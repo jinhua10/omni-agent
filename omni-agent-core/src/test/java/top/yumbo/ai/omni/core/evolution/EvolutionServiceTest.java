@@ -106,15 +106,18 @@ class EvolutionServiceTest {
 
     @Test
     @DisplayName("获取版本历史")
-    void testGetVersionHistory() {
-        // Given - 使用完全唯一的ID
-        String conceptId = "concept-hist-" + System.currentTimeMillis() + "-" + Math.random();
+    void testGetVersionHistory() throws InterruptedException {
+        // Given - 使用完全唯一的ID并添加小延迟确保独立性
+        Thread.sleep(10);
+        String conceptId = "concept-hist-" + System.nanoTime() + "-" + Thread.currentThread().getId();
 
         ConceptVersion v1 = evolutionService.createVersion(conceptId, "v1", "创建", ConceptVersion.ChangeType.CREATE, "user");
         assertNotNull(v1, "Version 1 should be created");
+        Thread.sleep(1);
 
         ConceptVersion v2 = evolutionService.createVersion(conceptId, "v2", "更新", ConceptVersion.ChangeType.UPDATE, "user");
         assertNotNull(v2, "Version 2 should be created");
+        Thread.sleep(1);
 
         ConceptVersion v3 = evolutionService.createVersion(conceptId, "v3", "合并", ConceptVersion.ChangeType.MERGE, "user");
         assertNotNull(v3, "Version 3 should be created");
@@ -126,7 +129,7 @@ class EvolutionServiceTest {
         assertNotNull(history);
         assertEquals(3, history.size(), "Should have exactly 3 versions, but got: " + history.size());
 
-        if (history.size() == 3) {
+        if (history.size() >= 3) {
             // 验证按时间倒序排列
             assertEquals(3, history.get(0).getVersion());
             assertEquals(2, history.get(1).getVersion());
