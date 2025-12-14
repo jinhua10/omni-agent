@@ -35,6 +35,9 @@
         <!-- AI API (AI Service API) -->
         <module>omni-agent-ai-api</module>
 
+        <!-- P2P API (P2P Collaboration API) -->
+        <module>omni-agent-p2p-api</module>
+
         <!-- ========== 核心业务模块 (Core Module) ========== -->
 
         <module>omni-agent-core</module>
