@@ -51,15 +51,25 @@
                        │              │              │
     ┌──────────────────┼──────────────┼──────────────┼──────────────┐
     │                  │              │              │              │
-┌───▼────────┐  ┌─────▼──────┐  ┌───▼──────┐  ┌───▼──────┐  ┌───▼──────┐
-│Persistence │  │Document    │  │RAG API   │  │P2P API   │  │Voting    │  │Behavior  │  │AI API    │
-│   API      │  │Storage API │  │(检索)    │  │(协作)    │  │  API     │  │   API    │  │(推理)    │
-│  (持久化)  │  │(文档存储)  │  │          │  │          │  │(投票)    │  │(行为分析)│  │          │
-└─────┬──────┘  └─────┬──────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘
-      │               │               │              │              │              │              │
-      │🔌维度1        │🔌维度2        │🔌维度3       │🔌维度5       │🔌维度6       │🔌维度7       │🔌维度4
-      │(结构化)       │(文档)         │(检索)        │(P2P)         │(投票)        │(行为)        │(AI)
-      │               │               │              │              │              │              │
+┌───▼────────┐  ┌─────▼──────┐  ┌───▼──────┐  ┌───▼──────┐
+│Persistence │  │Document    │  │RAG API   │  │AI API    │
+│   API      │  │Storage API │  │(检索)    │  │(推理)    │
+│  (持久化)  │  │(文档存储)  │  │          │  │          │
+└─────┬──────┘  └─────┬──────┘  └────┬─────┘  └────┬─────┘
+      │               │               │              │
+      │🔌维度1        │🔌维度2        │🔌维度3       │🔌维度4
+      │(结构化)       │(文档)         │(检索)        │(AI)
+      │               │               │              │
+
+┌───▼──────┐  ┌───▼──────┐  ┌───▼──────┐
+│P2P API   │  │Voting    │  │Behavior  │
+│(协作)    │  │  API     │  │   API    │
+│          │  │(投票)    │  │(行为分析)│
+└────┬─────┘  └────┬─────┘  └────┬─────┘
+     │              │              │
+     │🔌维度5       │🔌维度6       │🔌维度7
+     │(P2P)         │(投票)        │(行为)
+     │              │              │
 ┌─────▼──────┐  ┌─────▼──────┐  ┌────▼─────┐  ┌────▼─────┐  ┌────▼─────┐  ┌────▼─────┐  ┌────▼─────┐
 │持久化      │  │文档存储    │  │RAG       │  │P2P       │  │Voting    │  │Behavior  │  │AI        │
 │Starters    │  │Starters    │  │Starters  │  │Starters  │  │Starters  │  │Starters  │  │Starters  │
@@ -256,15 +266,41 @@ omni-agent:
     </dependency>
 </dependencies>
 ```
-    
-    <!-- 维度4: AI - 远程Ollama（团队共享） -->
-    <dependency>
-        <artifactId>omni-agent-ai-starter-remote-ollama</artifactId>
-    </dependency>
-</dependencies>
+
+**application.yml 配置**:
+```yaml
+omni-agent:
+  persistence:
+    type: h2
+    h2:
+      url: jdbc:h2:./data/omni-agent
+  document-storage:
+    type: mongodb
+    mongodb:
+      uri: mongodb://localhost:27017/omni-agent
+  rag:
+    type: elasticsearch
+    elasticsearch:
+      hosts: localhost:9200
+  ai:
+    type: online-api
+    online-api:
+      provider: openai
+      api-key: ${OPENAI_API_KEY}
+  p2p:
+    type: redis
+    redis:
+      host: localhost
+      port: 6379
+  voting:
+    type: mongodb
+    mongodb:
+      database: voting
+  behavior:
+    type: memory
 ```
 
-**特点**: ✅ 结构化数据用H2 ✅ 文档/图像用MongoDB ✅ 检索用ES ✅ AI共享使用
+**特点**: ✅ 结构化数据用H2 ✅ 文档/图像用MongoDB ✅ 检索用ES ✅ AI在线API ✅ 分布式协作
 
 ---
 
@@ -290,12 +326,65 @@ omni-agent:
     
     <!-- 维度4: AI - 在线API（企业级） -->
     <dependency>
+        <groupId>top.yumbo.ai.omni</groupId>
         <artifactId>omni-agent-ai-starter-online-api</artifactId>
+    </dependency>
+    
+    <!-- 维度5: P2P - Elasticsearch（分布式） -->
+    <dependency>
+        <groupId>top.yumbo.ai.omni</groupId>
+        <artifactId>omni-agent-p2p-starter-elasticsearch</artifactId>
+    </dependency>
+    
+    <!-- 维度6: Voting - Elasticsearch（持久化） -->
+    <dependency>
+        <groupId>top.yumbo.ai.omni</groupId>
+        <artifactId>omni-agent-voting-starter-elasticsearch</artifactId>
+    </dependency>
+    
+    <!-- 维度7: Behavior - Memory（实时） -->
+    <dependency>
+        <groupId>top.yumbo.ai.omni</groupId>
+        <artifactId>omni-agent-behavior-starter-memory</artifactId>
     </dependency>
 </dependencies>
 ```
 
-**特点**: ✅ 高可用 ✅ 可扩展 ✅ 云托管 ✅ 企业级
+**application.yml 配置**:
+```yaml
+omni-agent:
+  persistence:
+    type: elasticsearch
+    elasticsearch:
+      hosts: es-cluster:9200
+  document-storage:
+    type: s3
+    s3:
+      bucket: omni-agent-docs
+      region: us-east-1
+  rag:
+    type: elasticsearch
+    elasticsearch:
+      hosts: es-cluster:9200
+      index: omni-agent-rag
+  ai:
+    type: online-api
+    online-api:
+      provider: openai
+      api-key: ${OPENAI_API_KEY}
+      model: gpt-4
+  p2p:
+    type: elasticsearch
+    node-id: prod-node-${INSTANCE_ID}
+  voting:
+    type: elasticsearch
+    default-threshold: 0.7
+  behavior:
+    type: memory
+    cache-enabled: true
+```
+
+**特点**: ✅ 高可用 ✅ 可扩展 ✅ 云托管 ✅ 企业级 ✅ 全七维配置
 
 ---
 
@@ -543,7 +632,7 @@ omni-agent-common (公共层)
 
 ---
 
-## 四维可插拔架构的核心优势
+## 七维可插拔架构的核心优势
 
 ### 🎯 对开发者
 ```
@@ -830,6 +919,6 @@ manager.switchStrategy(PersistenceStrategy.ELASTICSEARCH);
 ---
 
 > 🎯 **架构目标**: 打造完全可插拔的全场景 Agent 框架！  
-> 🔌 **核心理念**: 4个维度，648种组合，业务代码零改动！  
+> 🔌 **核心理念**: 7个维度，10,368种组合，业务代码零改动！  
 > 🚀 **使用体验**: 像搭积木一样组装系统！
 
