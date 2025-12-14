@@ -1,0 +1,9 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 GitHub Discussions / 讨论区
+    url: https://github.com/jinhua10/ai-reviewer-base-file-rag/discussions
+    about: Please use GitHub Discussions for general questions and discussions / 请使用讨论区进行一般性问题讨论
+  - name: 📧 Email Contact / 邮件联系
+    url: mailto:1015770492@qq.com
+    about: Contact us via email for security issues or private inquiries / 通过邮件联系我们处理安全问题或私密咨询
+
