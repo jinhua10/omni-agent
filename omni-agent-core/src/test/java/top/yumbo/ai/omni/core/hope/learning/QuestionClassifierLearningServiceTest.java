@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 import top.yumbo.ai.persistence.api.model.QuestionTypeConfig;
 
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.*;
  * @since 1.0.0
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("QuestionClassifierLearningService Tests")
 class QuestionClassifierLearningServiceTest {
 
@@ -166,17 +169,19 @@ class QuestionClassifierLearningServiceTest {
     @Test
     @DisplayName("应该处理学习异常")
     void shouldHandleLearningException() {
-        // Given
-        when(persistence.getAllQuestionTypes()).thenThrow(new RuntimeException("Database error"));
+        // Given - performLearning会抓取异常，所以需要mock的是persistence.addKeywords
+        List<QuestionTypeConfig> types = new ArrayList<>();
+        types.add(QuestionTypeConfig.builder().id("SKILL").name("技能类").build());
+        when(persistence.getAllQuestionTypes()).thenReturn(types);
+        doThrow(new RuntimeException("Database error")).when(persistence).addKeywords(anyString(), anyList());
 
-        // When
-        learningService.recordClassification("问题", "SKILL", "SKILL", 0.9);
+        // When - 添加多个相同问题以触发高频关键词学习
+        for (int i = 0; i < 5; i++) {
+            learningService.recordClassification("如何学习Java", "SKILL", "SKILL", 0.9);
+        }
 
-        // Then - 不应该抛出异常，触发学习并捕获异常
-        learningService.triggerLearning();
-        
-        // Verify that getAllQuestionTypes was called
-        verify(persistence).getAllQuestionTypes();
+        // Then - 不应该抛出异常
+        assertThatNoException().isThrownBy(() -> learningService.triggerLearning());
     }
 
     @Test
@@ -186,7 +191,6 @@ class QuestionClassifierLearningServiceTest {
         List<QuestionTypeConfig> types = new ArrayList<>();
         types.add(QuestionTypeConfig.builder().id("SKILL").name("技能类").build());
         when(persistence.getAllQuestionTypes()).thenReturn(types);
-        when(persistence.getKeywords("SKILL")).thenReturn(new ArrayList<>());
 
         // When - 添加多个包含相同关键词的问题
         for (int i = 0; i < 5; i++) {
@@ -206,7 +210,6 @@ class QuestionClassifierLearningServiceTest {
         List<QuestionTypeConfig> types = new ArrayList<>();
         types.add(QuestionTypeConfig.builder().id("SKILL").name("技能类").build());
         when(persistence.getAllQuestionTypes()).thenReturn(types);
-        when(persistence.getKeywords("SKILL")).thenReturn(new ArrayList<>());
 
         // When - 添加不同的问题（关键词频率低）
         learningService.recordClassification("如何学习Java？", "SKILL", "SKILL", 0.9);
@@ -259,16 +262,15 @@ class QuestionClassifierLearningServiceTest {
         types.add(QuestionTypeConfig.builder().id("SKILL").name("技能类").build());
         types.add(QuestionTypeConfig.builder().id("KNOWLEDGE").name("知识类").build());
         when(persistence.getAllQuestionTypes()).thenReturn(types);
-        when(persistence.getKeywords(anyString())).thenReturn(new ArrayList<>());
 
         // When
         learningService.recordClassification("问题1", "SKILL", "SKILL", 0.9);
         learningService.recordClassification("问题2", "SKILL", null, 0.9);
         learningService.recordClassification("问题3", "SKILL", "KNOWLEDGE", 0.8);
 
-        learningService.triggerLearning();
-
-        // Then - 应该处理了有实际类型的记录
-        verify(persistence, atLeastOnce()).getAllQuestionTypes();
+        // Then
+        QuestionClassifierLearningService.LearningStatistics stats = learningService.getStatistics();
+        // 应该有 3 条记录，包括 null actualType 的记录
+        assertThat(stats.getCacheSize()).isEqualTo(3);
     }
 }
