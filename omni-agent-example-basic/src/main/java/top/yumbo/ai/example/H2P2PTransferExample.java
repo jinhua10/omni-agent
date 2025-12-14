@@ -34,25 +34,15 @@ public class H2P2PTransferExample {
         return args -> {
             System.out.println("\n========== H2 P2P数据传输示例 ==========\n");
 
-            // 1. 测试连接
-            System.out.println("1. 测试H2数据库连接...");
-            boolean connected = h2P2PDataTransferService.testConnection();
-            System.out.println("   连接状态: " + (connected ? "✅ 成功" : "❌ 失败"));
-
-            if (!connected) {
-                System.out.println("   H2数据库连接失败，请检查配置");
-                return;
-            }
-
-            // 2. 查询统计信息
-            System.out.println("\n2. 查询H2数据库统计信息...");
+            // 1. 查询统计信息
+            System.out.println("1. 查询H2数据库统计信息...");
             Map<String, Object> stats = h2P2PDataTransferService.getTransferStatistics();
             stats.forEach((key, value) -> 
                 System.out.println("   " + key + ": " + value)
             );
 
-            // 3. 批量传输示例
-            System.out.println("\n3. 执行批量数据传输...");
+            // 2. 批量传输示例
+            System.out.println("\n2. 执行批量数据传输...");
             Map<String, Object> query = Map.of(
                 "type", "document",
                 "limit", 100
@@ -74,8 +64,8 @@ public class H2P2PTransferExample {
                 );
             }
 
-            // 4. 跨存储传输示例（如果配置了其他存储）
-            System.out.println("\n4. H2跨存储传输示例");
+            // 3. 跨存储传输示例（如果配置了其他存储）
+            System.out.println("\n3. H2跨存储传输示例");
             System.out.println("   提示: 可以通过P2PTransferBridge实现H2 → Elasticsearch等跨存储传输");
             System.out.println("   示例代码:");
             System.out.println("   ```java");
