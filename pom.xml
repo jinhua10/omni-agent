@@ -38,6 +38,9 @@
         <!-- P2P API (P2P Collaboration API) -->
         <module>omni-agent-p2p-api</module>
 
+        <!-- Voting API (Voting System API) -->
+        <module>omni-agent-voting-api</module>
+
         <!-- ========== 核心业务模块 (Core Module) ========== -->
 
         <module>omni-agent-core</module>
@@ -79,6 +82,9 @@
 
         <!-- P2P Starters -->
         <module>omni-agent-p2p-starter-memory</module>
+
+        <!-- Voting Starters -->
+        <module>omni-agent-voting-starter-memory</module>
     </modules>
 
     <!-- 开发者信息 -->
