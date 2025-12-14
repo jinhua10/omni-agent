@@ -1,0 +1,26 @@
+/**
+ * 质量监控样式 (Quality Monitor Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+.quality-monitor {
+  padding: 20px;
+}
+
+.quality-monitor__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+}
+
+.quality-monitor__stats {
+  margin-bottom: 24px;
+}
+
+.quality-monitor__table {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+

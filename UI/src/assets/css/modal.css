@@ -1,0 +1,55 @@
+/**
+ * Modal 模态框样式 (Modal Dialog Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   模态框样式 (Modal Styles)
+   ============================================================================ */
+.app-modal .ant-modal-content {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.app-modal .ant-modal-header {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--spacing-lg);
+}
+
+.app-modal .ant-modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.app-modal .ant-modal-body {
+  padding: var(--spacing-lg);
+  color: var(--text-secondary);
+}
+
+.app-modal .ant-modal-footer {
+  border-top: 1px solid var(--border-light);
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+/* 确认对话框样式 (Confirm dialog styles) */
+.app-modal.ant-modal-confirm .ant-modal-body {
+  padding: var(--spacing-xl);
+}
+
+.app-modal.ant-modal-confirm .ant-modal-confirm-body-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+/* ============================================================================
+   动画优化 (Animation Optimization)
+   ============================================================================ */
+.app-modal .ant-modal-mask {
+  backdrop-filter: blur(4px);
+}
+

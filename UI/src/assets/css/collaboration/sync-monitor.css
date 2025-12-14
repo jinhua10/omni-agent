@@ -1,0 +1,54 @@
+/**
+ * 同步监控样式 (Sync Monitor Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+.sync-monitor {
+  padding: 20px;
+}
+
+.sync-monitor__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+}
+
+.sync-monitor__stats {
+  margin-bottom: 24px;
+}
+
+.sync-monitor__activity {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.sync-monitor__activity-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sync-monitor__activity-desc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sync-monitor__activity-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.sync-monitor__progress {
+  width: 200px;
+}
+
+@media (max-width: 768px) {
+  .sync-monitor__progress {
+    width: 100%;
+    margin-top: 12px;
+  }
+}
+

@@ -1,0 +1,571 @@
+/**
+ * 梦幻气泡布局样式 / Dreamy Bubble Layout Styles
+ * 
+ * 完整的系统级主题CSS
+ * Complete System-Level Theme CSS
+ * 
+ * @author World-Class Aesthetic Designer
+ * @since 2025-12-12
+ */
+
+/* 导入子样式文件 */
+@import '../../../assets/css/bubble-theme/global.css';
+@import '../../../assets/css/bubble-theme/navigation.css';
+@import '../../../assets/css/bubble-theme/header.css';
+
+/* ==================== 全局变量 ==================== */
+:root {
+  /* 主题色彩 */
+  --bubble-primary: #667eea;
+  --bubble-secondary: #764ba2;
+  --bubble-accent-1: #f093fb;
+  --bubble-accent-2: #f5576c;
+  --bubble-accent-3: #4facfe;
+  --bubble-accent-4: #00f2fe;
+  --bubble-accent-5: #43e97b;
+  --bubble-accent-6: #38f9d7;
+
+  /* 玻璃态效果 */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --glass-blur: 12px;
+
+  /* 动画时长 */
+  --animation-fast: 0.3s;
+  --animation-normal: 0.6s;
+  --animation-slow: 1.2s;
+
+  /* 空间尺寸 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Z-index层级 */
+  --z-background: 0;
+  --z-content: 10;
+  --z-navigation: 100;
+  --z-header: 200;
+  --z-overlay: 1000;
+}
+
+/* ==================== 主容器 ==================== */
+.bubble-universe {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  perspective: 2000px;
+  perspective-origin: 50% 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==================== 背景系统 ==================== */
+.bubble-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-background);
+  pointer-events: none;
+}
+
+/* 粒子画布 */
+.background-particles-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.6;
+}
+
+/* 渐变背景层 */
+.background-gradient-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.3;
+  animation: floatOrb 20s ease-in-out infinite;
+}
+
+.gradient-orb.orb-1 {
+  width: 600px;
+  height: 600px;
+  top: -200px;
+  left: -200px;
+  background: radial-gradient(circle, var(--bubble-primary) 0%, transparent 70%);
+  animation-delay: 0s;
+}
+
+.gradient-orb.orb-2 {
+  width: 500px;
+  height: 500px;
+  top: 30%;
+  right: -150px;
+  background: radial-gradient(circle, var(--bubble-accent-1) 0%, transparent 70%);
+  animation-delay: 5s;
+}
+
+.gradient-orb.orb-3 {
+  width: 700px;
+  height: 700px;
+  bottom: -250px;
+  left: 20%;
+  background: radial-gradient(circle, var(--bubble-accent-3) 0%, transparent 70%);
+  animation-delay: 10s;
+}
+
+.gradient-orb.orb-4 {
+  width: 450px;
+  height: 450px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, var(--bubble-accent-5) 0%, transparent 70%);
+  animation-delay: 15s;
+}
+
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -30px) scale(1.1); }
+  50% { transform: translate(-20px, 20px) scale(0.9); }
+  75% { transform: translate(40px, 10px) scale(1.05); }
+}
+
+/* 网格层 */
+.background-grid-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.03;
+}
+
+.grid-line {
+  position: absolute;
+  background: repeating-linear-gradient(
+    transparent,
+    transparent 50px,
+    rgba(102, 126, 234, 0.3) 50px,
+    rgba(102, 126, 234, 0.3) 51px
+  );
+}
+
+.grid-horizontal {
+  width: 100%;
+  height: 100%;
+}
+
+.grid-vertical {
+  width: 100%;
+  height: 100%;
+  transform: rotate(90deg);
+  transform-origin: center;
+}
+
+/* 光束效果 */
+.background-light-beams {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.1;
+}
+
+.light-beam {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent 0%, var(--bubble-primary) 50%, transparent 100%);
+  animation: beamScan 8s ease-in-out infinite;
+}
+
+.light-beam.beam-1 {
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.light-beam.beam-2 {
+  left: 50%;
+  animation-delay: 2s;
+}
+
+.light-beam.beam-3 {
+  left: 80%;
+  animation-delay: 4s;
+}
+
+@keyframes beamScan {
+  0%, 100% { transform: translateX(0) scaleY(1); opacity: 0; }
+  50% { transform: translateX(100px) scaleY(1.5); opacity: 0.3; }
+}
+
+/* 噪点纹理 */
+.background-noise-texture {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" /></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.05"/></svg>');
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
+
+/* ==================== 主内容区域 ==================== */
+.bubble-main-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  overflow: hidden;
+  z-index: var(--z-content);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 菜单展开时的内边距调整 */
+.bubble-universe[data-menu-expanded="true"] .bubble-main-stage {
+  /* 居中布局不需要调整 */
+}
+
+/* 自定义滚动条 */
+.bubble-main-stage::-webkit-scrollbar {
+  width: 8px;
+}
+
+.bubble-main-stage::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.bubble-main-stage::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--bubble-primary) 0%, var(--bubble-accent-1) 100%);
+  border-radius: 4px;
+  transition: background var(--animation-fast);
+}
+
+.bubble-main-stage::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--bubble-accent-1) 0%, var(--bubble-primary) 100%);
+}
+
+/* 内容容器 */
+.bubble-content-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 内容玻璃面板 */
+.bubble-content-panel {
+  position: relative;
+  border-radius: 32px;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: panelFadeIn var(--animation-slow) ease-out;
+}
+
+@keyframes panelFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.panel-glass-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  z-index: -1;
+}
+
+.panel-glow-border {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, 
+    var(--bubble-primary) 0%, 
+    var(--bubble-accent-1) 25%,
+    var(--bubble-accent-3) 50%,
+    var(--bubble-accent-5) 75%,
+    var(--bubble-primary) 100%
+  );
+  border-radius: 32px;
+  opacity: 0.3;
+  filter: blur(8px);
+  z-index: -2;
+  animation: glowRotate 8s linear infinite;
+}
+
+@keyframes glowRotate {
+  0% { filter: blur(8px) hue-rotate(0deg); }
+  100% { filter: blur(8px) hue-rotate(360deg); }
+}
+
+.panel-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 装饰性浮动元素 */
+.bubble-decorative-elements {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.deco-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.4) 0%, transparent 70%);
+  filter: blur(60px);
+  animation: decoFloat 15s ease-in-out infinite;
+}
+
+.deco-orb.deco-1 {
+  width: 300px;
+  height: 300px;
+  top: 20%;
+  right: 10%;
+  animation-delay: 0s;
+}
+
+.deco-orb.deco-2 {
+  width: 250px;
+  height: 250px;
+  bottom: 30%;
+  left: 15%;
+  background: radial-gradient(circle, rgba(240, 147, 251, 0.3) 0%, transparent 70%);
+  animation-delay: 5s;
+}
+
+.deco-orb.deco-3 {
+  width: 200px;
+  height: 200px;
+  top: 60%;
+  right: 25%;
+  background: radial-gradient(circle, rgba(67, 233, 123, 0.3) 0%, transparent 70%);
+  animation-delay: 10s;
+}
+
+@keyframes decoFloat {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(20px, -40px); }
+  66% { transform: translate(-30px, 20px); }
+}
+
+.deco-ring {
+  position: absolute;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 50%;
+  animation: ringExpand 6s ease-out infinite;
+}
+
+.deco-ring.ring-1 {
+  width: 400px;
+  height: 400px;
+  top: 40%;
+  left: 30%;
+  animation-delay: 0s;
+}
+
+.deco-ring.ring-2 {
+  width: 350px;
+  height: 350px;
+  top: 50%;
+  right: 20%;
+  animation-delay: 3s;
+}
+
+@keyframes ringExpand {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+}
+
+/* 滚动进度指示器 */
+.bubble-scroll-indicator {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 4px;
+  height: calc(100vh - 100px);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+  z-index: var(--z-content);
+}
+
+.scroll-progress-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--bubble-primary), var(--bubble-accent-1));
+  transform-origin: top;
+  transition: transform 0.1s ease-out;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
+}
+
+/* 环境光效 */
+.bubble-ambient-lights {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: screen;
+}
+
+.ambient-light {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  animation: ambientPulse 8s ease-in-out infinite;
+}
+
+.ambient-light.light-1 {
+  width: 500px;
+  height: 500px;
+  top: 10%;
+  left: 10%;
+  background: var(--bubble-primary);
+  animation-delay: 0s;
+}
+
+.ambient-light.light-2 {
+  width: 600px;
+  height: 600px;
+  top: 50%;
+  right: 10%;
+  background: var(--bubble-accent-1);
+  animation-delay: 2s;
+}
+
+.ambient-light.light-3 {
+  width: 450px;
+  height: 450px;
+  bottom: 10%;
+  left: 40%;
+  background: var(--bubble-accent-3);
+  animation-delay: 4s;
+}
+
+@keyframes ambientPulse {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(1.1); }
+}
+
+/* 交互式光标效果 */
+.bubble-cursor-glow {
+  position: fixed;
+  width: 400px;
+  height: 400px;
+  margin-left: -200px;
+  margin-top: -200px;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 2;
+  transition: left 0.3s ease-out, top 0.3s ease-out;
+  mix-blend-mode: screen;
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .bubble-main-stage {
+    margin-top: 70px;
+    padding: 15px 15px 30px 100px;
+  }
+
+  .bubble-universe[data-menu-expanded="true"] .bubble-main-stage {
+    padding-left: 150px;
+  }
+
+  .panel-content {
+    padding: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .bubble-main-stage {
+    margin-top: 70px;
+    padding: 15px 10px 30px 80px;
+  }
+
+  .bubble-universe[data-menu-expanded="true"] .bubble-main-stage {
+    padding-left: 120px;
+  }
+
+  .panel-content {
+    padding: var(--spacing-md);
+  }
+
+  .bubble-content-panel {
+    border-radius: 24px;
+  }
+}

@@ -1,0 +1,117 @@
+/**
+ * 文档引用组件样式
+ * Document References Component Styles
+ */
+
+.document-references {
+  margin-top: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+  border-radius: 8px;
+  border: 1px solid #d9e2ec;
+}
+
+.document-references__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.document-references__icon {
+  font-size: 16px;
+}
+
+.document-references__title {
+  font-size: 14px;
+}
+
+.document-references__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.document-references__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #e1e8ed;
+  transition: all 0.2s;
+}
+
+.document-references__item:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+}
+
+.document-references__item-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.document-references__item-tag {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.document-references__item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: #333;
+}
+
+.document-references__item-actions {
+  flex-shrink: 0;
+}
+
+.document-references__add-btn--added {
+  pointer-events: none;
+}
+
+.document-references__footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #d9e2ec;
+  text-align: center;
+}
+
+/* 暗色主题 */
+[data-theme='dark'] .document-references {
+  background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
+  border-color: #3a3a3a;
+}
+
+[data-theme='dark'] .document-references__header {
+  color: #40a9ff;
+}
+
+[data-theme='dark'] .document-references__item {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+}
+
+[data-theme='dark'] .document-references__item:hover {
+  border-color: #40a9ff;
+  box-shadow: 0 2px 8px rgba(64, 169, 255, 0.1);
+}
+
+[data-theme='dark'] .document-references__item-name {
+  color: #e0e0e0;
+}
+
+[data-theme='dark'] .document-references__footer {
+  border-top-color: #3a3a3a;
+}

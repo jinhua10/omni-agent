@@ -1,0 +1,55 @@
+/**
+ * Loading 加载组件样式 (Loading Component Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   简单加载 (Simple Loading)
+   ============================================================================ */
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+/* ============================================================================
+   全屏加载 (Fullscreen Loading)
+   ============================================================================ */
+.app-loading--fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+/* ============================================================================
+   包裹式加载 (Wrapper Loading)
+   ============================================================================ */
+.app-loading--wrapper {
+  min-height: 200px;
+}
+
+/* ============================================================================
+   加载动画优化 (Loading Animation Optimization)
+   ============================================================================ */
+.app-loading .ant-spin-dot,
+.app-loading--fullscreen .ant-spin-dot {
+  color: var(--primary-color);
+}
+
+.app-loading .ant-spin-text,
+.app-loading--fullscreen .ant-spin-text {
+  color: var(--text-secondary);
+  margin-top: var(--spacing-sm);
+}
+

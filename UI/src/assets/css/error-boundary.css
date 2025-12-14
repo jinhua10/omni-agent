@@ -1,0 +1,45 @@
+/**
+ * ErrorBoundary 错误边界样式 (Error Boundary Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   错误边界容器 (Error Boundary Container)
+   ============================================================================ */
+.error-boundary {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+/* ============================================================================
+   错误详情（开发环境）(Error Details - Development)
+   ============================================================================ */
+.error-boundary__details {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  text-align: left;
+  max-width: 600px;
+}
+
+.error-boundary__details h4 {
+  color: var(--error-color);
+  margin-bottom: var(--spacing-sm);
+}
+
+.error-boundary__details pre {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+}
+

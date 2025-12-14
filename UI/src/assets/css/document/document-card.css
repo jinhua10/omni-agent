@@ -1,0 +1,170 @@
+/**
+ * 文档卡片样式 (Document Card Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   文档卡片容器 (Document Card Container)
+   ============================================================================ */
+.document-card {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.document-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+}
+
+.document-card:hover .document-card__actions {
+  opacity: 1;
+}
+
+/* ============================================================================
+   文件图标 (File Icon)
+   ============================================================================ */
+.document-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.document-card__icon-emoji {
+  font-size: 64px;
+}
+
+/* ============================================================================
+   文件信息 (File Info)
+   ============================================================================ */
+.document-card__info {
+  padding: 16px;
+}
+
+.document-card__name {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.document-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #999;
+}
+
+.document-card__size {
+  color: #666;
+  font-weight: 500;
+}
+
+.document-card__separator {
+  color: #ddd;
+}
+
+.document-card__date {
+  color: #999;
+}
+
+/* 标签 (Tags) */
+.document-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.document-card__tag {
+  margin: 0;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* ============================================================================
+   操作按钮 (Action Buttons)
+   ============================================================================ */
+.document-card__actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================================================
+   拖拽样式 (Drag & Drop Styles)
+   ============================================================================ */
+.document-card[draggable="true"] {
+  cursor: grab;
+}
+
+.document-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.document-card--dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.3);
+  border: 2px dashed #1890ff;
+}
+
+/* 拖拽提示 */
+.document-card::before {
+  content: '🤖 拖拽到AI分析面板';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(24, 144, 255, 0.95);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.document-card--dragging::before {
+  opacity: 1;
+}
+
+/* ============================================================================
+   响应式样式 (Responsive Styles)
+   ============================================================================ */
+@media (max-width: 768px) {
+  .document-card__icon {
+    height: 100px;
+  }
+
+  .document-card__icon-emoji {
+    font-size: 48px;
+  }
+
+  .document-card__actions {
+    opacity: 1;
+  }
+}
+

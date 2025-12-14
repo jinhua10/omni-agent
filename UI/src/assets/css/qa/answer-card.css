@@ -1,0 +1,272 @@
+/**
+ * 答案卡片样式 (Answer Card Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   答案卡片容器 (Answer Card Container)
+   ============================================================================ */
+.answer-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: answerSlideIn 0.3s ease-out;
+}
+
+@keyframes answerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ============================================================================
+   AI 头像 (AI Avatar)
+   ============================================================================ */
+.answer-card__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.answer-card__avatar-icon {
+  font-size: 20px;
+}
+
+/* ============================================================================
+   答案内容区域 (Answer Content Area)
+   ============================================================================ */
+.answer-card__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: calc(100% - 48px);
+}
+
+.answer-card__text {
+  background: #f8f9fa;
+  padding: 16px 20px;
+  border-radius: 4px 12px 12px 12px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #333;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ============================================================================
+   底部工具栏 (Footer Toolbar)
+   ============================================================================ */
+.answer-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.answer-card__time {
+  font-size: 12px;
+  color: #999;
+}
+
+.answer-card__actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* 操作按钮 (Action Buttons) */
+.answer-card__action-btn {
+  color: #999;
+  transition: all 0.3s ease;
+}
+
+.answer-card__action-btn:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.answer-card__action-btn--active {
+  color: #667eea;
+}
+
+/* ============================================================================
+   Thinking 动画 (Thinking Animation)
+   ============================================================================ */
+.answer-card__thinking {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+}
+
+.answer-card__thinking-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.answer-card__thinking-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #667eea;
+  animation: thinkingDot 1.4s infinite ease-in-out both;
+}
+
+.answer-card__thinking-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.answer-card__thinking-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes thinkingDot {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.answer-card__thinking-text {
+  color: #667eea;
+  font-size: 14px;
+  font-style: italic;
+  animation: thinkingFade 1.5s infinite;
+}
+
+@keyframes thinkingFade {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   停止徽章 (Stopped Badge)
+   ============================================================================ */
+.answer-card__stopped-badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 6px;
+  color: #fa8c16;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   响应式样式 (Responsive Styles)
+   ============================================================================ */
+@media (max-width: 768px) {
+  .answer-card {
+    gap: 8px;
+  }
+
+  .answer-card__avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .answer-card__avatar-icon {
+    font-size: 18px;
+  }
+
+  .answer-card__text {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .answer-card__footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* ============================================================================
+   双轨模式：左右双面板 (Dual-track Mode: Left-Right Panels)
+   ============================================================================ */
+.answer-card__dual-track {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.answer-card__panel {
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-color, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.answer-card__panel:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.answer-card__panel--left .answer-card__panel-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.answer-card__panel--right .answer-card__panel-header {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.answer-card__panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.answer-card__panel-icon {
+  font-size: 18px;
+}
+
+.answer-card__panel-title {
+  flex: 1;
+}
+
+.answer-card__panel-content {
+  padding: 16px;
+  min-height: 200px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* 响应式：小屏幕下垂直排列 */
+@media (max-width: 768px) {
+  .answer-card__dual-track {
+    grid-template-columns: 1fr;
+  }
+}
+

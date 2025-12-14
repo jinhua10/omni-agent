@@ -1,0 +1,207 @@
+/* WishDetail 组件样式 */
+.wish-detail-modal .ant-modal-body {
+  padding: var(--spacing-xl);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.wish-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.wish-detail__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+/* 头部 */
+.wish-detail__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wish-detail__tags {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.wish-detail__tag {
+  font-size: var(--font-size-sm);
+}
+
+/* 标题 */
+.wish-detail__title {
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: var(--spacing-md) 0;
+  line-height: 1.4;
+}
+
+/* 元信息 */
+.wish-detail__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+}
+
+.wish-detail__author {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.wish-detail__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.wish-detail__avatar--default {
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+}
+
+.wish-detail__author-name {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.wish-detail__time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+/* 投票区域 */
+.wish-detail__vote {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-lg) 0;
+}
+
+/* 描述 */
+.wish-detail__description h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.wish-detail__description p {
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* 状态历史 */
+.wish-detail__history h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.wish-detail__history-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.wish-detail__history-status {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.wish-detail__history-time {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+.wish-detail__history-comment {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-sm);
+  margin-top: var(--spacing-xs);
+}
+
+/* 评论区 */
+.wish-detail__comments h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+/* 暗色模式 */
+[data-theme="dark"] .wish-detail__title,
+[data-theme="dark"] .wish-detail__description h3,
+[data-theme="dark"] .wish-detail__history h3,
+[data-theme="dark"] .wish-detail__comments h3,
+[data-theme="dark"] .wish-detail__author-name,
+[data-theme="dark"] .wish-detail__history-status {
+  color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .wish-detail__meta {
+  background: var(--color-bg-secondary-dark);
+}
+
+[data-theme="dark"] .wish-detail__description p,
+[data-theme="dark"] .wish-detail__history-comment {
+  color: var(--color-text-secondary-dark);
+}
+
+[data-theme="dark"] .wish-detail__history-comment {
+  background: var(--color-bg-secondary-dark);
+}
+
+[data-theme="dark"] .wish-detail__time,
+[data-theme="dark"] .wish-detail__history-time {
+  color: var(--color-text-tertiary-dark);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .wish-detail-modal {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .wish-detail-modal .ant-modal-body {
+    padding: var(--spacing-lg);
+    max-height: 90vh;
+  }
+
+  .wish-detail__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .wish-detail__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+}
+

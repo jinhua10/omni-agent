@@ -1,0 +1,37 @@
+/**
+ * 流式答案样式 (Streaming Answer Styles)
+ * VSCode Copilot 风格
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-13
+ */
+
+/* ============================================================================
+   流式答案容器 (Streaming Answer Container)
+   ============================================================================ */
+.streaming-answer {
+  position: relative;
+}
+
+/* ============================================================================
+   光标动画 (Cursor Animation) - VSCode Copilot 风格
+   ============================================================================ */
+.streaming-answer__cursor {
+  display: inline-block;
+  width: 10px;
+  height: 1.2em;
+  margin-left: 2px;
+  background: #667eea;
+  vertical-align: text-bottom;
+  animation: cursorBlink 1s infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 49% {
+    opacity: 1;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
+}
+

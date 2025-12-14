@@ -1,0 +1,197 @@
+/* ModernLayout 组件样式 / ModernLayout Component Styles */
+
+.modern-layout {
+  min-height: 100vh;
+  background: var(--theme-background);
+}
+
+/* 侧边栏样式 / Sidebar styles */
+.modern-layout__sider {
+  overflow: auto;
+  height: 100vh;
+  position: fixed !important;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+  z-index: 100;
+}
+
+.modern-layout__sider::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modern-layout__sider::-webkit-scrollbar-thumb {
+  background: var(--theme-border);
+  border-radius: 3px;
+}
+
+/* Logo样式 / Logo styles */
+.modern-layout__logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--theme-border);
+  transition: all 0.2s;
+}
+
+.modern-layout__logo-icon {
+  font-size: 32px;
+  transition: all 0.2s;
+}
+
+.modern-layout__logo-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--theme-text);
+  white-space: nowrap;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 菜单样式 / Menu styles */
+.modern-layout__menu {
+  border-right: none !important;
+  padding: 8px;
+}
+
+.modern-layout__menu .ant-menu-item {
+  border-radius: 8px;
+  margin-bottom: 4px;
+  height: 48px;
+  line-height: 48px;
+  color: var(--theme-text) !important;
+  transition: all 0.2s;
+}
+
+.modern-layout__menu .ant-menu-item:hover {
+  background: var(--theme-primary) !important;
+  color: white !important;
+}
+
+.modern-layout__menu .ant-menu-item-selected {
+  background: var(--theme-primary) !important;
+  color: white !important;
+}
+
+.modern-layout__menu .ant-menu-item-icon {
+  font-size: 18px;
+}
+
+/* 主内容区样式 / Main content area styles */
+.modern-layout__main {
+  margin-left: 240px;
+  transition: all 0.2s;
+  min-height: 100vh;
+}
+
+.modern-layout__sider.ant-layout-sider-collapsed + .modern-layout__main {
+  margin-left: 80px;
+}
+
+/* 顶部导航栏样式 / Top navigation bar styles */
+.modern-layout__header {
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.modern-layout__header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.modern-layout__header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modern-layout__trigger {
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: var(--theme-text) !important;
+  transition: all 0.2s;
+}
+
+.modern-layout__trigger:hover {
+  background: var(--theme-surface) !important;
+  color: var(--theme-primary) !important;
+}
+
+.modern-layout__header-right .ant-btn {
+  color: var(--theme-text) !important;
+  border-radius: 8px;
+  height: 40px;
+  transition: all 0.2s;
+}
+
+.modern-layout__header-right .ant-btn:hover {
+  background: var(--theme-surface) !important;
+  color: var(--theme-primary) !important;
+}
+
+/* 内容区样式 / Content area styles */
+.modern-layout__content {
+  padding: 24px;
+  min-height: calc(100vh - 64px);
+  transition: background-color 0.3s ease;
+}
+
+/* 响应式设计 / Responsive design */
+@media (max-width: 992px) {
+  .modern-layout__sider {
+    position: fixed !important;
+    z-index: 1000;
+  }
+
+  .modern-layout__main {
+    margin-left: 0 !important;
+  }
+
+  .modern-layout__sider.ant-layout-sider-collapsed {
+    transform: translateX(-100%);
+  }
+}
+
+/* 暗色模式优化 / Dark mode optimization */
+[data-theme="dark"] .modern-layout__sider {
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .modern-layout__header {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 平滑过渡效果 / Smooth transition effects */
+.modern-layout,
+.modern-layout__sider,
+.modern-layout__main,
+.modern-layout__header,
+.modern-layout__content {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+

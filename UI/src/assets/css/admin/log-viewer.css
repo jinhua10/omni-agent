@@ -1,0 +1,50 @@
+/* LogViewer 组件样式 */
+.log-viewer {
+  padding: var(--spacing-md);
+}
+
+.log-viewer__toolbar {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.log-viewer__list {
+  max-height: 600px;
+  overflow-y: auto;
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+}
+
+.log-viewer__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-family: 'Courier New', monospace;
+  font-size: var(--font-size-sm);
+}
+
+.log-viewer__time {
+  color: var(--color-text-tertiary);
+  min-width: 180px;
+}
+
+.log-viewer__message {
+  color: var(--color-text-secondary);
+  flex: 1;
+}
+
+[data-theme="dark"] .log-viewer__list {
+  background: var(--color-bg-secondary-dark);
+}
+
+[data-theme="dark"] .log-viewer__time {
+  color: var(--color-text-tertiary-dark);
+}
+
+[data-theme="dark"] .log-viewer__message {
+  color: var(--color-text-secondary-dark);
+}
+

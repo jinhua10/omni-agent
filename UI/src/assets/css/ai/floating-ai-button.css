@@ -1,0 +1,171 @@
+/**
+ * 浮动AI分析按钮样式
+ * Floating AI Analysis Button Styles
+ */
+
+.floating-ai-button {
+  position: fixed;
+  right: 24px;
+  bottom: 80px;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-ai-button__btn {
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  font-size: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  border-radius: 50% !important;
+  padding: 0 !important;
+}
+
+.floating-ai-button__btn:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.floating-ai-button__btn--active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+}
+
+.floating-ai-button__btn--active:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+}
+
+.floating-ai-button__btn--has-docs {
+  animation: docsPulse 2s ease-in-out infinite;
+}
+
+@keyframes docsPulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(102, 126, 234, 0.4),
+                0 0 0 4px rgba(102, 126, 234, 0.1);
+  }
+}
+
+/* 徽章样式 */
+.floating-ai-button__badge .ant-badge-count {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  font-weight: 600;
+  font-size: 12px;
+  min-width: 20px;
+  height: 20px;
+  line-height: 20px;
+  padding: 0 6px;
+  border: 2px solid #fff;
+}
+
+/* 脉冲动画提示 */
+.floating-ai-button__pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(102, 126, 234, 0.3);
+  animation: pulseWave 2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulseWave {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .floating-ai-button {
+    right: 16px;
+    bottom: 60px;
+  }
+
+  .floating-ai-button__btn {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .floating-ai-button__pulse {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* 暗色主题 */
+[data-theme='dark'] .floating-ai-button__btn {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .floating-ai-button__btn:hover {
+  background: #333;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme='dark'] .floating-ai-button__btn--active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+[data-theme='dark'] .floating-ai-button__badge .ant-badge-count {
+  border-color: #1f1f1f;
+}
+
+/* 进入和离开动画 */
+.floating-ai-button {
+  animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 当有文档时的特殊效果 */
+.floating-ai-button__btn--has-docs::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  bottom: -2px;
+  left: -2px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0.3;
+  z-index: -1;
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

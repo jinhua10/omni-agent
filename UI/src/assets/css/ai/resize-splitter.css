@@ -1,0 +1,91 @@
+/**
+ * 分隔线样式 (Resize Splitter Styles)
+ */
+
+.resize-splitter {
+  flex-shrink: 0;
+  position: relative;
+  background: transparent;
+  transition: background 0.2s;
+  z-index: 1000;
+}
+
+/* 水平分隔线（左右分屏） */
+.resize-splitter--horizontal {
+  width: 4px;
+  height: 100%;
+  cursor: ew-resize;
+}
+
+/* 垂直分隔线（上下分屏） */
+.resize-splitter--vertical {
+  width: 100%;
+  height: 4px;
+  cursor: ns-resize;
+}
+
+/* 分隔线手柄 */
+.resize-splitter__handle {
+  position: absolute;
+  background: #e8e8e8;
+  transition: all 0.2s;
+}
+
+.resize-splitter--horizontal .resize-splitter__handle {
+  left: 1px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+}
+
+.resize-splitter--vertical .resize-splitter__handle {
+  left: 0;
+  top: 1px;
+  width: 100%;
+  height: 2px;
+}
+
+/* Hover效果 */
+.resize-splitter:hover .resize-splitter__handle,
+.resize-splitter--dragging .resize-splitter__handle {
+  background: #1890ff;
+}
+
+.resize-splitter:hover {
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.resize-splitter--dragging {
+  background: rgba(24, 144, 255, 0.15);
+}
+
+/* 拖拽时的视觉反馈 */
+.resize-splitter--horizontal:hover .resize-splitter__handle,
+.resize-splitter--horizontal.resize-splitter--dragging .resize-splitter__handle {
+  width: 3px;
+  left: 0.5px;
+}
+
+.resize-splitter--vertical:hover .resize-splitter__handle,
+.resize-splitter--vertical.resize-splitter--dragging .resize-splitter__handle {
+  height: 3px;
+  top: 0.5px;
+}
+
+/* 暗色主题 */
+[data-theme='dark'] .resize-splitter__handle {
+  background: #434343;
+}
+
+[data-theme='dark'] .resize-splitter:hover .resize-splitter__handle,
+[data-theme='dark'] .resize-splitter--dragging .resize-splitter__handle {
+  background: #40a9ff;
+}
+
+[data-theme='dark'] .resize-splitter:hover {
+  background: rgba(64, 169, 255, 0.15);
+}
+
+[data-theme='dark'] .resize-splitter--dragging {
+  background: rgba(64, 169, 255, 0.2);
+}

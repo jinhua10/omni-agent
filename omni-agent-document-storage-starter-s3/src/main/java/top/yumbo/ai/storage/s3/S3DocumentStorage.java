@@ -1,0 +1,490 @@
+package top.yumbo.ai.storage.s3;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
+import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.storage.api.model.Image;
+import top.yumbo.ai.storage.api.model.PPLData;
+import top.yumbo.ai.storage.api.model.StorageStatistics;
+
+import java.util.*;
+
+/**
+ * AWS S3 对象存储实现 - 公有云对象存储方案
+ * (AWS S3 Object Storage Implementation - Public Cloud Object Storage)
+ *
+ * <p>
+ * 特点 (Features):
+ * - AWS 官方云存储服务
+ * - 全球可用，高可靠性（99.999999999%）
+ * - 无限扩展能力
+ * - 按量付费
+ * - 适合全球化大规模部署
+ * </p>
+ *
+ * @author OmniAgent Team
+ * @since 1.0.0
+ * @version 1.0.0 - S3 Starter 实现
+ */
+@Slf4j
+public class S3DocumentStorage implements DocumentStorageService {
+
+    private final S3Client s3Client;
+    private final S3StorageProperties properties;
+    private final ObjectMapper objectMapper;
+
+    public S3DocumentStorage(S3Client s3Client, S3StorageProperties properties) {
+        this.s3Client = s3Client;
+        this.properties = properties;
+        this.objectMapper = new ObjectMapper();
+
+        ensureBucketExists();
+        log.info("S3DocumentStorage initialized - bucket: {}, region: {}",
+                properties.getBucketName(), properties.getRegion());
+    }
+
+    private void ensureBucketExists() {
+        try {
+            HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .build();
+
+            s3Client.headBucket(headBucketRequest);
+            log.info("Bucket exists: {}", properties.getBucketName());
+        } catch (NoSuchBucketException e) {
+            try {
+                CreateBucketRequest createBucketRequest = CreateBucketRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .build();
+
+                s3Client.createBucket(createBucketRequest);
+                log.info("Created bucket: {}", properties.getBucketName());
+            } catch (Exception ex) {
+                log.error("Failed to create bucket", ex);
+            }
+        } catch (Exception e) {
+            log.error("Failed to check bucket", e);
+        }
+    }
+
+    // ========== Key 生成 ==========
+
+    private String getChunkKey(String documentId, String chunkId) {
+        return "chunks/" + documentId + "/" + chunkId + ".json";
+    }
+
+    private String getImageKey(String documentId, String imageId) {
+        return "images/" + documentId + "/" + imageId + ".bin";
+    }
+
+    private String getPPLKey(String documentId) {
+        return "ppl/" + documentId + "/ppl.json";
+    }
+
+    // ========== Chunk Storage ==========
+
+    @Override
+    public String saveChunk(String documentId, Chunk chunk) {
+        try {
+            String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
+            chunk.setId(chunkId);
+
+            String key = getChunkKey(documentId, chunkId);
+            byte[] data = objectMapper.writeValueAsBytes(chunk);
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .contentType("application/json")
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(data));
+
+            log.debug("Saved chunk: {}", chunkId);
+            return chunkId;
+        } catch (Exception e) {
+            log.error("Failed to save chunk", e);
+            return null;
+        }
+    }
+
+    @Override
+    public List<String> saveChunks(String documentId, List<Chunk> chunks) {
+        List<String> chunkIds = new ArrayList<>();
+        for (Chunk chunk : chunks) {
+            String chunkId = saveChunk(documentId, chunk);
+            if (chunkId != null) {
+                chunkIds.add(chunkId);
+            }
+        }
+        return chunkIds;
+    }
+
+    @Override
+    public Optional<Chunk> getChunk(String chunkId) {
+        log.warn("getChunk by ID only is not efficient in S3");
+        return Optional.empty();
+    }
+
+    @Override
+    public List<Chunk> getChunksByDocument(String documentId) {
+        try {
+            String prefix = "chunks/" + documentId + "/";
+            List<Chunk> chunks = new ArrayList<>();
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            for (S3Object s3Object : listResponse.contents()) {
+                try {
+                    GetObjectRequest getRequest = GetObjectRequest.builder()
+                            .bucket(properties.getBucketName())
+                            .key(s3Object.key())
+                            .build();
+
+                    byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+                    Chunk chunk = objectMapper.readValue(data, Chunk.class);
+                    chunks.add(chunk);
+                } catch (Exception e) {
+                    log.error("Failed to read chunk: {}", s3Object.key(), e);
+                }
+            }
+
+            return chunks;
+        } catch (Exception e) {
+            log.error("Failed to get chunks for document: {}", documentId, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void deleteChunk(String chunkId) {
+        log.warn("deleteChunk by ID only is not efficient in S3");
+    }
+
+    @Override
+    public void deleteChunksByDocument(String documentId) {
+        try {
+            String prefix = "chunks/" + documentId + "/";
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            for (S3Object s3Object : listResponse.contents()) {
+                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .key(s3Object.key())
+                        .build();
+
+                s3Client.deleteObject(deleteRequest);
+            }
+
+            log.info("Deleted all chunks for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete chunks for document: {}", documentId, e);
+        }
+    }
+
+    // ========== Image Storage ==========
+
+    @Override
+    public String saveImage(String documentId, Image image) {
+        try {
+            String imageId = image.getId() != null ? image.getId() : UUID.randomUUID().toString();
+            image.setId(imageId);
+
+            String key = getImageKey(documentId, imageId);
+            byte[] data = objectMapper.writeValueAsBytes(image);
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .contentType("application/octet-stream")
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(data));
+
+            log.debug("Saved image: {}", imageId);
+            return imageId;
+        } catch (Exception e) {
+            log.error("Failed to save image", e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<Image> getImage(String imageId) {
+        log.warn("getImage by ID only is not efficient in S3");
+        return Optional.empty();
+    }
+
+    @Override
+    public List<Image> getImagesByDocument(String documentId) {
+        try {
+            String prefix = "images/" + documentId + "/";
+            List<Image> images = new ArrayList<>();
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            for (S3Object s3Object : listResponse.contents()) {
+                try {
+                    GetObjectRequest getRequest = GetObjectRequest.builder()
+                            .bucket(properties.getBucketName())
+                            .key(s3Object.key())
+                            .build();
+
+                    byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+                    Image image = objectMapper.readValue(data, Image.class);
+                    images.add(image);
+                } catch (Exception e) {
+                    log.error("Failed to read image: {}", s3Object.key(), e);
+                }
+            }
+
+            return images;
+        } catch (Exception e) {
+            log.error("Failed to get images for document: {}", documentId, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void deleteImage(String imageId) {
+        log.warn("deleteImage by ID only is not efficient in S3");
+    }
+
+    @Override
+    public void deleteImagesByDocument(String documentId) {
+        try {
+            String prefix = "images/" + documentId + "/";
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            for (S3Object s3Object : listResponse.contents()) {
+                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .key(s3Object.key())
+                        .build();
+
+                s3Client.deleteObject(deleteRequest);
+            }
+
+            log.info("Deleted all images for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete images for document: {}", documentId, e);
+        }
+    }
+
+    // ========== PPL Data Storage ==========
+
+    @Override
+    public String savePPLData(String documentId, PPLData data) {
+        try {
+            String key = getPPLKey(documentId);
+            byte[] jsonData = objectMapper.writeValueAsBytes(data);
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .contentType("application/json")
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(jsonData));
+
+            log.debug("Saved PPL data for document: {}", documentId);
+            return documentId;
+        } catch (Exception e) {
+            log.error("Failed to save PPL data", e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<PPLData> getPPLData(String documentId) {
+        try {
+            String key = getPPLKey(documentId);
+
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+            PPLData pplData = objectMapper.readValue(data, PPLData.class);
+
+            return Optional.of(pplData);
+        } catch (NoSuchKeyException e) {
+            log.debug("PPL data not found for document: {}", documentId);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get PPL data for document: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deletePPLData(String documentId) {
+        try {
+            String key = getPPLKey(documentId);
+
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+
+            log.info("Deleted PPL data for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete PPL data for document: {}", documentId, e);
+        }
+    }
+
+    // ========== Document Management ==========
+
+    @Override
+    public void cleanupDocument(String documentId) {
+        deleteChunksByDocument(documentId);
+        deleteImagesByDocument(documentId);
+        deletePPLData(documentId);
+        log.info("Cleaned up all data for document: {}", documentId);
+    }
+
+    @Override
+    public boolean documentExists(String documentId) {
+        try {
+            String prefix = documentId + "/";
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .maxKeys(1)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            return !listResponse.contents().isEmpty();
+        } catch (Exception e) {
+            log.error("Failed to check document existence: {}", documentId, e);
+            return false;
+        }
+    }
+
+    @Override
+    public long getDocumentSize(String documentId) {
+        try {
+            long totalSize = 0;
+            String prefix = documentId + "/";
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            for (S3Object s3Object : listResponse.contents()) {
+                totalSize += s3Object.size();
+            }
+
+            return totalSize;
+        } catch (Exception e) {
+            log.error("Failed to calculate document size for: {}", documentId, e);
+            return 0;
+        }
+    }
+
+    // ========== Statistics ==========
+
+    @Override
+    public StorageStatistics getStatistics() {
+        try {
+            long totalChunks = 0;
+            long totalImages = 0;
+            long totalPPLData = 0;
+            long totalSize = 0;
+            Set<String> documentIds = new HashSet<>();
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            for (S3Object s3Object : listResponse.contents()) {
+                String key = s3Object.key();
+                totalSize += s3Object.size();
+
+                if (key.startsWith("chunks/")) {
+                    totalChunks++;
+                    String docId = key.split("/")[1];
+                    documentIds.add(docId);
+                } else if (key.startsWith("images/")) {
+                    totalImages++;
+                    String docId = key.split("/")[1];
+                    documentIds.add(docId);
+                } else if (key.startsWith("ppl/")) {
+                    totalPPLData++;
+                    String docId = key.split("/")[1];
+                    documentIds.add(docId);
+                }
+            }
+
+            return StorageStatistics.builder()
+                    .totalDocuments((long) documentIds.size())
+                    .totalChunks(totalChunks)
+                    .totalImages(totalImages)
+                    .totalPPLData(totalPPLData)
+                    .totalSize(totalSize)
+                    .storageType("s3")
+                    .healthy(isHealthy())
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to get statistics", e);
+            return StorageStatistics.builder()
+                    .storageType("s3")
+                    .healthy(false)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+        }
+    }
+
+    @Override
+    public boolean isHealthy() {
+        try {
+            HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .build();
+
+            s3Client.headBucket(headBucketRequest);
+            return true;
+        } catch (Exception e) {
+            log.error("Health check failed", e);
+            return false;
+        }
+    }
+}
+

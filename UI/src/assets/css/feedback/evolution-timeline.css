@@ -1,0 +1,93 @@
+/**
+ * 演化时间线样式 (Evolution Timeline Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+.evolution-timeline {
+  padding: 20px;
+}
+
+.evolution-timeline__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.evolution-timeline__card {
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.evolution-timeline__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.evolution-timeline__time {
+  font-size: 12px;
+  color: #999;
+}
+
+.evolution-timeline__content {
+  /* Content styles */
+}
+
+.evolution-timeline__title {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.evolution-timeline__description {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #666;
+}
+
+.evolution-timeline__changes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.evolution-timeline__change {
+  padding: 12px;
+  border-radius: 6px;
+  background: #f5f5f5;
+}
+
+.evolution-timeline__change--old {
+  border-left: 3px solid #ff4d4f;
+}
+
+.evolution-timeline__change--new {
+  border-left: 3px solid #52c41a;
+}
+
+.evolution-timeline__change-label {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.evolution-timeline__change-text {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .evolution-timeline__changes {
+    grid-template-columns: 1fr;
+  }
+}
+

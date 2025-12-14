@@ -1,0 +1,65 @@
+/* ServiceDetail 组件样式 */
+.service-detail-modal .ant-modal-body {
+  padding: var(--spacing-lg);
+}
+
+.service-detail__overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.service-detail__info {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+}
+
+.service-detail__icon {
+  font-size: 60px;
+}
+
+.service-detail__meta h3 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-xl);
+  color: var(--color-text-primary);
+}
+
+.service-detail__rating {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.service-detail__tags {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.service-detail__features ul {
+  list-style-type: disc;
+  padding-left: var(--spacing-lg);
+}
+
+.service-detail__changelog ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.service-detail__changelog li {
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+[data-theme="dark"] .service-detail__info {
+  background: var(--color-bg-secondary-dark);
+}
+
+[data-theme="dark"] .service-detail__meta h3 {
+  color: var(--color-text-primary-dark);
+}
+

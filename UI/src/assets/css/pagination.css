@@ -1,0 +1,65 @@
+/**
+ * Pagination 分页样式 (Pagination Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   分页容器 (Pagination Container)
+   ============================================================================ */
+.app-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-lg) 0;
+}
+
+/* 分页按钮样式 (Pagination button styles) */
+.app-pagination .ant-pagination-item {
+  border-radius: var(--radius-sm);
+  transition: var(--transition-base);
+}
+
+.app-pagination .ant-pagination-item:hover {
+  border-color: var(--primary-color);
+}
+
+.app-pagination .ant-pagination-item-active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.app-pagination .ant-pagination-item-active a {
+  color: white;
+}
+
+/* 上一页/下一页按钮 (Prev/Next buttons) */
+.app-pagination .ant-pagination-prev,
+.app-pagination .ant-pagination-next {
+  border-radius: var(--radius-sm);
+}
+
+/* 跳转输入框 (Jump input) */
+.app-pagination .ant-pagination-options-quick-jumper input {
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================================
+   响应式设计 (Responsive Design)
+   ============================================================================ */
+@media (max-width: 768px) {
+  .app-pagination {
+    padding: var(--spacing-md) 0;
+  }
+
+  .app-pagination .ant-pagination {
+    font-size: 12px;
+  }
+
+  /* 移动端隐藏快速跳转 (Hide quick jumper on mobile) */
+  .app-pagination .ant-pagination-options-quick-jumper {
+    display: none;
+  }
+}
+

@@ -1,0 +1,52 @@
+/* AchievementPanel 组件样式 */
+.achievement-panel {
+  padding: var(--spacing-md);
+}
+
+.achievement-card {
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.achievement-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.achievement-card--unlocked {
+  border-color: var(--color-success);
+}
+
+.achievement-card--locked {
+  opacity: 0.6;
+  filter: grayscale(80%);
+}
+
+.achievement-card__icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md);
+}
+
+.achievement-card__title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.achievement-card__description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+  min-height: 40px;
+}
+
+[data-theme="dark"] .achievement-card__title {
+  color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .achievement-card__description {
+  color: var(--color-text-secondary-dark);
+}
+

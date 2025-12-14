@@ -1,0 +1,137 @@
+/**
+ * 代码块样式 (Code Block Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   代码块容器 (Code Block Container)
+   ============================================================================ */
+.code-block {
+  margin: 12px 0;
+  border-radius: 8px;
+  background: #282c34;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================================
+   代码块头部 (Code Block Header)
+   ============================================================================ */
+.code-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #21252b;
+  border-bottom: 1px solid #181a1f;
+}
+
+.code-block__language {
+  font-size: 12px;
+  font-weight: 500;
+  color: #abb2bf;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.code-block__copy-btn {
+  color: #abb2bf;
+  transition: all 0.3s ease;
+}
+
+.code-block__copy-btn:hover {
+  color: #61afef;
+  background: rgba(97, 175, 239, 0.1);
+}
+
+/* ============================================================================
+   代码内容 (Code Content)
+   ============================================================================ */
+.code-block__pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  background: #282c34;
+}
+
+.code-block__code {
+  display: block;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #abb2bf;
+  white-space: pre;
+  word-wrap: normal;
+}
+
+/* ============================================================================
+   滚动条样式 (Scrollbar Styles)
+   ============================================================================ */
+.code-block__pre::-webkit-scrollbar {
+  height: 8px;
+}
+
+.code-block__pre::-webkit-scrollbar-track {
+  background: #21252b;
+}
+
+.code-block__pre::-webkit-scrollbar-thumb {
+  background: #4b5263;
+  border-radius: 4px;
+}
+
+.code-block__pre::-webkit-scrollbar-thumb:hover {
+  background: #5c6370;
+}
+
+/* ============================================================================
+   简单的语法高亮 (Simple Syntax Highlighting)
+   ============================================================================ */
+
+/* 关键字 (Keywords) */
+.code-block__code .keyword {
+  color: #c678dd;
+  font-weight: 500;
+}
+
+/* 字符串 (Strings) */
+.code-block__code .string {
+  color: #98c379;
+}
+
+/* 注释 (Comments) */
+.code-block__code .comment {
+  color: #5c6370;
+  font-style: italic;
+}
+
+/* 函数 (Functions) */
+.code-block__code .function {
+  color: #61afef;
+}
+
+/* 数字 (Numbers) */
+.code-block__code .number {
+  color: #d19a66;
+}
+
+/* 变量 (Variables) */
+.code-block__code .variable {
+  color: #e06c75;
+}
+
+/* ============================================================================
+   响应式样式 (Responsive Styles)
+   ============================================================================ */
+@media (max-width: 768px) {
+  .code-block__pre {
+    padding: 12px;
+  }
+
+  .code-block__code {
+    font-size: 13px;
+  }
+}
+

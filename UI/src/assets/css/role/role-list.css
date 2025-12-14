@@ -1,0 +1,121 @@
+/**
+ * 角色列表样式 (Role List Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+.role-list {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+  padding: 24px;
+}
+
+.role-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 20px 24px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.role-list__title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.role-list__title h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.role-list__count {
+  font-size: 14px;
+  color: #999;
+}
+
+/* 搜索和过滤工具栏 */
+.role-list__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 16px 24px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.role-list__content {
+  flex: 1;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 分页样式 */
+.role-list__pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.role-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #999;
+}
+
+.role-list__empty-icon {
+  font-size: 80px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.role-list__empty-text {
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.role-list__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.role-list__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .role-list {
+    padding: 16px;
+  }
+
+  .role-list__header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .role-list__grid {
+    grid-template-columns: 1fr;
+  }
+}
+

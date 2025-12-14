@@ -1,0 +1,59 @@
+/**
+ * 停靠预览区域样式 (Dock Drop Zone Styles)
+ */
+
+.dock-drop-zone {
+  position: fixed;
+  z-index: 9998; /* 低于FloatingAIPanel (9999) */
+  background: rgba(24, 144, 255, 0.15);
+  border: 2px dashed rgba(24, 144, 255, 0.6);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.dock-drop-zone__overlay {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgba(24, 144, 255, 0.1) 0%,
+    rgba(24, 144, 255, 0.2) 100%
+  );
+}
+
+.dock-drop-zone__icon {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1890ff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 16px 32px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+/* 暗色主题 */
+.dark .dock-drop-zone {
+  background: rgba(24, 144, 255, 0.2);
+  border-color: rgba(24, 144, 255, 0.8);
+}
+
+.dark .dock-drop-zone__icon {
+  background: rgba(30, 30, 30, 0.95);
+  color: #40a9ff;
+}

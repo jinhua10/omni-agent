@@ -1,0 +1,18 @@
+/* PPTGenerator 组件样式 */
+.ppt-generator {
+  padding: var(--spacing-lg);
+}
+
+.ppt-generator__steps {
+  margin-bottom: var(--spacing-xl);
+}
+
+.ppt-generator__form {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+[data-theme="dark"] .ppt-generator {
+  background: var(--color-bg-primary-dark);
+}
+

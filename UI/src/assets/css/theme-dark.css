@@ -1,0 +1,212 @@
+/**
+ * 暗色主题样式 (Dark Theme Styles)
+ *
+ * 提供完整的暗色主题 CSS 变量
+ * (Provides complete dark theme CSS variables)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   暗色主题变量 (Dark Theme Variables)
+   ============================================================================ */
+[data-theme='dark'] {
+  /* 主题色 (Theme Colors) - 保持不变 */
+  --primary-color: #667eea;
+  --primary-hover: #5568d3;
+  --secondary-color: #764ba2;
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* 状态色 (Status Colors) */
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --error-color: #ff4d4f;
+  --info-color: #1890ff;
+
+  /* 文本色 (Text Colors) - 暗色模式调整 */
+  --text-primary: #e8e8e8;
+  --text-secondary: #a8a8a8;
+  --text-tertiary: #888888;
+  --text-white: #ffffff;
+
+  /* 背景色 (Background Colors) - 暗色模式调整 */
+  --bg-primary: #1f1f1f;
+  --bg-secondary: #2a2a2a;
+  --bg-tertiary: #333333;
+
+  /* 边框色 (Border Colors) - 暗色模式调整 */
+  --border-color: #404040;
+  --border-light: #353535;
+
+  /* 阴影 (Shadows) - 暗色模式调整 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.65);
+
+  /* 圆角 (Border Radius) - 保持不变 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* 间距 (Spacing) - 保持不变 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* 过渡 (Transitions) - 保持不变 */
+  --transition-fast: 0.2s ease;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+/* ============================================================================
+   暗色模式全局样式 (Dark Mode Global Styles)
+   ============================================================================ */
+[data-theme='dark'] body {
+  background: #1a1a1a;
+  color: var(--text-primary);
+}
+
+/* 滚动条样式 (Scrollbar styles) */
+[data-theme='dark'] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+/* ============================================================================
+   组件暗色适配 (Component Dark Mode Adaptation)
+   ============================================================================ */
+
+/* 卡片 (Cards) */
+[data-theme='dark'] .ant-card {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+/* 输入框 (Inputs) */
+[data-theme='dark'] .ant-input,
+[data-theme='dark'] .ant-input-affix-wrapper {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .ant-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* 按钮 (Buttons) */
+[data-theme='dark'] .ant-btn-default {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .ant-btn-default:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* 下拉菜单 (Dropdowns) */
+[data-theme='dark'] .ant-dropdown-menu {
+  background: var(--bg-primary);
+}
+
+[data-theme='dark'] .ant-dropdown-menu-item {
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .ant-dropdown-menu-item:hover {
+  background: var(--bg-secondary);
+}
+
+/* 表格 (Tables) */
+[data-theme='dark'] .ant-table {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .ant-table-thead > tr > th {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .ant-table-tbody > tr > td {
+  border-color: var(--border-color);
+}
+
+[data-theme='dark'] .ant-table-tbody > tr:hover > td {
+  background: var(--bg-secondary);
+}
+
+/* 模态框 (Modals) */
+[data-theme='dark'] .ant-modal-content {
+  background: var(--bg-primary);
+}
+
+[data-theme='dark'] .ant-modal-header {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme='dark'] .ant-modal-title {
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .ant-modal-close {
+  color: var(--text-secondary);
+}
+
+/* 消息提示 (Messages) */
+[data-theme='dark'] .ant-message-notice-content {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 抽屉 (Drawers) */
+[data-theme='dark'] .ant-drawer-content {
+  background: var(--bg-primary);
+}
+
+[data-theme='dark'] .ant-drawer-header {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme='dark'] .ant-drawer-title {
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+   平滑过渡 (Smooth Transition)
+   ============================================================================ */
+body,
+.ant-card,
+.ant-input,
+.ant-btn,
+.ant-table,
+.ant-modal-content {
+  transition: background-color var(--transition-base),
+              border-color var(--transition-base),
+              color var(--transition-base);
+}
+

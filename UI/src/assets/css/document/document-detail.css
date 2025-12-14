@@ -1,0 +1,17 @@
+/**
+ * 文档详情样式 (Document Detail Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+.document-detail .ant-descriptions-item-label {
+  font-weight: 500;
+  color: #666;
+  width: 150px;
+}
+
+.document-detail .ant-descriptions-item-content {
+  color: #333;
+}
+

@@ -1,0 +1,545 @@
+/**
+ * 梦幻气泡导航样式 / Dreamy Bubble Navigation Styles
+ */
+
+/* ==================== 导航主容器 ==================== */
+.bubble-navigation {
+  position: fixed;
+  top: 50%;
+  left: 60px;
+  transform: translateY(-50%);
+  width: 100px;
+  height: 600px;
+  z-index: var(--z-navigation);
+  perspective: 1000px;
+  transition: left var(--animation-normal) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== 中心控制球 ==================== */
+.nav-center-orb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  z-index: 10;
+  transition: all var(--animation-normal) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-center-orb:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.nav-center-orb.expanded {
+  transform: translate(-50%, -50%) scale(1.2) rotate(180deg);
+}
+
+.orb-glass-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.3) 0%, 
+    rgba(118, 75, 162, 0.3) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.orb-glass-shell::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 70%
+  );
+  transform: rotate(45deg);
+  animation: glassShine 3s ease-in-out infinite;
+}
+
+@keyframes glassShine {
+  0%, 100% { transform: rotate(45deg) translateX(-100%); }
+  50% { transform: rotate(45deg) translateX(100%); }
+}
+
+.orb-inner-glow {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--bubble-primary) 0%, transparent 70%);
+  animation: innerGlowPulse 2s ease-in-out infinite;
+}
+
+@keyframes innerGlowPulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+.center-icon {
+  position: relative;
+  font-size: 24px;
+  color: #fff;
+  z-index: 1;
+  filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.6));
+}
+
+/* 中心球环 */
+.orb-rings {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.orb-rings .ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 50%;
+  animation: ringPulse 3s ease-out infinite;
+}
+
+.orb-rings .ring-1 {
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+  animation-delay: 0s;
+}
+
+.orb-rings .ring-2 {
+  width: 100px;
+  height: 100px;
+  margin: -50px 0 0 -50px;
+  animation-delay: 1s;
+}
+
+.orb-rings .ring-3 {
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  animation-delay: 2s;
+}
+
+@keyframes ringPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ==================== 轨道导航空间 ==================== */
+.nav-orbital-space {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400px;
+  height: 400px;
+  margin: -200px 0 0 -200px;
+  transform-style: preserve-3d;
+  transition: transform var(--animation-slow) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 导航球容器 */
+.nav-orb-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  transform-style: preserve-3d;
+  transition: all var(--animation-normal) cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+
+.nav-orb-container:hover {
+  /* 移除晃动效果，只保留缩放 / Remove shaking, only keep scaling */
+  z-index: 10;
+}
+
+.nav-orb-container:hover .nav-orb {
+  transform: scale(1.15);
+}
+
+.nav-orb-container.active {
+  z-index: 9;
+}
+
+.nav-orb-container.active .nav-orb {
+  transform: scale(1.1);
+}
+
+/* 导航球 */
+.nav-orb {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  transition: all var(--animation-fast);
+  transform-style: preserve-3d;
+  /* 添加缓慢旋转动画 / Add slow rotation animation */
+  animation: orbSlowRotate 20s linear infinite;
+}
+
+@keyframes orbSlowRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.nav-orb::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: inherit;
+  filter: blur(20px);
+  opacity: 0.6;
+  z-index: -1;
+}
+
+.orb-glass-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.orb-reflection {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+  transform: translate3d(0, 0, 1px);
+}
+
+.orb-icon {
+  position: relative;
+  font-size: 28px;
+  color: #fff;
+  z-index: 1;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+  transition: transform var(--animation-fast);
+}
+
+.nav-orb-container:hover .orb-icon {
+  transform: scale(1.2) rotateY(360deg);
+}
+
+/* 活动指示器 */
+.active-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.indicator-ring {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  animation: indicatorRotate 3s linear infinite;
+}
+
+@keyframes indicatorRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.indicator-pulse {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  animation: indicatorPulse 2s ease-out infinite;
+}
+
+@keyframes indicatorPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* 连接线 */
+.connection-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 100px;
+  background: linear-gradient(to top, currentColor, transparent);
+  opacity: 0.3;
+  transform-origin: bottom;
+  transform: translateX(-50%) translateY(-100%);
+  transition: opacity var(--animation-fast);
+}
+
+.nav-orb-container:hover .connection-line {
+  opacity: 0.8;
+}
+
+/* 标签 */
+.nav-label {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: all var(--animation-fast);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.nav-orb-container:hover .nav-label {
+  opacity: 1;
+  bottom: -50px;
+}
+
+.label-glass {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  z-index: -1;
+}
+
+.label-text {
+  position: relative;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  z-index: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 悬停光晕 */
+.hover-halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.4;
+  animation: haloExpand 1s ease-out;
+  pointer-events: none;
+}
+
+@keyframes haloExpand {
+  from {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+}
+
+/* ==================== 轨道轨迹 ==================== */
+.orbital-tracks {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.track {
+  position: absolute;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 50%;
+  animation: trackRotate 30s linear infinite;
+}
+
+.track-1 {
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+}
+
+.track-2 {
+  width: 280px;
+  height: 280px;
+  margin: -140px 0 0 -140px;
+  animation-direction: reverse;
+  animation-duration: 40s;
+}
+
+.track-3 {
+  width: 360px;
+  height: 360px;
+  margin: -180px 0 0 -180px;
+  animation-duration: 50s;
+}
+
+@keyframes trackRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== 能量场 ==================== */
+.nav-energy-field {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400px;
+  height: 400px;
+  margin: -200px 0 0 -200px;
+  pointer-events: none;
+}
+
+.energy-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--bubble-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+  animation: particleOrbit 8s linear infinite;
+  opacity: 0;
+  transition: opacity var(--animation-normal);
+}
+
+.energy-particle:nth-child(1) { top: 0; left: 50%; animation-delay: 0s; }
+.energy-particle:nth-child(2) { top: 10%; left: 80%; animation-delay: 0.6s; }
+.energy-particle:nth-child(3) { top: 30%; left: 95%; animation-delay: 1.2s; }
+.energy-particle:nth-child(4) { top: 50%; left: 100%; animation-delay: 1.8s; }
+.energy-particle:nth-child(5) { top: 70%; left: 95%; animation-delay: 2.4s; }
+.energy-particle:nth-child(6) { top: 90%; left: 80%; animation-delay: 3s; }
+.energy-particle:nth-child(7) { top: 100%; left: 50%; animation-delay: 3.6s; }
+.energy-particle:nth-child(8) { top: 90%; left: 20%; animation-delay: 4.2s; }
+.energy-particle:nth-child(9) { top: 70%; left: 5%; animation-delay: 4.8s; }
+.energy-particle:nth-child(10) { top: 50%; left: 0%; animation-delay: 5.4s; }
+.energy-particle:nth-child(11) { top: 30%; left: 5%; animation-delay: 6s; }
+.energy-particle:nth-child(12) { top: 10%; left: 20%; animation-delay: 6.6s; }
+
+@keyframes particleOrbit {
+  0%, 100% { opacity: 0; transform: scale(0); }
+  10%, 90% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 1024px) {
+  .bubble-navigation {
+    left: 40px;
+  }
+
+  .nav-center-orb {
+    width: 50px;
+    height: 50px;
+  }
+
+  .center-icon {
+    font-size: 20px;
+  }
+
+  .nav-orb-container {
+    width: 60px;
+    height: 60px;
+    margin: -30px 0 0 -30px;
+  }
+
+  .orb-icon {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bubble-navigation {
+    left: 20px;
+  }
+
+  .nav-center-orb {
+    width: 45px;
+    height: 45px;
+  }
+
+  .center-icon {
+    font-size: 18px;
+  }
+
+  .nav-orb-container {
+    width: 50px;
+    height: 50px;
+    margin: -25px 0 0 -25px;
+  }
+
+  .orb-icon {
+    font-size: 20px;
+  }
+}

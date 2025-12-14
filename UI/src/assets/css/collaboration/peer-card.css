@@ -1,0 +1,92 @@
+/**
+ * 伙伴卡片样式 (Peer Card Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+.peer-card {
+  transition: all 0.3s ease;
+}
+
+.peer-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+}
+
+.peer-card__header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.peer-card__avatar-wrapper {
+  position: relative;
+}
+
+.peer-card__avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.peer-card__status {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  margin: 0;
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+.peer-card__info {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.peer-card__name {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.peer-card__id {
+  margin: 0 0 16px 0;
+  font-size: 12px;
+  color: #999;
+  font-family: monospace;
+}
+
+.peer-card__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 6px;
+}
+
+.peer-card__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.peer-card__stat-label {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.peer-card__stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.peer-card__footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+  border-top: 1px solid #e8e8e8;
+}
+

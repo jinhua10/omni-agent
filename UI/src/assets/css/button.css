@@ -1,0 +1,74 @@
+/**
+ * Button 按钮样式 (Button Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   按钮基础样式 (Button Base Styles)
+   ============================================================================ */
+.app-button {
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: var(--transition-base);
+}
+
+/* 主要按钮 (Primary button) */
+.app-button.ant-btn-primary {
+  background: var(--primary-gradient);
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.app-button.ant-btn-primary:hover {
+  background: var(--primary-gradient);
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* 默认按钮 (Default button) */
+.app-button.ant-btn-default {
+  border-color: var(--border-color);
+}
+
+.app-button.ant-btn-default:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* 虚线按钮 (Dashed button) */
+.app-button.ant-btn-dashed:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* 文本按钮 (Text button) */
+.app-button.ant-btn-text:hover {
+  background: var(--bg-tertiary);
+  color: var(--primary-color);
+}
+
+/* 危险按钮 (Danger button) */
+.app-button.ant-btn-dangerous {
+  box-shadow: 0 2px 8px rgba(245, 34, 45, 0.2);
+}
+
+.app-button.ant-btn-dangerous:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 34, 45, 0.3);
+}
+
+/* 加载状态 (Loading state) */
+.app-button.ant-btn-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* 禁用状态 (Disabled state) */
+.app-button.ant-btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+

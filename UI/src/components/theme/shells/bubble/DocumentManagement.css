@@ -1,0 +1,510 @@
+/**
+ * 气泡主题 - 文档管理页面样式
+ * Bubble Theme - Document Management Styles
+ * 
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ==================== 主容器 ==================== */
+.document-management-container {
+  padding: 20px;
+}
+
+/* ==================== 上传区域 ==================== */
+.document-upload-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.document-upload-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.document-upload-input {
+  display: none;
+}
+
+.document-upload-label {
+  display: inline-block;
+  padding: 10px 20px;
+  background: white;
+  color: #667eea;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.document-upload-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.document-upload-label.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.upload-progress-container {
+  margin-top: 15px;
+}
+
+.upload-progress-text {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+/* ==================== 搜索区域 ==================== */
+.document-search-section {
+  margin-bottom: 20px;
+}
+
+.search-mode-toggle {
+  margin-bottom: 10px;
+}
+
+.search-toggle-btn {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.search-toggle-btn:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+/* 简单搜索 */
+.simple-search-container {
+  display: flex;
+  gap: 10px;
+}
+
+.simple-search-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.simple-search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-btn {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+/* 高级搜索 */
+.advanced-search-panel {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.search-field-group {
+  margin-bottom: 15px;
+}
+
+.search-field-label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+}
+
+.search-field-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.search-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* 文件类型选择器 */
+.file-type-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.file-type-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.file-type-checkbox input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* 文件大小输入 */
+.file-size-inputs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.size-input {
+  width: 100px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* 日期输入 */
+.date-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* 搜索操作按钮 */
+.search-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-apply {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-apply:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+.btn-reset {
+  padding: 10px 20px;
+  background: #999;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-reset:hover {
+  background: #777;
+  transform: translateY(-1px);
+}
+
+/* ==================== 文档列表头部 ==================== */
+.document-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.document-list-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.btn-refresh {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-refresh:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+.btn-refresh:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ==================== 调试信息 ==================== */
+.debug-panel {
+  background: #f0f0f0;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+}
+
+.debug-panel div {
+  margin: 2px 0;
+  color: #555;
+}
+
+/* ==================== 加载和错误状态 ==================== */
+.loading-container {
+  text-align: center;
+  padding: 40px;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 16px;
+}
+
+.error-container {
+  background: #ffebee;
+  color: #c62828;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+/* ==================== 文档列表 ==================== */
+.document-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.empty-text {
+  font-size: 16px;
+}
+
+/* 文档卡片 */
+.document-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.document-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.document-info {
+  flex: 1;
+}
+
+.document-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 16px;
+  color: #333;
+}
+
+.document-meta {
+  font-size: 14px;
+  color: #666;
+}
+
+.document-meta span {
+  margin-left: 5px;
+}
+
+.btn-delete {
+  padding: 8px 16px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-delete:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+}
+
+/* ==================== 分页 ==================== */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 14px;
+}
+
+/* ==================== 响应式设计 ==================== */
+@media (max-width: 768px) {
+  .document-management-container {
+    padding: 15px;
+  }
+
+  .simple-search-container {
+    flex-direction: column;
+  }
+
+  .document-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .btn-delete {
+    width: 100%;
+  }
+
+  .search-field-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .file-size-inputs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .size-input {
+    width: 100%;
+  }
+}
+
+/* ==================== 动画效果 ==================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.document-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* ==================== 滚动条样式 ==================== */
+.document-management-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.document-management-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.document-management-container::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.document-management-container::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
+}

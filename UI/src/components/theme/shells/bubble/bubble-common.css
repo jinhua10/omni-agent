@@ -1,0 +1,365 @@
+/**
+ * 气泡主题 - 通用页面样式
+ * Bubble Theme - Common Page Styles
+ */
+
+/* ==================== 通用样式 ==================== */
+.bubble-home-shell,
+.bubble-qa-shell,
+.bubble-documents-shell,
+.bubble-analytics-shell,
+.bubble-settings-shell {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ==================== Hero Section ==================== */
+.home-hero-section,
+.qa-hero-section,
+.docs-hero-section,
+.analytics-hero-section,
+.settings-hero-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.hero-orb,
+.hero-orb-large {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: heroFloat 6s ease-in-out infinite;
+}
+
+.hero-orb-large {
+  width: 350px;
+  height: 350px;
+}
+
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.hero-orb .orb-glow,
+.hero-orb-large .orb-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--bubble-primary) 0%, transparent 70%);
+  filter: blur(60px);
+  opacity: 0.6;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+.hero-orb .orb-content,
+.hero-orb-large .orb-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.2) 0%, 
+    rgba(118, 75, 162, 0.2) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 16px 64px rgba(0, 0, 0, 0.3),
+    inset 0 0 40px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 40px;
+}
+
+.hero-icon {
+  font-size: 80px;
+  filter: drop-shadow(0 4px 12px rgba(102, 126, 234, 0.4));
+  animation: iconBounce 2s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.hero-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff 0%, var(--bubble-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.3));
+}
+
+.hero-subtitle {
+  margin: 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 400;
+}
+
+.hero-stats {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  padding: 4px 12px;
+  background: rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  display: inline-block;
+}
+
+/* ==================== Content Grid ==================== */
+.home-features-grid,
+.qa-content-grid,
+.docs-content-grid,
+.analytics-content-grid,
+.settings-content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ==================== Cards ==================== */
+.feature-card,
+.qa-card,
+.docs-card,
+.analytics-card,
+.settings-card {
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card:hover,
+.qa-card:hover,
+.docs-card:hover,
+.analytics-card:hover,
+.settings-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 12px 48px rgba(0, 0, 0, 0.3),
+    0 0 40px rgba(102, 126, 234, 0.4);
+}
+
+.feature-card::before,
+.qa-card::before,
+.docs-card::before,
+.analytics-card::before,
+.settings-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    transparent 70%
+  );
+  transform: rotate(45deg);
+  transition: all 0.6s;
+}
+
+.feature-card:hover::before,
+.qa-card:hover::before,
+.docs-card:hover::before,
+.analytics-card:hover::before,
+.settings-card:hover::before {
+  left: 100%;
+}
+
+.card-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 4px 12px rgba(102, 126, 234, 0.4));
+  display: inline-block;
+  animation: cardIconFloat 3s ease-in-out infinite;
+}
+
+@keyframes cardIconFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.feature-card h3,
+.qa-card h3,
+.docs-card h3,
+.analytics-card h3,
+.settings-card h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.feature-card p,
+.qa-card p,
+.docs-card p,
+.analytics-card p,
+.settings-card p {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+}
+
+.card-stat {
+  display: block;
+  margin-top: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--bubble-primary);
+  background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 768px) {
+  .bubble-home-shell,
+  .bubble-qa-shell,
+  .bubble-documents-shell,
+  .bubble-analytics-shell,
+  .bubble-settings-shell {
+    padding: 20px 10px;
+  }
+
+  .home-hero-section,
+  .qa-hero-section,
+  .docs-hero-section,
+  .analytics-hero-section,
+  .settings-hero-section {
+    margin-bottom: 40px;
+    min-height: 200px;
+  }
+
+  .hero-orb,
+  .hero-orb-large {
+    width: 220px;
+    height: 220px;
+  }
+
+  .hero-icon {
+    font-size: 60px;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+  }
+
+  .home-features-grid,
+  .qa-content-grid,
+  .docs-content-grid,
+  .analytics-content-grid,
+  .settings-content-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card-icon {
+    font-size: 48px;
+  }
+}
+
+/* ==================== Documents Shell Specific Styles ==================== */
+.bubble-documents-shell .hero-stats {
+  margin-top: 12px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.bubble-documents-shell .card-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--primary-color, #667eea);
+  margin: 12px 0 8px;
+  text-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.bubble-documents-shell .card-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 8px;
+}
+
+.bubble-documents-shell .docs-features-section {
+  width: 100%;
+  max-width: 1200px;
+  margin-top: 40px;
+  padding: 0 20px;
+}
+
+.bubble-documents-shell .section-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 30px;
+  text-shadow: 0 2px 12px rgba(102, 126, 234, 0.4);
+}
+
+.bubble-documents-shell .features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.bubble-documents-shell .feature-card {
+  text-align: center;
+}
+
+.bubble-documents-shell .feature-card h3 {
+  font-size: 18px;
+  margin: 12px 0 8px;
+}
+
+.bubble-documents-shell .feature-card p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Error state */
+.bubble-documents-shell .error-orb .orb-glow {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%);
+  box-shadow: 0 0 80px rgba(239, 68, 68, 0.4);
+}

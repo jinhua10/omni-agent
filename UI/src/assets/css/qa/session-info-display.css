@@ -1,0 +1,145 @@
+/**
+ * 会话信息显示组件样式
+ * Session Info Display Component Styles
+ */
+
+.session-info-display {
+  margin: 16px 0;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.session-info-display--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.session-info-display__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  justify-content: center;
+}
+
+.session-info-display__stat {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  color: white !important;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.session-info-display__stat strong {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.session-info-display__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.session-info-display__pagination-btn {
+  padding: 8px 20px;
+  height: auto;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.session-info-display__pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.session-info-display__pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.session-info-display__pagination-btn.ant-btn-primary {
+  background: rgba(24, 144, 255, 0.3);
+  border-color: rgba(24, 144, 255, 0.6);
+}
+
+.session-info-display__pagination-btn.ant-btn-primary:hover:not(:disabled) {
+  background: rgba(24, 144, 255, 0.5);
+  border-color: rgba(24, 144, 255, 0.9);
+}
+
+.session-info-display__pagination-info {
+  padding: 0 16px;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.session-info-display__refresh-btn {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: white;
+}
+
+.session-info-display__refresh-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.session-info-display__complete {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  color: white;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .session-info-display__stats {
+    gap: 8px;
+  }
+
+  .session-info-display__stat {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .session-info-display__stat strong {
+    font-size: 14px;
+  }
+
+  .session-info-display__pagination {
+    flex-wrap: wrap;
+  }
+
+  .session-info-display__pagination-btn {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+}
+
+/* 暗色主题 */
+[data-theme='dark'] .session-info-display {
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+}

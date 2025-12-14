@@ -1,0 +1,222 @@
+/* WishComments 组件样式 */
+.wish-comments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* 输入区域 */
+.wish-comments__input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.wish-comments__reply-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-info);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.wish-comments__cancel-reply {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  padding: 0 var(--spacing-sm);
+  transition: opacity 0.3s ease;
+}
+
+.wish-comments__cancel-reply:hover {
+  opacity: 0.8;
+}
+
+.wish-comments__input {
+  border-radius: var(--border-radius-md);
+  resize: none;
+}
+
+.wish-comments__submit-wrapper {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 评论列表 */
+.wish-comments__list {
+  margin-top: var(--spacing-md);
+}
+
+.wish-comments__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-xl) 0;
+}
+
+.wish-comments__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* 单条评论 */
+.wish-comment {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  transition: background 0.3s ease;
+}
+
+.wish-comment:hover {
+  background: var(--color-bg-hover);
+}
+
+.wish-comment--reply {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-primary);
+}
+
+.wish-comment__avatar {
+  flex-shrink: 0;
+}
+
+.wish-comment__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.wish-comment__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.wish-comment__author {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.wish-comment__time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.wish-comment__text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.wish-comment__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.wish-comment__action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: all 0.3s ease;
+}
+
+.wish-comment__action:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-primary);
+}
+
+.wish-comment__action--liked {
+  color: var(--color-primary);
+}
+
+.wish-comment__replies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+  padding-left: var(--spacing-lg);
+  border-left: 2px solid var(--color-border);
+}
+
+/* 暗色模式 */
+[data-theme="dark"] .wish-comments__reply-hint {
+  background: var(--color-bg-info-dark);
+}
+
+[data-theme="dark"] .wish-comment {
+  background: var(--color-bg-secondary-dark);
+}
+
+[data-theme="dark"] .wish-comment:hover {
+  background: var(--color-bg-hover-dark);
+}
+
+[data-theme="dark"] .wish-comment--reply {
+  background: var(--color-bg-primary-dark);
+}
+
+[data-theme="dark"] .wish-comment__author {
+  color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .wish-comment__text {
+  color: var(--color-text-secondary-dark);
+}
+
+[data-theme="dark"] .wish-comment__time,
+[data-theme="dark"] .wish-comment__action {
+  color: var(--color-text-tertiary-dark);
+}
+
+[data-theme="dark"] .wish-comment__action:hover {
+  background: var(--color-bg-hover-dark);
+}
+
+[data-theme="dark"] .wish-comment__replies {
+  border-left-color: var(--color-border-dark);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .wish-comment {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .wish-comment__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+
+  .wish-comment__replies {
+    padding-left: var(--spacing-md);
+  }
+
+  .wish-comments__input {
+    font-size: var(--font-size-sm);
+  }
+}
+

@@ -1,0 +1,39 @@
+/**
+ * 冲突列表样式 (Conflict List Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+.conflict-list {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.conflict-list__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.conflict-list__content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.conflict-list__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .conflict-list__grid {
+    grid-template-columns: 1fr;
+  }
+}
+

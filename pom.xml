@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.11</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>top.yumbo.ai.omni</groupId>
+    <artifactId>omni-agent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>OmniAgent - Pluggable AI Framework</name>
+    <description>四维可插拔AI智能体框架 - 基于Spring Boot Starter模式的完全可插拔架构</description>
+
+    <!-- 子模块 -->
+    <modules>
+        <!-- ========== API 层 (Interface Layer) - 已完成 ========== -->
+
+        <!-- 持久化 API (Persistence API) -->
+        <module>omni-agent-persistence-api</module>
+
+        <!-- 文档存储 API (Document Storage API) -->
+        <module>omni-agent-document-storage-api</module>
+
+        <!-- RAG API (Retrieval API) -->
+        <module>omni-agent-rag-api</module>
+
+        <!-- AI API (AI Service API) -->
+        <module>omni-agent-ai-api</module>
+
+        <!-- ========== 核心业务模块 (Core Module) ========== -->
+
+        <module>omni-agent-core</module>
+
+        <!-- ========== 以下模块待创建 ========== -->
+
+
+        <!-- 持久化 Starters (Persistence Starters) -->
+        <module>omni-agent-persistence-starter-memory</module>
+        <module>omni-agent-persistence-starter-h2</module>
+        <module>omni-agent-persistence-starter-sqlite</module>
+        <module>omni-agent-persistence-starter-redis</module>
+        <module>omni-agent-persistence-starter-mongodb</module>
+        <module>omni-agent-persistence-starter-elasticsearch</module>
+
+        <!-- 文档存储 Starters (Document Storage Starters) -->
+        <module>omni-agent-document-storage-starter-file</module>
+        <module>omni-agent-document-storage-starter-mongodb</module>
+        <module>omni-agent-document-storage-starter-redis</module>
+        <module>omni-agent-document-storage-starter-elasticsearch</module>
+        <module>omni-agent-document-storage-starter-s3</module>
+        <module>omni-agent-document-storage-starter-minio</module>
+
+        <!-- RAG Starters (RAG Starters) -->
+        <module>omni-agent-rag-starter-file</module>
+        <module>omni-agent-rag-starter-h2</module>
+        <module>omni-agent-rag-starter-sqlite</module>
+        <module>omni-agent-rag-starter-redis</module>
+        <module>omni-agent-rag-starter-mongodb</module>
+        <module>omni-agent-rag-starter-elasticsearch</module>
+
+        <!-- AI Starters (AI Service Starters) -->
+        <module>omni-agent-ai-starter-ollama</module>
+        <module>omni-agent-ai-starter-online-api</module>
+
+        <!-- 应用示例模块 (Application Examples) -->
+        <module>omni-agent-example-basic</module>
+        <module>omni-agent-example-production</module>
+    </modules>
+
+    <!-- 开发者信息 -->
+    <developers>
+        <developer>
+            <name>Jinhua Yu</name>
+            <email>1015770492@qq.com</email>
+            <url>https://github.com/jinhua10/omni-agent</url>
+        </developer>
+    </developers>
+
+    <url>https://github.com/jinhua10/omni-agent</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/jinhua10/omni-agent.git</connection>
+        <developerConnection>scm:git:https://github.com/jinhua10/omni-agent.git</developerConnection>
+        <url>https://github.com/jinhua10/omni-agent</url>
+    </scm>
+
+    <!-- 属性配置 -->
+    <properties>
+        <!-- Java 版本 -->
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+
+        <!-- 编码配置 -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+
+        <!-- 依赖版本 -->
+        <spring-boot.version>3.2.11</spring-boot.version>
+        <lombok.version>1.18.34</lombok.version>
+        <lucene.version>9.10.0</lucene.version>
+        <poi.version>5.5.0</poi.version>
+        <tika.version>3.2.3</tika.version>
+        <jackson.version>2.15.3</jackson.version>
+
+        <!-- 控制台编码 -->
+        <console.encoding>UTF-8</console.encoding>
+    </properties>
+
+    <!-- 依赖管理 -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot Dependencies -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Apache Lucene -->
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-core</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-queryparser</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-analyzers-common</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-analysis-common</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-highlighter</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+
+            <!-- Apache POI -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+
+            <!-- Apache Tika -->
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>${tika.version}</version>
+            </dependency>
+
+            <!-- 修复安全漏洞 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.27.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <!-- Maven 编译插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <!-- Maven 资源插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Source Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Javadoc Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.6.3</version>
+                <configuration>
+                    <doclint>none</doclint>
+                    <source>${java.version}</source>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <charset>${project.build.sourceEncoding}</charset>
+                    <docencoding>${project.build.sourceEncoding}</docencoding>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Surefire Plugin (测试) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <argLine>
+                        -Xms512m
+                        -Xmx2048m
+                        -Dfile.encoding=${console.encoding}
+                    </argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- Profiles -->
+    <profiles>
+        <!-- Windows 控制台 GBK 编码 -->
+        <profile>
+            <id>windows-console-gbk</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <properties>
+                <console.encoding>GBK</console.encoding>
+            </properties>
+        </profile>
+
+        <!-- 快速开发模式 -->
+        <profile>
+            <id>quick</id>
+            <properties>
+                <maven.test.skip>true</maven.test.skip>
+                <maven.javadoc.skip>true</maven.javadoc.skip>
+            </properties>
+        </profile>
+    </profiles>
+
+</project>
+

@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+top.yumbo.ai.rag.h2.H2RAGAutoConfiguration

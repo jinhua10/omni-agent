@@ -1,0 +1,72 @@
+{
+  "groups": [
+    {
+      "name": "omni-agent.rag.file",
+      "type": "top.yumbo.ai.rag.file.FileRAGProperties",
+      "sourceType": "top.yumbo.ai.rag.file.FileRAGProperties",
+      "description": "File RAG (Lucene) 配置属性"
+    }
+  ],
+  "properties": [
+    {
+      "name": "omni-agent.rag.type",
+      "type": "java.lang.String",
+      "description": "RAG 实现类型：file, h2, sqlite, redis, mongodb, elasticsearch",
+      "defaultValue": "file"
+    },
+    {
+      "name": "omni-agent.rag.file.index-path",
+      "type": "java.lang.String",
+      "description": "Lucene 索引存储路径",
+      "defaultValue": "./data/lucene-index"
+    },
+    {
+      "name": "omni-agent.rag.file.ram-buffer-size-mb",
+      "type": "java.lang.Double",
+      "description": "RAM 缓冲区大小（MB）",
+      "defaultValue": 256.0
+    },
+    {
+      "name": "omni-agent.rag.file.rebuild-on-startup",
+      "type": "java.lang.Boolean",
+      "description": "是否在启动时重建索引",
+      "defaultValue": false
+    },
+    {
+      "name": "omni-agent.rag.file.max-results",
+      "type": "java.lang.Integer",
+      "description": "最大搜索结果数",
+      "defaultValue": 100
+    },
+    {
+      "name": "omni-agent.rag.file.default-top-k",
+      "type": "java.lang.Integer",
+      "description": "默认返回结果数",
+      "defaultValue": 10
+    },
+    {
+      "name": "omni-agent.rag.file.highlight-enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用搜索结果高亮",
+      "defaultValue": true
+    },
+    {
+      "name": "omni-agent.rag.file.highlight-prefix",
+      "type": "java.lang.String",
+      "description": "高亮前缀标签",
+      "defaultValue": "<em>"
+    },
+    {
+      "name": "omni-agent.rag.file.highlight-suffix",
+      "type": "java.lang.String",
+      "description": "高亮后缀标签",
+      "defaultValue": "</em>"
+    },
+    {
+      "name": "omni-agent.rag.file.min-score",
+      "type": "java.lang.Float",
+      "description": "最小相似度阈值",
+      "defaultValue": 0.0
+    }
+  ]
+}

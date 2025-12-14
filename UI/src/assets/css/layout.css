@@ -1,0 +1,47 @@
+/**
+ * Layout 布局组件样式 (Layout Component Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   布局容器 (Layout Container)
+   ============================================================================ */
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 头部区域 (Header Area) */
+.app-layout__header {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 主内容区 (Main Content Area) */
+.app-layout__content {
+  flex: 1;
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+}
+
+/* 底部区域 (Footer Area) */
+.app-layout__footer {
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-light);
+}
+
+/* ============================================================================
+   响应式设计 (Responsive Design)
+   ============================================================================ */
+@media (max-width: 768px) {
+  .app-layout__content {
+    padding: var(--spacing-md);
+  }
+}
+

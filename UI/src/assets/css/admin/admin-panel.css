@@ -1,0 +1,45 @@
+/* AdminPanel 组件样式 */
+.admin-panel {
+  padding: var(--spacing-lg);
+  background: var(--color-bg-primary);
+  min-height: 100vh;
+}
+
+.admin-panel__card {
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-panel__title {
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.admin-panel__tabs .ant-tabs-nav {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* 系统配置 */
+.system-config {
+  max-width: 600px;
+}
+
+/* 模型配置 */
+.model-config {
+  max-width: 600px;
+}
+
+/* 监控面板 */
+.monitor-dashboard {
+  padding: var(--spacing-md);
+}
+
+[data-theme="dark"] .admin-panel {
+  background: var(--color-bg-primary-dark);
+}
+
+[data-theme="dark"] .admin-panel__title {
+  color: var(--color-text-primary-dark);
+}
+

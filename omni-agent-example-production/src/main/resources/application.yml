@@ -1,0 +1,99 @@
+# ========================================
+# OmniAgent Production Configuration
+# 生产级配置示例
+# ========================================
+
+server:
+  port: 8080
+  compression:
+    enabled: true
+
+spring:
+  application:
+    name: omni-agent-production
+
+# ========================================
+# 持久化配置 (Persistence)
+# 使用 Elasticsearch 作为生产级持久化方案
+# ========================================
+omni-agent:
+  persistence:
+    type: elasticsearch
+    elasticsearch:
+      host: elasticsearch.production.com:9200
+      username: elastic
+      password: ${ES_PASSWORD:changeme}
+      index-prefix: omni-agent-prod
+      number-of-shards: 3
+      number-of-replicas: 2
+
+  # ========================================
+  # 文档存储配置 (Document Storage)
+  # 使用 AWS S3 作为公有云对象存储
+  # ========================================
+  document-storage:
+    type: s3
+    s3:
+      region: us-east-1
+      access-key-id: ${AWS_ACCESS_KEY_ID}
+      secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+      bucket-name: omni-agent-production-documents
+
+  # ========================================
+  # RAG 配置 (RAG)
+  # 使用 Elasticsearch 作为向量检索引擎
+  # ========================================
+  rag:
+    type: elasticsearch
+    elasticsearch:
+      host: elasticsearch.production.com:9200
+      username: elastic
+      password: ${ES_PASSWORD:changeme}
+      index-prefix: omni-agent-rag-prod
+      number-of-shards: 3
+      number-of-replicas: 2
+
+  # ========================================
+  # AI 配置 (AI Service)
+  # 使用 Online API (OpenAI GPT-4)
+  # ========================================
+  ai:
+    type: online-api
+    online:
+      provider: openai
+      base-url: https://api.openai.com/v1
+      api-key: ${OPENAI_API_KEY}
+      default-model: gpt-4
+      temperature: 0.7
+      max-tokens: 2048
+
+# ========================================
+# Spring Boot Actuator (监控端点)
+# ========================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# ========================================
+# 日志配置
+# ========================================
+logging:
+  level:
+    root: INFO
+    top.yumbo.ai: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/omni-agent-production.log
+    max-size: 100MB
+    max-history: 30
+

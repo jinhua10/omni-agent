@@ -1,0 +1,192 @@
+/**
+ * 相似问题推荐样式 (Similar Questions Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   相似问题容器 (Similar Questions Container)
+   ============================================================================ */
+.similar-questions {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-left: 1px solid #e8e8e8;
+}
+
+/* ============================================================================
+   头部 (Header)
+   ============================================================================ */
+.similar-questions__header {
+  padding: 16px;
+  border-bottom: 1px solid #e8e8e8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+}
+
+.similar-questions__icon {
+  font-size: 18px;
+  color: #667eea;
+}
+
+.similar-questions__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ============================================================================
+   内容区域 (Content Area)
+   ============================================================================ */
+.similar-questions__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* 空状态 (Empty State) */
+.similar-questions__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 20px;
+}
+
+/* ============================================================================
+   问题列表项 (Question List Item)
+   ============================================================================ */
+.similar-questions__item {
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #f8f9fa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.similar-questions__item:hover {
+  background: #ffffff;
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.similar-questions__item:last-child {
+  margin-bottom: 0;
+}
+
+/* 问题项头部 (Item Header) */
+.similar-questions__item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.similar-questions__item-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #667eea;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.similar-questions__item-tag {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* 问题文本 (Item Text) */
+.similar-questions__item-text {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 答案预览 (Answer Preview) */
+.similar-questions__item-preview {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid #e8e8e8;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #999;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================================================
+   滚动条样式 (Scrollbar Styles)
+   ============================================================================ */
+.similar-questions__content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.similar-questions__content::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
+
+.similar-questions__content::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 3px;
+}
+
+.similar-questions__content::-webkit-scrollbar-thumb:hover {
+  background: #b0b0b0;
+}
+
+/* ============================================================================
+   响应式样式 (Responsive Styles)
+   ============================================================================ */
+@media (max-width: 1200px) {
+  .similar-questions {
+    border-left: none;
+    border-top: 1px solid #e8e8e8;
+  }
+
+  .similar-questions__content {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .similar-questions__header {
+    padding: 12px;
+  }
+
+  .similar-questions__title {
+    font-size: 14px;
+  }
+
+  .similar-questions__item {
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  .similar-questions__item-text {
+    font-size: 13px;
+  }
+}
+

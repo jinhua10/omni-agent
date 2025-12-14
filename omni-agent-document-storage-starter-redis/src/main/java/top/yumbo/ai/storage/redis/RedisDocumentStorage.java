@@ -1,0 +1,455 @@
+package top.yumbo.ai.storage.redis;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.storage.api.model.Image;
+import top.yumbo.ai.storage.api.model.PPLData;
+import top.yumbo.ai.storage.api.model.StorageStatistics;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+/**
+ * Redis 文档存储实现 - 高性能缓存存储
+ * (Redis Document Storage Implementation - High-performance Cache Storage)
+ *
+ * <p>
+ * 特点 (Features):
+ * - 高性能读写
+ * - 支持数据过期
+ * - 适合临时/缓存数据
+ * - 支持主从复制和集群
+ * </p>
+ *
+ * @author OmniAgent Team
+ * @since 1.0.0
+ * @version 1.0.0 - Redis Starter 实现
+ */
+@Slf4j
+public class RedisDocumentStorage implements DocumentStorageService {
+
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisStorageProperties properties;
+    private final ObjectMapper objectMapper;
+
+    public RedisDocumentStorage(RedisTemplate<String, Object> redisTemplate,
+                               RedisStorageProperties properties) {
+        this.redisTemplate = redisTemplate;
+        this.properties = properties;
+        this.objectMapper = new ObjectMapper();
+        log.info("RedisDocumentStorage initialized with prefix: {}", properties.getKeyPrefix());
+    }
+
+    // ========== Key 生成 ==========
+
+    private String getChunkKey(String chunkId) {
+        return properties.getKeyPrefix() + "chunk:" + chunkId;
+    }
+
+    private String getDocumentChunksKey(String documentId) {
+        return properties.getKeyPrefix() + "doc:" + documentId + ":chunks";
+    }
+
+    private String getImageKey(String imageId) {
+        return properties.getKeyPrefix() + "image:" + imageId;
+    }
+
+    private String getDocumentImagesKey(String documentId) {
+        return properties.getKeyPrefix() + "doc:" + documentId + ":images";
+    }
+
+    private String getPPLKey(String documentId) {
+        return properties.getKeyPrefix() + "ppl:" + documentId;
+    }
+
+    private String getDocumentKey(String documentId) {
+        return properties.getKeyPrefix() + "doc:" + documentId;
+    }
+
+    // ========== Chunk Storage ==========
+
+    @Override
+    public String saveChunk(String documentId, Chunk chunk) {
+        try {
+            String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
+            chunk.setId(chunkId);
+
+            // 保存 chunk 对象
+            String chunkKey = getChunkKey(chunkId);
+            redisTemplate.opsForValue().set(chunkKey, chunk);
+
+            // 添加到文档的 chunks 集合
+            String docChunksKey = getDocumentChunksKey(documentId);
+            redisTemplate.opsForSet().add(docChunksKey, chunkId);
+
+            // 设置过期时间
+            if (properties.getTtl() > 0) {
+                redisTemplate.expire(chunkKey, properties.getTtl(), TimeUnit.SECONDS);
+                redisTemplate.expire(docChunksKey, properties.getTtl(), TimeUnit.SECONDS);
+            }
+
+            log.debug("Saved chunk: {}", chunkId);
+            return chunkId;
+        } catch (Exception e) {
+            log.error("Failed to save chunk", e);
+            return null;
+        }
+    }
+
+    @Override
+    public List<String> saveChunks(String documentId, List<Chunk> chunks) {
+        List<String> chunkIds = new ArrayList<>();
+        for (Chunk chunk : chunks) {
+            String chunkId = saveChunk(documentId, chunk);
+            if (chunkId != null) {
+                chunkIds.add(chunkId);
+            }
+        }
+        return chunkIds;
+    }
+
+    @Override
+    public Optional<Chunk> getChunk(String chunkId) {
+        try {
+            String chunkKey = getChunkKey(chunkId);
+            Object obj = redisTemplate.opsForValue().get(chunkKey);
+            if (obj instanceof Chunk) {
+                return Optional.of((Chunk) obj);
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get chunk: {}", chunkId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<Chunk> getChunksByDocument(String documentId) {
+        try {
+            String docChunksKey = getDocumentChunksKey(documentId);
+            Set<Object> chunkIds = redisTemplate.opsForSet().members(docChunksKey);
+
+            if (chunkIds == null || chunkIds.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            return chunkIds.stream()
+                    .map(id -> getChunk(id.toString()))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to get chunks for document: {}", documentId, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void deleteChunk(String chunkId) {
+        try {
+            String chunkKey = getChunkKey(chunkId);
+            redisTemplate.delete(chunkKey);
+            log.debug("Deleted chunk: {}", chunkId);
+        } catch (Exception e) {
+            log.error("Failed to delete chunk: {}", chunkId, e);
+        }
+    }
+
+    @Override
+    public void deleteChunksByDocument(String documentId) {
+        try {
+            String docChunksKey = getDocumentChunksKey(documentId);
+            Set<Object> chunkIds = redisTemplate.opsForSet().members(docChunksKey);
+
+            if (chunkIds != null) {
+                for (Object chunkId : chunkIds) {
+                    deleteChunk(chunkId.toString());
+                }
+            }
+
+            redisTemplate.delete(docChunksKey);
+            log.info("Deleted all chunks for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete chunks for document: {}", documentId, e);
+        }
+    }
+
+    // ========== Image Storage ==========
+
+    @Override
+    public String saveImage(String documentId, Image image) {
+        try {
+            String imageId = image.getId() != null ? image.getId() : UUID.randomUUID().toString();
+            image.setId(imageId);
+
+            // 保存 image 对象
+            String imageKey = getImageKey(imageId);
+            redisTemplate.opsForValue().set(imageKey, image);
+
+            // 添加到文档的 images 集合
+            String docImagesKey = getDocumentImagesKey(documentId);
+            redisTemplate.opsForSet().add(docImagesKey, imageId);
+
+            // 设置过期时间
+            if (properties.getTtl() > 0) {
+                redisTemplate.expire(imageKey, properties.getTtl(), TimeUnit.SECONDS);
+                redisTemplate.expire(docImagesKey, properties.getTtl(), TimeUnit.SECONDS);
+            }
+
+            log.debug("Saved image: {}", imageId);
+            return imageId;
+        } catch (Exception e) {
+            log.error("Failed to save image", e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<Image> getImage(String imageId) {
+        try {
+            String imageKey = getImageKey(imageId);
+            Object obj = redisTemplate.opsForValue().get(imageKey);
+            if (obj instanceof Image) {
+                return Optional.of((Image) obj);
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get image: {}", imageId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<Image> getImagesByDocument(String documentId) {
+        try {
+            String docImagesKey = getDocumentImagesKey(documentId);
+            Set<Object> imageIds = redisTemplate.opsForSet().members(docImagesKey);
+
+            if (imageIds == null || imageIds.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            return imageIds.stream()
+                    .map(id -> getImage(id.toString()))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to get images for document: {}", documentId, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void deleteImage(String imageId) {
+        try {
+            String imageKey = getImageKey(imageId);
+            redisTemplate.delete(imageKey);
+            log.debug("Deleted image: {}", imageId);
+        } catch (Exception e) {
+            log.error("Failed to delete image: {}", imageId, e);
+        }
+    }
+
+    @Override
+    public void deleteImagesByDocument(String documentId) {
+        try {
+            String docImagesKey = getDocumentImagesKey(documentId);
+            Set<Object> imageIds = redisTemplate.opsForSet().members(docImagesKey);
+
+            if (imageIds != null) {
+                for (Object imageId : imageIds) {
+                    deleteImage(imageId.toString());
+                }
+            }
+
+            redisTemplate.delete(docImagesKey);
+            log.info("Deleted all images for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete images for document: {}", documentId, e);
+        }
+    }
+
+    // ========== PPL Data Storage ==========
+
+    @Override
+    public String savePPLData(String documentId, PPLData data) {
+        try {
+            String pplKey = getPPLKey(documentId);
+            redisTemplate.opsForValue().set(pplKey, data);
+
+            // 设置过期时间
+            if (properties.getTtl() > 0) {
+                redisTemplate.expire(pplKey, properties.getTtl(), TimeUnit.SECONDS);
+            }
+
+            log.debug("Saved PPL data for document: {}", documentId);
+            return documentId;
+        } catch (Exception e) {
+            log.error("Failed to save PPL data", e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<PPLData> getPPLData(String documentId) {
+        try {
+            String pplKey = getPPLKey(documentId);
+            Object obj = redisTemplate.opsForValue().get(pplKey);
+            if (obj instanceof PPLData) {
+                return Optional.of((PPLData) obj);
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get PPL data for document: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deletePPLData(String documentId) {
+        try {
+            String pplKey = getPPLKey(documentId);
+            redisTemplate.delete(pplKey);
+            log.info("Deleted PPL data for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete PPL data for document: {}", documentId, e);
+        }
+    }
+
+    // ========== Document Management ==========
+
+    @Override
+    public void cleanupDocument(String documentId) {
+        deleteChunksByDocument(documentId);
+        deleteImagesByDocument(documentId);
+        deletePPLData(documentId);
+
+        // 删除文档元数据
+        String docKey = getDocumentKey(documentId);
+        redisTemplate.delete(docKey);
+
+        log.info("Cleaned up all data for document: {}", documentId);
+    }
+
+    @Override
+    public boolean documentExists(String documentId) {
+        try {
+            String docChunksKey = getDocumentChunksKey(documentId);
+            String docImagesKey = getDocumentImagesKey(documentId);
+            String pplKey = getPPLKey(documentId);
+
+            return Boolean.TRUE.equals(redisTemplate.hasKey(docChunksKey)) ||
+                   Boolean.TRUE.equals(redisTemplate.hasKey(docImagesKey)) ||
+                   Boolean.TRUE.equals(redisTemplate.hasKey(pplKey));
+        } catch (Exception e) {
+            log.error("Failed to check document existence: {}", documentId, e);
+            return false;
+        }
+    }
+
+    @Override
+    public long getDocumentSize(String documentId) {
+        try {
+            long size = 0;
+
+            // 计算 chunks 大小（估算）
+            List<Chunk> chunks = getChunksByDocument(documentId);
+            for (Chunk chunk : chunks) {
+                if (chunk.getContent() != null) {
+                    size += chunk.getContent().getBytes().length;
+                }
+            }
+
+            // 计算 images 大小
+            List<Image> images = getImagesByDocument(documentId);
+            for (Image image : images) {
+                if (image.getData() != null) {
+                    size += image.getData().length;
+                }
+            }
+
+            // 计算 PPL 大小（估算）
+            Optional<PPLData> pplData = getPPLData(documentId);
+            if (pplData.isPresent()) {
+                size += 1024; // 估算 PPL 数据大小
+            }
+
+            return size;
+        } catch (Exception e) {
+            log.error("Failed to calculate document size for: {}", documentId, e);
+            return 0;
+        }
+    }
+
+    // ========== Statistics ==========
+
+    @Override
+    public StorageStatistics getStatistics() {
+        try {
+            // Redis 无法高效统计所有 key，使用模式匹配（注意：生产环境慎用 KEYS 命令）
+            Set<String> allKeys = redisTemplate.keys(properties.getKeyPrefix() + "*");
+
+            long totalChunks = 0;
+            long totalImages = 0;
+            long totalPPLData = 0;
+            Set<String> documentIds = new HashSet<>();
+
+            if (allKeys != null) {
+                for (String key : allKeys) {
+                    if (key.contains(":chunk:")) {
+                        totalChunks++;
+                    } else if (key.contains(":image:")) {
+                        totalImages++;
+                    } else if (key.contains(":ppl:")) {
+                        totalPPLData++;
+                    }
+
+                    // 提取 documentId
+                    if (key.contains(":doc:")) {
+                        String[] parts = key.split(":doc:");
+                        if (parts.length > 1) {
+                            String docPart = parts[1].split(":")[0];
+                            documentIds.add(docPart);
+                        }
+                    }
+                }
+            }
+
+            return StorageStatistics.builder()
+                    .totalDocuments(documentIds.size())
+                    .totalChunks(totalChunks)
+                    .totalImages(totalImages)
+                    .totalPPLData(totalPPLData)
+                    .totalSize(0) // Redis 难以准确计算总大小
+                    .storageType("redis")
+                    .healthy(isHealthy())
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to get statistics", e);
+            return StorageStatistics.builder()
+                    .storageType("redis")
+                    .healthy(false)
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+        }
+    }
+
+    @Override
+    public boolean isHealthy() {
+        try {
+            // 测试 Redis 连接
+            redisTemplate.opsForValue().get("health-check");
+            return true;
+        } catch (Exception e) {
+            log.error("Health check failed", e);
+            return false;
+        }
+    }
+}
+

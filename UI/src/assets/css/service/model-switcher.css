@@ -1,0 +1,91 @@
+/* ModelSwitcher 组件样式 */
+.model-switcher {
+  padding: var(--spacing-lg);
+}
+
+.model-switcher__title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.model-switcher__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  width: 100%;
+}
+
+.model-switcher__card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid var(--color-border);
+}
+
+.model-switcher__card:hover {
+  border-color: var(--color-primary);
+}
+
+.model-switcher__card--active {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+}
+
+.model-switcher__option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  position: relative;
+}
+
+.model-switcher__icon {
+  font-size: 40px;
+  color: var(--color-primary);
+}
+
+.model-switcher__info {
+  flex: 1;
+}
+
+.model-switcher__info h4 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+}
+
+.model-switcher__info p {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.model-switcher__tags {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.model-switcher__check {
+  font-size: 24px;
+  color: var(--color-success);
+}
+
+.model-switcher__actions {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  justify-content: center;
+}
+
+[data-theme="dark"] .model-switcher__title,
+[data-theme="dark"] .model-switcher__info h4 {
+  color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .model-switcher__info p {
+  color: var(--color-text-secondary-dark);
+}
+
+[data-theme="dark"] .model-switcher__card {
+  border-color: var(--color-border-dark);
+}
+

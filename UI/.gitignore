@@ -1,0 +1,40 @@
+# 依赖 (Dependencies)
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 构建输出 (Build output)
+dist/
+build/
+
+# 开发工具 (Development tools)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 环境变量 (Environment variables)
+.env
+.env.local
+.env.development
+.env.production
+
+# 日志 (Logs)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 操作系统 (OS)
+.DS_Store
+Thumbs.db
+
+# 临时文件 (Temporary files)
+*.tmp
+*.temp
+
+# 调试 (Debug)
+.vite-inspect/
+

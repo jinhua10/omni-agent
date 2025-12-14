@@ -1,0 +1,92 @@
+/**
+ * Footer 页脚样式 (Footer Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   页脚容器 (Footer Container)
+   ============================================================================ */
+.app-footer {
+  width: 100%;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-light);
+  padding: var(--spacing-lg) 0;
+}
+
+.app-footer__container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+/* ============================================================================
+   版权信息 (Copyright)
+   ============================================================================ */
+.app-footer__copyright {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.app-footer__heart {
+  color: #ff4d4f;
+  margin: 0 4px;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* ============================================================================
+   链接区域 (Links)
+   ============================================================================ */
+.app-footer__links {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 0.875rem;
+}
+
+.app-footer__link {
+  color: var(--text-secondary);
+  transition: var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-footer__link:hover {
+  color: var(--primary-color);
+}
+
+.app-footer__divider {
+  color: var(--border-color);
+}
+
+/* ============================================================================
+   响应式设计 (Responsive Design)
+   ============================================================================ */
+@media (max-width: 768px) {
+  .app-footer__container {
+    flex-direction: column;
+    text-align: center;
+    padding: 0 var(--spacing-md);
+  }
+
+  .app-footer__links {
+    justify-content: center;
+  }
+}
+

@@ -1,0 +1,62 @@
+/data/
+/logs/
+*.log
+/knowledge-base/
+/release/models
+/release/data
+/release/logs
+/release/*.jar
+/temp
+/models*/
+
+/src/main/resources/simpleExcel/*
+/src/main/resources/models
+/release/models/*/*.onnx
+
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+.kotlin
+
+# 临时提取的 META-INF 文件夹（从 JAR 测试时产生）
+/META-INF/
+
+*.log
+### IntelliJ IDEA ###
+.idea/
+.idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/libraries/
+*.iws
+*.iml
+*.ipr
+/reports/
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+/**/*.jar
+src.backup
+old/

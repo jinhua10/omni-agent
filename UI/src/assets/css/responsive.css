@@ -1,0 +1,304 @@
+/**
+ * 响应式布局样式 (Responsive Layout Styles)
+ *
+ * 提供完整的响应式布局支持
+ * (Provides complete responsive layout support)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   断点定义 (Breakpoints)
+   ============================================================================ */
+/*
+  xs: < 576px   (手机 Mobile)
+  sm: >= 576px  (平板竖屏 Tablet Portrait)
+  md: >= 768px  (平板横屏 Tablet Landscape)
+  lg: >= 992px  (桌面 Desktop)
+  xl: >= 1200px (大屏 Large Desktop)
+  xxl: >= 1600px (超大屏 Extra Large Desktop)
+*/
+
+/* ============================================================================
+   容器响应式 (Container Responsive)
+   ============================================================================ */
+.container {
+  width: 100%;
+  padding-right: var(--spacing-md);
+  padding-left: var(--spacing-md);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 576px) {
+  .container {
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .container {
+    max-width: 1400px;
+  }
+}
+
+/* ============================================================================
+   网格系统 (Grid System)
+   ============================================================================ */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: calc(var(--spacing-md) * -0.5);
+  margin-left: calc(var(--spacing-md) * -0.5);
+}
+
+.col {
+  flex: 1 0 0%;
+  padding-right: calc(var(--spacing-md) * 0.5);
+  padding-left: calc(var(--spacing-md) * 0.5);
+}
+
+/* 列宽度类 (Column width classes) */
+.col-1 { flex: 0 0 auto; width: 8.33333333%; }
+.col-2 { flex: 0 0 auto; width: 16.66666667%; }
+.col-3 { flex: 0 0 auto; width: 25%; }
+.col-4 { flex: 0 0 auto; width: 33.33333333%; }
+.col-5 { flex: 0 0 auto; width: 41.66666667%; }
+.col-6 { flex: 0 0 auto; width: 50%; }
+.col-7 { flex: 0 0 auto; width: 58.33333333%; }
+.col-8 { flex: 0 0 auto; width: 66.66666667%; }
+.col-9 { flex: 0 0 auto; width: 75%; }
+.col-10 { flex: 0 0 auto; width: 83.33333333%; }
+.col-11 { flex: 0 0 auto; width: 91.66666667%; }
+.col-12 { flex: 0 0 auto; width: 100%; }
+
+/* ============================================================================
+   显示/隐藏工具类 (Display/Hide Utilities)
+   ============================================================================ */
+
+/* 仅在移动端显示 (Show on mobile only) */
+.d-xs-block { display: block; }
+.d-xs-none { display: none; }
+
+@media (min-width: 576px) {
+  .d-sm-block { display: block; }
+  .d-sm-none { display: none; }
+  .d-xs-block { display: none; }
+}
+
+@media (min-width: 768px) {
+  .d-md-block { display: block; }
+  .d-md-none { display: none; }
+}
+
+@media (min-width: 992px) {
+  .d-lg-block { display: block; }
+  .d-lg-none { display: none; }
+}
+
+@media (min-width: 1200px) {
+  .d-xl-block { display: block; }
+  .d-xl-none { display: none; }
+}
+
+/* ============================================================================
+   文字大小响应式 (Responsive Text Size)
+   ============================================================================ */
+.text-responsive {
+  font-size: 14px;
+}
+
+@media (min-width: 576px) {
+  .text-responsive {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 768px) {
+  .text-responsive {
+    font-size: 16px;
+  }
+}
+
+/* ============================================================================
+   间距响应式 (Responsive Spacing)
+   ============================================================================ */
+
+/* 移动端减小间距 (Reduce spacing on mobile) */
+@media (max-width: 767px) {
+  .p-responsive {
+    padding: var(--spacing-sm) !important;
+  }
+
+  .px-responsive {
+    padding-left: var(--spacing-sm) !important;
+    padding-right: var(--spacing-sm) !important;
+  }
+
+  .py-responsive {
+    padding-top: var(--spacing-sm) !important;
+    padding-bottom: var(--spacing-sm) !important;
+  }
+
+  .m-responsive {
+    margin: var(--spacing-sm) !important;
+  }
+
+  .mx-responsive {
+    margin-left: var(--spacing-sm) !important;
+    margin-right: var(--spacing-sm) !important;
+  }
+
+  .my-responsive {
+    margin-top: var(--spacing-sm) !important;
+    margin-bottom: var(--spacing-sm) !important;
+  }
+}
+
+/* ============================================================================
+   布局方向响应式 (Responsive Layout Direction)
+   ============================================================================ */
+.flex-column-mobile {
+  display: flex;
+}
+
+@media (max-width: 767px) {
+  .flex-column-mobile {
+    flex-direction: column;
+  }
+}
+
+/* ============================================================================
+   移动端优化 (Mobile Optimizations)
+   ============================================================================ */
+@media (max-width: 767px) {
+  /* 移动端字体调整 (Mobile font adjustments) */
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  /* 移动端按钮调整 (Mobile button adjustments) */
+  .ant-btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+
+  /* 移动端输入框调整 (Mobile input adjustments) */
+  .ant-input {
+    height: 36px;
+    font-size: 14px;
+  }
+
+  /* 移动端表格调整 (Mobile table adjustments) */
+  .ant-table {
+    font-size: 12px;
+  }
+
+  /* 移动端卡片调整 (Mobile card adjustments) */
+  .ant-card {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .ant-card-body {
+    padding: var(--spacing-md);
+  }
+}
+
+/* ============================================================================
+   平板优化 (Tablet Optimizations)
+   ============================================================================ */
+@media (min-width: 768px) and (max-width: 991px) {
+  .container {
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+  }
+}
+
+/* ============================================================================
+   打印样式 (Print Styles)
+   ============================================================================ */
+@media print {
+  /* 隐藏不需要打印的元素 (Hide elements not needed for print) */
+  .no-print,
+  .app-header,
+  .app-footer,
+  .app-sidebar {
+    display: none !important;
+  }
+
+  /* 打印样式调整 (Print style adjustments) */
+  body {
+    font-size: 12pt;
+    color: #000;
+    background: #fff;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  /* 分页控制 (Page break control) */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+
+  img {
+    page-break-inside: avoid;
+  }
+}
+
+/* ============================================================================
+   触摸设备优化 (Touch Device Optimizations)
+   ============================================================================ */
+@media (hover: none) and (pointer: coarse) {
+  /* 增大触摸目标 (Increase touch targets) */
+  .ant-btn,
+  a,
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 移除悬停效果 (Remove hover effects) */
+  .hover-lift:hover {
+    transform: none;
+  }
+
+  .hover-scale:hover {
+    transform: none;
+  }
+}
+

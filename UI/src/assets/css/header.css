@@ -1,0 +1,104 @@
+/**
+ * Header 导航栏样式 (Header Navigation Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   头部容器 (Header Container)
+   ============================================================================ */
+.app-header {
+  width: 100%;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-header__container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+/* ============================================================================
+   Logo 区域 (Logo Area)
+   ============================================================================ */
+.app-header__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+.app-header__logo:hover {
+  opacity: 0.8;
+}
+
+.app-header__logo-icon {
+  font-size: 1.5rem;
+}
+
+.app-header__logo-text {
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   导航菜单 (Navigation Menu)
+   ============================================================================ */
+.app-header__menu {
+  flex: 1;
+  margin: 0 var(--spacing-xl);
+  border-bottom: none;
+  background: transparent;
+}
+
+/* ============================================================================
+   右侧操作区 (Right Actions)
+   ============================================================================ */
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.app-header__language-btn {
+  border-radius: var(--radius-md);
+}
+
+/* ============================================================================
+   响应式设计 (Responsive Design)
+   ============================================================================ */
+@media (max-width: 768px) {
+  .app-header__container {
+    padding: 0 var(--spacing-md);
+  }
+
+  .app-header__logo-text {
+    display: none;
+  }
+
+  .app-header__menu {
+    margin: 0 var(--spacing-md);
+  }
+
+  /* 移动端菜单文字隐藏，只显示图标 (Hide text on mobile, show icons only) */
+  .app-header__menu .ant-menu-title-content {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header__language-btn span:not(.anticon) {
+    display: none;
+  }
+}
+

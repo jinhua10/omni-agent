@@ -1,0 +1,419 @@
+/**
+ * 梦幻气泡主题 - 全局样式 / Dreamy Bubble Theme - Global Styles
+ * 
+ * 覆盖Ant Design组件样式以匹配气泡主题美学
+ * Override Ant Design component styles to match bubble theme aesthetics
+ */
+
+/* ==================== Ant Design 全局覆盖 ==================== */
+
+/* 模态框 / Modal */
+.bubble-universe .ant-modal {
+  background: transparent;
+}
+
+.bubble-universe .ant-modal-content {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.4);
+}
+
+.bubble-universe .ant-modal-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px 24px 0 0;
+}
+
+.bubble-universe .ant-modal-title {
+  color: #fff;
+  font-weight: 600;
+}
+
+.bubble-universe .ant-modal-close {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.bubble-universe .ant-modal-close:hover {
+  color: #fff;
+}
+
+/* 按钮 / Button */
+.bubble-universe .ant-btn-primary {
+  background: linear-gradient(135deg, var(--bubble-primary) 0%, var(--bubble-secondary) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bubble-universe .ant-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5);
+}
+
+.bubble-universe .ant-btn-default {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bubble-universe .ant-btn-default:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--bubble-primary);
+  color: #fff;
+}
+
+/* 输入框 / Input */
+.bubble-universe .ant-input,
+.bubble-universe .ant-input-textarea textarea {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
+  transition: all 0.3s;
+}
+
+.bubble-universe .ant-input:hover,
+.bubble-universe .ant-input-textarea textarea:hover {
+  border-color: var(--bubble-primary);
+}
+
+.bubble-universe .ant-input:focus,
+.bubble-universe .ant-input-textarea textarea:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--bubble-primary);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+}
+
+.bubble-universe .ant-input::placeholder,
+.bubble-universe .ant-input-textarea textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* 选择框 / Select */
+.bubble-universe .ant-select-selector {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+}
+
+.bubble-universe .ant-select-arrow {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.bubble-universe .ant-select-focused .ant-select-selector {
+  border-color: var(--bubble-primary) !important;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3) !important;
+}
+
+/* 下拉菜单 / Dropdown */
+.bubble-universe .ant-dropdown-menu {
+  background: rgba(20, 20, 40, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+  padding: 8px;
+}
+
+.bubble-universe .ant-dropdown-menu-item {
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s;
+  margin: 4px 0;
+}
+
+.bubble-universe .ant-dropdown-menu-item:hover {
+  background: rgba(102, 126, 234, 0.2);
+  color: #fff;
+}
+
+/* 卡片 / Card */
+.bubble-universe .ant-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.bubble-universe .ant-card-head {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px 20px 0 0;
+  color: #fff;
+}
+
+.bubble-universe .ant-card-body {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 表格 / Table */
+.bubble-universe .ant-table {
+  background: transparent;
+}
+
+.bubble-universe .ant-table-thead > tr > th {
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.bubble-universe .ant-table-tbody > tr {
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.3s;
+}
+
+.bubble-universe .ant-table-tbody > tr:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.bubble-universe .ant-table-tbody > tr > td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 标签页 / Tabs */
+.bubble-universe .ant-tabs-nav {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+}
+
+.bubble-universe .ant-tabs-tab {
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  transition: all 0.3s;
+  margin: 0 4px;
+}
+
+.bubble-universe .ant-tabs-tab:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.bubble-universe .ant-tabs-tab-active {
+  background: linear-gradient(135deg, var(--bubble-primary) 0%, var(--bubble-secondary) 100%);
+  color: #fff !important;
+}
+
+.bubble-universe .ant-tabs-ink-bar {
+  display: none;
+}
+
+/* 开关 / Switch */
+.bubble-universe .ant-switch {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bubble-universe .ant-switch-checked {
+  background: linear-gradient(135deg, var(--bubble-primary) 0%, var(--bubble-secondary) 100%);
+}
+
+/* 滑块 / Slider */
+.bubble-universe .ant-slider-track {
+  background: linear-gradient(90deg, var(--bubble-primary) 0%, var(--bubble-accent-1) 100%);
+}
+
+.bubble-universe .ant-slider-handle {
+  background: #fff;
+  border: 3px solid var(--bubble-primary);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+}
+
+/* 标签 / Tag */
+.bubble-universe .ant-tag {
+  background: rgba(102, 126, 234, 0.2);
+  border: 1px solid rgba(102, 126, 234, 0.4);
+  border-radius: 20px;
+  color: #fff;
+  padding: 4px 12px;
+}
+
+/* 徽章 / Badge */
+.bubble-universe .ant-badge-count {
+  background: linear-gradient(135deg, var(--bubble-accent-1) 0%, var(--bubble-accent-2) 100%);
+  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);
+}
+
+/* 提示框 / Tooltip */
+.bubble-universe .ant-tooltip-inner {
+  background: rgba(20, 20, 40, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: #fff;
+}
+
+.bubble-universe .ant-tooltip-arrow-content {
+  background: rgba(20, 20, 40, 0.95);
+}
+
+/* 消息提示 / Message */
+.bubble-universe .ant-message-notice-content {
+  background: rgba(20, 20, 40, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  color: #fff;
+}
+
+/* 通知 / Notification */
+.bubble-universe .ant-notification-notice {
+  background: rgba(20, 20, 40, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.bubble-universe .ant-notification-notice-message {
+  color: #fff;
+}
+
+.bubble-universe .ant-notification-notice-description {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 进度条 / Progress */
+.bubble-universe .ant-progress-bg {
+  background: linear-gradient(90deg, var(--bubble-primary) 0%, var(--bubble-accent-1) 100%);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+}
+
+/* 骨架屏 / Skeleton */
+.bubble-universe .ant-skeleton-element {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.05) 25%, 
+    rgba(255, 255, 255, 0.1) 37%, 
+    rgba(255, 255, 255, 0.05) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.4s ease infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* 加载旋转 / Spin */
+.bubble-universe .ant-spin-dot-item {
+  background-color: var(--bubble-primary);
+}
+
+/* 分页 / Pagination */
+.bubble-universe .ant-pagination-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.bubble-universe .ant-pagination-item a {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bubble-universe .ant-pagination-item:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: var(--bubble-primary);
+}
+
+.bubble-universe .ant-pagination-item-active {
+  background: linear-gradient(135deg, var(--bubble-primary) 0%, var(--bubble-secondary) 100%);
+  border-color: transparent;
+}
+
+.bubble-universe .ant-pagination-item-active a {
+  color: #fff;
+}
+
+/* ==================== 自定义滚动条全局样式 ==================== */
+.bubble-universe * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bubble-primary) rgba(255, 255, 255, 0.02);
+}
+
+.bubble-universe *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.bubble-universe *::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.bubble-universe *::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--bubble-primary) 0%, var(--bubble-accent-1) 100%);
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.bubble-universe *::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--bubble-accent-1) 0%, var(--bubble-primary) 100%);
+}
+
+/* ==================== 辅助工具类 ==================== */
+.bubble-glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 24px;
+}
+
+.bubble-glow-text {
+  background: linear-gradient(135deg, #fff 0%, var(--bubble-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.3));
+}
+
+.bubble-gradient-bg {
+  background: linear-gradient(135deg, var(--bubble-primary) 0%, var(--bubble-secondary) 100%);
+}
+
+.bubble-hover-lift {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bubble-hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* ==================== 页面过渡动画 ==================== */
+.bubble-page-enter {
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+}
+
+.bubble-page-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bubble-page-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.bubble-page-exit-active {
+  opacity: 0;
+  transform: translateY(-30px) scale(0.95);
+  transition: all 0.4s ease-out;
+}

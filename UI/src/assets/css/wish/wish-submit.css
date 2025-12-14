@@ -1,0 +1,94 @@
+/* WishSubmit 组件样式 */
+.wish-submit-modal .ant-modal-body {
+  padding: var(--spacing-lg);
+}
+
+.wish-submit-form {
+  padding: var(--spacing-md) 0;
+}
+
+.wish-submit-form__tips {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--color-bg-info);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--border-radius-sm);
+}
+
+.wish-submit-form__tips h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.wish-submit-form__tips ul {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  list-style-type: disc;
+}
+
+.wish-submit-form__tips li {
+  margin: var(--spacing-xs) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* 表单项样式优化 */
+.wish-submit-form .ant-form-item-label > label {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.wish-submit-form .ant-input,
+.wish-submit-form .ant-input-textarea {
+  border-radius: var(--border-radius-md);
+}
+
+.wish-submit-form .ant-select-selector {
+  border-radius: var(--border-radius-md);
+}
+
+/* 字符计数器样式 */
+.wish-submit-form .ant-input-textarea-show-count::after,
+.wish-submit-form .ant-input-show-count-suffix {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+/* 暗色模式 */
+[data-theme="dark"] .wish-submit-form__tips {
+  background: var(--color-bg-info-dark);
+  border-left-color: var(--color-primary);
+}
+
+[data-theme="dark"] .wish-submit-form__tips h4 {
+  color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .wish-submit-form__tips li {
+  color: var(--color-text-secondary-dark);
+}
+
+[data-theme="dark"] .wish-submit-form .ant-form-item-label > label {
+  color: var(--color-text-primary-dark);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .wish-submit-modal {
+    max-width: 100%;
+    margin: 0;
+    padding: 0 var(--spacing-md);
+  }
+
+  .wish-submit-form__tips {
+    padding: var(--spacing-sm);
+  }
+
+  .wish-submit-form__tips ul {
+    padding-left: var(--spacing-md);
+  }
+}
+

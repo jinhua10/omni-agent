@@ -1,0 +1,313 @@
+/**
+ * 聊天框样式 (Chat Box Styles)
+ *
+ * @author AI Reviewer Team
+ * @since 2025-12-12
+ */
+
+/* ============================================================================
+   聊天框容器 (Chat Box Container)
+   ============================================================================ */
+.chat-box {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff;
+}
+
+/* ============================================================================
+   顶部工具栏 (Toolbar)
+   ============================================================================ */
+.chat-box__toolbar {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chat-box__toolbar-left,
+.chat-box__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-box__history-btn {
+  font-size: 14px;
+}
+
+/* 知识库模式选择 (Knowledge Mode Selection) */
+.chat-box__kb-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-box__kb-mode-label {
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.chat-box__kb-mode-group {
+  flex-shrink: 0;
+}
+
+.chat-box__kb-mode-group .ant-radio-button-wrapper {
+  font-size: 12px;
+  padding: 0 12px;
+  height: 28px;
+  line-height: 26px;
+}
+
+/* 角色选择器 (Role Selector) */
+.chat-box__role-select {
+  min-width: 120px;
+}
+
+.chat-box__kb-toggle--active:hover {
+  background: linear-gradient(135deg, #0e8077 0%, #2dd96a 100%);
+  box-shadow: 0 4px 8px rgba(56, 239, 125, 0.4);
+}
+
+/* 模式切换 (Mode Toggle) */
+.chat-box__mode-toggle {
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 4px 12px;
+  height: auto;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.chat-box__mode-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #5568d3 0%, #6941a5 100%);
+}
+
+.chat-box__mode-toggle:active {
+  transform: translateY(0);
+}
+
+/* ============================================================================
+   消息列表 (Messages List)
+   ============================================================================ */
+.chat-box__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 空状态 (Empty State) */
+.chat-box__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+}
+
+.chat-box__empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.chat-box__empty-text {
+  font-size: 16px;
+  color: #999;
+}
+
+/* ============================================================================
+   消息项 (Message Item)
+   ============================================================================ */
+.chat-box__message {
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================================
+   用户问题 (User Question)
+   ============================================================================ */
+.chat-box__question {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.chat-box__question-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.chat-box__question-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-box__question-text {
+  background: #f5f5f5;
+  padding: 12px 16px;
+  border-radius: 12px 12px 12px 4px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333;
+  word-wrap: break-word;
+}
+
+.chat-box__question-time {
+  font-size: 12px;
+  color: #999;
+  padding-left: 4px;
+}
+
+/* ============================================================================
+   错误消息 (Error Message)
+   ============================================================================ */
+.chat-box__error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+  color: #ff4d4f;
+}
+
+.chat-box__error-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.chat-box__error-content {
+  flex: 1;
+  font-size: 14px;
+}
+
+/* ============================================================================
+   加载指示器 (Loading Indicator)
+   ============================================================================ */
+.chat-box__loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+
+.chat-box__loading-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.chat-box__loading-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #667eea;
+  animation: loadingDot 1.4s infinite ease-in-out both;
+}
+
+.chat-box__loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.chat-box__loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes loadingDot {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   停止生成按钮 (Stop Generation Button)
+   ============================================================================ */
+.chat-box__stop-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-box__stop-btn {
+  font-size: 14px;
+  border-radius: 20px;
+  padding: 8px 24px;
+  height: auto;
+  box-shadow: 0 2px 8px rgba(255, 77, 79, 0.2);
+  transition: all 0.3s ease;
+}
+
+.chat-box__stop-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.3);
+}
+
+/* ============================================================================
+   响应式样式 (Responsive Styles)
+   ============================================================================ */
+@media (max-width: 768px) {
+  .chat-box__messages {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .chat-box__question-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .chat-box__question-text {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}
+

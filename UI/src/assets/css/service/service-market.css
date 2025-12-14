@@ -1,0 +1,205 @@
+/* ServiceMarket 组件样式 */
+.service-market {
+  padding: var(--spacing-lg);
+  background: var(--color-bg-primary);
+  min-height: 100vh;
+}
+
+/* 头部 */
+.service-market__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.service-market__header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.service-market__title {
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.service-market__count {
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  padding: 4px 12px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-sm);
+}
+
+/* 标签页 */
+.service-market__tabs {
+  margin-bottom: var(--spacing-lg);
+}
+
+.service-market__tabs .ant-tabs-nav {
+  margin-bottom: 0;
+}
+
+/* 工具栏 */
+.service-market__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  gap: var(--spacing-md);
+}
+
+.service-market__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.service-market__search {
+  flex-shrink: 0;
+}
+
+.service-market__filter {
+  flex-shrink: 0;
+}
+
+.service-market__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.service-market__view-switch {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius-sm);
+}
+
+.service-market__view-btn {
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.service-market__view-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.service-market__view-btn--active {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* 内容区域 */
+.service-market__content {
+  min-height: 400px;
+}
+
+/* 服务列表 */
+.service-market__list {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+/* 网格视图 */
+.service-market__list--grid {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+/* 列表视图 */
+.service-market__list--list {
+  grid-template-columns: 1fr;
+}
+
+/* 加载状态 */
+.service-market__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+/* 空状态 */
+.service-market__empty {
+  padding: var(--spacing-xxl) 0;
+}
+
+/* 暗色模式 */
+[data-theme="dark"] .service-market {
+  background: var(--color-bg-primary-dark);
+}
+
+[data-theme="dark"] .service-market__title {
+  color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .service-market__count {
+  background: var(--color-bg-secondary-dark);
+  color: var(--color-text-secondary-dark);
+}
+
+[data-theme="dark"] .service-market__toolbar {
+  background: var(--color-bg-secondary-dark);
+}
+
+[data-theme="dark"] .service-market__view-switch {
+  background: var(--color-bg-primary-dark);
+}
+
+[data-theme="dark"] .service-market__view-btn {
+  color: var(--color-text-secondary-dark);
+}
+
+[data-theme="dark"] .service-market__view-btn:hover {
+  background: var(--color-bg-hover-dark);
+  color: var(--color-text-primary-dark);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .service-market {
+    padding: var(--spacing-md);
+  }
+
+  .service-market__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .service-market__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .service-market__toolbar-left {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .service-market__search,
+  .service-market__filter {
+    width: 100% !important;
+  }
+
+  .service-market__list--grid {
+    grid-template-columns: 1fr;
+  }
+}
+

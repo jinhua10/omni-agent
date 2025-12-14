@@ -1,0 +1,133 @@
+/* UserProfile 组件样式 */
+.user-profile {
+  padding: var(--spacing-lg);
+  background: var(--color-bg-primary);
+  min-height: 100vh;
+}
+
+.user-profile__card {
+  margin-bottom: var(--spacing-lg);
+}
+
+.user-profile__header {
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: flex-start;
+}
+
+.user-profile__avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.user-profile__edit-btn {
+  width: 100%;
+}
+
+.user-profile__info {
+  flex: 1;
+}
+
+.user-profile__name {
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.user-profile__email {
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.user-profile__bio {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.user-profile__stats {
+  display: flex;
+  gap: var(--spacing-xl);
+}
+
+.user-profile__stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.user-profile__stat-value {
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.user-profile__stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+/* 统计卡片 */
+.stat-card {
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+.stat-card__value {
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  color: var(--color-primary);
+  display: block;
+}
+
+.stat-card__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+  display: block;
+}
+
+/* 贡献项 */
+.contribution-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+}
+
+.contribution-item__rank {
+  min-width: 40px;
+  font-weight: 600;
+}
+
+.contribution-item__name {
+  min-width: 100px;
+}
+
+/* 图表占位 */
+.statistics-chart__placeholder {
+  text-align: center;
+  padding: var(--spacing-xxl);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-tertiary);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .user-profile__header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .user-profile__stats {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+}
+
