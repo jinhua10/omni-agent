@@ -43,4 +43,10 @@ public class MongoP2PProperties {
      * (Connection timeout in minutes)
      */
     private int connectionTimeoutMinutes = 1440; // 24小时
+
+    /**
+     * 数据传输集合名称
+     * (Data transfer collection name)
+     */
+    private String dataCollectionName = "p2p_data_transfer";
 }

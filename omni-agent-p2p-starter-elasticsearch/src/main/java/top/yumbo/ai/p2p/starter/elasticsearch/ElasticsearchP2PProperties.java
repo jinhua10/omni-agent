@@ -11,4 +11,16 @@ public class ElasticsearchP2PProperties {
     private String knowledgeIndexName = "p2p_shared_knowledge";
     private int codeExpirationMinutes = 10;
     private int connectionTimeoutMinutes = 1440;
+
+    /**
+     * 数据传输索引名称
+     * (Data transfer index name)
+     */
+    private String indexName = "p2p_data_transfer";
+
+    /**
+     * 写入后是否刷新索引
+     * (Refresh index after write)
+     */
+    private boolean refreshAfterWrite = true;
 }

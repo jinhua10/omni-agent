@@ -36,4 +36,9 @@ public class RedisP2PProperties {
      * Key前缀
      */
     private String keyPrefix = "omni:p2p:";
+
+    /**
+     * 数据TTL（小时），0表示不过期
+     */
+    private int dataTtlHours = 0;
 }

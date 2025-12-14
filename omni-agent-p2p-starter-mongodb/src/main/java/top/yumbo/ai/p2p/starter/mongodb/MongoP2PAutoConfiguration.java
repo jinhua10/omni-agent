@@ -6,11 +6,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import top.yumbo.ai.p2p.api.P2PCollaborationService;
+import top.yumbo.ai.p2p.api.P2PDataTransferService;
 
 /**
- * MongoDB P2P协作自动配置
- * (MongoDB P2P Collaboration Auto Configuration)
+ * MongoDB P2P数据传输自动配置
+ * (MongoDB P2P Data Transfer Auto Configuration)
  *
  * @author OmniAgent Team
  * @since 1.0.0
@@ -21,10 +21,10 @@ import top.yumbo.ai.p2p.api.P2PCollaborationService;
 public class MongoP2PAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(P2PCollaborationService.class)
-    public P2PCollaborationService p2pCollaborationService(
+    @ConditionalOnMissingBean(P2PDataTransferService.class)
+    public P2PDataTransferService p2pDataTransferService(
             MongoTemplate mongoTemplate,
             MongoP2PProperties properties) {
-        return new MongoP2PCollaborationService(mongoTemplate, properties);
+        return new MongoP2PDataTransferService(mongoTemplate, properties);
     }
 }

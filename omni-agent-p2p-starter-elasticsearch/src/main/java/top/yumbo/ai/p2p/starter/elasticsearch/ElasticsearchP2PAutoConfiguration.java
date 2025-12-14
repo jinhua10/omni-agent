@@ -6,18 +6,25 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import top.yumbo.ai.p2p.api.P2PCollaborationService;
+import top.yumbo.ai.p2p.api.P2PDataTransferService;
 
+/**
+ * Elasticsearch P2P数据传输自动配置
+ * (Elasticsearch P2P Data Transfer Auto Configuration)
+ *
+ * @author OmniAgent Team
+ * @since 1.0.0
+ */
 @Configuration
 @ConditionalOnClass(ElasticsearchOperations.class)
 @EnableConfigurationProperties(ElasticsearchP2PProperties.class)
 public class ElasticsearchP2PAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(P2PCollaborationService.class)
-    public P2PCollaborationService p2pCollaborationService(
+    @ConditionalOnMissingBean(P2PDataTransferService.class)
+    public P2PDataTransferService p2pDataTransferService(
             ElasticsearchOperations elasticsearchOperations,
             ElasticsearchP2PProperties properties) {
-        return new ElasticsearchP2PCollaborationService(elasticsearchOperations, properties);
+        return new ElasticsearchP2PDataTransferService(elasticsearchOperations, properties);
     }
 }

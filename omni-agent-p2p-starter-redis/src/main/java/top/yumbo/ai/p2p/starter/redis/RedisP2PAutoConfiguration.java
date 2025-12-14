@@ -10,7 +10,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import top.yumbo.ai.p2p.api.P2PCollaborationService;
+import top.yumbo.ai.p2p.api.P2PDataTransferService;
 
 /**
  * Redis P2P协作自动配置
@@ -52,11 +52,11 @@ public class RedisP2PAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(P2PCollaborationService.class)
-    public P2PCollaborationService p2pCollaborationService(
+    @ConditionalOnMissingBean(P2PDataTransferService.class)
+    public P2PDataTransferService p2pDataTransferService(
             RedisTemplate<String, Object> redisTemplate,
             RedisP2PProperties properties,
             ObjectMapper objectMapper) {
-        return new RedisP2PCollaborationService(redisTemplate, properties, objectMapper);
+        return new RedisP2PDataTransferService(redisTemplate, properties, objectMapper);
     }
 }

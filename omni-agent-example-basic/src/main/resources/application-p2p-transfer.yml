@@ -1,0 +1,28 @@
+# P2P Data Transfer Configuration Example
+
+## SQLite → Elasticsearch Transfer
+
+spring:
+  application:
+    name: p2p-transfer-example
+
+# SQLite Configuration (Source)
+omni-agent:
+  p2p:
+    sqlite:
+      database-path: ./data/knowledge.db
+      source-table: knowledge_items
+      batch-size: 100
+      auto-create-table: true
+
+# Elasticsearch Configuration (Target)
+  elasticsearch:
+    uris: http://localhost:9200
+    username: elastic
+    password: changeme
+
+# Logging
+logging:
+  level:
+    top.yumbo.ai: DEBUG
+    org.springframework.jdbc: DEBUG

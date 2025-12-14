@@ -82,6 +82,7 @@
 
         <!-- P2P Starters -->
         <module>omni-agent-p2p-starter-memory</module>
+        <module>omni-agent-p2p-starter-sqlite</module>
         <module>omni-agent-p2p-starter-redis</module>
         <module>omni-agent-p2p-starter-mongodb</module>
         <module>omni-agent-p2p-starter-elasticsearch</module>
