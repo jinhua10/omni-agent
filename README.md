@@ -9,14 +9,17 @@
 
 ## 🎯 架构概述
 
-OmniAgent 是一个基于 Spring Boot Starter 模式的**四维可插拔AI智能体框架**。
+OmniAgent 是一个基于 Spring Boot Starter 模式的**七维可插拔AI智能体框架**。
 
-### 四个可插拔维度
+### 七个可插拔维度
 
-1. **持久化层** (Persistence) - 结构化数据存储
-2. **文档存储层** (Document Storage) - 非结构化数据存储 
-3. **RAG层** (Retrieval) - 文档索引与检索
-4. **AI层** (Intelligence) - LLM推理与Embedding
+1. **持久化层** (Persistence) - 结构化数据存储（问题分类配置）
+2. **文档存储层** (Document Storage) - 非结构化数据存储（分块、图像、PPL）
+3. **RAG层** (Retrieval) - 文档索引与检索（文本+向量搜索）
+4. **AI层** (Intelligence) - LLM推理与Embedding（本地+在线）
+5. **P2P协作层** (Collaboration) - 点对点知识共享（团队协作）⭐ NEW
+6. **投票仲裁层** (Voting) - 知识冲突投票决策（质量保障）⭐ NEW
+7. **行为分析层** (Behavior) - 用户行为分析与态度推断（智能化）⭐ NEW
 
 每个维度都可以独立选择实现，通过 Maven 依赖和配置文件即可切换，无需修改业务代码。
 
