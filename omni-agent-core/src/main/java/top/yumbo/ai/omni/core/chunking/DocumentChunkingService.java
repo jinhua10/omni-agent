@@ -134,11 +134,14 @@ public class DocumentChunkingService {
             chunks.add(chunk);
 
             // 移动到下一个分块（考虑重叠）
-            position = endPosition - overlapSize;
-            if (position >= contentLength) {
+            int nextPosition = endPosition - overlapSize;
+
+            // 确保position不会是负数，且能够前进
+            if (nextPosition <= position || nextPosition >= contentLength) {
                 break;
             }
 
+            position = nextPosition;
             sequence++;
         }
 

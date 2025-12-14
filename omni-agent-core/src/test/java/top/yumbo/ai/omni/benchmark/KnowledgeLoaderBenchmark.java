@@ -45,8 +45,9 @@ public class KnowledgeLoaderBenchmark {
         // Pre-populate cache with some entries
         for (int i = 0; i < 100; i++) {
             String key = "preload-" + i;
-            knowledgeLoader.load(key, k -> 
-                new KnowledgeLoader.KnowledgeEntry(k, "Preload content " + i));
+            int finalI = i;
+            knowledgeLoader.load(key, k ->
+                new KnowledgeLoader.KnowledgeEntry(k, "Preload content " + finalI));
         }
     }
 
@@ -100,8 +101,9 @@ public class KnowledgeLoaderBenchmark {
         // Fill cache to trigger eviction
         for (int i = 0; i < CACHE_SIZE + 10; i++) {
             String key = "evict-" + i;
-            knowledgeLoader.load(key, k -> 
-                new KnowledgeLoader.KnowledgeEntry(k, "Content " + i));
+            int finalI = i;
+            knowledgeLoader.load(key, k ->
+                new KnowledgeLoader.KnowledgeEntry(k, "Content " + finalI));
         }
         
         // Load one more to trigger eviction
