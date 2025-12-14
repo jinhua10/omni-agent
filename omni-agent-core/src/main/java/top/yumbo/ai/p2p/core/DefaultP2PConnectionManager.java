@@ -1,10 +1,8 @@
 package top.yumbo.ai.p2p.core;
 
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.p2p.api.P2PConnection;
-import top.yumbo.ai.p2p.api.P2PConnectionManager;
-import top.yumbo.ai.p2p.api.P2PDataTransferService;
-import top.yumbo.ai.p2p.api.P2PTransferBridge;
+import org.springframework.beans.factory.annotation.Autowired;
+import top.yumbo.ai.p2p.api.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -27,6 +25,12 @@ public class DefaultP2PConnectionManager implements P2PConnectionManager {
     private final Map<String, P2PConnectionImpl> connections = new ConcurrentHashMap<>();
     private final Map<String, P2PDataTransferService> serviceRegistry = new ConcurrentHashMap<>();
     private final P2PTransferBridge transferBridge;
+
+    @Autowired(required = false)
+    private P2PSecureHandshake secureHandshake;
+
+    @Autowired(required = false)
+    private P2PEndpointDiscovery endpointDiscovery;
 
     public DefaultP2PConnectionManager(P2PTransferBridge transferBridge) {
         this.transferBridge = transferBridge;
@@ -82,6 +86,79 @@ public class DefaultP2PConnectionManager implements P2PConnectionManager {
         connections.put(connectionId, connection);
 
         log.info("P2P connection {} established successfully", connectionId);
+
+        return connection;
+    }
+
+    @Override
+    public P2PConnection establishWithHandshake(
+            P2PConnection.EndpointInfo sourceEndpoint,
+            P2PConnection.EndpointInfo targetEndpoint,
+            String connectionCode,
+            Map<String, Object> config) {
+
+        log.info("通过安全握手建立连接: {} → {} (使用连接码)",
+                sourceEndpoint.getEndpointId(),
+                targetEndpoint.getEndpointId());
+
+        if (secureHandshake == null) {
+            throw new IllegalStateException("P2PSecureHandshake服务未配置");
+        }
+
+        // 步骤1: 发起握手
+        P2PSecureHandshake.HandshakeSession session = secureHandshake.initiateHandshake(
+                sourceEndpoint,
+                targetEndpoint,
+                connectionCode
+        );
+
+        log.info("握手会话创建: {}", session.getSessionId());
+
+        // 步骤2: 接受握手（验证连接码）
+        P2PSecureHandshake.HandshakeResult result = secureHandshake.acceptHandshake(
+                session.getSessionId(),
+                connectionCode
+        );
+
+        if (!result.isSuccess()) {
+            throw new SecurityException("握手失败: " + result.getFailureReason());
+        }
+
+        log.info("✓ 握手成功，共享密钥已生成");
+
+        // 步骤3: 使用握手结果建立安全连接
+        Map<String, Object> secureConfig = config != null ? new HashMap<>(config) : new HashMap<>();
+        secureConfig.put("handshake_session_id", session.getSessionId());
+        secureConfig.put("shared_secret", result.getSharedSecret());
+        secureConfig.put("secure_connection", true);
+
+        // 验证服务是否注册
+        P2PDataTransferService sourceService = getService(sourceEndpoint.getStorageType());
+        P2PDataTransferService targetService = getService(targetEndpoint.getStorageType());
+
+        if (sourceService == null) {
+            throw new IllegalArgumentException(
+                    "源服务未注册: " + sourceEndpoint.getStorageType());
+        }
+
+        if (targetService == null) {
+            throw new IllegalArgumentException(
+                    "目标服务未注册: " + targetEndpoint.getStorageType());
+        }
+
+        // 创建安全连接
+        P2PConnectionImpl connection = new P2PConnectionImpl(
+                result.getConnectionId(),
+                sourceEndpoint,
+                targetEndpoint,
+                sourceService,
+                targetService,
+                secureConfig
+        );
+
+        connections.put(result.getConnectionId(), connection);
+
+        log.info("✓ 安全P2P连接建立成功: {}", result.getConnectionId());
 
         return connection;
     }

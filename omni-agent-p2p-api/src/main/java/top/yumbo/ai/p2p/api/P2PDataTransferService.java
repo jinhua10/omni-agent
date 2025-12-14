@@ -1,5 +1,7 @@
 package top.yumbo.ai.p2p.api;
 
+import lombok.Data;
+
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +65,7 @@ public interface P2PDataTransferService {
     /**
      * 传输结果
      */
+    @Data
     class TransferResult {
         private int totalRecords;
         private int successCount;
@@ -77,16 +80,5 @@ public interface P2PDataTransferService {
             this.durationMs = durationMs;
         }
 
-        // Getters and Setters
-        public int getTotalRecords() { return totalRecords; }
-        public void setTotalRecords(int totalRecords) { this.totalRecords = totalRecords; }
-        public int getSuccessCount() { return successCount; }
-        public void setSuccessCount(int successCount) { this.successCount = successCount; }
-        public int getFailureCount() { return failureCount; }
-        public void setFailureCount(int failureCount) { this.failureCount = failureCount; }
-        public long getDurationMs() { return durationMs; }
-        public void setDurationMs(long durationMs) { this.durationMs = durationMs; }
-        public List<String> getErrors() { return errors; }
-        public void setErrors(List<String> errors) { this.errors = errors; }
     }
 }

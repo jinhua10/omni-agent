@@ -32,6 +32,23 @@ public interface P2PConnectionManager {
     );
 
     /**
+     * 通过安全握手建立端到端连接
+     * (Establish connection through secure handshake)
+     *
+     * @param sourceEndpoint 源端点信息
+     * @param targetEndpoint 目标端点信息
+     * @param connectionCode 连接码
+     * @param config 连接配置
+     * @return 连接对象
+     */
+    P2PConnection establishWithHandshake(
+        P2PConnection.EndpointInfo sourceEndpoint,
+        P2PConnection.EndpointInfo targetEndpoint,
+        String connectionCode,
+        Map<String, Object> config
+    );
+
+    /**
      * 通过连接ID获取连接
      * (Get connection by ID)
      *
