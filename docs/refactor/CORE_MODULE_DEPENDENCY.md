@@ -599,34 +599,75 @@ omni-agent-common (公共层)
 
 ## 重构优先级建议
 
-### 🔴 P0 - 立即重构（架构性问题）
-1. **持久化模块分离** - `hope/persistence` → `omni-agent-persistence-api`
-   - 影响: 高
-   - 复杂度: 中
-   - 收益: 解耦核心模块
+### ✅ 已完成的重构（2025-12-15）
+1. ✅ **持久化模块分离** - `omni-agent-persistence-api` + 6个Starter
+   - 状态: 完成
+   - 成果: 完全解耦，支持Memory/H2/SQLite/Redis/MongoDB/ES
 
-2. **RAG 接口标准化** - 定义统一的 RAG API
-   - 影响: 高
-   - 复杂度: 高
-   - 收益: 模块可插拔
+2. ✅ **RAG 接口标准化** - `omni-agent-rag-api` + 6个Starter
+   - 状态: 完成
+   - 成果: 统一RAG接口，支持File/H2/SQLite/Redis/MongoDB/ES
 
-### 🟡 P1 - 近期重构（结构性改进）
-1. **文档分块模块整合**
-   - 清理 `optimization/DocumentChunker` 
-   - 统一到 `chunking/*`
+3. ✅ **文档存储接口标准化** - `omni-agent-document-storage-api` + 6个Starter
+   - 状态: 完成
+   - 成果: 支持File/MongoDB/Redis/ES/S3/MinIO
+
+4. ✅ **AI 接口标准化** - `omni-agent-ai-api` + 2个Starter
+   - 状态: 完成
+   - 成果: 支持Ollama/Online-API
+
+5. ✅ **P2P 协作层** - `omni-agent-p2p-api` + 6个Starter ⭐
+   - 状态: 完成
+   - 成果: 端点发现、安全握手、数据传输
+
+6. ✅ **投票仲裁层** - `omni-agent-voting-api` + 4个Starter ⭐
+   - 状态: 完成
+   - 成果: 多角色投票、冲突解决
+
+7. ✅ **行为分析层** - `omni-agent-behavior-api` + 1个Starter ⭐
+   - 状态: 完成
+   - 成果: 用户行为分析、态度推断
+
+### 🔴 P0 - 当前优先级（质量保障）
+1. **扩充单元测试** - 从25%提升到80%+
+   - 影响: 高
+   - 当前: 46个测试用例
+   - 目标: 覆盖所有核心模块
+
+2. **更新主README.md** - 完善文档
+   - 影响: 高
+   - 状态: ✅ 已完成
+
+### 🟡 P1 - 近期优化（性能提升）
+1. **知识库加载器** - 性能优化关键
+   - LRU缓存机制
+   - 预加载策略
+   - 加载统计
    
-2. **配置管理统一**
-   - 整合各模块配置
-   - 使用 Spring Boot Configuration Properties
+2. **集成测试** - 跨模块测试
+   - P2P端到端测试
+   - Behavior集成测试
+   - Voting集成测试
 
-3. **角色系统优化**
-   - 简化角色检测逻辑
-   - 提升知识聚合性能
+3. **性能基准测试** - 各存储后端性能对比
+   - 数据传输速度测试
+   - 内存占用分析
 
-### 🟢 P2 - 长期优化（功能性增强）
-1. **HOPE 系统文档化**
-2. **监控指标完善**
-3. **游戏化功能增强**
+### 🟢 P2 - 长期规划（功能增强）
+1. **Behavior Starter扩展**
+   - Redis实现
+   - MongoDB实现
+   - Elasticsearch实现
+
+2. **可视化仪表板**
+   - 行为分析可视化
+   - P2P连接监控
+   - 投票统计展示
+
+3. **文档完善**
+   - 快速开始教程
+   - 最佳实践指南
+   - 故障排查文档
 
 ---
 
