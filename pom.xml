@@ -73,9 +73,12 @@
         <module>omni-agent-ai-starter-ollama</module>
         <module>omni-agent-ai-starter-online-api</module>
 
-        <!-- 应用示例模块 (Application Examples) -->
+        <!-- 应用示例 (Application Examples) -->
         <module>omni-agent-example-basic</module>
         <module>omni-agent-example-production</module>
+
+        <!-- P2P Starters -->
+        <module>omni-agent-p2p-starter-memory</module>
     </modules>
 
     <!-- 开发者信息 -->
