@@ -83,10 +83,14 @@
         <!-- P2P Starters -->
         <module>omni-agent-p2p-starter-memory</module>
         <module>omni-agent-p2p-starter-redis</module>
+        <module>omni-agent-p2p-starter-mongodb</module>
+        <module>omni-agent-p2p-starter-elasticsearch</module>
 
         <!-- Voting Starters -->
         <module>omni-agent-voting-starter-memory</module>
         <module>omni-agent-voting-starter-redis</module>
+        <module>omni-agent-voting-starter-mongodb</module>
+        <module>omni-agent-voting-starter-elasticsearch</module>
     </modules>
 
     <!-- 开发者信息 -->
