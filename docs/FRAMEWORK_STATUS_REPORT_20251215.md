@@ -472,7 +472,7 @@ Application层 (业务应用)
 | **代码质量** | ⭐⭐⭐⭐⭐ | 100% | 编译通过,接口清晰,无耦合 |
 | **功能完整性** | ⭐⭐⭐⭐⭐ | 95% | 7/7维度100%完成！|
 | **文档完整性** | ⭐⭐⭐⭐☆ | 85% | 详细文档,需更新最新进展 |
-| **测试覆盖** | ⭐⭐☆☆☆ | 20% | 缺少单元测试和集成测试 |
+| **测试覆盖** | ⭐⭐☆☆☆ | 25% | 初始测试套件已创建（46个用例） |
 | **生产就绪度** | ⭐⭐⭐⭐☆ | 80% | 核心功能完备,需测试和优化 |
 
 ---
@@ -489,15 +489,22 @@ Application层 (业务应用)
 - **总代码量**: ~1,775行 Java代码 + ~600行文档
 - **优先级**: ✅ 已完成
 
-#### 2. 单元测试
+#### 2. 🔄 单元测试 - **进行中**
 - **目标**: 所有模块达到80%+测试覆盖率
-- **工作量**: ~5000行测试代码
+- **当前进度**: ~15%（初始测试套件已创建）
+- **已完成**:
+  - ✅ Behavior Analysis测试（24个用例，~290行）
+  - ✅ P2P Endpoint Discovery测试（10个用例，~120行）
+  - ✅ P2P Secure Handshake测试（12个用例，~200行）
+  - ✅ 测试框架搭建（JUnit 5 + Spring Boot Test）
+- **测试代码量**: ~610行（目标~5000行）
 - **优先级**: 🔴 P0
-- **包含**:
-  - API层接口测试
-  - Core层实现测试
-  - Starter层自动配置测试
-  - P2P连接管理测试
+- **剩余工作**:
+  - ⏳ P2P Connection Manager测试
+  - ⏳ Voting Service测试
+  - ⏳ HOPE系统测试
+  - ⏳ RAG/AI/Persistence服务测试
+  - ⏳ 集成测试套件
 
 #### 3. 文档更新
 - **目标**: 更新README.md至最新状态
@@ -938,6 +945,7 @@ omni-agent/
 - [x] Behavior API接口定义 ⭐ **NEW**
 - [x] Behavior Memory Starter实现 ⭐ **NEW**
 - [x] Behavior完整使用文档 ⭐ **NEW**
+- [x] 初始单元测试套件（3个测试类，46个用例）⭐ **NEW**
 
 #### 🔲 待办事项
 - [ ] **更新README.md** (2小时)
@@ -948,11 +956,12 @@ omni-agent/
   - 更新时间戳至2025-12-15
 
 
-- [ ] **编写P2P连接管理单元测试** (4小时)
-  - DefaultP2PConnectionManager测试
-  - DefaultP2PEndpointDiscovery测试
-  - DefaultP2PSecureHandshake测试
-  - 目标覆盖率: 80%+
+- [x] **编写P2P连接管理单元测试** (4小时) - **部分完成**
+  - ⏳ DefaultP2PConnectionManager测试（待完成）
+  - ✅ DefaultP2PEndpointDiscovery测试（10个用例）
+  - ✅ DefaultP2PSecureHandshake测试（12个用例）
+  - ✅ MemoryBehaviorAnalysisService测试（24个用例）
+  - 当前覆盖率: ~15%（目标80%+）
 
 ---
 
