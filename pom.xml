@@ -99,6 +99,8 @@
 
         <!-- Behavior Starters -->
         <module>omni-agent-behavior-starter-memory</module>
+        <module>omni-agent-behavior-starter-redis</module>
+        <module>omni-agent-behavior-starter-mongodb</module>
     </modules>
 
     <!-- 开发者信息 -->

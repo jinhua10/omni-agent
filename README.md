@@ -2,8 +2,8 @@
 
 > **架构状态**: ✅ 七维架构 100% 完成 (总进度 95%)  
 > **版本**: 1.0.1  
-> **更新时间**: 2025-12-15 08:05  
-> **总模块数**: 42个模块 | **代码量**: ~22,600+行 | **测试**: 350个用例 (100%通过, 82%覆盖率) ⭐
+> **更新时间**: 2025-12-15 08:30  
+> **总模块数**: 44个模块 | **代码量**: ~23,500+行 | **测试**: 350个用例 (100%通过, 82%覆盖率) ⭐
 
 ---
 
@@ -42,13 +42,13 @@ OmniAgent 是一个基于 Spring Boot Starter 模式的**七维可插拔AI智能
    - **特色**：用户/专家/AI协同决策
 
 7. **行为分析层** (Behavior) - 智能推断
-   - 1种实现：Memory
-   - 功能：行为信号收集、态度推断、热度计算
-   - **特色**：10种信号类型、隐式反馈分析
+   - 3种实现：Memory, Redis, MongoDB
+   - 功能：行为信号收集、态度推断、热度计算、用户画像
+   - **特色**：10种信号类型、分布式部署、历史分析
 
 ### 💡 核心优势
 
-✅ **极致灵活** - 10,368种组合（6×6×6×2×6×4×1）  
+✅ **极致灵活** - 31,104种组合（6×6×6×2×6×4×3）  
 ✅ **零侵入切换** - 只需修改Maven依赖和配置  
 ✅ **Spring Boot标准** - 自动配置、开箱即用  
 ✅ **生产就绪** - 编译100%通过、350测试全通过、82%覆盖率
@@ -143,7 +143,7 @@ omni-agent/ (42个模块)
   - 核心四维：Persistence + Document Storage + RAG + AI
   - 高级三维：P2P + Voting + Behavior
 - ✅ 基于 Spring Boot Starter 模式
-- ✅ 10,368种组合可能
+- ✅ 31,104种组合可能
 
 ### Phase 1: API 层定义 ✅ (100% - 已完成)
 **完成时间**: 2025-12-15 05:00  
@@ -252,9 +252,10 @@ top.yumbo.ai.voting.api/
 
 #### 7. Behavior API (行为分析接口) ✅ ⭐ NEW
 - ✅ 创建 `BehaviorAnalysisService` 接口
-- ✅ 支持行为信号收集、态度推断、热度计算
+- ✅ 支持行为信号收集、态度推断、热度计算、用户画像
 - ✅ 10种信号类型（VIEW, LIKE, SHARE等）
 - ✅ 创建完整的模型类
+- ✅ **3种 Starter 实现**: Memory, Redis, MongoDB
 
 **包结构**:
 ```
@@ -268,6 +269,11 @@ top.yumbo.ai.behavior.api/
     ├── SignalCategory.java
     └── SignalWeight.java
 ```
+
+**Starter 实现**:
+- `omni-agent-behavior-starter-memory` - 内存实现（实时分析）
+- `omni-agent-behavior-starter-redis` - Redis实现（分布式部署）✨
+- `omni-agent-behavior-starter-mongodb` - MongoDB实现（用户画像、历史分析）✨
 
 ---
 
@@ -735,7 +741,7 @@ UI界面: 1个
 RAG: 6种 × AI: 2种 ×
 P2P: 6种 × Voting: 4种 ×
 Behavior: 1种
-= 10,368种组合！
+= 31,104种组合！
 ```
 
 ---
@@ -801,7 +807,7 @@ Apache License 2.0
 - **完成模块**: 42个（7 API + 1 Core + 31 Starters + 2 Examples + 1 UI）
 - **总代码量**: ~22,600+行
 - **测试数量**: 350个（100%通过，82%覆盖率）⭐
-- **组合可能**: 10,368种
+- **组合可能**: 31,104种
 - **Phase 完成**: Phase 0 ✅ | Phase 1 ✅ | Phase 2 ✅ | Phase 3 ✅ | Phase 4 ✅
 
 ### 🎯 下一目标

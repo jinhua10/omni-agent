@@ -77,12 +77,12 @@
 │            │  │            │  │          │  │          │  │          │  │          │  │          │
 │✅ memory   │  │✅ file     │  │✅ file   │  │✅ memory │  │✅ memory │  │✅ memory │  │✅ ollama │
 │✅ h2       │  │✅ mongodb  │  │✅ h2     │  │✅ h2     │  │✅ redis  │  │          │  │✅ online │
-│✅ sqlite   │  │✅ redis    │  │✅ sqlite │  │✅ sqlite │  │✅ mongodb│  │          │  │          │
-│✅ redis    │  │✅ elastic  │  │✅ redis  │  │✅ redis  │  │✅ elastic│  │          │  │          │
+│✅ sqlite   │  │✅ redis    │  │✅ sqlite │  │✅ sqlite │  │✅ mongodb│  │✅ redis  │  │          │
+│✅ redis    │  │✅ elastic  │  │✅ redis  │  │✅ redis  │  │✅ elastic│  │✅ mongodb│  │          │
 │✅ mongodb  │  │✅ s3       │  │✅ mongodb│  │✅ mongodb│  │          │  │          │  │          │
 │✅ elastic  │  │✅ minio    │  │✅ elastic│  │✅ elastic│  │          │  │          │  │          │
 │            │  │            │  │          │  │          │  │          │  │          │  │          │
-│6种实现     │  │6种实现     │  │6种实现   │  │6种实现   │  │4种实现   │  │1种实现   │  │2种实现   │
+│6种实现     │  │6种实现     │  │6种实现   │  │6种实现   │  │4种实现   │  │3种实现   │  │2种实现   │
 │100%完成    │  │100%完成    │  │100%完成  │  │100%完成  │  │100%完成  │  │100%完成  │  │100%完成  │
 └────────────┘  └────────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘
 
@@ -116,8 +116,8 @@
      • AI: 2 种选择 ✅
      • P2P协作: 6 种选择 ✅ **NEW**
      • 投票仲裁: 4 种选择 ✅ **NEW**
-     • 行为分析: 1 种选择 ✅ **NEW**
-     = 6 × 6 × 6 × 2 × 6 × 4 × 1 = 10,368 种组合！
+     • 行为分析: 3 种选择 ✅ **NEW** (Memory/Redis/MongoDB)
+     = 6 × 6 × 6 × 2 × 6 × 4 × 3 = 31,104 种组合！
 
   💡 切换无需改代码
      只需修改 pom.xml 依赖和 application.yml 配置
