@@ -187,68 +187,148 @@ public class DemoController {
      * 实时返回AI生成的每个token
      */
     @GetMapping(value = "/ai/chat/stream", produces = "text/event-stream")
-    public reactor.core.publisher.Flux<String> chatStream(@RequestParam String message) {
-        try {
-            // 构建简单的消息列表
-            List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
-                    top.yumbo.ai.ai.api.model.ChatMessage.builder()
-                            .role("user")
-                            .content(message)
-                            .build()
-            );
+    public SseEmitter chatStream(@RequestParam String message) {
+        log.info("AI流式对话: message={}", message);
 
-            // 返回流式响应，每个token作为SSE事件发送
-            return aiService.chatFlux(messages)
-                    .map(token -> "data: " + token + "\n\n")
-                    .onErrorResume(e -> reactor.core.publisher.Flux.just(
-                            "data: [ERROR] " + e.getMessage() + "\n\n"
-                    ));
-        } catch (Exception e) {
-            return reactor.core.publisher.Flux.just(
-                    "data: [ERROR] " + e.getMessage() + "\n\n"
-            );
-        }
+        SseEmitter emitter = new SseEmitter(300000L);
+
+        new Thread(() -> {
+            try {
+                // 构建简单的消息列表
+                List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
+                        top.yumbo.ai.ai.api.model.ChatMessage.builder()
+                                .role("user")
+                                .content(message)
+                                .build()
+                );
+
+                // 流式发送 AI 响应
+                aiService.chatFlux(messages)
+                        .doOnNext(token -> {
+                            try {
+                                emitter.send(SseEmitter.event().data(token));
+                                log.debug("📤 发送 token: [{}]", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送 token 失败: {}", e.getMessage());
+                                emitter.completeWithError(e);
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ AI 流式对话完成");
+                            emitter.complete();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ AI 流式对话失败: {}", e.getMessage());
+                            try {
+                                emitter.send(SseEmitter.event().data("[ERROR] " + e.getMessage()));
+                            } catch (Exception ex) {
+                                log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                            }
+                            emitter.completeWithError(e);
+                        })
+                        .subscribe();
+            } catch (Exception e) {
+                log.error("❌ AI 流式对话初始化失败", e);
+                try {
+                    emitter.send(SseEmitter.event().data("[ERROR] " + e.getMessage()));
+                    emitter.completeWithError(e);
+                } catch (Exception ex) {
+                    log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                }
+            }
+        }).start();
+
+        emitter.onTimeout(() -> {
+            log.warn("⏰ SSE 连接超时");
+            emitter.complete();
+        });
+
+        emitter.onError(e -> log.error("❌ SSE 连接错误: {}", e.getMessage()));
+        emitter.onCompletion(() -> log.info("✅ SSE 连接关闭"));
+
+        return emitter;
     }
 
     /**
      * AI 流式对话 (POST方式，支持更复杂的参数) ⭐ NEW
      */
     @PostMapping(value = "/ai/chat/stream", produces = "text/event-stream")
-    public reactor.core.publisher.Flux<String> chatStreamPost(@RequestBody StreamChatRequest request) {
-        try {
-            // 构建消息列表
-            List<top.yumbo.ai.ai.api.model.ChatMessage> messages = new java.util.ArrayList<>();
+    public SseEmitter chatStreamPost(@RequestBody StreamChatRequest request) {
+        log.info("AI流式对话(POST): message={}", request.getMessage());
 
-            // 添加系统提示（如果有）
-            if (request.getSystemPrompt() != null && !request.getSystemPrompt().isEmpty()) {
+        SseEmitter emitter = new SseEmitter(300000L);
+
+        new Thread(() -> {
+            try {
+                // 构建消息列表
+                List<top.yumbo.ai.ai.api.model.ChatMessage> messages = new java.util.ArrayList<>();
+
+                // 添加系统提示（如果有）
+                if (request.getSystemPrompt() != null && !request.getSystemPrompt().isEmpty()) {
+                    messages.add(top.yumbo.ai.ai.api.model.ChatMessage.builder()
+                            .role("system")
+                            .content(request.getSystemPrompt())
+                            .build());
+                }
+
+                // 添加历史消息（如果有）
+                if (request.getHistory() != null) {
+                    messages.addAll(request.getHistory());
+                }
+
+                // 添加当前用户消息
                 messages.add(top.yumbo.ai.ai.api.model.ChatMessage.builder()
-                        .role("system")
-                        .content(request.getSystemPrompt())
+                        .role("user")
+                        .content(request.getMessage())
                         .build());
+
+                // 流式发送 AI 响应
+                aiService.chatFlux(messages)
+                        .doOnNext(token -> {
+                            try {
+                                emitter.send(SseEmitter.event().data(escapeJson(token)));
+                                log.debug("📤 发送 token: [{}]", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送 token 失败: {}", e.getMessage());
+                                emitter.completeWithError(e);
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ AI 流式对话完成");
+                            emitter.complete();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ AI 流式对话失败: {}", e.getMessage());
+                            try {
+                                emitter.send(SseEmitter.event()
+                                        .data("{\"error\": \"" + escapeJson(e.getMessage()) + "\"}"));
+                            } catch (Exception ex) {
+                                log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                            }
+                            emitter.completeWithError(e);
+                        })
+                        .subscribe();
+            } catch (Exception e) {
+                log.error("❌ AI 流式对话初始化失败", e);
+                try {
+                    emitter.send(SseEmitter.event()
+                            .data("{\"error\": \"" + escapeJson(e.getMessage()) + "\"}"));
+                    emitter.completeWithError(e);
+                } catch (Exception ex) {
+                    log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                }
             }
+        }).start();
 
-            // 添加历史消息（如果有）
-            if (request.getHistory() != null) {
-                messages.addAll(request.getHistory());
-            }
+        emitter.onTimeout(() -> {
+            log.warn("⏰ SSE 连接超时");
+            emitter.complete();
+        });
 
-            // 添加当前用户消息
-            messages.add(top.yumbo.ai.ai.api.model.ChatMessage.builder()
-                    .role("user")
-                    .content(request.getMessage())
-                    .build());
+        emitter.onError(e -> log.error("❌ SSE 连接错误: {}", e.getMessage()));
+        emitter.onCompletion(() -> log.info("✅ SSE 连接关闭"));
 
-            // 返回流式响应
-            return aiService.chatFlux(messages)
-                    .map(token -> "data: " + escapeJson(token) + "\n\n")
-                    .onErrorResume(e -> reactor.core.publisher.Flux.just(
-                            "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
-                    ));
-        } catch (Exception e) {
-            return reactor.core.publisher.Flux.just(
-                    "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
-            );
-        }
+        return emitter;
     }
 
     /**
@@ -276,24 +356,66 @@ public class DemoController {
      * AI 流式文本生成 (Server-Sent Events) ⭐ NEW
      */
     @PostMapping(value = "/ai/generate/stream", produces = "text/event-stream")
-    public reactor.core.publisher.Flux<String> generateStream(@RequestBody GenerateRequest request) {
-        try {
-            top.yumbo.ai.ai.api.model.AIRequest aiRequest = top.yumbo.ai.ai.api.model.AIRequest.builder()
-                    .prompt(request.getPrompt())
-                    .temperature(request.getTemperature() != null ? request.getTemperature() : 0.7f)
-                    .maxTokens(request.getMaxTokens() != null ? request.getMaxTokens() : 2048)
-                    .build();
+    public SseEmitter generateStream(@RequestBody GenerateRequest request) {
+        log.info("AI流式生成: prompt={}", request.getPrompt());
 
-            return aiService.generateFlux(aiRequest)
-                    .map(token -> "data: " + escapeJson(token) + "\n\n")
-                    .onErrorResume(e -> reactor.core.publisher.Flux.just(
-                            "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
-                    ));
-        } catch (Exception e) {
-            return reactor.core.publisher.Flux.just(
-                    "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
-            );
-        }
+        SseEmitter emitter = new SseEmitter(300000L);
+
+        new Thread(() -> {
+            try {
+                top.yumbo.ai.ai.api.model.AIRequest aiRequest = top.yumbo.ai.ai.api.model.AIRequest.builder()
+                        .prompt(request.getPrompt())
+                        .temperature(request.getTemperature() != null ? request.getTemperature() : 0.7f)
+                        .maxTokens(request.getMaxTokens() != null ? request.getMaxTokens() : 2048)
+                        .build();
+
+                // 流式发送 AI 响应
+                aiService.generateFlux(aiRequest)
+                        .doOnNext(token -> {
+                            try {
+                                emitter.send(SseEmitter.event().data(escapeJson(token)));
+                                log.debug("📤 发送 token: [{}]", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送 token 失败: {}", e.getMessage());
+                                emitter.completeWithError(e);
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ AI 流式生成完成");
+                            emitter.complete();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ AI 流式生成失败: {}", e.getMessage());
+                            try {
+                                emitter.send(SseEmitter.event()
+                                        .data("{\"error\": \"" + escapeJson(e.getMessage()) + "\"}"));
+                            } catch (Exception ex) {
+                                log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                            }
+                            emitter.completeWithError(e);
+                        })
+                        .subscribe();
+            } catch (Exception e) {
+                log.error("❌ AI 流式生成初始化失败", e);
+                try {
+                    emitter.send(SseEmitter.event()
+                            .data("{\"error\": \"" + escapeJson(e.getMessage()) + "\"}"));
+                    emitter.completeWithError(e);
+                } catch (Exception ex) {
+                    log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                }
+            }
+        }).start();
+
+        emitter.onTimeout(() -> {
+            log.warn("⏰ SSE 连接超时");
+            emitter.complete();
+        });
+
+        emitter.onError(e -> log.error("❌ SSE 连接错误: {}", e.getMessage()));
+        emitter.onCompletion(() -> log.info("✅ SSE 连接关闭"));
+
+        return emitter;
     }
 
     /**
@@ -556,54 +678,92 @@ public class DemoController {
      * 流式问答
      */
     @GetMapping(value = "/qa/ask/stream", produces = "text/event-stream")
-    public reactor.core.publisher.Flux<String> askStream(
+    public SseEmitter askStream(
             @RequestParam String question,
             @RequestParam(defaultValue = "rag") String knowledgeMode,
             @RequestParam(required = false) String roleName) {
 
-        try {
-            List<SearchResult> references;
-            String prompt;
+        log.info("流式问答: question={}, mode={}, role={}", question, knowledgeMode, roleName);
 
-            if ("none".equals(knowledgeMode)) {
-                // 直接LLM
-                prompt = question;
-            } else if ("role".equals(knowledgeMode) && roleName != null) {
-                // 角色知识库（getRole 返回 Role，不是 Optional）
-                top.yumbo.ai.omni.core.role.Role role = roleService.getRole(roleName);
-                references = ragService.searchByText(question, 5);
-                String context = buildRoleContext(references);
-                prompt = String.format(
-                        "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                        role.getName(), role.getDescription(), context, question
+        SseEmitter emitter = new SseEmitter(300000L);
+
+        new Thread(() -> {
+            try {
+                List<SearchResult> references;
+                String prompt;
+
+                if ("none".equals(knowledgeMode)) {
+                    // 直接LLM
+                    prompt = question;
+                } else if ("role".equals(knowledgeMode) && roleName != null) {
+                    // 角色知识库（getRole 返回 Role，不是 Optional）
+                    top.yumbo.ai.omni.core.role.Role role = roleService.getRole(roleName);
+                    references = ragService.searchByText(question, 5);
+                    String context = buildRoleContext(references);
+                    prompt = String.format(
+                            "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                            role.getName(), role.getDescription(), context, question
+                    );
+                } else {
+                    // 传统RAG
+                    references = ragService.searchByText(question, 5);
+                    String context = buildContext(references);
+                    prompt = String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", context, question);
+                }
+
+                // 构建消息
+                List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
+                        top.yumbo.ai.ai.api.model.ChatMessage.builder()
+                                .role("user")
+                                .content(prompt)
+                                .build()
                 );
-            } else {
-                // 传统RAG
-                references = ragService.searchByText(question, 5);
-                String context = buildContext(references);
-                prompt = String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", context, question);
+
+                // 流式发送 AI 响应
+                aiService.chatFlux(messages)
+                        .doOnNext(token -> {
+                            try {
+                                emitter.send(SseEmitter.event().data(token));
+                                log.debug("📤 发送 token: [{}]", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送 token 失败: {}", e.getMessage());
+                                emitter.completeWithError(e);
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ 流式问答完成");
+                            emitter.complete();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ 流式问答失败: {}", e.getMessage());
+                            try {
+                                emitter.send(SseEmitter.event().data("[ERROR] " + e.getMessage()));
+                            } catch (Exception ex) {
+                                log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                            }
+                            emitter.completeWithError(e);
+                        })
+                        .subscribe();
+            } catch (Exception e) {
+                log.error("❌ 流式问答初始化失败", e);
+                try {
+                    emitter.send(SseEmitter.event().data("[ERROR] " + e.getMessage()));
+                    emitter.completeWithError(e);
+                } catch (Exception ex) {
+                    log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                }
             }
+        }).start();
 
-            // 构建消息
-            List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
-                    top.yumbo.ai.ai.api.model.ChatMessage.builder()
-                            .role("user")
-                            .content(prompt)
-                            .build()
-            );
+        emitter.onTimeout(() -> {
+            log.warn("⏰ SSE 连接超时");
+            emitter.complete();
+        });
 
-            return aiService.chatFlux(messages)
-                    .map(token -> "data: " + token + "\n\n")
-                    .onErrorResume(e -> reactor.core.publisher.Flux.just(
-                            "data: [ERROR] " + e.getMessage() + "\n\n"
-                    ));
+        emitter.onError(e -> log.error("❌ SSE 连接错误: {}", e.getMessage()));
+        emitter.onCompletion(() -> log.info("✅ SSE 连接关闭"));
 
-        } catch (Exception e) {
-            log.error("流式问答失败", e);
-            return reactor.core.publisher.Flux.just(
-                    "data: [ERROR] " + e.getMessage() + "\n\n"
-            );
-        }
+        return emitter;
     }
 
     /**

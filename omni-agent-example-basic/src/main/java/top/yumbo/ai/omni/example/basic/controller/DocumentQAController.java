@@ -64,21 +64,64 @@ public class DocumentQAController {
      * GET /api/document-qa/query/stream
      */
     @GetMapping(value = "/query/stream", produces = "text/event-stream")
-    public reactor.core.publisher.Flux<String> queryDocumentStream(
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter queryDocumentStream(
             @RequestParam String documentId,
             @RequestParam String question) {
 
-        try {
-            log.info("收到流式文档问答请求: documentId={}, question={}", documentId, question);
+        log.info("收到流式文档问答请求: documentId={}, question={}", documentId, question);
 
-            return documentQAService.queryDocumentStream(documentId, question);
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter =
+            new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(300000L);
 
-        } catch (Exception e) {
-            log.error("流式文档问答失败", e);
-            return reactor.core.publisher.Flux.just(
-                "data: [ERROR] " + e.getMessage() + "\n\n"
-            );
-        }
+        new Thread(() -> {
+            try {
+                documentQAService.queryDocumentStream(documentId, question)
+                        .doOnNext(token -> {
+                            try {
+                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                        .data(token));
+                                log.debug("📤 发送 token: [{}]", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送 token 失败: {}", e.getMessage());
+                                emitter.completeWithError(e);
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ 流式文档问答完成");
+                            emitter.complete();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ 流式文档问答失败: {}", e.getMessage());
+                            try {
+                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                        .data("[ERROR] " + e.getMessage()));
+                            } catch (Exception ex) {
+                                log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                            }
+                            emitter.completeWithError(e);
+                        })
+                        .subscribe();
+            } catch (Exception e) {
+                log.error("❌ 流式文档问答初始化失败", e);
+                try {
+                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                            .data("[ERROR] " + e.getMessage()));
+                    emitter.completeWithError(e);
+                } catch (Exception ex) {
+                    log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                }
+            }
+        }).start();
+
+        emitter.onTimeout(() -> {
+            log.warn("⏰ SSE 连接超时");
+            emitter.complete();
+        });
+
+        emitter.onError(e -> log.error("❌ SSE 连接错误: {}", e.getMessage()));
+        emitter.onCompletion(() -> log.info("✅ SSE 连接关闭"));
+
+        return emitter;
     }
 
     /**
@@ -86,24 +129,67 @@ public class DocumentQAController {
      * POST /api/document-qa/query/stream
      */
     @PostMapping(value = "/query/stream", produces = "text/event-stream")
-    public reactor.core.publisher.Flux<String> queryDocumentStreamPost(
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter queryDocumentStreamPost(
             @RequestBody DocumentQARequest request) {
 
-        try {
-            log.info("收到流式文档问答请求(POST): documentId={}, question={}",
+        log.info("收到流式文档问答请求(POST): documentId={}, question={}",
                 request.getDocumentId(), request.getQuestion());
 
-            return documentQAService.queryDocumentStream(
-                request.getDocumentId(),
-                request.getQuestion()
-            );
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter =
+            new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(300000L);
 
-        } catch (Exception e) {
-            log.error("流式文档问答失败", e);
-            return reactor.core.publisher.Flux.just(
-                "data: [ERROR] " + e.getMessage() + "\n\n"
-            );
-        }
+        new Thread(() -> {
+            try {
+                documentQAService.queryDocumentStream(
+                        request.getDocumentId(),
+                        request.getQuestion()
+                )
+                        .doOnNext(token -> {
+                            try {
+                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                        .data(token));
+                                log.debug("📤 发送 token: [{}]", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送 token 失败: {}", e.getMessage());
+                                emitter.completeWithError(e);
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ 流式文档问答完成");
+                            emitter.complete();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ 流式文档问答失败: {}", e.getMessage());
+                            try {
+                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                        .data("[ERROR] " + e.getMessage()));
+                            } catch (Exception ex) {
+                                log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                            }
+                            emitter.completeWithError(e);
+                        })
+                        .subscribe();
+            } catch (Exception e) {
+                log.error("❌ 流式文档问答初始化失败", e);
+                try {
+                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                            .data("[ERROR] " + e.getMessage()));
+                    emitter.completeWithError(e);
+                } catch (Exception ex) {
+                    log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                }
+            }
+        }).start();
+
+        emitter.onTimeout(() -> {
+            log.warn("⏰ SSE 连接超时");
+            emitter.complete();
+        });
+
+        emitter.onError(e -> log.error("❌ SSE 连接错误: {}", e.getMessage()));
+        emitter.onCompletion(() -> log.info("✅ SSE 连接关闭"));
+
+        return emitter;
     }
 
     // ========== DTO 类 ==========
