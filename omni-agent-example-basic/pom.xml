@@ -30,26 +30,50 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- ========== 四维可插拔 Starters ========== -->
+        <!-- ========== 四维可插拔 Starters - 冗余备份方案 ========== -->
 
-        <!-- 1. Persistence Starter - 使用 SQLite -->
+        <!-- 1. Persistence Starters - 异构冗余 -->
+        <!-- 主存储：SQLite（本地轻量级数据库） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
             <artifactId>omni-agent-persistence-starter-sqlite</artifactId>
             <version>${project.version}</version>
         </dependency>
 
-        <!-- 2. Document Storage Starter - 使用文件存储 -->
+        <!-- 备份1：File（文件系统备份） -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-persistence-starter-file</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 备份2：H2（嵌入式数据库备份） -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-persistence-starter-h2</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 2. Document Storage Starters - 异构冗余 -->
+        <!-- 主存储：File（本地文件系统） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
             <artifactId>omni-agent-document-storage-starter-file</artifactId>
             <version>${project.version}</version>
         </dependency>
 
-        <!-- 3. RAG Starter - 使用文件检索（Lucene） -->
+        <!-- 3. RAG Starters - 异构冗余 -->
+        <!-- 主检索：Lucene（高性能全文检索） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
             <artifactId>omni-agent-rag-starter-file</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 备份检索：SQLite FTS5（备用全文检索） -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-rag-starter-sqlite</artifactId>
             <version>${project.version}</version>
         </dependency>
 

@@ -1,0 +1,183 @@
+# ========================================
+# OmniAgent 冗余备份配置
+# Redundant Backup Configuration
+# ========================================
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: omni-agent-redundant-backup
+
+# ========================================
+# 冗余备份策略配置
+# ========================================
+
+omni-agent:
+  # ==========================================
+  # 1. 持久化层 - 异构冗余 (Persistence Layer)
+  # ==========================================
+  persistence:
+    # 启用组合持久化策略
+    strategy: composite
+
+    # 主存储：SQLite（轻量级、高性能）
+    primary-type: sqlite
+
+    # 次要存储（异构冗余备份）
+    secondary-types:
+      - file       # 文件系统备份（人工可读）
+      - h2         # H2数据库备份（兼容性好）
+
+    # SQLite 主存储配置
+    sqlite:
+      db-path: ./data/primary/sqlite/omni-agent.db
+      auto-create-tables: true
+      show-sql: false
+      connection-timeout: 30000
+
+    # File 备份配置
+    file:
+      base-path: ./data/backup/persistence/file
+      auto-backup: true
+      backup-format: json  # JSON格式便于人工检查
+
+    # H2 备份配置
+    h2:
+      jdbc-url: jdbc:h2:file:./data/backup/persistence/h2/omni-agent;AUTO_SERVER=TRUE
+      username: sa
+      password:
+      auto-create-tables: true
+
+  # ==========================================
+  # 2. 文档存储层 - 同种+异构冗余
+  # ==========================================
+  document-storage:
+    type: file
+
+    file:
+      # 主存储目录
+      base-path: ./data/primary/documents
+      chunk-path: ./data/primary/chunks
+      image-path: ./data/primary/images
+      ppl-path: ./data/primary/ppl
+      max-file-size: 104857600  # 100MB
+
+      # 同种冗余：多路径备份
+      backup-paths:
+        - ./data/backup/documents/backup1
+        - ./data/backup/documents/backup2
+        - ./data/backup/documents/backup3
+
+      # 自动同步到备份路径
+      auto-sync-backup: true
+      sync-interval: 300000  # 5分钟同步一次
+
+  # ==========================================
+  # 3. RAG检索层 - 异构冗余
+  # ==========================================
+  rag:
+    # 主检索引擎：Lucene（高性能）
+    type: file
+
+    file:
+      # 主索引路径
+      index-path: ./data/primary/rag-index
+      analyzer: smartcn
+      max-results: 100
+      similarity-threshold: 0.7
+      ram-buffer-size-mb: 256
+
+      # 索引备份
+      backup-index-paths:
+        - ./data/backup/rag-index/backup1
+        - ./data/backup/rag-index/backup2
+
+    # 备用检索：SQLite FTS5（备份）
+    sqlite:
+      database-path: ./data/backup/rag/sqlite/rag-backup.db
+      enable-fts: true
+      enable-backup: true
+      auto-sync: true
+
+  # ==========================================
+  # 4. AI服务层 - 多提供商冗余
+  # ==========================================
+  ai:
+    type: online-api
+
+    online:
+      # 主AI提供商
+      provider: qianwen
+      endpoint: https://dashscope.aliyuncs.com/api/v1
+      api-key: ${QW_API_KEY:your-api-key-here}
+      default-model: qwen-plus
+      temperature: 0.7
+      max-tokens: 2048
+      timeout: 60000
+      max-retries: 3
+
+      # 故障转移配置
+      failover:
+        enabled: true
+        fallback-providers:
+          - provider: ollama  # 本地Ollama作为备用
+            base-url: http://localhost:11434
+            model: qwen2.5:latest
+
+    # 本地Ollama配置（作为备用）
+    ollama:
+      base-url: http://localhost:11434
+      model: qwen2.5:latest
+      temperature: 0.7
+      max-tokens: 2000
+      timeout: 30000
+
+  # ==========================================
+  # 5. 冗余备份监控配置
+  # ==========================================
+  backup:
+    # 启用备份监控
+    monitoring:
+      enabled: true
+      check-interval: 60000  # 每分钟检查一次
+
+    # 备份健康检查
+    health-check:
+      enabled: true
+      alert-on-failure: true
+
+    # 自动恢复配置
+    auto-recovery:
+      enabled: true
+      max-retry: 3
+      retry-interval: 5000
+
+    # 备份同步策略
+    sync-strategy:
+      mode: async  # async | sync
+      batch-size: 100
+      thread-pool-size: 4
+
+    # 数据一致性检查
+    consistency-check:
+      enabled: true
+      check-interval: 3600000  # 每小时检查一次
+      auto-repair: true
+
+# ========================================
+# 日志配置
+# ========================================
+logging:
+  level:
+    root: INFO
+    top.yumbo.ai.omni: DEBUG
+    top.yumbo.ai.omni.example.basic.backup: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ./logs/omni-agent-backup.log
+    max-size: 10MB
+    max-history: 30
+
