@@ -145,105 +145,68 @@ function QAPanel() {
           // 调试日志
           console.log('📨 Received data:', data.type, data)
 
-          // 处理不需要节流的消息类型（reference, complete, error）
-          if (data.type === 'reference' || data.type === 'complete' || data.type === 'error') {
-            setMessages(prev => {
-              const lastIndex = prev.length - 1
-              if (lastIndex < 0) return prev
-
-              const lastMessage = prev[lastIndex]
-              if (!lastMessage || !lastMessage.streaming) return prev
-
-              let updatedMessage = { ...lastMessage }
-
-              if (data.type === 'reference') {
-                updatedMessage = {
-                  ...updatedMessage,
-                  sources: [
-                    ...(updatedMessage.sources || []),
-                    {
-                      title: data.title,
-                      content: data.content,
-                      score: data.score
-                    }
-                  ]
-                }
-              } else if (data.type === 'complete') {
-                updatedMessage = {
-                  ...updatedMessage,
-                  streaming: false,
-                  sessionId: data.sessionId
-                }
-              } else if (data.type === 'error') {
-                updatedMessage = {
-                  ...updatedMessage,
-                  type: 'error',
-                  content: data.error || t('qa.error.failed'),
-                  streaming: false
-                }
-              }
-
-              return [
-                ...prev.slice(0, lastIndex),
-                updatedMessage
-              ]
-            })
-            return
-          }
-
-          // 处理需要实时更新的消息类型（answer, llm, left, right）
-          // 先更新 ref（立即累加内容）
-          if (data.type === 'answer' || data.type === 'llm') {
-            streamingLLMAnswerRef.current += data.content
-          } else if (data.type === 'left') {
+          // 累加到ref
+          if (data.type === 'left') {
+            // 左面板：纯 LLM
+            console.log('⬅️ Left panel:', data.content)
             streamingContentRef.current.leftPanel += data.content
           } else if (data.type === 'right') {
+            // 右面板：RAG 增强 / 角色知识库
+            console.log('➡️ Right panel:', data.content)
             streamingContentRef.current.rightPanel += data.content
+          } else if (data.type === 'llm') {
+            // 单轨 LLM（不使用 RAG）
+            console.log('📦 LLM chunk:', data.content)
+            streamingLLMAnswerRef.current += data.content
           }
 
-          // 🔥 立即更新 UI，不使用节流 - 实现真正的流式渲染
+          // 🔥 立即更新 UI - 实现真正的流式渲染
           setMessages(prev => {
-            const lastIndex = prev.length - 1
-            if (lastIndex < 0) return prev
+            const newMessages = [...prev]
+            const lastMessage = newMessages[newMessages.length - 1]
 
-            const lastMessage = prev[lastIndex]
-            if (!lastMessage || !lastMessage.streaming) return prev
+            if (lastMessage && lastMessage.streaming) {
+              switch (data.type) {
+                case 'left':
+                case 'right':
+                  // 双轨模式
+                  lastMessage.dualTrack = true
+                  lastMessage.leftPanel = streamingContentRef.current.leftPanel || ''
+                  lastMessage.rightPanel = streamingContentRef.current.rightPanel || ''
+                  lastMessage.content = `[${t('qa.dualTrack.dualTrackOutput')}]\n${t('qa.dualTrack.leftPanel')}: ${lastMessage.leftPanel.substring(0, 50)}...\n${t('qa.dualTrack.rightPanel')}: ${lastMessage.rightPanel.substring(0, 50)}...`
+                  break
 
-            // 创建新的消息对象（不可变更新）
-            let updatedMessage = { ...lastMessage }
+                case 'llm':
+                  // 单轨模式（不使用 RAG）
+                  lastMessage.dualTrack = false
+                  lastMessage.content = streamingLLMAnswerRef.current
+                  break
 
-            if (data.type === 'answer' || data.type === 'llm') {
-              // AI 答案 token（统一的流式输出）
-              updatedMessage = {
-                ...updatedMessage,
-                dualTrack: false,
-                content: streamingLLMAnswerRef.current
-              }
-            } else if (data.type === 'left') {
-              // 双轨模式 - 左面板
-              updatedMessage = {
-                ...updatedMessage,
-                dualTrack: true,
-                leftPanel: streamingContentRef.current.leftPanel,
-                rightPanel: streamingContentRef.current.rightPanel || '',
-                content: `[${t('qa.dualTrack.dualTrackOutput')}]\n${t('qa.dualTrack.leftPanel')}: ${streamingContentRef.current.leftPanel.substring(0, 50)}...\n${t('qa.dualTrack.rightPanel')}: ${(streamingContentRef.current.rightPanel || '').substring(0, 50)}...`
-              }
-            } else if (data.type === 'right') {
-              // 双轨模式 - 右面板
-              updatedMessage = {
-                ...updatedMessage,
-                dualTrack: true,
-                leftPanel: streamingContentRef.current.leftPanel || '',
-                rightPanel: streamingContentRef.current.rightPanel,
-                content: `[${t('qa.dualTrack.dualTrackOutput')}]\n${t('qa.dualTrack.leftPanel')}: ${(streamingContentRef.current.leftPanel || '').substring(0, 50)}...\n${t('qa.dualTrack.rightPanel')}: ${streamingContentRef.current.rightPanel.substring(0, 50)}...`
+                case 'complete':
+                  // 完成
+                  lastMessage.streaming = false
+                  lastMessage.sessionId = data.sessionId
+                  break
+
+                case 'error':
+                  // 错误
+                  lastMessage.type = 'error'
+                  lastMessage.content = data.error || t('qa.error.failed')
+                  lastMessage.streaming = false
+                  break
+
+                default:
+                  // 兼容旧版
+                  if (data.content) {
+                    streamingLLMAnswerRef.current += data.content
+                    lastMessage.content = streamingLLMAnswerRef.current
+                  }
+                  if (data.done) {
+                    lastMessage.streaming = false
+                  }
               }
             }
-
-            // 返回新的数组，替换最后一条消息
-            return [
-              ...prev.slice(0, lastIndex),
-              updatedMessage
-            ]
+            return newMessages
           })
         }
       )
