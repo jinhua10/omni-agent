@@ -32,10 +32,15 @@
 
         <!-- ========== 四维可插拔 Starters ========== -->
 
-        <!-- 1. Persistence Starter - 使用内存实现（开发/测试） -->
+        <!-- 1. Persistence Starter - 使用 SQLite + File 组合 -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-starter-memory</artifactId>
+            <artifactId>omni-agent-persistence-starter-sqlite</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-persistence-starter-file</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -57,6 +62,13 @@
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
             <artifactId>omni-agent-ai-starter-ollama</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- AI Starter - 使用在线 API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-ai-starter-online-api</artifactId>
             <version>${project.version}</version>
         </dependency>
 
