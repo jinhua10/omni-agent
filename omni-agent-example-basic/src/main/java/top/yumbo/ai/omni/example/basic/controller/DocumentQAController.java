@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import top.yumbo.ai.omni.example.basic.service.DocumentQAService;
 
 /**
@@ -64,21 +65,20 @@ public class DocumentQAController {
      * GET /api/document-qa/query/stream
      */
     @GetMapping(value = "/query/stream", produces = "text/event-stream")
-    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter queryDocumentStream(
+    public SseEmitter queryDocumentStream(
             @RequestParam String documentId,
             @RequestParam String question) {
 
         log.info("收到流式文档问答请求: documentId={}, question={}", documentId, question);
 
-        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter =
-            new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(300000L);
+        SseEmitter emitter = new SseEmitter(300000L);
 
         new Thread(() -> {
             try {
                 documentQAService.queryDocumentStream(documentId, question)
                         .doOnNext(token -> {
                             try {
-                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                emitter.send(SseEmitter.event()
                                         .data(token));
                                 log.debug("📤 发送 token: [{}]", token);
                             } catch (Exception e) {
@@ -93,7 +93,7 @@ public class DocumentQAController {
                         .doOnError(e -> {
                             log.error("❌ 流式文档问答失败: {}", e.getMessage());
                             try {
-                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                emitter.send(SseEmitter.event()
                                         .data("[ERROR] " + e.getMessage()));
                             } catch (Exception ex) {
                                 log.error("❌ 发送错误消息失败: {}", ex.getMessage());
@@ -104,7 +104,7 @@ public class DocumentQAController {
             } catch (Exception e) {
                 log.error("❌ 流式文档问答初始化失败", e);
                 try {
-                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                    emitter.send(SseEmitter.event()
                             .data("[ERROR] " + e.getMessage()));
                     emitter.completeWithError(e);
                 } catch (Exception ex) {
@@ -129,14 +129,13 @@ public class DocumentQAController {
      * POST /api/document-qa/query/stream
      */
     @PostMapping(value = "/query/stream", produces = "text/event-stream")
-    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter queryDocumentStreamPost(
+    public SseEmitter queryDocumentStreamPost(
             @RequestBody DocumentQARequest request) {
 
         log.info("收到流式文档问答请求(POST): documentId={}, question={}",
                 request.getDocumentId(), request.getQuestion());
 
-        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter =
-            new org.springframework.web.servlet.mvc.method.annotation.SseEmitter(300000L);
+        SseEmitter emitter = new SseEmitter(300000L);
 
         new Thread(() -> {
             try {
@@ -146,7 +145,7 @@ public class DocumentQAController {
                 )
                         .doOnNext(token -> {
                             try {
-                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                emitter.send(SseEmitter.event()
                                         .data(token));
                                 log.debug("📤 发送 token: [{}]", token);
                             } catch (Exception e) {
@@ -161,7 +160,7 @@ public class DocumentQAController {
                         .doOnError(e -> {
                             log.error("❌ 流式文档问答失败: {}", e.getMessage());
                             try {
-                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                emitter.send(SseEmitter.event()
                                         .data("[ERROR] " + e.getMessage()));
                             } catch (Exception ex) {
                                 log.error("❌ 发送错误消息失败: {}", ex.getMessage());
@@ -172,7 +171,7 @@ public class DocumentQAController {
             } catch (Exception e) {
                 log.error("❌ 流式文档问答初始化失败", e);
                 try {
-                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                    emitter.send(SseEmitter.event()
                             .data("[ERROR] " + e.getMessage()));
                     emitter.completeWithError(e);
                 } catch (Exception ex) {
