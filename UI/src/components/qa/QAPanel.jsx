@@ -44,10 +44,6 @@ function QAPanel() {
   // 使用ref追踪当前流式消息的内容，避免React批量更新导致重复累加
   const streamingContentRef = useRef('')
   const streamingLLMAnswerRef = useRef('')
-  
-  // 用于节流更新的 ref
-  const updateTimerRef = useRef(null)
-  const pendingUpdateRef = useRef(false)
 
   // 从 localStorage 读取流式模式偏好（默认为 true）
   const [isStreamingMode, setIsStreamingMode] = useState(() => {
@@ -195,7 +191,7 @@ function QAPanel() {
             return
           }
 
-          // 处理需要节流的消息类型（answer, llm, left, right）
+          // 处理需要实时更新的消息类型（answer, llm, left, right）
           // 先更新 ref（立即累加内容）
           if (data.type === 'answer' || data.type === 'llm') {
             streamingLLMAnswerRef.current += data.content
@@ -205,61 +201,49 @@ function QAPanel() {
             streamingContentRef.current.rightPanel += data.content
           }
 
-          // 使用 requestAnimationFrame 节流更新 UI
-          if (pendingUpdateRef.current) {
-            // 已有待处理的更新，跳过
-            return
-          }
+          // 🔥 立即更新 UI，不使用节流 - 实现真正的流式渲染
+          setMessages(prev => {
+            const lastIndex = prev.length - 1
+            if (lastIndex < 0) return prev
 
-          pendingUpdateRef.current = true
+            const lastMessage = prev[lastIndex]
+            if (!lastMessage || !lastMessage.streaming) return prev
 
-          requestAnimationFrame(() => {
-            pendingUpdateRef.current = false
+            // 创建新的消息对象（不可变更新）
+            let updatedMessage = { ...lastMessage }
 
-            // 更新 UI - 使用不可变更新模式
-            setMessages(prev => {
-              const lastIndex = prev.length - 1
-              if (lastIndex < 0) return prev
-
-              const lastMessage = prev[lastIndex]
-              if (!lastMessage || !lastMessage.streaming) return prev
-
-              // 创建新的消息对象（不可变更新）
-              let updatedMessage = { ...lastMessage }
-
-              if (data.type === 'answer' || data.type === 'llm') {
-                // AI 答案 token（统一的流式输出）
-                updatedMessage = {
-                  ...updatedMessage,
-                  dualTrack: false,
-                  content: streamingLLMAnswerRef.current
-                }
-              } else if (data.type === 'left') {
-                // 双轨模式 - 左面板
-                updatedMessage = {
-                  ...updatedMessage,
-                  dualTrack: true,
-                  leftPanel: streamingContentRef.current.leftPanel,
-                  rightPanel: streamingContentRef.current.rightPanel || '',
-                  content: `[${t('qa.dualTrack.dualTrackOutput')}]\n${t('qa.dualTrack.leftPanel')}: ${streamingContentRef.current.leftPanel.substring(0, 50)}...\n${t('qa.dualTrack.rightPanel')}: ${(streamingContentRef.current.rightPanel || '').substring(0, 50)}...`
-                }
-              } else if (data.type === 'right') {
-                // 双轨模式 - 右面板
-                updatedMessage = {
-                  ...updatedMessage,
-                  dualTrack: true,
-                  leftPanel: streamingContentRef.current.leftPanel || '',
-                  rightPanel: streamingContentRef.current.rightPanel,
-                  content: `[${t('qa.dualTrack.dualTrackOutput')}]\n${t('qa.dualTrack.leftPanel')}: ${(streamingContentRef.current.leftPanel || '').substring(0, 50)}...\n${t('qa.dualTrack.rightPanel')}: ${streamingContentRef.current.rightPanel.substring(0, 50)}...`
-                }
+            if (data.type === 'answer' || data.type === 'llm') {
+              // AI 答案 token（统一的流式输出）
+              updatedMessage = {
+                ...updatedMessage,
+                dualTrack: false,
+                content: streamingLLMAnswerRef.current
               }
+            } else if (data.type === 'left') {
+              // 双轨模式 - 左面板
+              updatedMessage = {
+                ...updatedMessage,
+                dualTrack: true,
+                leftPanel: streamingContentRef.current.leftPanel,
+                rightPanel: streamingContentRef.current.rightPanel || '',
+                content: `[${t('qa.dualTrack.dualTrackOutput')}]\n${t('qa.dualTrack.leftPanel')}: ${streamingContentRef.current.leftPanel.substring(0, 50)}...\n${t('qa.dualTrack.rightPanel')}: ${(streamingContentRef.current.rightPanel || '').substring(0, 50)}...`
+              }
+            } else if (data.type === 'right') {
+              // 双轨模式 - 右面板
+              updatedMessage = {
+                ...updatedMessage,
+                dualTrack: true,
+                leftPanel: streamingContentRef.current.leftPanel || '',
+                rightPanel: streamingContentRef.current.rightPanel,
+                content: `[${t('qa.dualTrack.dualTrackOutput')}]\n${t('qa.dualTrack.leftPanel')}: ${(streamingContentRef.current.leftPanel || '').substring(0, 50)}...\n${t('qa.dualTrack.rightPanel')}: ${streamingContentRef.current.rightPanel.substring(0, 50)}...`
+              }
+            }
 
-              // 返回新的数组，替换最后一条消息
-              return [
-                ...prev.slice(0, lastIndex),
-                updatedMessage
-              ]
-            })
+            // 返回新的数组，替换最后一条消息
+            return [
+              ...prev.slice(0, lastIndex),
+              updatedMessage
+            ]
           })
         }
       )

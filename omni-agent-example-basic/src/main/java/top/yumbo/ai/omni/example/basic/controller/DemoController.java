@@ -7,6 +7,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import top.yumbo.ai.ai.api.model.ChatMessage;
+import java.time.Duration;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 import top.yumbo.ai.rag.api.RAGService;
@@ -722,6 +723,7 @@ public class DemoController {
 
                 // 发送参考文档事件
                 referencesFlux = Flux.fromIterable(references)
+                        .delayElements(Duration.ofMillis(1))  // ⭐ 立即发送
                         .doOnNext(ref -> log.info("📄 发送参考文档: {}",
                                 ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : "无标题"))
                         .map(ref -> {

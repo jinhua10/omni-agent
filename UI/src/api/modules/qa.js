@@ -78,10 +78,19 @@ const qaApi = {
       const eventSourceUrl = `${SSE_BASE_URL}/qa/stream/dual-track?${queryParams}`
       console.log('📡 Connecting to dual-track SSE:', eventSourceUrl)
 
-      const eventSource = new EventSource(eventSourceUrl)
+      // ⭐ 创建 EventSource 连接（withCredentials 确保正确处理跨域）
+      const eventSource = new EventSource(eventSourceUrl, {
+        withCredentials: false  // 开发环境跨域不需要凭据
+      })
+
+      // 监听连接打开事件
+      eventSource.onopen = (event) => {
+        console.log('✅ SSE connection opened:', event)
+      }
 
       // 监听默认 message 事件
       eventSource.onmessage = (event) => {
+        console.log('⚡ Real-time SSE message received:', event.data.substring(0, 100))
         try {
           const data = JSON.parse(event.data)
           console.log('📦 Received SSE data:', data.type, data)
@@ -104,10 +113,11 @@ const qaApi = {
 
             case 'answer':
               // AI 答案 token
-              console.log('💬 Answer token:', data.token?.substring(0, 20))
+              const tokenContent = data.token || data.content || ''
+              console.log('💬 Answer token:', tokenContent)
               onChunk({
                 type: 'answer',
-                content: data.token,
+                content: tokenContent,
                 done: false
               })
               break
