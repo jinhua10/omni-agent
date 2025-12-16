@@ -182,24 +182,62 @@ public class DocumentManagementController {
     /**
      * 删除文档
      * DELETE /api/documents/{documentId}
+     *
+     * 注意：documentId可以是文档ID或文件名，会自动查找匹配的文档
      */
     @DeleteMapping("/{documentId}")
     public Map<String, Object> deleteDocument(@PathVariable String documentId) {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            log.info("删除文档: {}", documentId);
+            log.info("🗑️ 删除文档请求: {}", documentId);
+            log.debug("文档ID字节长度: {}, 实际字符数: {}", documentId.getBytes().length, documentId.length());
+
+            // 尝试查找文档（可能传入的是文件名）
+            String actualDocumentId = documentId;
+
+            // 如果documentId不是以doc_开头，可能是文件名，需要搜索对应的文档
+            if (!documentId.startsWith("doc_")) {
+                log.info("检测到可能是文件名，尝试搜索对应的文档: {}", documentId);
+
+                // 使用文件名搜索文档
+                List<SearchResult> searchResults = ragService.searchByText(documentId, 10);
+
+                // 查找title完全匹配的文档
+                for (SearchResult sr : searchResults) {
+                    Document doc = sr.getDocument();
+                    if (doc != null && doc.getTitle() != null && doc.getTitle().equals(documentId)) {
+                        actualDocumentId = doc.getId();
+                        log.info("找到匹配的文档ID: {}", actualDocumentId);
+                        break;
+                    }
+                }
+
+                // 如果没找到完全匹配的，使用第一个搜索结果
+                if (actualDocumentId.equals(documentId) && !searchResults.isEmpty() && searchResults.get(0).getDocument() != null) {
+                    actualDocumentId = searchResults.get(0).getDocument().getId();
+                    log.info("使用第一个搜索结果的文档ID: {}", actualDocumentId);
+                }
+            }
 
             // 删除文档的所有分块
-            storageService.deleteChunksByDocument(documentId);
+            storageService.deleteChunksByDocument(actualDocumentId);
             // 删除文档的所有图片
-            storageService.deleteImagesByDocument(documentId);
+            storageService.deleteImagesByDocument(actualDocumentId);
             // 删除RAG索引
-            ragService.deleteDocument(documentId);
+            boolean deleted = ragService.deleteDocument(actualDocumentId);
 
-            result.put("status", "success");
-            result.put("message", "文档删除成功");
-            result.put("documentId", documentId);
+            if (deleted) {
+                result.put("status", "success");
+                result.put("message", "文档删除成功");
+                result.put("documentId", actualDocumentId);
+                log.info("文档删除成功: {}", actualDocumentId);
+            } else {
+                result.put("status", "error");
+                result.put("message", "文档删除失败：RAG删除返回false");
+                result.put("documentId", actualDocumentId);
+                log.warn("文档删除失败: {}", actualDocumentId);
+            }
 
         } catch (Exception e) {
             log.error("删除文档失败: {}", documentId, e);

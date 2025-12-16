@@ -411,25 +411,45 @@ public class LuceneRAGService implements RAGService {
             try {
                 List<Document> documents = new ArrayList<>();
                 IndexReader reader = searcher.getIndexReader();
+
+                // 使用numDocs()获取未删除的文档数，而不是maxDoc()
+                int numDocs = reader.numDocs();
                 int maxDoc = reader.maxDoc();
 
-                // 计算实际范围
-                int startIndex = Math.min(offset, maxDoc);
-                int endIndex = Math.min(offset + limit, maxDoc);
+                log.debug("获取所有文档: offset={}, limit={}, numDocs={}, maxDoc={}",
+                        offset, limit, numDocs, maxDoc);
 
-                log.debug("获取所有文档: offset={}, limit={}, maxDoc={}, range=[{}, {})",
-                        offset, limit, maxDoc, startIndex, endIndex);
+                // 获取存活文档的位集合（liveDocs）
+                org.apache.lucene.util.Bits liveDocs = org.apache.lucene.index.MultiBits.getLiveDocs(reader);
 
-                // 遍历文档
-                for (int i = startIndex; i < endIndex; i++) {
+                // 跳过offset个有效文档，然后读取limit个
+                int skipped = 0;
+                int collected = 0;
+
+                for (int i = 0; i < maxDoc && collected < limit; i++) {
+                    // 检查文档是否存在（未被删除）
+                    // 如果liveDocs为null，说明没有删除操作，所有文档都存在
+                    // 如果liveDocs不为null，需要检查位是否为true（true表示文档存在）
+                    if (liveDocs != null && !liveDocs.get(i)) {
+                        continue; // 跳过已删除的文档
+                    }
+
                     try {
                         org.apache.lucene.document.Document luceneDoc = searcher.storedFields().document(i);
                         if (luceneDoc != null) {
+                            // 跳过前offset个文档
+                            if (skipped < offset) {
+                                skipped++;
+                                continue;
+                            }
+
+                            // 收集文档
                             Document document = convertFromLuceneDocument(luceneDoc);
                             documents.add(document);
+                            collected++;
                         }
                     } catch (Exception e) {
-                        // 文档可能已被删除或不存在，跳过
+                        // 文档读取失败，跳过
                         log.debug("跳过文档: docId={}", i);
                     }
                 }

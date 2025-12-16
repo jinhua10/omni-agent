@@ -350,6 +350,8 @@ function DocumentList() {
    * @param {string} doc.name - 文档名称 (Document name)
    */
   const handleDelete = useCallback((doc) => {
+    const fileName = doc.fileName || doc.name
+    
     Modal.confirm({
       title: t('document.deleteConfirm'),
       content: doc.name,
@@ -358,17 +360,20 @@ function DocumentList() {
       okType: 'danger',
       onOk: async () => {
         try {
+          console.log('🗑️ Deleting document:', fileName)
           // 后端删除接口使用 fileName 作为路径参数 (Backend delete API uses fileName as path parameter)
-          await documentApi.delete(doc.fileName || doc.name)
+          const result = await documentApi.delete(fileName)
+          console.log('✅ Delete result:', result)
           message.success(t('document.deleteSuccess'))
           loadDocuments()
         } catch (error) {
-          console.error('Failed to delete document:', error)
-          message.error(t('document.deleteFailed'))
+          console.error('❌ Failed to delete document:', error)
+          console.error('Error details:', error.response?.data || error.message)
+          message.error(t('document.deleteFailed') + ': ' + (error.response?.data?.message || error.message))
         }
       },
     })
-  }, [loadDocuments, t])
+  }, [loadDocuments, t, message])
 
   /**
    * 处理文档下载事件 (Handle document download event)
