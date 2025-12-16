@@ -22,7 +22,6 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/themes")
-@CrossOrigin(origins = "*")
 public class ThemeController {
 
     /**

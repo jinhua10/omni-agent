@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/api/roles")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class RoleController {
 

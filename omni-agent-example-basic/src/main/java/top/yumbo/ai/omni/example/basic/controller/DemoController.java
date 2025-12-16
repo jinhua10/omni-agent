@@ -41,7 +41,6 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*")  // 添加 CORS 支持
 @RequiredArgsConstructor
 public class DemoController {
 

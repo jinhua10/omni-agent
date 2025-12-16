@@ -20,7 +20,6 @@ import top.yumbo.ai.omni.example.basic.service.DocumentQAService;
 @Slf4j
 @RestController
 @RequestMapping("/api/document-qa")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class DocumentQAController {
 

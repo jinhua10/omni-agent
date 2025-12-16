@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/api/images")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class ImageController {
 
