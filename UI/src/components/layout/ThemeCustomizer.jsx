@@ -73,7 +73,7 @@ function ThemeCustomizer({ open, onClose }) {
       size="default"
       styles={{ body: { width: 360 } }}
     >
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="large" style={{ width: '100%' }}>
         {/* 主色调 / Primary color */}
         <div>
           <Text strong>{t('theme.customizer.primary') || '主色调'}</Text>

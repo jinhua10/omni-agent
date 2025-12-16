@@ -107,7 +107,7 @@ function SyncMonitor() {
         className="sync-monitor__activity"
         title={t('collaboration.recentActivity')}
       >
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
           {(data.recentSyncs || []).map((item, index) => (
             <div key={item.id || index}>
               <div className="sync-monitor__activity-item">

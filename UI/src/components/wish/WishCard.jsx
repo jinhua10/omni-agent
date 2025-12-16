@@ -25,6 +25,7 @@ const WishCard = ({ wish, viewMode = 'grid', onClick, onVote }) => {
       feature: 'purple',
       bug: 'red',
       interface: 'cyan',
+      improvement: 'blue',
     };
     return colors[category] || 'default';
   };

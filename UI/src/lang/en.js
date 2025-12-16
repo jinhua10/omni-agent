@@ -697,6 +697,7 @@ export default {
       feature: 'Feature Enhancement',
       bug: 'Bug Fix',
       interface: 'UI Optimization',
+      improvement: 'Improvement',
     },
 
     // Form

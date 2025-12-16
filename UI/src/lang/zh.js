@@ -685,6 +685,7 @@ export default {
       feature: '功能增强',
       bug: 'Bug修复',
       interface: '界面优化',
+      improvement: '体验优化',
     },
 
     // 表单

@@ -45,6 +45,7 @@ const WishDetail = ({ visible, wish, onClose, onVote, onUpdate }) => {
       feature: 'purple',
       bug: 'red',
       interface: 'cyan',
+      improvement: 'blue',
     };
     return colors[category] || 'default';
   };

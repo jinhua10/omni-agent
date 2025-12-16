@@ -82,6 +82,7 @@ const WishSubmit = ({ visible, onClose, onSuccess }) => {
             <Option value="feature">{t('wish.category.feature')}</Option>
             <Option value="bug">{t('wish.category.bug')}</Option>
             <Option value="interface">{t('wish.category.interface')}</Option>
+            <Option value="improvement">{t('wish.category.improvement')}</Option>
           </Select>
         </Form.Item>
 
