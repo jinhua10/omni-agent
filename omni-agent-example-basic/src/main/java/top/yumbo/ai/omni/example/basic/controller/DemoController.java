@@ -1,33 +1,46 @@
 package top.yumbo.ai.omni.example.basic.controller;
 
+import lombok.Data;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import top.yumbo.ai.omni.core.role.Role;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
 import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.core.hope.HOPEKnowledgeManager;
+import top.yumbo.ai.omni.core.role.RoleService;
+import top.yumbo.ai.omni.core.query.QueryService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Optional;
 
 /**
- * 基础示例控制器
- * 
+ * 基础示例控制器 - 增强版
+ *
  * <p>演示如何使用OmniAgent的可插拔服务：</p>
  * <ul>
  *   <li>QuestionClassifierPersistence - 持久化服务</li>
  *   <li>DocumentStorageService - 文档存储服务</li>
  *   <li>RAGService - RAG检索服务</li>
- *   <li>AIService - AI推理服务 ⭐ 已实现</li>
+ *   <li>AIService - AI推理服务</li>
+ *   <li>HOPEKnowledgeManager - HOPE三层知识架构</li>
+ *   <li>RoleService - 角色知识库</li>
+ *   <li>QueryService - 智能问答</li>
  * </ul>
  * 
  * @author Jinhua Yu
  * @since 1.0.0
  */
+@Slf4j
 @RestController
-@RequestMapping("/api/demo")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class DemoController {
 
@@ -35,6 +48,9 @@ public class DemoController {
     private final DocumentStorageService storageService;
     private final RAGService ragService;
     private final top.yumbo.ai.ai.api.AIService aiService;
+    private final HOPEKnowledgeManager hopeManager;
+    private final RoleService roleService;
+    private final QueryService queryService;
 
     /**
      * 健康检查
@@ -438,5 +454,301 @@ public class DemoController {
             .replace("\n", "\\n")
             .replace("\r", "\\r")
             .replace("\t", "\\t");
+    }
+
+    // ========== 知识库问答 API ==========
+
+    /**
+     * 智能问答 (统一入口)
+     * 支持三种模式：
+     * 1. knowledgeMode="none" - 直接LLM回答（不使用知识库）
+     * 2. knowledgeMode="rag" - 传统RAG检索回答
+     * 3. knowledgeMode="role" - 角色知识库回答
+     */
+    @PostMapping("/qa/ask")
+    public Map<String, Object> ask(@RequestBody QuestionRequest request) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            String question = request.getQuestion();
+            String knowledgeMode = request.getKnowledgeMode() != null ? request.getKnowledgeMode() : "rag";
+            String roleName = request.getRoleName();
+            String hopeSessionId = request.getHopeSessionId();
+
+            log.info("收到问答请求: question={}, mode={}, role={}, session={}",
+                question, knowledgeMode, roleName, hopeSessionId);
+
+            String answer;
+            List<SearchResult> references = null;
+
+            switch (knowledgeMode.toLowerCase()) {
+                case "none":
+                    // 直接LLM模式
+                    answer = aiService.chat(question);
+                    break;
+
+                case "role":
+                    // 角色知识库模式
+                    if (roleName == null || roleName.isEmpty()) {
+                        result.put("status", "error");
+                        result.put("error", "roleName is required for role mode");
+                        return result;
+                    }
+
+                    // 获取角色信息（getRole 返回 Role，不是 Optional）
+                    Role roleEntity = roleService.getRole(roleName);
+
+                    // 使用RAG检索
+                    references = ragService.searchByText(question, 5);
+
+                    // 构建包含角色信息和上下文的提示词
+                    String roleContext = buildRoleContext(references);
+                    String rolePrompt = String.format(
+                        "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                        roleEntity.getName(), roleEntity.getDescription(), roleContext, question
+                    );
+                    answer = aiService.chat(rolePrompt);
+                    break;
+
+                case "rag":
+                default:
+                    // 传统RAG模式
+                    references = ragService.searchByText(question, 5);
+
+                    // 构建RAG提示词
+                    String context = buildContext(references);
+                    String prompt = String.format(
+                        "基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                        context, question
+                    );
+                    answer = aiService.chat(prompt);
+                    break;
+            }
+
+            result.put("status", "success");
+            result.put("question", question);
+            result.put("answer", answer);
+            result.put("knowledgeMode", knowledgeMode);
+            result.put("model", aiService.getCurrentModel());
+
+            if (references != null && !references.isEmpty()) {
+                result.put("referenceCount", references.size());
+                result.put("references", references);
+            }
+
+            // 如果有HOPE会话ID，记录到会话历史
+            if (hopeSessionId != null && !hopeSessionId.isEmpty()) {
+                result.put("hopeSessionId", hopeSessionId);
+                // TODO: 保存到HOPE会话历史
+            }
+
+        } catch (Exception e) {
+            log.error("问答失败", e);
+            result.put("status", "error");
+            result.put("error", e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * 流式问答
+     */
+    @GetMapping(value = "/qa/ask/stream", produces = "text/event-stream")
+    public reactor.core.publisher.Flux<String> askStream(
+            @RequestParam String question,
+            @RequestParam(defaultValue = "rag") String knowledgeMode,
+            @RequestParam(required = false) String roleName) {
+
+        try {
+            List<SearchResult> references;
+            String prompt;
+
+            if ("none".equals(knowledgeMode)) {
+                // 直接LLM
+                prompt = question;
+            } else if ("role".equals(knowledgeMode) && roleName != null) {
+                // 角色知识库（getRole 返回 Role，不是 Optional）
+                top.yumbo.ai.omni.core.role.Role role = roleService.getRole(roleName);
+                references = ragService.searchByText(question, 5);
+                String context = buildRoleContext(references);
+                prompt = String.format(
+                    "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                    role.getName(), role.getDescription(), context, question
+                );
+            } else {
+                // 传统RAG
+                references = ragService.searchByText(question, 5);
+                String context = buildContext(references);
+                prompt = String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", context, question);
+            }
+
+            // 构建消息
+            List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
+                top.yumbo.ai.ai.api.model.ChatMessage.builder()
+                    .role("user")
+                    .content(prompt)
+                    .build()
+            );
+
+            return aiService.chatFlux(messages)
+                .map(token -> "data: " + token + "\n\n")
+                .onErrorResume(e -> reactor.core.publisher.Flux.just(
+                    "data: [ERROR] " + e.getMessage() + "\n\n"
+                ));
+
+        } catch (Exception e) {
+            log.error("流式问答失败", e);
+            return reactor.core.publisher.Flux.just(
+                "data: [ERROR] " + e.getMessage() + "\n\n"
+            );
+        }
+    }
+
+    /**
+     * HOPE会话查询
+     * 使用HOPE三层知识架构进行智能问答
+     */
+    @PostMapping("/qa/hope")
+    public Map<String, Object> hopeQuery(@RequestBody HOPEQueryRequest request) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            String question = request.getQuestion();
+            String sessionId = request.getSessionId();
+
+            log.info("HOPE查询: question={}, session={}", question, sessionId);
+
+            // 使用HOPE管理器查询
+            // HOPE会自动根据问题类型路由到合适的知识层
+            // - 高频层：快速响应
+            // - 普通层：常规知识
+            // - 永久层：核心知识
+
+            // TODO: 实现HOPE查询逻辑
+            // String hopeAnswer = hopeManager.query(question, sessionId);
+
+            // 临时实现：使用RAG
+            List<SearchResult> references = ragService.searchByText(question, 5);
+            String context = buildContext(references);
+            String prompt = String.format(
+                "【HOPE智能问答】基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                context, question
+            );
+            String answer = aiService.chat(prompt);
+
+            result.put("status", "success");
+            result.put("question", question);
+            result.put("answer", answer);
+            result.put("sessionId", sessionId);
+            result.put("hopeEnabled", true);
+            result.put("references", references);
+
+        } catch (Exception e) {
+            log.error("HOPE查询失败", e);
+            result.put("status", "error");
+            result.put("error", e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * 批量索引文档
+     */
+    @PostMapping("/rag/index/batch")
+    public Map<String, Object> indexDocuments(@RequestBody BatchIndexRequest request) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            List<String> docIds = ragService.indexDocuments(request.getDocuments());
+
+            result.put("status", "success");
+            result.put("indexedCount", docIds.size());
+            result.put("documentIds", docIds);
+            result.put("message", "Documents indexed successfully");
+        } catch (Exception e) {
+            log.error("批量索引失败", e);
+            result.put("status", "error");
+            result.put("error", e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * 重建索引
+     */
+    @PostMapping("/rag/rebuild")
+    public Map<String, Object> rebuildIndex() {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            ragService.rebuildIndex();
+
+            result.put("status", "success");
+            result.put("message", "Index rebuild completed");
+            result.put("statistics", ragService.getStatistics());
+        } catch (Exception e) {
+            log.error("重建索引失败", e);
+            result.put("status", "error");
+            result.put("error", e.getMessage());
+        }
+
+        return result;
+    }
+
+    // ========== 辅助方法 ==========
+
+    private String buildContext(List<SearchResult> references) {
+        if (references == null || references.isEmpty()) {
+            return "暂无相关知识";
+        }
+
+        StringBuilder context = new StringBuilder();
+        for (int i = 0; i < references.size(); i++) {
+            SearchResult ref = references.get(i);
+            context.append(String.format("[文档%d] ", i + 1));
+            if (ref.getDocument().getTitle() != null) {
+                context.append(ref.getDocument().getTitle()).append("\n");
+            }
+            context.append(ref.getDocument().getContent()).append("\n\n");
+        }
+        return context.toString();
+    }
+
+    private String buildRoleContext(List<SearchResult> references) {
+        if (references == null || references.isEmpty()) {
+            return "暂无相关角色知识";
+        }
+
+        StringBuilder context = new StringBuilder();
+        for (int i = 0; i < references.size(); i++) {
+            SearchResult ref = references.get(i);
+            context.append(String.format("[角色知识%d] ", i + 1));
+            context.append(ref.getDocument().getContent()).append("\n\n");
+        }
+        return context.toString();
+    }
+
+    // ========== DTO 类 ==========
+
+    @Data
+    public static class QuestionRequest {
+        private String question;
+        private String knowledgeMode;  // "none", "rag", "role"
+        private String roleName;
+        private String hopeSessionId;
+    }
+
+    @Data
+    public static class HOPEQueryRequest {
+        private String question;
+        private String sessionId;
+    }
+
+    @Data
+    public static class BatchIndexRequest {
+        private List<Document> documents;
     }
 }
