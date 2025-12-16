@@ -61,7 +61,8 @@ omni-agent:
       provider: qianwen
 
       # API端点（推荐使用endpoint，更适合企业网关）
-      endpoint: https://dashscope.aliyuncs.com/api/v1
+      # 注意：千问现在支持OpenAI兼容模式
+      endpoint: https://api.deepseek.com/v1/chat/completions
 
       # API Key（从阿里云DashScope获取）
       # 获取地址: https://dashscope.console.aliyun.com/
@@ -71,7 +72,8 @@ omni-agent:
       # qwen-plus: 平衡性能和成本（推荐）
       # qwen-turbo: 快速响应
       # qwen-max: 最强性能
-      default-model: qwen-plus
+      # qwen-vl-plus: 图像理解能力
+      default-model: deepseek-chat
 
       # 生成参数
       temperature: 0.7      # 0.0-2.0，控制随机性

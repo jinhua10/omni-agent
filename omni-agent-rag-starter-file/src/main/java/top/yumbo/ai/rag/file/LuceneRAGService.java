@@ -62,6 +62,17 @@ public class LuceneRAGService implements RAGService {
                 Files.createDirectories(indexPath);
             }
 
+            // 清理可能残留的锁文件（处理异常退出情况）
+            Path lockFile = indexPath.resolve("write.lock");
+            if (Files.exists(lockFile)) {
+                try {
+                    Files.delete(lockFile);
+                    log.warn("检测到旧的索引锁文件，已自动清理: {}", lockFile);
+                } catch (IOException e) {
+                    log.warn("无法删除锁文件: {}, 将尝试继续初始化", lockFile);
+                }
+            }
+
             // 初始化 Lucene 组件
             this.directory = FSDirectory.open(indexPath);
             this.analyzer = new StandardAnalyzer();

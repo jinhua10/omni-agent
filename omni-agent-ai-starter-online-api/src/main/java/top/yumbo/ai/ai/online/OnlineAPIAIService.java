@@ -306,10 +306,15 @@ public class OnlineAPIAIService implements AIService {
         // 如果endpoint/baseUrl都没配置，使用默认值
         if (baseEndpoint == null || baseEndpoint.isEmpty()) {
             log.warn("No endpoint configured, using default qianwen endpoint");
-            baseEndpoint = "https://dashscope.aliyuncs.com/api/v1";
+            baseEndpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1";
         }
 
-        return baseEndpoint + "/chat/completions";
+        // 添加chat/completions路径（如果endpoint还没包含）
+        if (!baseEndpoint.endsWith("/chat/completions")) {
+            return baseEndpoint + "/chat/completions";
+        }
+
+        return baseEndpoint;
     }
 
     /**
@@ -325,7 +330,12 @@ public class OnlineAPIAIService implements AIService {
         }
 
         if (baseEndpoint == null || baseEndpoint.isEmpty()) {
-            baseEndpoint = "https://dashscope.aliyuncs.com/api/v1";
+            baseEndpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+        }
+
+        // 移除尾部的 /chat/completions 以获取基础路径
+        if (baseEndpoint.endsWith("/chat/completions")) {
+            baseEndpoint = baseEndpoint.substring(0, baseEndpoint.lastIndexOf("/chat/completions"));
         }
 
         return baseEndpoint;
