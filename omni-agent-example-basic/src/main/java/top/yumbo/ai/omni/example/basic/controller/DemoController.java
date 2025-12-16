@@ -765,10 +765,16 @@ public class DemoController {
                     .build()
             );
 
+            // 根据 knowledgeMode 决定发送 llm 还是 answer 类型
+            // knowledgeMode=none 时发送 llm（单轨），否则发送 answer（双轨）
+            String answerType = "none".equals(knowledgeMode) ? "llm" : "answer";
+
             reactor.core.publisher.Flux<org.springframework.http.codec.ServerSentEvent<String>> answerFlux =
                 aiService.chatFlux(messages)
                     .map(token -> org.springframework.http.codec.ServerSentEvent.<String>builder()
-                        .data("{\"type\":\"answer\",\"token\":\"" + escapeJson(token) + "\"}")
+                        .data("{\"type\":\"" + answerType + "\",\"" +
+                              ("llm".equals(answerType) ? "content" : "token") +
+                              "\":\"" + escapeJson(token) + "\"}")
                         .build());
 
             // 添加完成事件
