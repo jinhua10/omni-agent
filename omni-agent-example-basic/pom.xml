@@ -32,15 +32,10 @@
 
         <!-- ========== 四维可插拔 Starters ========== -->
 
-        <!-- 1. Persistence Starter - 使用 SQLite + File 组合 -->
+        <!-- 1. Persistence Starter - 使用 SQLite -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
             <artifactId>omni-agent-persistence-starter-sqlite</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-starter-file</artifactId>
             <version>${project.version}</version>
         </dependency>
 

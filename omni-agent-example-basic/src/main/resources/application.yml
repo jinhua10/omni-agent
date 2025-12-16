@@ -10,26 +10,16 @@ spring:
 # 1. 持久化配置 (Persistence)
 omni-agent:
   persistence:
-    # 多持久化策略配置
-    # composite: 组合模式，支持主+备份多写
-    # primary: 主持久化后端（用于读写）
-    # secondaries: 备份后端列表（异步写入）
-    strategy: composite
-    primary-type: sqlite    # 主后端: SQLite（轻量级文件数据库）
-    secondary-types:        # 备份后端列表
-      - file                # File 作为备份
+    # 持久化后端类型: sqlite, file, h2, memory, redis, mongodb, elasticsearch
+    type: sqlite
 
-    # SQLite 配置（主后端）
+    # SQLite 配置
     sqlite:
       db-path: ./data/omni-agent.db
       auto-create-tables: true
       show-sql: false
       connection-timeout: 30000
 
-    # File 配置（备份后端）
-    file:
-      base-path: ./data/persistence
-      auto-create-dirs: true
 
   # 2. 文档存储配置 (Document Storage)
   document-storage:
@@ -55,7 +45,7 @@ omni-agent:
   # 4. AI 配置 (Artificial Intelligence)
   ai:
     # type: ollama  # 本地Ollama（开发/测试）
-    type: online    # 在线API（生产环境推荐）
+    type: online-api    # 在线API（生产环境推荐）
 
     # Ollama 本地配置（开发/测试环境）
     ollama:

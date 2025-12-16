@@ -1,2 +1,1 @@
-org.springframework.boot.autoconfigure.AutoConfiguration.imports=\
 top.yumbo.ai.behavior.starter.redis.RedisBehaviorAnalysisAutoConfiguration
