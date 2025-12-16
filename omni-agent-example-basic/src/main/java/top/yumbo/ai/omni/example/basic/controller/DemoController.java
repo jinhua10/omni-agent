@@ -3,11 +3,10 @@ package top.yumbo.ai.omni.example.basic.controller;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 import top.yumbo.ai.ai.api.model.ChatMessage;
-import java.time.Duration;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 import top.yumbo.ai.rag.api.RAGService;
@@ -701,125 +700,152 @@ public class DemoController {
     }
 
     /**
-     * 双轨流式问答 ⭐ NEW
+     * 双轨流式问答 ⭐ NEW (使用 SseEmitter)
      * 同时返回AI答案流和参考文档
      * GET /api/qa/stream/dual-track
      */
     @GetMapping(value = "/qa/stream/dual-track", produces = "text/event-stream")
-    public Flux<ServerSentEvent<String>> dualTrackStream(
+    public SseEmitter dualTrackStream(
             @RequestParam String question,
             @RequestParam(defaultValue = "none") String knowledgeMode,
             @RequestParam(required = false) String roleName) {
 
-        try {
-            log.info("双轨流式问答: question={}, mode={}, role={}", question, knowledgeMode, roleName);
+        log.info("双轨流式问答: question={}, mode={}, role={}", question, knowledgeMode, roleName);
 
-            // 1. 先发送参考文档（如果需要）
-            Flux<ServerSentEvent<String>> referencesFlux = Flux.empty();
+        // 创建 SseEmitter，超时时间 5 分钟
+        SseEmitter emitter = new SseEmitter(300000L);
 
-            if (!"none".equals(knowledgeMode)) {
-                List<SearchResult> references = ragService.searchByText(question, 5);
-                log.info("📚 检索到 {} 个参考文档", references.size());
+        // 异步处理
+        new Thread(() -> {
+            try {
+                // 1. 先发送参考文档（如果需要）
+                if (!"none".equals(knowledgeMode)) {
+                    List<SearchResult> references = ragService.searchByText(question, 5);
+                    log.info("📚 检索到 {} 个参考文档", references.size());
 
-                // 发送参考文档事件
-                referencesFlux = Flux.fromIterable(references)
-                        .delayElements(Duration.ofMillis(1))  // ⭐ 立即发送
-                        .doOnNext(ref -> log.info("📄 发送参考文档: {}",
-                                ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : "无标题"))
-                        .map(ref -> {
-                            try {
-                                String refJson = String.format(
-                                        "{\"type\":\"reference\",\"title\":\"%s\",\"content\":\"%s\",\"score\":%.2f}",
-                                        escapeJson(ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : ""),
-                                        escapeJson(ref.getDocument().getContent()),
-                                        ref.getScore()
-                                );
-                                return ServerSentEvent.<String>builder()
-                                        .data(refJson)
-                                        .build();
-                            } catch (Exception e) {
-                                log.error("❌ 发送参考文档失败: {}", e.getMessage());
-                                return ServerSentEvent.<String>builder()
-                                        .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
-                                        .build();
-                            }
-                        });
-            } else {
-                log.info("🚫 不使用知识库模式，跳过参考文档检索");
-            }
+                    for (SearchResult ref : references) {
+                        try {
+                            String refJson = String.format(
+                                    "{\"type\":\"reference\",\"title\":\"%s\",\"content\":\"%s\",\"score\":%.2f}",
+                                    escapeJson(ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : ""),
+                                    escapeJson(ref.getDocument().getContent()),
+                                    ref.getScore()
+                            );
+                            emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                    .data(refJson));
+                            log.info("📄 发送参考文档: {}",
+                                    ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : "无标题");
+                        } catch (Exception e) {
+                            log.error("❌ 发送参考文档失败: {}", e.getMessage());
+                        }
+                    }
+                } else {
+                    log.info("🚫 不使用知识库模式，跳过参考文档检索");
+                }
 
-            // 2. 构建AI提示词
-            String prompt;
-            if ("none".equals(knowledgeMode)) {
-                prompt = question;
-            } else if ("role".equals(knowledgeMode) && roleName != null) {
-                Role role = roleService.getRole(roleName);
-                List<SearchResult> references = ragService.searchByText(question, 5);
-                String context = buildRoleContext(references);
-                prompt = String.format(
-                        "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                        role.getName(), role.getDescription(), context, question
+                // 2. 构建AI提示词
+                String prompt;
+                if ("none".equals(knowledgeMode)) {
+                    prompt = question;
+                } else if ("role".equals(knowledgeMode) && roleName != null) {
+                    Role role = roleService.getRole(roleName);
+                    List<SearchResult> references = ragService.searchByText(question, 5);
+                    String context = buildRoleContext(references);
+                    prompt = String.format(
+                            "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                            role.getName(), role.getDescription(), context, question
+                    );
+                } else {
+                    List<SearchResult> references = ragService.searchByText(question, 5);
+                    String context = buildContext(references);
+                    prompt = String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", context, question);
+                }
+
+                // 3. 流式发送AI答案
+                List<ChatMessage> messages = List.of(
+                        ChatMessage.builder()
+                                .role("user")
+                                .content(prompt)
+                                .build()
                 );
-            } else {
-                List<SearchResult> references = ragService.searchByText(question, 5);
-                String context = buildContext(references);
-                prompt = String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", context, question);
+
+                log.info("🚀 开始流式生成答案...");
+
+                // 订阅 AI 流式输出
+                // 根据知识库模式决定事件类型：none -> llm, role -> right, rag -> right
+                final String eventType = "none".equals(knowledgeMode) ? "llm" : "right";
+
+                aiService.chatFlux(messages)
+                        .doOnNext(token -> {
+                            try {
+                                // 发送流式 token，使用对应的事件类型
+                                String jsonData = String.format(
+                                        "{\"content\":\"%s\",\"chunkIndex\":%d}",
+                                        escapeJson(token),
+                                        0  // 临时使用固定索引
+                                );
+                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                        .name(eventType)  // ⭐ 根据模式指定事件名称: llm 或 right
+                                        .data(jsonData));
+                                log.debug("📤 [{}] 发送 token: [{}]", eventType, token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送 token 失败: {}", e.getMessage());
+                                emitter.completeWithError(e);
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            try {
+                                // 发送完成标记
+                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                        .name("complete")  // ⭐ 指定事件名称
+                                        .data("{\"type\":\"complete\"}"));
+                                log.info("✅ 答案流生成完成");
+                                emitter.complete();
+                            } catch (Exception e) {
+                                log.error("❌ 发送完成标记失败: {}", e.getMessage());
+                                emitter.completeWithError(e);
+                            }
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ 答案流生成失败: {}", e.getMessage());
+                            try {
+                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                                        .name("error")  // ⭐ 指定事件名称
+                                        .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}"));
+                            } catch (Exception ex) {
+                                log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                            }
+                            emitter.completeWithError(e);
+                        })
+                        .subscribe();  // 启动订阅
+
+            } catch (Exception e) {
+                log.error("❌ 双轨流式问答失败", e);
+                try {
+                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
+                            .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}"));
+                    emitter.completeWithError(e);
+                } catch (Exception ex) {
+                    log.error("❌ 发送错误消息失败: {}", ex.getMessage());
+                }
             }
+        }).start();
 
-            // 3. AI答案流
-            List<ChatMessage> messages = List.of(
-                    ChatMessage.builder()
-                            .role("user")
-                            .content(prompt)
-                            .build()
-            );
+        // 设置超时和错误处理
+        emitter.onTimeout(() -> {
+            log.warn("⏰ SSE 连接超时");
+            emitter.complete();
+        });
 
-            // 统一使用 answer 类型发送 token（前端只处理 answer 类型）
-            Flux<ServerSentEvent<String>> answerFlux =
-                    aiService.chatFlux(messages)
-                            .doOnSubscribe(sub -> log.info("🚀 开始流式生成答案..."))
-                            .doOnNext(token -> {
-                                // 实时输出每个 token
-                                log.info("📤 发送 token: [{}]", token);
-                            })
-                            .doOnComplete(() -> log.info("✅ 答案流生成完成"))
-                            .doOnError(e -> log.error("❌ 答案流生成失败: {}", e.getMessage()))
-                            .map(token -> {
-                                String jsonData = "{\"type\":\"answer\",\"token\":\"" + escapeJson(token) + "\"}";
-                                log.debug("📦 SSE 数据包: {}", jsonData);
-                                return ServerSentEvent.<String>builder()
-                                        .data(jsonData)
-                                        .build();
-                            });
+        emitter.onError(e -> {
+            log.error("❌ SSE 连接错误: {}", e.getMessage());
+        });
 
-            // 添加完成事件
-            Flux<ServerSentEvent<String>> completeFlux = Flux.just(
-                    ServerSentEvent.<String>builder()
-                            .data("{\"type\":\"complete\"}")
-                            .build()
-            ).doOnNext(event -> log.info("🏁 发送完成标记"));
+        emitter.onCompletion(() -> {
+            log.info("✅ SSE 连接关闭");
+        });
 
-            // 4. 合并三个流：参考文档 -> 答案流 -> 完成标记
-            return Flux.concat(referencesFlux, answerFlux, completeFlux)
-                    .doOnSubscribe(sub -> log.info("🌊 开始双轨流式传输..."))
-                    .doOnComplete(() -> log.info("✅ 双轨流式传输完成"))
-                    .onErrorResume(e -> {
-                        log.error("❌ 双轨流式问答失败", e);
-                        return Flux.just(
-                                ServerSentEvent.<String>builder()
-                                        .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
-                                        .build()
-                        );
-                    });
-
-        } catch (Exception e) {
-            log.error("双轨流式问答初始化失败", e);
-            return Flux.just(
-                    ServerSentEvent.<String>builder()
-                            .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
-                            .build()
-            );
-        }
+        return emitter;
     }
 
     /**
