@@ -92,6 +92,94 @@ public class DocumentManagementController {
     }
 
     /**
+     * 批量上传文档
+     * POST /api/documents/upload-batch
+     */
+    @PostMapping("/upload-batch")
+    public BatchUploadResponse uploadBatch(
+            @RequestParam("files") MultipartFile[] files,
+            @RequestParam(value = "autoIndex", defaultValue = "true") boolean autoIndex) {
+
+        BatchUploadResponse response = new BatchUploadResponse();
+        List<UploadResult> results = new ArrayList<>();
+        int successCount = 0;
+        int failCount = 0;
+
+        try {
+            log.info("批量上传文档: count={}", files.length);
+
+            for (MultipartFile file : files) {
+                UploadResult uploadResult = new UploadResult();
+                uploadResult.setFileName(file.getOriginalFilename());
+
+                try {
+                    if (file.isEmpty()) {
+                        uploadResult.setSuccess(false);
+                        uploadResult.setMessage("文件为空");
+                        failCount++;
+                        results.add(uploadResult);
+                        continue;
+                    }
+
+                    String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
+
+                    // 生成文档ID
+                    String documentId = "doc_" + System.currentTimeMillis() + "_" +
+                        filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+
+                    // 读取文档内容
+                    String content = new String(file.getBytes(), StandardCharsets.UTF_8);
+
+                    // 直接索引到RAG
+                    if (autoIndex) {
+                        Document document = Document.builder()
+                            .id(documentId)
+                            .title(filename)
+                            .content(content)
+                            .source("upload")
+                            .type("document")
+                            .build();
+
+                        ragService.indexDocument(document);
+                    }
+
+                    uploadResult.setSuccess(true);
+                    uploadResult.setMessage("上传成功");
+                    uploadResult.setDocumentId(documentId);
+                    uploadResult.setFileSize(file.getSize());
+                    successCount++;
+
+                } catch (Exception e) {
+                    log.error("上传文件失败: {}", file.getOriginalFilename(), e);
+                    uploadResult.setSuccess(false);
+                    uploadResult.setMessage("上传失败: " + e.getMessage());
+                    failCount++;
+                }
+
+                results.add(uploadResult);
+            }
+
+            response.setSuccess(true);
+            response.setMessage(String.format("批量上传完成: 成功 %d, 失败 %d", successCount, failCount));
+            response.setSuccessCount(successCount);
+            response.setFailureCount(failCount);
+            response.setResults(results);
+
+            log.info("批量上传完成: success={}, fail={}", successCount, failCount);
+
+        } catch (Exception e) {
+            log.error("批量上传失败", e);
+            response.setSuccess(false);
+            response.setMessage("批量上传失败: " + e.getMessage());
+            response.setSuccessCount(successCount);
+            response.setFailureCount(failCount);
+            response.setResults(results);
+        }
+
+        return response;
+    }
+
+    /**
      * 删除文档
      * DELETE /api/documents/{documentId}
      */
@@ -313,6 +401,24 @@ public class DocumentManagementController {
         private long fileSize;
         private String documentId;
         private boolean autoIndexed;
+    }
+
+    @Data
+    public static class BatchUploadResponse {
+        private boolean success;
+        private String message;
+        private int successCount;
+        private int failureCount;
+        private List<UploadResult> results;
+    }
+
+    @Data
+    public static class UploadResult {
+        private boolean success;
+        private String message;
+        private String fileName;
+        private String documentId;
+        private long fileSize;
     }
 
     @Data
