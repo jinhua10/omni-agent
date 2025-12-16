@@ -33,7 +33,7 @@ import java.util.Map;
  *   <li>RoleService - 角色知识库</li>
  *   <li>QueryService - 智能问答</li>
  * </ul>
- * 
+ *
  * @author Jinhua Yu
  * @since 1.0.0
  */
@@ -74,17 +74,17 @@ public class DemoController {
     @PostMapping("/rag/index")
     public Map<String, Object> indexDocument(@RequestBody DocumentRequest request) {
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             Document document = Document.builder()
-                .id(request.getId())
-                .title(request.getTitle())
-                .content(request.getContent())
-                .summary(request.getSummary())
-                .type("example")
-                .source("api")
-                .build();
-                
+                    .id(request.getId())
+                    .title(request.getTitle())
+                    .content(request.getContent())
+                    .summary(request.getSummary())
+                    .type("example")
+                    .source("api")
+                    .build();
+
             String docId = ragService.indexDocument(document);
             result.put("status", "success");
             result.put("documentId", docId);
@@ -93,7 +93,7 @@ public class DemoController {
             result.put("status", "error");
             result.put("error", e.getMessage());
         }
-        
+
         return result;
     }
 
@@ -105,7 +105,7 @@ public class DemoController {
             @RequestParam String query,
             @RequestParam(defaultValue = "10") int topK) {
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             List<SearchResult> searchResults = ragService.searchByText(query, topK);
             result.put("status", "success");
@@ -116,7 +116,7 @@ public class DemoController {
             result.put("status", "error");
             result.put("error", e.getMessage());
         }
-        
+
         return result;
     }
 
@@ -126,7 +126,7 @@ public class DemoController {
     @GetMapping("/rag/statistics")
     public Map<String, Object> getRAGStatistics() {
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             result.put("status", "success");
             result.put("statistics", ragService.getStatistics());
@@ -135,7 +135,7 @@ public class DemoController {
             result.put("status", "error");
             result.put("error", e.getMessage());
         }
-        
+
         return result;
     }
 
@@ -145,7 +145,7 @@ public class DemoController {
     @GetMapping("/storage/statistics")
     public Map<String, Object> getStorageStatistics() {
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             result.put("status", "success");
             result.put("statistics", storageService.getStatistics());
@@ -154,7 +154,7 @@ public class DemoController {
             result.put("status", "error");
             result.put("error", e.getMessage());
         }
-        
+
         return result;
     }
 
@@ -190,21 +190,21 @@ public class DemoController {
         try {
             // 构建简单的消息列表
             List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
-                top.yumbo.ai.ai.api.model.ChatMessage.builder()
-                    .role("user")
-                    .content(message)
-                    .build()
+                    top.yumbo.ai.ai.api.model.ChatMessage.builder()
+                            .role("user")
+                            .content(message)
+                            .build()
             );
 
             // 返回流式响应，每个token作为SSE事件发送
             return aiService.chatFlux(messages)
-                .map(token -> "data: " + token + "\n\n")
-                .onErrorResume(e -> reactor.core.publisher.Flux.just(
-                    "data: [ERROR] " + e.getMessage() + "\n\n"
-                ));
+                    .map(token -> "data: " + token + "\n\n")
+                    .onErrorResume(e -> reactor.core.publisher.Flux.just(
+                            "data: [ERROR] " + e.getMessage() + "\n\n"
+                    ));
         } catch (Exception e) {
             return reactor.core.publisher.Flux.just(
-                "data: [ERROR] " + e.getMessage() + "\n\n"
+                    "data: [ERROR] " + e.getMessage() + "\n\n"
             );
         }
     }
@@ -221,9 +221,9 @@ public class DemoController {
             // 添加系统提示（如果有）
             if (request.getSystemPrompt() != null && !request.getSystemPrompt().isEmpty()) {
                 messages.add(top.yumbo.ai.ai.api.model.ChatMessage.builder()
-                    .role("system")
-                    .content(request.getSystemPrompt())
-                    .build());
+                        .role("system")
+                        .content(request.getSystemPrompt())
+                        .build());
             }
 
             // 添加历史消息（如果有）
@@ -233,19 +233,19 @@ public class DemoController {
 
             // 添加当前用户消息
             messages.add(top.yumbo.ai.ai.api.model.ChatMessage.builder()
-                .role("user")
-                .content(request.getMessage())
-                .build());
+                    .role("user")
+                    .content(request.getMessage())
+                    .build());
 
             // 返回流式响应
             return aiService.chatFlux(messages)
-                .map(token -> "data: " + escapeJson(token) + "\n\n")
-                .onErrorResume(e -> reactor.core.publisher.Flux.just(
-                    "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
-                ));
+                    .map(token -> "data: " + escapeJson(token) + "\n\n")
+                    .onErrorResume(e -> reactor.core.publisher.Flux.just(
+                            "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
+                    ));
         } catch (Exception e) {
             return reactor.core.publisher.Flux.just(
-                "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
+                    "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
             );
         }
     }
@@ -278,19 +278,19 @@ public class DemoController {
     public reactor.core.publisher.Flux<String> generateStream(@RequestBody GenerateRequest request) {
         try {
             top.yumbo.ai.ai.api.model.AIRequest aiRequest = top.yumbo.ai.ai.api.model.AIRequest.builder()
-                .prompt(request.getPrompt())
-                .temperature(request.getTemperature() != null ? request.getTemperature() : 0.7f)
-                .maxTokens(request.getMaxTokens() != null ? request.getMaxTokens() : 2048)
-                .build();
+                    .prompt(request.getPrompt())
+                    .temperature(request.getTemperature() != null ? request.getTemperature() : 0.7f)
+                    .maxTokens(request.getMaxTokens() != null ? request.getMaxTokens() : 2048)
+                    .build();
 
             return aiService.generateFlux(aiRequest)
-                .map(token -> "data: " + escapeJson(token) + "\n\n")
-                .onErrorResume(e -> reactor.core.publisher.Flux.just(
-                    "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
-                ));
+                    .map(token -> "data: " + escapeJson(token) + "\n\n")
+                    .onErrorResume(e -> reactor.core.publisher.Flux.just(
+                            "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
+                    ));
         } catch (Exception e) {
             return reactor.core.publisher.Flux.just(
-                "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
+                    "data: {\"error\": \"" + escapeJson(e.getMessage()) + "\"}\n\n"
             );
         }
     }
@@ -304,8 +304,8 @@ public class DemoController {
 
         try {
             top.yumbo.ai.ai.api.model.AIResponse response = aiService.chat(
-                request.getSystemPrompt(),
-                request.getMessages()
+                    request.getSystemPrompt(),
+                    request.getMessages()
             );
 
             result.put("status", "success");
@@ -349,8 +349,8 @@ public class DemoController {
         try {
             // 1. 使用RAG检索相关文档
             List<SearchResult> searchResults = ragService.searchByText(
-                request.getQuestion(),
-                request.getTopK() != null ? request.getTopK() : 5
+                    request.getQuestion(),
+                    request.getTopK() != null ? request.getTopK() : 5
             );
 
             // 2. 构建上下文
@@ -449,11 +449,11 @@ public class DemoController {
             return "";
         }
         return text
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-            .replace("\t", "\\t");
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     // ========== 知识库问答 API ==========
@@ -476,7 +476,7 @@ public class DemoController {
             String hopeSessionId = request.getHopeSessionId();
 
             log.info("收到问答请求: question={}, mode={}, role={}, session={}",
-                question, knowledgeMode, roleName, hopeSessionId);
+                    question, knowledgeMode, roleName, hopeSessionId);
 
             String answer;
             List<SearchResult> references = null;
@@ -504,8 +504,8 @@ public class DemoController {
                     // 构建包含角色信息和上下文的提示词
                     String roleContext = buildRoleContext(references);
                     String rolePrompt = String.format(
-                        "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                        roleEntity.getName(), roleEntity.getDescription(), roleContext, question
+                            "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                            roleEntity.getName(), roleEntity.getDescription(), roleContext, question
                     );
                     answer = aiService.chat(rolePrompt);
                     break;
@@ -518,8 +518,8 @@ public class DemoController {
                     // 构建RAG提示词
                     String context = buildContext(references);
                     String prompt = String.format(
-                        "基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                        context, question
+                            "基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                            context, question
                     );
                     answer = aiService.chat(prompt);
                     break;
@@ -573,8 +573,8 @@ public class DemoController {
                 references = ragService.searchByText(question, 5);
                 String context = buildRoleContext(references);
                 prompt = String.format(
-                    "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                    role.getName(), role.getDescription(), context, question
+                        "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                        role.getName(), role.getDescription(), context, question
                 );
             } else {
                 // 传统RAG
@@ -585,22 +585,22 @@ public class DemoController {
 
             // 构建消息
             List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
-                top.yumbo.ai.ai.api.model.ChatMessage.builder()
-                    .role("user")
-                    .content(prompt)
-                    .build()
+                    top.yumbo.ai.ai.api.model.ChatMessage.builder()
+                            .role("user")
+                            .content(prompt)
+                            .build()
             );
 
             return aiService.chatFlux(messages)
-                .map(token -> "data: " + token + "\n\n")
-                .onErrorResume(e -> reactor.core.publisher.Flux.just(
-                    "data: [ERROR] " + e.getMessage() + "\n\n"
-                ));
+                    .map(token -> "data: " + token + "\n\n")
+                    .onErrorResume(e -> reactor.core.publisher.Flux.just(
+                            "data: [ERROR] " + e.getMessage() + "\n\n"
+                    ));
 
         } catch (Exception e) {
             log.error("流式问答失败", e);
             return reactor.core.publisher.Flux.just(
-                "data: [ERROR] " + e.getMessage() + "\n\n"
+                    "data: [ERROR] " + e.getMessage() + "\n\n"
             );
         }
     }
@@ -632,8 +632,8 @@ public class DemoController {
             List<SearchResult> references = ragService.searchByText(question, 5);
             String context = buildContext(references);
             String prompt = String.format(
-                "【HOPE智能问答】基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                context, question
+                    "【HOPE智能问答】基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                    context, question
             );
             String answer = aiService.chat(prompt);
 
@@ -720,23 +720,23 @@ public class DemoController {
 
                 // 发送参考文档事件
                 referencesFlux = Flux.fromIterable(references)
-                    .map(ref -> {
-                        try {
-                            String refJson = String.format(
-                                "{\"type\":\"reference\",\"title\":\"%s\",\"content\":\"%s\",\"score\":%.2f}",
-                                escapeJson(ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : ""),
-                                escapeJson(ref.getDocument().getContent()),
-                                ref.getScore()
-                            );
-                            return ServerSentEvent.<String>builder()
-                                .data(refJson)
-                                .build();
-                        } catch (Exception e) {
-                            return ServerSentEvent.<String>builder()
-                                .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
-                                .build();
-                        }
-                    });
+                        .map(ref -> {
+                            try {
+                                String refJson = String.format(
+                                        "{\"type\":\"reference\",\"title\":\"%s\",\"content\":\"%s\",\"score\":%.2f}",
+                                        escapeJson(ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : ""),
+                                        escapeJson(ref.getDocument().getContent()),
+                                        ref.getScore()
+                                );
+                                return ServerSentEvent.<String>builder()
+                                        .data(refJson)
+                                        .build();
+                            } catch (Exception e) {
+                                return ServerSentEvent.<String>builder()
+                                        .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
+                                        .build();
+                            }
+                        });
             }
 
             // 2. 构建AI提示词
@@ -748,8 +748,8 @@ public class DemoController {
                 List<SearchResult> references = ragService.searchByText(question, 5);
                 String context = buildRoleContext(references);
                 prompt = String.format(
-                    "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                    role.getName(), role.getDescription(), context, question
+                        "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                        role.getName(), role.getDescription(), context, question
                 );
             } else {
                 List<SearchResult> references = ragService.searchByText(question, 5);
@@ -759,49 +759,43 @@ public class DemoController {
 
             // 3. AI答案流
             List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
-                top.yumbo.ai.ai.api.model.ChatMessage.builder()
-                    .role("user")
-                    .content(prompt)
-                    .build()
+                    top.yumbo.ai.ai.api.model.ChatMessage.builder()
+                            .role("user")
+                            .content(prompt)
+                            .build()
             );
 
-            // 根据 knowledgeMode 决定发送 llm 还是 answer 类型
-            // knowledgeMode=none 时发送 llm（单轨），否则发送 answer（双轨）
-            String answerType = "none".equals(knowledgeMode) ? "llm" : "answer";
-
-            reactor.core.publisher.Flux<org.springframework.http.codec.ServerSentEvent<String>> answerFlux =
-                aiService.chatFlux(messages)
-                    .map(token -> org.springframework.http.codec.ServerSentEvent.<String>builder()
-                        .data("{\"type\":\"" + answerType + "\",\"" +
-                              ("llm".equals(answerType) ? "content" : "token") +
-                              "\":\"" + escapeJson(token) + "\"}")
-                        .build());
+            // 统一使用 answer 类型发送 token（前端只处理 answer 类型）
+            Flux<ServerSentEvent<String>> answerFlux =
+                    aiService.chatFlux(messages)
+                            .map(token -> ServerSentEvent.<String>builder()
+                                    .data("{\"type\":\"answer\",\"token\":\"" + escapeJson(token) + "\"}")
+                                    .build());
 
             // 添加完成事件
-            reactor.core.publisher.Flux<org.springframework.http.codec.ServerSentEvent<String>> completeFlux =
-                reactor.core.publisher.Flux.just(
-                    org.springframework.http.codec.ServerSentEvent.<String>builder()
-                        .data("{\"type\":\"complete\"}")
-                        .build()
-                );
+            Flux<ServerSentEvent<String>> completeFlux = Flux.just(
+                    ServerSentEvent.<String>builder()
+                            .data("{\"type\":\"complete\"}")
+                            .build()
+            );
 
             // 4. 合并三个流：参考文档 -> 答案流 -> 完成标记
             return reactor.core.publisher.Flux.concat(referencesFlux, answerFlux, completeFlux)
-                .onErrorResume(e -> {
-                    log.error("双轨流式问答失败", e);
-                    return reactor.core.publisher.Flux.just(
-                        org.springframework.http.codec.ServerSentEvent.<String>builder()
-                            .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
-                            .build()
-                    );
-                });
+                    .onErrorResume(e -> {
+                        log.error("双轨流式问答失败", e);
+                        return reactor.core.publisher.Flux.just(
+                                org.springframework.http.codec.ServerSentEvent.<String>builder()
+                                        .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
+                                        .build()
+                        );
+                    });
 
         } catch (Exception e) {
             log.error("双轨流式问答初始化失败", e);
             return reactor.core.publisher.Flux.just(
-                org.springframework.http.codec.ServerSentEvent.<String>builder()
-                    .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
-                    .build()
+                    org.springframework.http.codec.ServerSentEvent.<String>builder()
+                            .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
+                            .build()
             );
         }
     }
@@ -828,8 +822,8 @@ public class DemoController {
 
                 // 如果有标题，使用标题作为问题
                 String questionText = sr.getDocument().getTitle() != null && !sr.getDocument().getTitle().isEmpty()
-                    ? sr.getDocument().getTitle()
-                    : sr.getDocument().getContent().substring(0, Math.min(50, sr.getDocument().getContent().length())) + "...";
+                        ? sr.getDocument().getTitle()
+                        : sr.getDocument().getContent().substring(0, Math.min(50, sr.getDocument().getContent().length())) + "...";
 
                 item.put("question", questionText);
                 item.put("score", sr.getScore());
