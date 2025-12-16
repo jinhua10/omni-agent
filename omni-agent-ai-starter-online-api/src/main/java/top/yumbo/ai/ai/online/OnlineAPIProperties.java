@@ -22,19 +22,26 @@ public class OnlineAPIProperties {
     private String provider = "qianwen";
 
     /**
-     * API Endpoint（推荐使用 endpoint 而不是 baseUrl）
-     * 更适合企业内部网关和API代理场景
-     *
-     * 千问 (Qianwen/Tongyi): https://dashscope.aliyuncs.com/api/v1
-     * OpenAI: https://api.openai.com/v1
-     * Claude: https://api.anthropic.com/v1
-     * 智谱AI: https://open.bigmodel.cn/api/paas/v4
+     * API 端点 URL（完整的 API 地址，直接使用）
+     * <p>
+     * 这是推荐的配置方式，endpoint 就是具体的 API 接口地址
+     * <p>
+     * 示例:
+     * - DeepSeek: <a href="https://api.deepseek.com/v1/chat/completions">...</a>
+     * - 千问: <a href="https://dashscope.aliyuncs.com/api/v1/chat/completions">...</a>
+     * - OpenAI: <a href="https://api.openai.com/v1/chat/completions">...</a>
+     * - Claude: <a href="https://api.anthropic.com/v1/messages">...</a>
+     * - 智谱: <a href="https://open.bigmodel.cn/api/paas/v4/chat/completions">...</a>
+     * - 企业网关: <a href="https://your-gateway.com/ai/chat/completions">...</a>
      */
-    private String endpoint = "https://dashscope.aliyuncs.com/api/v1";
+    private String endpoint;
 
     /**
-     * API Base URL（已废弃，推荐使用 endpoint）
-     * @deprecated 使用 endpoint 代替
+     * API 基础 URL（向后兼容的配置方式，会自动拼接 /chat/completions）
+     * <p>
+     * 注意：推荐使用 endpoint 配置完整 URL
+     *
+     * @deprecated 推荐使用 endpoint 配置完整 API 地址
      */
     @Deprecated
     private String baseUrl;

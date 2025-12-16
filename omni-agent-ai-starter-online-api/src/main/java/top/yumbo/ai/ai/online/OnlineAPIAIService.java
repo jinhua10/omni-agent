@@ -290,55 +290,62 @@ public class OnlineAPIAIService implements AIService {
     // ========== Helper Methods ==========
 
     /**
-     * 获取API端点URL
-     * 优先使用endpoint，如果没有配置则使用baseUrl（向后兼容）
+     * 获取 chat/completions API 端点 URL
+     *
+     * endpoint 就是完整的 API URL，直接使用
      */
     private String getEndpoint() {
-        String baseEndpoint = properties.getEndpoint();
-
-        // 向后兼容：如果没有配置endpoint但配置了baseUrl，使用baseUrl
-        if ((baseEndpoint == null || baseEndpoint.isEmpty()) &&
-            properties.getBaseUrl() != null && !properties.getBaseUrl().isEmpty()) {
-            log.warn("Using deprecated 'baseUrl' configuration. Please migrate to 'endpoint'");
-            baseEndpoint = properties.getBaseUrl();
+        // 如果配置了 endpoint，直接使用（完整 URL）
+        if (properties.getEndpoint() != null && !properties.getEndpoint().isEmpty()) {
+            log.debug("Using endpoint: {}", properties.getEndpoint());
+            return properties.getEndpoint();
         }
 
-        // 如果endpoint/baseUrl都没配置，使用默认值
-        if (baseEndpoint == null || baseEndpoint.isEmpty()) {
-            log.warn("No endpoint configured, using default qianwen endpoint");
-            baseEndpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+        // 向后兼容：如果配置了 baseUrl，拼接路径
+        if (properties.getBaseUrl() != null && !properties.getBaseUrl().isEmpty()) {
+            String url = properties.getBaseUrl();
+            if (!url.endsWith("/chat/completions")) {
+                url = url + "/chat/completions";
+            }
+            log.debug("Using baseUrl + /chat/completions: {}", url);
+            return url;
         }
 
-        // 添加chat/completions路径（如果endpoint还没包含）
-        if (!baseEndpoint.endsWith("/chat/completions")) {
-            return baseEndpoint + "/chat/completions";
-        }
-
-        return baseEndpoint;
+        // 使用默认值
+        log.warn("No endpoint or baseUrl configured, using default qianwen endpoint");
+        return "https://dashscope.aliyuncs.com/api/v1/chat/completions";
     }
 
     /**
-     * 获取基础端点URL（不含路径）
+     * 获取基础端点 URL（用于获取模型列表等其他 API）
      */
     private String getBaseEndpoint() {
-        String baseEndpoint = properties.getEndpoint();
-
-        // 向后兼容
-        if ((baseEndpoint == null || baseEndpoint.isEmpty()) &&
-            properties.getBaseUrl() != null && !properties.getBaseUrl().isEmpty()) {
-            baseEndpoint = properties.getBaseUrl();
+        // 如果配置了 endpoint，智能提取基础 URL
+        if (properties.getEndpoint() != null && !properties.getEndpoint().isEmpty()) {
+            String url = properties.getEndpoint();
+            // 去除 /chat/completions 后缀
+            if (url.endsWith("/chat/completions")) {
+                return url.substring(0, url.length() - "/chat/completions".length());
+            }
+            // 去除最后一段路径（通常是具体的 API 方法）
+            int lastSlash = url.lastIndexOf('/');
+            if (lastSlash > 0) {
+                return url.substring(0, lastSlash);
+            }
+            return url;
         }
 
-        if (baseEndpoint == null || baseEndpoint.isEmpty()) {
-            baseEndpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+        // 如果配置了 baseUrl，直接使用
+        if (properties.getBaseUrl() != null && !properties.getBaseUrl().isEmpty()) {
+            String url = properties.getBaseUrl();
+            if (url.endsWith("/chat/completions")) {
+                return url.substring(0, url.length() - "/chat/completions".length());
+            }
+            return url;
         }
 
-        // 移除尾部的 /chat/completions 以获取基础路径
-        if (baseEndpoint.endsWith("/chat/completions")) {
-            baseEndpoint = baseEndpoint.substring(0, baseEndpoint.lastIndexOf("/chat/completions"));
-        }
-
-        return baseEndpoint;
+        // 使用默认值
+        return "https://dashscope.aliyuncs.com/api/v1";
     }
 
     private HttpHeaders createHeaders() {
