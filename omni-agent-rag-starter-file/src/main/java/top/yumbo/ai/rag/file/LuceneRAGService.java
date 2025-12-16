@@ -404,6 +404,49 @@ public class LuceneRAGService implements RAGService {
         return indexWriter.getDocStats().numDocs;
     }
 
+    @Override
+    public List<Document> getAllDocuments(int offset, int limit) {
+        try {
+            IndexSearcher searcher = searcherManager.acquire();
+            try {
+                List<Document> documents = new ArrayList<>();
+                IndexReader reader = searcher.getIndexReader();
+                int maxDoc = reader.maxDoc();
+
+                // 计算实际范围
+                int startIndex = Math.min(offset, maxDoc);
+                int endIndex = Math.min(offset + limit, maxDoc);
+
+                log.debug("获取所有文档: offset={}, limit={}, maxDoc={}, range=[{}, {})",
+                        offset, limit, maxDoc, startIndex, endIndex);
+
+                // 遍历文档
+                for (int i = startIndex; i < endIndex; i++) {
+                    try {
+                        org.apache.lucene.document.Document luceneDoc = searcher.storedFields().document(i);
+                        if (luceneDoc != null) {
+                            Document document = convertFromLuceneDocument(luceneDoc);
+                            documents.add(document);
+                        }
+                    } catch (Exception e) {
+                        // 文档可能已被删除或不存在，跳过
+                        log.debug("跳过文档: docId={}", i);
+                    }
+                }
+
+                log.debug("获取文档完成: 返回 {} 个文档", documents.size());
+                return documents;
+
+            } finally {
+                searcherManager.release(searcher);
+            }
+
+        } catch (IOException e) {
+            log.error("获取所有文档失败", e);
+            return Collections.emptyList();
+        }
+    }
+
     // ========== 统计与健康 ==========
 
     @Override

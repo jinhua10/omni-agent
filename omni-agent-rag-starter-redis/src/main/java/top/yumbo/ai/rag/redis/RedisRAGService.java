@@ -455,6 +455,50 @@ public class RedisRAGService implements RAGService {
         }
     }
 
+    @Override
+    public List<Document> getAllDocuments(int offset, int limit) {
+        try {
+            // 获取所有文档的key模式
+            String keyPattern = properties.getKeyPrefix() + DOC_PREFIX + "*";
+            Set<String> keys = redisTemplate.keys(keyPattern);
+            if (keys == null || keys.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            // 提取文档ID并排序
+            String docPrefix = properties.getKeyPrefix() + DOC_PREFIX;
+            List<String> docIds = keys.stream()
+                .filter(key -> key.startsWith(docPrefix))
+                .map(key -> key.substring(docPrefix.length()))
+                .sorted()
+                .toList();
+
+            // 分页
+            int start = Math.min(offset, docIds.size());
+            int end = Math.min(offset + limit, docIds.size());
+
+            if (start >= docIds.size()) {
+                return Collections.emptyList();
+            }
+
+            List<String> pagedIds = docIds.subList(start, end);
+
+            // 获取文档内容
+            List<Document> documents = new ArrayList<>();
+            for (String docId : pagedIds) {
+                Optional<Document> doc = getDocument(docId);
+                doc.ifPresent(documents::add);
+            }
+
+            log.debug("获取文档列表: offset={}, limit={}, count={}", offset, limit, documents.size());
+            return documents;
+
+        } catch (Exception e) {
+            log.error("获取所有文档失败", e);
+            return Collections.emptyList();
+        }
+    }
+
     // ========== 统计与健康 ==========
 
     @Override

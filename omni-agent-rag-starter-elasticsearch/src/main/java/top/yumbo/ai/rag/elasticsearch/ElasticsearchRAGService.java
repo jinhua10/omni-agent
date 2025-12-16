@@ -1,6 +1,7 @@
 package top.yumbo.ai.rag.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -463,6 +464,35 @@ public class ElasticsearchRAGService implements RAGService {
         } catch (IOException e) {
             log.error("获取文档总数失败", e);
             return 0;
+        }
+    }
+
+    @Override
+    public List<Document> getAllDocuments(int offset, int limit) {
+        try {
+            SearchRequest request = SearchRequest.of(s -> s
+                .index(properties.getIndexName())
+                .query(q -> q.matchAll(m -> m))
+                .from(offset)
+                .size(limit)
+                .sort(so -> so.field(f -> f.field("createdAt").order(SortOrder.Desc)))
+            );
+
+            SearchResponse<Document> response = client.search(request, Document.class);
+
+            List<Document> documents = new ArrayList<>();
+            for (var hit : response.hits().hits()) {
+                if (hit.source() != null) {
+                    documents.add(hit.source());
+                }
+            }
+
+            log.debug("获取文档列表: offset={}, limit={}, count={}", offset, limit, documents.size());
+            return documents;
+
+        } catch (IOException e) {
+            log.error("获取所有文档失败", e);
+            return Collections.emptyList();
         }
     }
 

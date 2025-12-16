@@ -439,6 +439,43 @@ public class H2RAGService implements RAGService {
         }
     }
 
+    @Override
+    public List<Document> getAllDocuments(int offset, int limit) {
+        String sql = "SELECT id, title, content, source, type, metadata, created_at " +
+                     "FROM rag_documents ORDER BY created_at DESC LIMIT ? OFFSET ?";
+
+        List<Document> documents = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, limit);
+            pstmt.setInt(2, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                Document document = Document.builder()
+                    .id(rs.getString("id"))
+                    .title(rs.getString("title"))
+                    .content(rs.getString("content"))
+                    .source(rs.getString("source"))
+                    .type(rs.getString("type"))
+                    .metadata(deserializeMetadata(rs.getString("metadata")))
+                    .createdAt(rs.getTimestamp("created_at").getTime())
+                    .build();
+                    documents.add(document);
+                }
+            }
+
+            log.debug("获取文档列表: offset={}, limit={}, count={}", offset, limit, documents.size());
+            return documents;
+
+        } catch (SQLException e) {
+            log.error("获取所有文档失败", e);
+            return Collections.emptyList();
+        }
+    }
+
     // ========== 统计与健康 ==========
 
     @Override

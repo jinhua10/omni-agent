@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import top.yumbo.ai.rag.api.model.SearchResult;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
@@ -263,13 +264,15 @@ public class DocumentManagementController {
         try {
             log.info("获取文档列表: keyword={}, page={}, pageSize={}", keyword, page, pageSize);
 
-            // 获取RAG中的所有文档
-            var ragStats = ragService.getStatistics();
+            // 获取文档总数
+            long totalCount = ragService.getDocumentCount();
             List<DocumentInfo> allDocuments = new ArrayList<>();
 
-            // 如果有关键词，则搜索；否则返回空列表（因为RAG没有提供列表所有文档的API）
+            // 如果有关键词，则搜索；否则获取所有文档
             if (keyword != null && !keyword.trim().isEmpty()) {
-                List<top.yumbo.ai.rag.api.model.SearchResult> searchResults =
+                // 关键词搜索
+                log.info("执行关键词搜索: keyword={}", keyword);
+                List<SearchResult> searchResults =
                     ragService.searchByText(keyword, 100); // 搜索更多结果用于分页
 
                 // 提取唯一的文档
@@ -291,22 +294,45 @@ public class DocumentManagementController {
                 }
                 allDocuments.addAll(documentMap.values());
             } else {
-                // 没有关键词时，返回统计信息但文档列表为空
-                log.info("未提供关键词，返回空文档列表");
+                // 没有关键词时，获取所有文档（分页）
+                log.info("获取所有文档: totalCount={}", totalCount);
+                int offset = (page - 1) * pageSize;
+                List<Document> documents = ragService.getAllDocuments(offset, pageSize);
+
+                for (Document doc : documents) {
+                    DocumentInfo docInfo = new DocumentInfo();
+                    docInfo.setDocumentId(doc.getId());
+                    docInfo.setFileName(doc.getTitle() != null ? doc.getTitle() : doc.getId());
+                    docInfo.setFileSize(doc.getContent() != null ? doc.getContent().length() : 0);
+                    docInfo.setFileType(doc.getType() != null ? doc.getType() : "text");
+                    docInfo.setUploadTime(doc.getCreatedAt() != null ? new Date(doc.getCreatedAt()) : new Date());
+                    docInfo.setIndexed(true);
+                    allDocuments.add(docInfo);
+                }
             }
 
             // 分页处理
-            int total = allDocuments.size();
-            int totalPages = (int) Math.ceil((double) total / pageSize);
-            int startIndex = (page - 1) * pageSize;
-            int endIndex = Math.min(startIndex + pageSize, total);
-
             List<DocumentInfo> pagedDocuments;
-            if (startIndex >= total) {
-                pagedDocuments = new ArrayList<>();
+            int total;
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                // 搜索结果需要在内存中分页
+                total = allDocuments.size();
+                int startIndex = (page - 1) * pageSize;
+                int endIndex = Math.min(startIndex + pageSize, total);
+
+                if (startIndex >= total) {
+                    pagedDocuments = new ArrayList<>();
+                } else {
+                    pagedDocuments = allDocuments.subList(startIndex, endIndex);
+                }
             } else {
-                pagedDocuments = allDocuments.subList(startIndex, endIndex);
+                // getAllDocuments 已经分页，直接使用
+                pagedDocuments = allDocuments;
+                total = (int) totalCount;
             }
+
+            int totalPages = (int) Math.ceil((double) total / pageSize);
 
             response.setSuccess(true);
             response.setDocuments(pagedDocuments);

@@ -431,6 +431,33 @@ public class MongoDBRAGService implements RAGService {
         }
     }
 
+    @Override
+    public List<Document> getAllDocuments(int offset, int limit) {
+        try {
+            Query query = new Query()
+                .with(org.springframework.data.domain.Sort.by(
+                    org.springframework.data.domain.Sort.Direction.DESC, "createdAt"))
+                .skip(offset)
+                .limit(limit);
+
+            List<org.bson.Document> mongoDocs = mongoTemplate.find(
+                query, org.bson.Document.class, properties.getCollectionName());
+
+            List<Document> documents = new ArrayList<>();
+            for (org.bson.Document mongoDoc : mongoDocs) {
+                Document document = convertFromMongoDoc(mongoDoc);
+                documents.add(document);
+            }
+
+            log.debug("获取文档列表: offset={}, limit={}, count={}", offset, limit, documents.size());
+            return documents;
+
+        } catch (Exception e) {
+            log.error("获取所有文档失败", e);
+            return Collections.emptyList();
+        }
+    }
+
     // ========== 统计与健康 ==========
 
     @Override

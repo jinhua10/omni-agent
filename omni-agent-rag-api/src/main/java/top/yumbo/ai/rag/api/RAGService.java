@@ -145,6 +145,14 @@ public interface RAGService {
      */
     long getDocumentCount();
 
+    /**
+     * 获取所有文档（支持分页）
+     * @param offset 偏移量（从0开始）
+     * @param limit 限制数量
+     * @return 文档列表
+     */
+    List<Document> getAllDocuments(int offset, int limit);
+
     // ========== 统计与健康 (Statistics & Health) ==========
 
     /**

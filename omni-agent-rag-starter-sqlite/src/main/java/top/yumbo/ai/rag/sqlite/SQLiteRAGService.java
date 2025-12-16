@@ -500,6 +500,41 @@ public class SQLiteRAGService implements RAGService {
         return count != null ? count : 0;
     }
 
+    @Override
+    public List<Document> getAllDocuments(int offset, int limit) {
+        String sql = "SELECT id, title, content, source, type, metadata, created_at " +
+                     "FROM rag_documents ORDER BY created_at DESC LIMIT ? OFFSET ?";
+
+        try {
+            return jdbcTemplate.query(sql, (rs, rowNum) -> {
+                String metadataJson = rs.getString("metadata");
+                Map<String, Object> metadata = new HashMap<>();
+                if (metadataJson != null && !metadataJson.isEmpty()) {
+                    try {
+                        metadata = objectMapper.readValue(metadataJson,
+                            new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+                    } catch (Exception e) {
+                        log.warn("解析metadata失败", e);
+                    }
+                }
+
+                return Document.builder()
+                    .id(rs.getString("id"))
+                    .title(rs.getString("title"))
+                    .content(rs.getString("content"))
+                    .source(rs.getString("source"))
+                    .type(rs.getString("type"))
+                    .metadata(metadata)
+                    .createdAt(rs.getTimestamp("created_at").getTime())
+                    .build();
+            }, limit, offset);
+
+        } catch (Exception e) {
+            log.error("获取所有文档失败", e);
+            return Collections.emptyList();
+        }
+    }
+
     // ========== 统计与健康 ==========
 
     @Override
