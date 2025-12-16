@@ -16,6 +16,11 @@ import top.yumbo.ai.behavior.api.BehaviorAnalysisService;
  */
 @Slf4j
 @AutoConfiguration
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.behavior.type",
+    havingValue = "memory",
+    matchIfMissing = true
+)
 public class BehaviorAnalysisAutoConfiguration {
 
     /**

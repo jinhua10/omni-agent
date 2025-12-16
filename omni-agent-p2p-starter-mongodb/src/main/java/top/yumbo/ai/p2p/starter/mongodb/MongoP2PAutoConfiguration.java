@@ -17,6 +17,10 @@ import top.yumbo.ai.p2p.api.P2PDataTransferService;
  */
 @Configuration
 @ConditionalOnClass(MongoTemplate.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.p2p.type",
+    havingValue = "mongodb"
+)
 @EnableConfigurationProperties(MongoP2PProperties.class)
 public class MongoP2PAutoConfiguration {
 

@@ -20,6 +20,10 @@ import top.yumbo.ai.voting.api.VotingService;
  */
 @Configuration
 @ConditionalOnClass(RedisTemplate.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.voting.type",
+    havingValue = "redis"
+)
 @EnableConfigurationProperties(RedisVotingProperties.class)
 public class RedisVotingAutoConfiguration {
 

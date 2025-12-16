@@ -17,6 +17,10 @@ import top.yumbo.ai.voting.api.VotingService;
  */
 @Configuration
 @ConditionalOnClass(MongoTemplate.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.voting.type",
+    havingValue = "mongodb"
+)
 @EnableConfigurationProperties(MongoVotingProperties.class)
 public class MongoVotingAutoConfiguration {
 

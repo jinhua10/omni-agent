@@ -17,6 +17,10 @@ import top.yumbo.ai.behavior.api.BehaviorAnalysisService;
 @Slf4j
 @AutoConfiguration
 @ConditionalOnClass(MongoTemplate.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.behavior.type",
+    havingValue = "mongodb"
+)
 public class MongoDBBehaviorAnalysisAutoConfiguration {
 
     @Bean

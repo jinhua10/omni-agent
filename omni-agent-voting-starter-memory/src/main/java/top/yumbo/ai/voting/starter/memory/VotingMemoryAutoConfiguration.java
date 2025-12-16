@@ -15,6 +15,11 @@ import top.yumbo.ai.voting.api.VotingService;
  */
 @Slf4j
 @AutoConfiguration
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.voting.type",
+    havingValue = "memory",
+    matchIfMissing = true
+)
 public class VotingMemoryAutoConfiguration {
 
     @Bean

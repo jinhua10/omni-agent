@@ -18,6 +18,10 @@ import top.yumbo.ai.rag.api.RAGService;
 @Slf4j
 @AutoConfiguration
 @ConditionalOnClass(org.h2.Driver.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.rag.type",
+    havingValue = "h2"
+)
 @EnableConfigurationProperties(H2RAGProperties.class)
 public class H2RAGAutoConfiguration {
 

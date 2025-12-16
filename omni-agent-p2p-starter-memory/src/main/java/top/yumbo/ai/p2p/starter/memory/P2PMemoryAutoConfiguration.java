@@ -15,6 +15,10 @@ import top.yumbo.ai.p2p.api.P2PDataTransferService;
  */
 @Slf4j
 @AutoConfiguration
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.p2p.type",
+    havingValue = "memory"
+)
 public class P2PMemoryAutoConfiguration {
 
     @Bean

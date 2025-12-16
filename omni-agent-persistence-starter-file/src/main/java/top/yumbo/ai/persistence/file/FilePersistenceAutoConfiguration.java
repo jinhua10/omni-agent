@@ -3,6 +3,7 @@ package top.yumbo.ai.persistence.file;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
@@ -15,6 +16,10 @@ import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
  */
 @Slf4j
 @AutoConfiguration
+@ConditionalOnProperty(
+    name = "omni-agent.persistence.type",
+    havingValue = "file"
+)
 @EnableConfigurationProperties(FilePersistenceProperties.class)
 public class FilePersistenceAutoConfiguration {
 

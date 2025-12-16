@@ -17,6 +17,10 @@ import top.yumbo.ai.p2p.api.P2PDataTransferService;
  */
 @Configuration
 @ConditionalOnClass(ElasticsearchOperations.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.p2p.type",
+    havingValue = "elasticsearch"
+)
 @EnableConfigurationProperties(ElasticsearchP2PProperties.class)
 public class ElasticsearchP2PAutoConfiguration {
 

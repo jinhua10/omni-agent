@@ -52,31 +52,36 @@ public class LuceneRAGService implements RAGService {
     }
 
     @PostConstruct
-    public void init() throws IOException {
-        log.info("初始化 Lucene RAG 服务，索引路径: {}", properties.getIndexPath());
+    public void init() {
+        try {
+            log.info("初始化 Lucene RAG 服务，索引路径: {}", properties.getIndexPath());
 
-        // 创建索引目录
-        Path indexPath = Paths.get(properties.getIndexPath());
-        if (!Files.exists(indexPath)) {
-            Files.createDirectories(indexPath);
+            // 创建索引目录
+            Path indexPath = Paths.get(properties.getIndexPath());
+            if (!Files.exists(indexPath)) {
+                Files.createDirectories(indexPath);
+            }
+
+            // 初始化 Lucene 组件
+            this.directory = FSDirectory.open(indexPath);
+            this.analyzer = new StandardAnalyzer();
+
+            // 配置 IndexWriter
+            IndexWriterConfig config = new IndexWriterConfig(analyzer);
+            config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+            config.setRAMBufferSizeMB(properties.getRamBufferSizeMb());
+
+            this.indexWriter = new IndexWriter(directory, config);
+            this.indexWriter.commit();
+
+            // 初始化 SearcherManager
+            this.searcherManager = new SearcherManager(directory, null);
+
+            log.info("Lucene RAG 服务初始化完成，文档总数: {}", indexWriter.getDocStats().numDocs);
+        } catch (IOException e) {
+            log.error("初始化 Lucene RAG 服务失败", e);
+            throw new RuntimeException("初始化 Lucene RAG 服务失败: " + e.getMessage(), e);
         }
-
-        // 初始化 Lucene 组件
-        this.directory = FSDirectory.open(indexPath);
-        this.analyzer = new StandardAnalyzer();
-
-        // 配置 IndexWriter
-        IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        config.setRAMBufferSizeMB(properties.getRamBufferSizeMb());
-
-        this.indexWriter = new IndexWriter(directory, config);
-        this.indexWriter.commit();
-
-        // 初始化 SearcherManager
-        this.searcherManager = new SearcherManager(directory, null);
-
-        log.info("Lucene RAG 服务初始化完成，文档总数: {}", indexWriter.getDocStats().numDocs);
     }
 
     @PreDestroy

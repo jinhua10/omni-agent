@@ -23,6 +23,10 @@ import top.yumbo.ai.rag.api.RAGService;
 @Slf4j
 @AutoConfiguration
 @ConditionalOnClass(ElasticsearchClient.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.rag.type",
+    havingValue = "elasticsearch"
+)
 @EnableConfigurationProperties(ElasticsearchRAGProperties.class)
 public class ElasticsearchRAGAutoConfiguration {
 

@@ -10,6 +10,10 @@ import top.yumbo.ai.voting.api.VotingService;
 
 @Configuration
 @ConditionalOnClass(ElasticsearchOperations.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.voting.type",
+    havingValue = "elasticsearch"
+)
 @EnableConfigurationProperties(ElasticsearchVotingProperties.class)
 public class ElasticsearchVotingAutoConfiguration {
 

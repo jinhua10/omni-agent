@@ -21,6 +21,10 @@ import top.yumbo.ai.p2p.api.P2PDataTransferService;
  */
 @Configuration
 @ConditionalOnClass(RedisTemplate.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "omni-agent.p2p.type",
+    havingValue = "redis"
+)
 @EnableConfigurationProperties(RedisP2PProperties.class)
 public class RedisP2PAutoConfiguration {
 

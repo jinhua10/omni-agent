@@ -2,6 +2,7 @@ package top.yumbo.ai.p2p.starter.sqlite;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,10 @@ import javax.sql.DataSource;
  */
 @Configuration
 @ConditionalOnClass(JdbcTemplate.class)
+@ConditionalOnProperty(
+    name = "omni-agent.p2p.type",
+    havingValue = "sqlite"
+)
 @EnableConfigurationProperties(SqliteP2PProperties.class)
 public class SqliteP2PAutoConfiguration {
 
