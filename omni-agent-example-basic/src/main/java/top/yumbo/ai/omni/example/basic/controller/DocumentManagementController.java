@@ -3,14 +3,24 @@ package top.yumbo.ai.omni.example.basic.controller;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import top.yumbo.ai.omni.example.basic.util.DocumentParserUtil;
+import top.yumbo.ai.omni.example.basic.util.FileStorageUtil;
 import top.yumbo.ai.rag.api.model.SearchResult;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,8 +67,19 @@ public class DocumentManagementController {
             String documentId = "doc_" + System.currentTimeMillis() + "_" +
                 filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 
-            // 读取文档内容
-            String content = new String(file.getBytes(), StandardCharsets.UTF_8);
+            // 保存原始文件
+            FileStorageUtil.saveFile(file, documentId);
+            log.info("原始文件已保存: documentId={}", documentId);
+
+            // 使用 DocumentParserUtil 解析文档内容
+            String content;
+            try {
+                content = DocumentParserUtil.parseDocument(file);
+                log.info("文档解析成功: {} bytes", content.length());
+            } catch (Exception e) {
+                log.warn("文档解析失败，使用原始字节内容: {}", e.getMessage());
+                content = new String(file.getBytes(), StandardCharsets.UTF_8);
+            }
 
             // 直接索引到RAG
             if (autoIndex) {
@@ -127,8 +148,17 @@ public class DocumentManagementController {
                     String documentId = "doc_" + System.currentTimeMillis() + "_" +
                         filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 
-                    // 读取文档内容
-                    String content = new String(file.getBytes(), StandardCharsets.UTF_8);
+                    // 保存原始文件
+                    FileStorageUtil.saveFile(file, documentId);
+
+                    // 使用 DocumentParserUtil 解析文档内容
+                    String content;
+                    try {
+                        content = DocumentParserUtil.parseDocument(file);
+                    } catch (Exception e) {
+                        log.warn("文档解析失败，使用原始字节内容: {}", e.getMessage());
+                        content = new String(file.getBytes(), StandardCharsets.UTF_8);
+                    }
 
                     // 直接索引到RAG
                     if (autoIndex) {
@@ -177,6 +207,53 @@ public class DocumentManagementController {
         }
 
         return response;
+    }
+
+    /**
+     * 下载文档
+     * GET /api/documents/download
+     */
+    @GetMapping("/download")
+    public ResponseEntity<Resource> downloadDocument(@RequestParam String fileName) {
+        try {
+            log.info("下载文档请求: fileName={}", fileName);
+
+            // 查找文件
+            Path filePath = FileStorageUtil.findFileByName(fileName);
+            if (filePath == null || !Files.exists(filePath)) {
+                log.warn("文件不存在: {}", fileName);
+                return ResponseEntity.notFound().build();
+            }
+
+            // 加载文件为资源
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                log.error("文件不可读: {}", filePath);
+                return ResponseEntity.notFound().build();
+            }
+
+            // 获取文件的 MIME 类型
+            String contentType = Files.probeContentType(filePath);
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
+            // 对文件名进行 URL 编码，支持中文文件名
+            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
+                    .replaceAll("\\+", "%20");
+
+            log.info("文件下载成功: {}, size={} bytes", fileName, Files.size(filePath));
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" + encodedFileName)
+                    .body(resource);
+
+        } catch (Exception e) {
+            log.error("文件下载失败: {}", fileName, e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     /**

@@ -91,6 +91,35 @@ omni-agent:
       max-retries: 3       # 最大重试次数
       stream-enabled: true # 启用流式响应
 
+  # 5. Vision LLM 配置（图片转文字）⭐
+  vision-llm:
+    # 是否启用图片提取功能
+    enabled: false
+
+    # API 配置
+    api-key: ${VISION_LLM_API_KEY:${AI_API_KEY:your-api-key-here}}
+
+    # 模型选择（支持多模态视觉理解的模型）
+    # - qwen-vl-plus: 千问视觉理解增强版（推荐，中文效果好）
+    # - qwen-vl-max: 千问视觉理解旗舰版
+    # - deepseek-vl: DeepSeek 视觉理解
+    # - gpt-4o: OpenAI GPT-4 with Vision
+    # - gpt-4-vision-preview: OpenAI GPT-4 Vision
+    model: qwen-vl-plus
+
+    # API 端点
+    # 千问 VL: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+    # DeepSeek VL: https://api.deepseek.com/v1/chat/completions
+    # OpenAI: https://api.openai.com/v1/chat/completions
+    endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+
+    # 系统提示词（可自定义）
+    system-prompt: |
+      请分析这张图片并提取其中的关键信息。
+      如果图片包含文字，请完整准确地提取所有文字内容。
+      如果是图表或示意图，请描述其主要内容和含义。
+      保持输出简洁，只提取核心信息。
+
 # ========== 日志配置 ==========
 logging:
   level:
