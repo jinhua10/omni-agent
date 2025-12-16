@@ -85,12 +85,14 @@ public class OnlineAPIAIService implements AIService {
 
     @Override
     public Flux<String> generateFlux(AIRequest request) {
-        // 简化实现：返回完整文本作为单个元素
-        // 真实实现应该使用 WebClient 处理 SSE 流式响应
-        return Flux.defer(() -> {
-            AIResponse response = generate(request);
-            return Flux.just(response.getText());
-        });
+        // 转换为 chat 格式
+        List<ChatMessage> messages = new ArrayList<>();
+        messages.add(ChatMessage.builder()
+                .role("user")
+                .content(request.getPrompt())
+                .build());
+
+        return chatFlux(messages);
     }
 
     @Override
@@ -191,11 +193,115 @@ public class OnlineAPIAIService implements AIService {
 
     @Override
     public Flux<String> chatFlux(String systemPrompt, List<ChatMessage> messages) {
-        // 简化实现：返回完整文本作为单个元素
-        // 真实实现应该使用 WebClient 处理 SSE 流式响应
-        return Flux.defer(() -> {
-            AIResponse response = chat(systemPrompt, messages);
-            return Flux.just(response.getText());
+        return Flux.create(sink -> {
+            try {
+                String endpoint = getEndpoint();
+
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("model", currentModel);
+
+                // 构建消息列表
+                List<Map<String, String>> apiMessages = new ArrayList<>();
+
+                // 添加系统提示
+                if (systemPrompt != null && !systemPrompt.isEmpty()) {
+                    Map<String, String> sysMsg = new HashMap<>();
+                    sysMsg.put("role", "system");
+                    sysMsg.put("content", systemPrompt);
+                    apiMessages.add(sysMsg);
+                }
+
+                // 添加对话历史
+                for (ChatMessage message : messages) {
+                    Map<String, String> msg = new HashMap<>();
+                    msg.put("role", message.getRole());
+                    msg.put("content", message.getContent());
+                    apiMessages.add(msg);
+                }
+
+                requestBody.put("messages", apiMessages);
+                requestBody.put("temperature", properties.getTemperature());
+                requestBody.put("max_tokens", properties.getMaxTokens());
+                requestBody.put("top_p", properties.getTopP());
+                requestBody.put("stream", true);  // 启用流式响应
+
+                HttpHeaders headers = createHeaders();
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+                // 使用 RestTemplate 的 execute 方法处理流式响应
+                restTemplate.execute(
+                    endpoint,
+                    HttpMethod.POST,
+                    request -> {
+                        headers.forEach((key, values) -> values.forEach(value -> request.getHeaders().add(key, value)));
+                        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                        request.getBody().write(
+                            new com.fasterxml.jackson.databind.ObjectMapper()
+                                .writeValueAsBytes(requestBody)
+                        );
+                    },
+                    response -> {
+                        try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                            new java.io.InputStreamReader(response.getBody(), java.nio.charset.StandardCharsets.UTF_8))) {
+
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                if (line.isEmpty() || line.startsWith(":")) {
+                                    continue;  // 跳过空行和注释
+                                }
+
+                                if (line.startsWith("data: ")) {
+                                    String data = line.substring(6).trim();
+
+                                    // 检查是否是结束标记
+                                    if ("[DONE]".equals(data)) {
+                                        sink.complete();
+                                        break;
+                                    }
+
+                                    try {
+                                        // 解析 JSON
+                                        com.fasterxml.jackson.databind.ObjectMapper mapper =
+                                            new com.fasterxml.jackson.databind.ObjectMapper();
+                                        Map<String, Object> jsonData = mapper.readValue(data, Map.class);
+
+                                        // 提取 token
+                                        List<Map<String, Object>> choices =
+                                            (List<Map<String, Object>>) jsonData.get("choices");
+                                        if (choices != null && !choices.isEmpty()) {
+                                            Map<String, Object> firstChoice = choices.get(0);
+                                            Map<String, Object> delta =
+                                                (Map<String, Object>) firstChoice.get("delta");
+                                            if (delta != null) {
+                                                String content = (String) delta.get("content");
+                                                if (content != null && !content.isEmpty()) {
+                                                    sink.next(content);
+                                                }
+                                            }
+
+                                            // 检查是否完成
+                                            String finishReason = (String) firstChoice.get("finish_reason");
+                                            if (finishReason != null && !finishReason.isEmpty()) {
+                                                sink.complete();
+                                                break;
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        log.warn("Failed to parse SSE data: {}", data, e);
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.error("Error reading stream", e);
+                            sink.error(e);
+                        }
+                        return null;
+                    }
+                );
+            } catch (Exception e) {
+                log.error("Failed to start streaming", e);
+                sink.error(e);
+            }
         });
     }
 

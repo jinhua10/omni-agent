@@ -3,7 +3,9 @@ package top.yumbo.ai.omni.example.basic.controller;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 import top.yumbo.ai.rag.api.RAGService;
@@ -702,7 +704,7 @@ public class DemoController {
      * GET /api/qa/stream/dual-track
      */
     @GetMapping(value = "/qa/stream/dual-track", produces = "text/event-stream")
-    public reactor.core.publisher.Flux<String> dualTrackStream(
+    public Flux<ServerSentEvent<String>> dualTrackStream(
             @RequestParam String question,
             @RequestParam(defaultValue = "none") String knowledgeMode,
             @RequestParam(required = false) String roleName) {
@@ -711,13 +713,13 @@ public class DemoController {
             log.info("双轨流式问答: question={}, mode={}, role={}", question, knowledgeMode, roleName);
 
             // 1. 先发送参考文档（如果需要）
-            reactor.core.publisher.Flux<String> referencesFlux = reactor.core.publisher.Flux.empty();
+            Flux<ServerSentEvent<String>> referencesFlux = Flux.empty();
 
             if (!"none".equals(knowledgeMode)) {
                 List<SearchResult> references = ragService.searchByText(question, 5);
 
                 // 发送参考文档事件
-                referencesFlux = reactor.core.publisher.Flux.fromIterable(references)
+                referencesFlux = Flux.fromIterable(references)
                     .map(ref -> {
                         try {
                             String refJson = String.format(
@@ -726,9 +728,13 @@ public class DemoController {
                                 escapeJson(ref.getDocument().getContent()),
                                 ref.getScore()
                             );
-                            return "data: " + refJson + "\n\n";
+                            return ServerSentEvent.<String>builder()
+                                .data(refJson)
+                                .build();
                         } catch (Exception e) {
-                            return "data: {\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}\n\n";
+                            return ServerSentEvent.<String>builder()
+                                .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
+                                .build();
                         }
                     });
             }
@@ -738,7 +744,7 @@ public class DemoController {
             if ("none".equals(knowledgeMode)) {
                 prompt = question;
             } else if ("role".equals(knowledgeMode) && roleName != null) {
-                top.yumbo.ai.omni.core.role.Role role = roleService.getRole(roleName);
+                Role role = roleService.getRole(roleName);
                 List<SearchResult> references = ragService.searchByText(question, 5);
                 String context = buildRoleContext(references);
                 prompt = String.format(
@@ -759,27 +765,37 @@ public class DemoController {
                     .build()
             );
 
-            reactor.core.publisher.Flux<String> answerFlux = aiService.chatFlux(messages)
-                .map(token -> "data: {\"type\":\"answer\",\"token\":\"" + escapeJson(token) + "\"}\n\n");
+            reactor.core.publisher.Flux<org.springframework.http.codec.ServerSentEvent<String>> answerFlux =
+                aiService.chatFlux(messages)
+                    .map(token -> org.springframework.http.codec.ServerSentEvent.<String>builder()
+                        .data("{\"type\":\"answer\",\"token\":\"" + escapeJson(token) + "\"}")
+                        .build());
 
             // 添加完成事件
-            reactor.core.publisher.Flux<String> completeFlux = reactor.core.publisher.Flux.just(
-                "data: {\"type\":\"complete\"}\n\n"
-            );
+            reactor.core.publisher.Flux<org.springframework.http.codec.ServerSentEvent<String>> completeFlux =
+                reactor.core.publisher.Flux.just(
+                    org.springframework.http.codec.ServerSentEvent.<String>builder()
+                        .data("{\"type\":\"complete\"}")
+                        .build()
+                );
 
             // 4. 合并三个流：参考文档 -> 答案流 -> 完成标记
             return reactor.core.publisher.Flux.concat(referencesFlux, answerFlux, completeFlux)
                 .onErrorResume(e -> {
                     log.error("双轨流式问答失败", e);
                     return reactor.core.publisher.Flux.just(
-                        "data: {\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}\n\n"
+                        org.springframework.http.codec.ServerSentEvent.<String>builder()
+                            .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
+                            .build()
                     );
                 });
 
         } catch (Exception e) {
             log.error("双轨流式问答初始化失败", e);
             return reactor.core.publisher.Flux.just(
-                "data: {\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}\n\n"
+                org.springframework.http.codec.ServerSentEvent.<String>builder()
+                    .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
+                    .build()
             );
         }
     }
