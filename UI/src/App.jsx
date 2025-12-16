@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react'
-import { ConfigProvider, theme as antdTheme } from 'antd'
+import { ConfigProvider, theme as antdTheme, App as AntdApp } from 'antd'
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext'
 import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import { UIThemeEngineProvider } from './contexts/UIThemeEngineContext'
@@ -174,7 +174,8 @@ function AppContent() {
 
   return (
     <ConfigProvider theme={antdThemeConfig}>
-      <ErrorBoundary>
+      <AntdApp>
+        <ErrorBoundary>
         {isDocked ? (
           // 停靠模式：分屏布局
           <div 
@@ -267,6 +268,7 @@ function AppContent() {
           </>
         )}
       </ErrorBoundary>
+      </AntdApp>
     </ConfigProvider>
   )
 }

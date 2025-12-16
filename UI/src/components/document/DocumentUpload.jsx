@@ -6,14 +6,16 @@
  */
 
 import React, { useState } from 'react'
-import { Modal, message } from 'antd'
+import { Modal } from 'antd'
 import UploadDropZone from './UploadDropZone'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useMessage } from '../../hooks/useMessage'
 import documentApi from '../../api/modules/document'
 
 function DocumentUpload(props) {
   const { visible, onCancel, onSuccess } = props
   const { t } = useLanguage()
+  const message = useMessage()
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
 

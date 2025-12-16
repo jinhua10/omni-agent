@@ -9,6 +9,9 @@
 export { default as useApi } from './useApi'
 export { default as useFetch } from './useFetch'
 
+// UI Hooks
+export { default as useMessage } from './useMessage'
+
 // Context Hooks (re-export from contexts)
 export { useApp } from '../contexts/AppContext'
 export { useUser, useAuth } from '../contexts/UserContext'

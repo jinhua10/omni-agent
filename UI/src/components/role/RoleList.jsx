@@ -6,18 +6,20 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Button, Space, Switch, message, Modal, Input, Select, Pagination } from 'antd'
+import { Button, Space, Switch, Modal, Input, Select, Pagination } from 'antd'
 import { PlusOutlined, ReloadOutlined, AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import RoleCard from './RoleCard'
 import RoleEditor from './RoleEditor'
 import RoleStatistics from './RoleStatistics'
 import { Loading } from '../common'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useMessage } from '../../hooks/useMessage'
 import roleApi from '../../api/modules/role'
 import '../../assets/css/role/role-list.css'
 
 function RoleList() {
   const { t } = useLanguage()
+  const message = useMessage()
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(false)
   const [editorVisible, setEditorVisible] = useState(false)
