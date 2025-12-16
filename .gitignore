@@ -60,3 +60,4 @@ build/
 /**/*.jar
 src.backup
 old/
+*.ps1

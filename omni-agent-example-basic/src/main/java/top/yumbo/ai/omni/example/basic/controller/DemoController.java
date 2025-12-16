@@ -1,25 +1,22 @@
 package top.yumbo.ai.omni.example.basic.controller;
 
 import lombok.Data;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.core.role.Role;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
 import top.yumbo.ai.rag.api.model.SearchResult;
 import top.yumbo.ai.omni.core.hope.HOPEKnowledgeManager;
+import top.yumbo.ai.omni.core.role.Role;
 import top.yumbo.ai.omni.core.role.RoleService;
 import top.yumbo.ai.omni.core.query.QueryService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Optional;
 
 /**
  * 基础示例控制器 - 增强版
@@ -41,6 +38,7 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "*")  // 添加 CORS 支持
 @RequiredArgsConstructor
 public class DemoController {
 
@@ -693,6 +691,136 @@ public class DemoController {
             log.error("重建索引失败", e);
             result.put("status", "error");
             result.put("error", e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * 双轨流式问答 ⭐ NEW
+     * 同时返回AI答案流和参考文档
+     * GET /api/qa/stream/dual-track
+     */
+    @GetMapping(value = "/qa/stream/dual-track", produces = "text/event-stream")
+    public reactor.core.publisher.Flux<String> dualTrackStream(
+            @RequestParam String question,
+            @RequestParam(defaultValue = "none") String knowledgeMode,
+            @RequestParam(required = false) String roleName) {
+
+        try {
+            log.info("双轨流式问答: question={}, mode={}, role={}", question, knowledgeMode, roleName);
+
+            // 1. 先发送参考文档（如果需要）
+            reactor.core.publisher.Flux<String> referencesFlux = reactor.core.publisher.Flux.empty();
+
+            if (!"none".equals(knowledgeMode)) {
+                List<SearchResult> references = ragService.searchByText(question, 5);
+
+                // 发送参考文档事件
+                referencesFlux = reactor.core.publisher.Flux.fromIterable(references)
+                    .map(ref -> {
+                        try {
+                            String refJson = String.format(
+                                "{\"type\":\"reference\",\"title\":\"%s\",\"content\":\"%s\",\"score\":%.2f}",
+                                escapeJson(ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : ""),
+                                escapeJson(ref.getDocument().getContent()),
+                                ref.getScore()
+                            );
+                            return "data: " + refJson + "\n\n";
+                        } catch (Exception e) {
+                            return "data: {\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}\n\n";
+                        }
+                    });
+            }
+
+            // 2. 构建AI提示词
+            String prompt;
+            if ("none".equals(knowledgeMode)) {
+                prompt = question;
+            } else if ("role".equals(knowledgeMode) && roleName != null) {
+                top.yumbo.ai.omni.core.role.Role role = roleService.getRole(roleName);
+                List<SearchResult> references = ragService.searchByText(question, 5);
+                String context = buildRoleContext(references);
+                prompt = String.format(
+                    "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
+                    role.getName(), role.getDescription(), context, question
+                );
+            } else {
+                List<SearchResult> references = ragService.searchByText(question, 5);
+                String context = buildContext(references);
+                prompt = String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", context, question);
+            }
+
+            // 3. AI答案流
+            List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
+                top.yumbo.ai.ai.api.model.ChatMessage.builder()
+                    .role("user")
+                    .content(prompt)
+                    .build()
+            );
+
+            reactor.core.publisher.Flux<String> answerFlux = aiService.chatFlux(messages)
+                .map(token -> "data: {\"type\":\"answer\",\"token\":\"" + escapeJson(token) + "\"}\n\n");
+
+            // 4. 合并两个流：先发送参考文档，再发送答案流
+            return reactor.core.publisher.Flux.concat(referencesFlux, answerFlux)
+                .onErrorResume(e -> {
+                    log.error("双轨流式问答失败", e);
+                    return reactor.core.publisher.Flux.just(
+                        "data: {\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}\n\n"
+                    );
+                });
+
+        } catch (Exception e) {
+            log.error("双轨流式问答初始化失败", e);
+            return reactor.core.publisher.Flux.just(
+                "data: {\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}\n\n"
+            );
+        }
+    }
+
+    /**
+     * 获取相似问题 ⭐ NEW
+     * 基于RAG检索返回相似的问题
+     * GET /api/qa/similar
+     */
+    @GetMapping("/qa/similar")
+    public Map<String, Object> getSimilarQuestions(@RequestParam String question) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            log.info("获取相似问题: {}", question);
+
+            // 使用RAG搜索相似问题
+            List<SearchResult> searchResults = ragService.searchByText(question, 5);
+
+            // 提取问题（假设文档标题是问题）
+            List<Map<String, Object>> similarQuestions = new java.util.ArrayList<>();
+            for (SearchResult sr : searchResults) {
+                Map<String, Object> item = new HashMap<>();
+
+                // 如果有标题，使用标题作为问题
+                String questionText = sr.getDocument().getTitle() != null && !sr.getDocument().getTitle().isEmpty()
+                    ? sr.getDocument().getTitle()
+                    : sr.getDocument().getContent().substring(0, Math.min(50, sr.getDocument().getContent().length())) + "...";
+
+                item.put("question", questionText);
+                item.put("score", sr.getScore());
+                item.put("documentId", sr.getDocument().getId());
+
+                similarQuestions.add(item);
+            }
+
+            result.put("status", "success");
+            result.put("query", question);
+            result.put("count", similarQuestions.size());
+            result.put("questions", similarQuestions);
+
+        } catch (Exception e) {
+            log.error("获取相似问题失败", e);
+            result.put("status", "error");
+            result.put("error", e.getMessage());
+            result.put("questions", new java.util.ArrayList<>()); // 返回空列表
         }
 
         return result;
