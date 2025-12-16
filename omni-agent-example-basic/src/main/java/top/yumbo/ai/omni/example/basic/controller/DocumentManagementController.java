@@ -3,18 +3,12 @@ package top.yumbo.ai.omni.example.basic.controller;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
 
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -168,6 +162,84 @@ public class DocumentManagementController {
     }
 
     /**
+     * 获取文档列表（分页）
+     * GET /api/documents/list
+     */
+    @GetMapping("/list")
+    public ListResponse listDocuments(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize) {
+
+        ListResponse response = new ListResponse();
+
+        try {
+            log.info("获取文档列表: keyword={}, page={}, pageSize={}", keyword, page, pageSize);
+
+            // 获取RAG中的所有文档
+            var ragStats = ragService.getStatistics();
+            List<DocumentInfo> allDocuments = new ArrayList<>();
+
+            // 如果有关键词，则搜索；否则返回空列表（因为RAG没有提供列表所有文档的API）
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                List<top.yumbo.ai.rag.api.model.SearchResult> searchResults =
+                    ragService.searchByText(keyword, 100); // 搜索更多结果用于分页
+
+                // 提取唯一的文档
+                Map<String, DocumentInfo> documentMap = new HashMap<>();
+                for (var result : searchResults) {
+                    var doc = result.getDocument();
+                    if (doc != null && doc.getId() != null) {
+                        if (!documentMap.containsKey(doc.getId())) {
+                            DocumentInfo docInfo = new DocumentInfo();
+                            docInfo.setDocumentId(doc.getId());
+                            docInfo.setFileName(doc.getTitle() != null ? doc.getTitle() : doc.getId());
+                            docInfo.setFileSize(doc.getContent() != null ? doc.getContent().length() : 0);
+                            docInfo.setFileType("text");
+                            docInfo.setUploadTime(new Date());
+                            docInfo.setIndexed(true);
+                            documentMap.put(doc.getId(), docInfo);
+                        }
+                    }
+                }
+                allDocuments.addAll(documentMap.values());
+            } else {
+                // 没有关键词时，返回统计信息但文档列表为空
+                log.info("未提供关键词，返回空文档列表");
+            }
+
+            // 分页处理
+            int total = allDocuments.size();
+            int totalPages = (int) Math.ceil((double) total / pageSize);
+            int startIndex = (page - 1) * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, total);
+
+            List<DocumentInfo> pagedDocuments;
+            if (startIndex >= total) {
+                pagedDocuments = new ArrayList<>();
+            } else {
+                pagedDocuments = allDocuments.subList(startIndex, endIndex);
+            }
+
+            response.setSuccess(true);
+            response.setDocuments(pagedDocuments);
+            response.setTotal(total);
+            response.setPage(page);
+            response.setPageSize(pageSize);
+            response.setTotalPages(totalPages);
+
+            log.info("返回文档列表: total={}, page={}, pageSize={}", total, page, pageSize);
+
+        } catch (Exception e) {
+            log.error("获取文档列表失败", e);
+            response.setSuccess(false);
+            response.setMessage("获取文档列表失败: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
      * 获取文档统计
      * GET /api/documents/statistics
      */
@@ -246,6 +318,27 @@ public class DocumentManagementController {
     @Data
     public static class BatchDeleteRequest {
         private List<String> documentIds;
+    }
+
+    @Data
+    public static class ListResponse {
+        private boolean success;
+        private String message;
+        private List<DocumentInfo> documents;
+        private int total;
+        private int page;
+        private int pageSize;
+        private int totalPages;
+    }
+
+    @Data
+    public static class DocumentInfo {
+        private String documentId;
+        private String fileName;
+        private long fileSize;
+        private String fileType;
+        private Date uploadTime;
+        private boolean indexed;
     }
 }
 
