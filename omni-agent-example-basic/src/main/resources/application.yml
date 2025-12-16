@@ -16,7 +16,7 @@ omni-agent:
       initial-capacity: 100
       max-size: 10000
 
-# 2. 文档存储配置 (Document Storage)
+  # 2. 文档存储配置 (Document Storage)
   document-storage:
     type: file
     file:
@@ -27,7 +27,7 @@ omni-agent:
       ppl-path: ./data/ppl
       max-file-size: 104857600  # 100MB
 
-# 3. RAG 配置 (Retrieval Augmented Generation)
+  # 3. RAG 配置 (Retrieval Augmented Generation)
   rag:
     type: file
     file:
@@ -37,7 +37,7 @@ omni-agent:
       max-results: 100
       similarity-threshold: 0.7
 
-# 4. AI 配置 (Artificial Intelligence)
+  # 4. AI 配置 (Artificial Intelligence)
   ai:
     type: ollama
     ollama:
