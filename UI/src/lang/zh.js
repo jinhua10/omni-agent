@@ -640,6 +640,7 @@ export default {
     voteSuccess: '投票成功',
     voteFailed: '投票失败',
     votes: '票',
+    comments: '评论',
     viewDetail: '查看详情',
     anonymous: '匿名用户',
 

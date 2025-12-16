@@ -652,6 +652,7 @@ export default {
     voteSuccess: 'Voted successfully',
     voteFailed: 'Failed to vote',
     votes: 'votes',
+    comments: 'Comments',
     viewDetail: 'View Detail',
     anonymous: 'Anonymous',
 
