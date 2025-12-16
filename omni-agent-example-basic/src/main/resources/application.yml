@@ -5,6 +5,14 @@ spring:
   application:
     name: omni-agent-example-basic
 
+  # 文件上传配置 (File Upload Configuration)
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB      # 单个文件最大100MB
+      max-request-size: 100MB   # 整个请求最大100MB
+      file-size-threshold: 2KB  # 文件写入磁盘的阈值
+
 # ========== OmniAgent 四维可插拔配置 ==========
 
 # 1. 持久化配置 (Persistence)
