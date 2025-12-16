@@ -37,6 +37,12 @@ export function FeedbackProvider({ children }) {
       setConflicts(data.list || data)
       return data
     } catch (error) {
+      // 如果是404错误（接口未实现），返回空数据而不报错
+      if (error.response?.status === 404) {
+        console.warn('⚠️ Feedback conflicts endpoint not implemented, using empty data')
+        setConflicts([])
+        return { list: [] }
+      }
       console.error('Failed to fetch conflicts:', error)
       throw error
     } finally {

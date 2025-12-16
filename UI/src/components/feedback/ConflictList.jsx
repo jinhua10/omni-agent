@@ -36,12 +36,18 @@ function ConflictList() {
         setConflicts(response.list || response || [])
       }
     } catch (error) {
+      // 如果是404错误（接口未实现），静默失败使用空数据
+      if (error.response?.status === 404) {
+        console.warn('⚠️ Feedback conflicts endpoint not implemented yet')
+        setConflicts([])
+        return
+      }
       console.error('Failed to load conflicts:', error)
       message.error(t('feedback.loadFailed'))
     } finally {
       setLoading(false)
     }
-  }, [filterStatus, t])
+  }, [filterStatus, t, message])
 
   useEffect(() => {
     loadConflicts()
