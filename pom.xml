@@ -53,6 +53,7 @@
 
         <!-- 持久化 Starters (Persistence Starters) -->
         <module>omni-agent-persistence-starter-memory</module>
+        <module>omni-agent-persistence-starter-file</module>
         <module>omni-agent-persistence-starter-h2</module>
         <module>omni-agent-persistence-starter-sqlite</module>
         <module>omni-agent-persistence-starter-redis</module>

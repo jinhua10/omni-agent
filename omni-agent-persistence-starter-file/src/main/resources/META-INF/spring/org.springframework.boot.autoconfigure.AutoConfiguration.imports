@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.AutoConfiguration.imports=\
+top.yumbo.ai.persistence.file.FilePersistenceAutoConfiguration
