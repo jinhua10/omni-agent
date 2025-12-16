@@ -87,7 +87,7 @@ function BubbleHeader({ scrollProgress }) {
             </div>
           </div>
           <h1 className="logo-text">
-            <span className="text-gradient">AI智能审查系统</span>
+            <span className="text-gradient">Omni Agent</span>
           </h1>
         </div>
 

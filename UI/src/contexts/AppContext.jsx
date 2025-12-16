@@ -76,7 +76,7 @@ export function AppProvider({ children }) {
    */
   const updatePageTitle = useCallback((title) => {
     setPageTitle(title)
-    document.title = `${title} - AI Reviewer`
+    document.title = `${title} - Omni Agent`
   }, [])
 
   // Context 值 (Context value)

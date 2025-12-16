@@ -1,10 +1,10 @@
 {
-  "name": "ai-reviewer-frontend",
+  "name": "omni-agent-frontend",
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "AI Reviewer - RAG 2.0 Frontend with React",
-  "author": "AI Reviewer Team",
+  "description": "Omni Agent - Intelligent AI Assistant Frontend with React",
+  "author": "Omni Agent Team",
   "license": "Apache-2.0",
   "scripts": {
     "dev": "vite",

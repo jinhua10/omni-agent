@@ -1,6 +1,6 @@
-# AI Reviewer Frontend
+# Omni Agent Frontend
 
-基于 React + Vite 的现代化前端项目。
+基于 React + Vite 的智能AI助手前端项目。
 
 ## 📂 目录结构
 

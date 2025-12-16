@@ -111,7 +111,7 @@ function Header({
         {/* Logo 和标题 (Logo and title) */}
         <div className="app-header__logo">
           <span className="app-header__logo-icon">🤖</span>
-          <span className="app-header__logo-text">AI Reviewer</span>
+          <span className="app-header__logo-text">Omni Agent</span>
         </div>
 
         {/* 导航菜单 (Navigation menu) */}

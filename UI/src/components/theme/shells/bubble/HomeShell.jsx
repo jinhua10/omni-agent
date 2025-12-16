@@ -13,8 +13,8 @@ function HomeShell() {
           <div className="orb-glow"></div>
           <div className="orb-content">
             <span className="hero-icon">🏠</span>
-            <h1 className="hero-title">AI智能审查系统</h1>
-            <p className="hero-subtitle">欢迎来到梦幻气泡主题</p>
+            <h1 className="hero-title">Omni Agent</h1>
+            <p className="hero-subtitle">智能AI助手系统</p>
           </div>
         </div>
       </div>

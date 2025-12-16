@@ -27,6 +27,19 @@ const UserProfile = () => {
       const userData = response.data || response;
       setUserInfo(userData);
     } catch (error) {
+      // 如果是404错误（接口未实现），使用默认用户数据
+      if (error.response?.status === 404) {
+        console.warn('⚠️ Profile info endpoint not implemented, using default user');
+        setUserInfo({
+          userId: 'guest',
+          username: 'Guest User',
+          email: 'guest@example.com',
+          avatar: null,
+          bio: 'Welcome to OmniAgent',
+          joinDate: new Date().toISOString(),
+        });
+        return;
+      }
       console.error('Failed to load user info:', error);
       message.error(t('profile.loadFailed'));
       setUserInfo(null);

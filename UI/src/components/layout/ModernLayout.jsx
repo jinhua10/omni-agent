@@ -219,7 +219,7 @@ function ModernLayout({ children, activeKey, onMenuChange }) {
         <div className="modern-layout__logo">
           <span className="modern-layout__logo-icon">🤖</span>
           {!collapsed && (
-            <span className="modern-layout__logo-text">AI Reviewer</span>
+            <span className="modern-layout__logo-text">Omni Agent</span>
           )}
         </div>
 
