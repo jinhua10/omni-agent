@@ -15,6 +15,12 @@ import { mockRequest, ENABLE_MOCK } from './mock'
 // API 基础路径 (API base URL)
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
+// SSE 专用基础路径 (SSE base URL - EventSource cannot use proxy)
+// 开发环境直接指向后端，生产环境使用相对路径
+export const SSE_BASE_URL = import.meta.env.MODE === 'development'
+  ? 'http://localhost:8080/api'
+  : '/api'
+
 // 请求超时时间（毫秒）(Request timeout in milliseconds)
 const TIMEOUT = 30000
 

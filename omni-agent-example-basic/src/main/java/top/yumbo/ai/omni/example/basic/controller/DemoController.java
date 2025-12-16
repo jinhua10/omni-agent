@@ -762,8 +762,13 @@ public class DemoController {
             reactor.core.publisher.Flux<String> answerFlux = aiService.chatFlux(messages)
                 .map(token -> "data: {\"type\":\"answer\",\"token\":\"" + escapeJson(token) + "\"}\n\n");
 
-            // 4. 合并两个流：先发送参考文档，再发送答案流
-            return reactor.core.publisher.Flux.concat(referencesFlux, answerFlux)
+            // 添加完成事件
+            reactor.core.publisher.Flux<String> completeFlux = reactor.core.publisher.Flux.just(
+                "data: {\"type\":\"complete\"}\n\n"
+            );
+
+            // 4. 合并三个流：参考文档 -> 答案流 -> 完成标记
+            return reactor.core.publisher.Flux.concat(referencesFlux, answerFlux, completeFlux)
                 .onErrorResume(e -> {
                     log.error("双轨流式问答失败", e);
                     return reactor.core.publisher.Flux.just(

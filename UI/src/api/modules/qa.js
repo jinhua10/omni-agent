@@ -8,7 +8,7 @@
  * @since 2025-12-12
  */
 
-import { request } from '../index'
+import { request, SSE_BASE_URL } from '../index'
 
 const qaApi = {
   /**
@@ -74,97 +74,73 @@ const qaApi = {
       }
 
       // 使用单端点双轨流式接口
-      const eventSourceUrl = `${window.location.origin}/api/qa/stream/dual-track?${queryParams}`
+      // 注意：EventSource 不能使用 Vite 代理，需要直接指向后端
+      const eventSourceUrl = `${SSE_BASE_URL}/qa/stream/dual-track?${queryParams}`
       console.log('📡 Connecting to dual-track SSE:', eventSourceUrl)
 
       const eventSource = new EventSource(eventSourceUrl)
 
-      // 监听左面板输出（纯 LLM / 单轨模式的 LLM）
-      eventSource.addEventListener('left', (event) => {
+      // 监听默认 message 事件
+      eventSource.onmessage = (event) => {
         try {
-          const leftData = JSON.parse(event.data)
-          console.log('⬅️ Left panel chunk:', leftData.content.substring(0, 30))
+          const data = JSON.parse(event.data)
+          console.log('📦 Received SSE data:', data.type, data)
 
-          if (onChunk) {
-            onChunk({
-              content: leftData.content,
-              done: false,
-              type: 'left',  // 左面板
-              chunkIndex: leftData.chunkIndex
-            })
+          if (!onChunk) return
+
+          // 根据 type 字段处理不同类型的数据
+          switch (data.type) {
+            case 'reference':
+              // 参考文档
+              console.log('📚 Reference:', data.title)
+              onChunk({
+                type: 'reference',
+                title: data.title,
+                content: data.content,
+                score: data.score,
+                done: false
+              })
+              break
+
+            case 'answer':
+              // AI 答案 token
+              console.log('💬 Answer token:', data.token?.substring(0, 20))
+              onChunk({
+                type: 'answer',
+                content: data.token,
+                done: false
+              })
+              break
+
+            case 'complete':
+              // 完成标记
+              console.log('✅ Stream completed')
+              onChunk({
+                type: 'complete',
+                content: '',
+                done: true
+              })
+              eventSource.close()
+              break
+
+            case 'error':
+              // 错误信息
+              console.error('❌ Error:', data.message)
+              onChunk({
+                type: 'error',
+                error: data.message,
+                done: true
+              })
+              eventSource.close()
+              break
+
+            default:
+              console.warn('⚠️ Unknown message type:', data.type)
           }
         } catch (error) {
-          console.error('❌ Failed to parse left panel chunk:', error)
+          console.error('❌ Failed to parse SSE message:', error, event.data)
         }
-      })
-
-      // 监听右面板输出（RAG 增强 / 角色知识库）
-      eventSource.addEventListener('right', (event) => {
-        try {
-          const rightData = JSON.parse(event.data)
-          console.log('➡️ Right panel chunk:', rightData.content.substring(0, 30))
-
-          if (onChunk) {
-            onChunk({
-              content: rightData.content,
-              done: false,
-              type: 'right',  // 右面板
-              chunkIndex: rightData.chunkIndex
-            })
-          }
-        } catch (error) {
-          console.error('❌ Failed to parse right panel chunk:', error)
-        }
-      })
-
-      // 监听 LLM 流式输出（单轨模式：不使用 RAG）
-      eventSource.addEventListener('llm', (event) => {
-        try {
-          const llmData = JSON.parse(event.data)
-          console.log('📦 LLM chunk received:', llmData.content.substring(0, 50))
-
-          if (onChunk) {
-            onChunk({
-              content: llmData.content,
-              done: false,
-              type: 'llm',  // 单面板 LLM
-              chunkIndex: llmData.chunkIndex
-            })
-          }
-        } catch (error) {
-          console.error('❌ Failed to parse LLM chunk:', error)
-        }
-      })
-
-      // 监听完成事件
-      eventSource.addEventListener('complete', (event) => {
-        console.log('✅ Dual-track streaming completed')
-
-        try {
-          const stats = JSON.parse(event.data)
-          console.log('📊 Streaming stats:', stats)
-
-          if (onChunk) {
-            onChunk({
-              content: '',
-              done: true,
-              type: 'complete',
-              totalChunks: stats.totalChunks,
-              totalTime: stats.totalTime
-            })
-          }
-        } catch (e) {
-          if (onChunk) {
-            onChunk({
-              content: '',
-              done: true,
-              type: 'complete'
-            })
-          }
-        }
-
-        eventSource.close()
-      })
+      }
 
       // 监听错误事件
       eventSource.addEventListener('error', (event) => {
