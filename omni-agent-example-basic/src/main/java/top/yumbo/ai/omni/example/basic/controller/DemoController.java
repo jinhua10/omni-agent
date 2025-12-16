@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
+import top.yumbo.ai.ai.api.model.ChatMessage;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 import top.yumbo.ai.rag.api.RAGService;
@@ -717,9 +718,12 @@ public class DemoController {
 
             if (!"none".equals(knowledgeMode)) {
                 List<SearchResult> references = ragService.searchByText(question, 5);
+                log.info("📚 检索到 {} 个参考文档", references.size());
 
                 // 发送参考文档事件
                 referencesFlux = Flux.fromIterable(references)
+                        .doOnNext(ref -> log.info("📄 发送参考文档: {}",
+                                ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : "无标题"))
                         .map(ref -> {
                             try {
                                 String refJson = String.format(
@@ -732,11 +736,14 @@ public class DemoController {
                                         .data(refJson)
                                         .build();
                             } catch (Exception e) {
+                                log.error("❌ 发送参考文档失败: {}", e.getMessage());
                                 return ServerSentEvent.<String>builder()
                                         .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
                                         .build();
                             }
                         });
+            } else {
+                log.info("🚫 不使用知识库模式，跳过参考文档检索");
             }
 
             // 2. 构建AI提示词
@@ -758,8 +765,8 @@ public class DemoController {
             }
 
             // 3. AI答案流
-            List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
-                    top.yumbo.ai.ai.api.model.ChatMessage.builder()
+            List<ChatMessage> messages = List.of(
+                    ChatMessage.builder()
                             .role("user")
                             .content(prompt)
                             .build()
@@ -768,23 +775,36 @@ public class DemoController {
             // 统一使用 answer 类型发送 token（前端只处理 answer 类型）
             Flux<ServerSentEvent<String>> answerFlux =
                     aiService.chatFlux(messages)
-                            .map(token -> ServerSentEvent.<String>builder()
-                                    .data("{\"type\":\"answer\",\"token\":\"" + escapeJson(token) + "\"}")
-                                    .build());
+                            .doOnSubscribe(sub -> log.info("🚀 开始流式生成答案..."))
+                            .doOnNext(token -> {
+                                // 实时输出每个 token
+                                log.info("📤 发送 token: [{}]", token);
+                            })
+                            .doOnComplete(() -> log.info("✅ 答案流生成完成"))
+                            .doOnError(e -> log.error("❌ 答案流生成失败: {}", e.getMessage()))
+                            .map(token -> {
+                                String jsonData = "{\"type\":\"answer\",\"token\":\"" + escapeJson(token) + "\"}";
+                                log.debug("📦 SSE 数据包: {}", jsonData);
+                                return ServerSentEvent.<String>builder()
+                                        .data(jsonData)
+                                        .build();
+                            });
 
             // 添加完成事件
             Flux<ServerSentEvent<String>> completeFlux = Flux.just(
                     ServerSentEvent.<String>builder()
                             .data("{\"type\":\"complete\"}")
                             .build()
-            );
+            ).doOnNext(event -> log.info("🏁 发送完成标记"));
 
             // 4. 合并三个流：参考文档 -> 答案流 -> 完成标记
-            return reactor.core.publisher.Flux.concat(referencesFlux, answerFlux, completeFlux)
+            return Flux.concat(referencesFlux, answerFlux, completeFlux)
+                    .doOnSubscribe(sub -> log.info("🌊 开始双轨流式传输..."))
+                    .doOnComplete(() -> log.info("✅ 双轨流式传输完成"))
                     .onErrorResume(e -> {
-                        log.error("双轨流式问答失败", e);
-                        return reactor.core.publisher.Flux.just(
-                                org.springframework.http.codec.ServerSentEvent.<String>builder()
+                        log.error("❌ 双轨流式问答失败", e);
+                        return Flux.just(
+                                ServerSentEvent.<String>builder()
                                         .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
                                         .build()
                         );
@@ -792,8 +812,8 @@ public class DemoController {
 
         } catch (Exception e) {
             log.error("双轨流式问答初始化失败", e);
-            return reactor.core.publisher.Flux.just(
-                    org.springframework.http.codec.ServerSentEvent.<String>builder()
+            return Flux.just(
+                    ServerSentEvent.<String>builder()
                             .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}")
                             .build()
             );
