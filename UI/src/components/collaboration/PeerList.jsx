@@ -6,17 +6,19 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Button, Space, message, Empty } from 'antd'
+import { Button, Space, Empty } from 'antd'
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import PeerCard from './PeerCard'
 import ConnectionManager from './ConnectionManager'
 import { Loading } from '../common'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useMessage } from '../../hooks/useMessage'
 import collaborationApi from '../../api/modules/collaboration'
 import '../../assets/css/collaboration/peer-list.css'
 
 function PeerList() {
   const { t } = useLanguage()
+  const message = useMessage()
   const [peers, setPeers] = useState([])
   const [loading, setLoading] = useState(false)
   const [connectionVisible, setConnectionVisible] = useState(false)

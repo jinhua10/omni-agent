@@ -9,8 +9,9 @@
  */
 
 import React, { useState } from 'react';
-import { Drawer, Space, Typography, ColorPicker, Button, message, Divider } from 'antd';
+import { Drawer, Space, Typography, ColorPicker, Button, Divider } from 'antd';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useMessage } from '../../hooks/useMessage';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const { Title, Text } = Typography;
@@ -19,6 +20,7 @@ const { Title, Text } = Typography;
  * 主题定制器组件 / Theme Customizer Component
  */
 function ThemeCustomizer({ open, onClose }) {
+  const message = useMessage();
   const { t } = useLanguage();
   const { theme, themeName, setTheme, updateCustomTheme } = useTheme();
 

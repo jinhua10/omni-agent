@@ -6,17 +6,19 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Space, Button, Select, message, Empty } from 'antd'
+import { Space, Button, Select, Empty } from 'antd'
 import { ReloadOutlined, FilterOutlined } from '@ant-design/icons'
 import ConflictCard from './ConflictCard'
 import VotingPanel from './VotingPanel'
 import { Loading } from '../common'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useMessage } from '../../hooks/useMessage'
 import feedbackApi from '../../api/modules/feedback'
 import '../../assets/css/feedback/conflict-list.css'
 
 function ConflictList() {
   const { t } = useLanguage()
+  const message = useMessage()
   const [conflicts, setConflicts] = useState([])
   const [loading, setLoading] = useState(false)
   const [votingVisible, setVotingVisible] = useState(false)

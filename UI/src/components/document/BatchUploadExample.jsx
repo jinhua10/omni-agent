@@ -9,13 +9,14 @@
  */
 
 import React, { useState } from 'react';
-import { message } from 'antd';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useMessage } from '../../hooks/useMessage';
 import { batchUploadDocuments } from '../../adapters/PageDataAdapter';
 import UploadDropZone from './UploadDropZone';
 
 function BatchUploadExample() {
   const { t } = useLanguage();
+  const message = useMessage();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 

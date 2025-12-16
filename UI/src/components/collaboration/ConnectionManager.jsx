@@ -6,15 +6,17 @@
  */
 
 import React, { useState } from 'react'
-import { Modal, Tabs, Input, Button, message } from 'antd'
+import { Modal, Tabs, Input, Button } from 'antd'
 import { QrcodeOutlined, KeyOutlined } from '@ant-design/icons'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useMessage } from '../../hooks/useMessage'
 import collaborationApi from '../../api/modules/collaboration'
 import '../../assets/css/collaboration/connection-manager.css'
 
 function ConnectionManager(props) {
   const { visible, onCancel, onSuccess } = props
   const { t } = useLanguage()
+  const message = useMessage()
   const [activeTab, setActiveTab] = useState('generate')
   const [connectionCode, setConnectionCode] = useState('')
   const [generatedCode, setGeneratedCode] = useState('')

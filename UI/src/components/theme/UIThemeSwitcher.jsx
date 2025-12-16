@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react';
-import { Modal, Card, Row, Col, Button, Tag, Badge, Upload, message, Tabs } from 'antd';
+import { Modal, Card, Row, Col, Button, Tag, Badge, Upload, Tabs } from 'antd';
 import {
   AppstoreOutlined,
   DownloadOutlined,
@@ -20,6 +20,7 @@ import {
   ExportOutlined,
 } from '@ant-design/icons';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useMessage } from '../../hooks/useMessage';
 import { useUIThemeEngine } from '../../contexts/UIThemeEngineContext';
 import './ui-theme-switcher.css';
 
@@ -28,6 +29,7 @@ import './ui-theme-switcher.css';
  */
 function UIThemeSwitcher({ open, onClose }) {
   const { t, language } = useLanguage();
+  const message = useMessage();
   const {
     currentUITheme,
     allThemes,

@@ -22,7 +22,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Button, Space, message, Modal, Pagination } from 'antd'
+import { Button, Space, Modal, Pagination } from 'antd'
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import DocumentCard from './DocumentCard'
 import DocumentUpload from './DocumentUpload'
@@ -31,6 +31,7 @@ import DocumentAdvancedSearch from './DocumentAdvancedSearch'
 import DocumentDetail from './DocumentDetail'
 import { Loading } from '../common'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useMessage } from '../../hooks/useMessage'
 import documentApi from '../../api/modules/document'
 import '../../assets/css/document/document-list.css'
 import dayjs from 'dayjs'
@@ -40,6 +41,7 @@ function DocumentList() {
   // Hooks / 钩子
   // ============================================================================
   const { t } = useLanguage()
+  const message = useMessage()
 
   // ============================================================================
   // State / 状态管理

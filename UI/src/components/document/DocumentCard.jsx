@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react'
-import { Card, Button, Space, Tooltip, Tag, message } from 'antd'
+import { Card, Button, Space, Tooltip, Tag } from 'antd'
 import {
   EyeOutlined,
   DownloadOutlined,
@@ -27,12 +27,14 @@ import {
   FileOutlined,
 } from '@ant-design/icons'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useMessage } from '../../hooks/useMessage'
 import { useQA } from '../../contexts/QAContext'
 import '../../assets/css/document/document-card.css'
 
 function DocumentCard(props) {
   const { document, onView, onDelete, onDownload, onAddToAI } = props
   const { t } = useLanguage()
+  const message = useMessage()
   const { addDocToAIAnalysis } = useQA()
   const [isDragging, setIsDragging] = useState(false)
   
