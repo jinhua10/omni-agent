@@ -212,7 +212,7 @@ public class OnlineAPIAIService implements AIService {
     @Override
     public List<ModelInfo> listModels() {
         try {
-            String url = properties.getBaseUrl() + "/models";
+            String url = getBaseEndpoint() + "/models";
             HttpHeaders headers = createHeaders();
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
@@ -263,7 +263,7 @@ public class OnlineAPIAIService implements AIService {
     @Override
     public boolean isHealthy() {
         try {
-            String url = properties.getBaseUrl() + "/models";
+            String url = getBaseEndpoint() + "/models";
             HttpHeaders headers = createHeaders();
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
@@ -280,7 +280,7 @@ public class OnlineAPIAIService implements AIService {
         Map<String, Object> status = new HashMap<>();
         status.put("service", "online-api");
         status.put("provider", properties.getProvider());
-        status.put("baseUrl", properties.getBaseUrl());
+        status.put("endpoint", getBaseEndpoint());
         status.put("currentModel", currentModel);
         status.put("healthy", isHealthy());
         status.put("timestamp", System.currentTimeMillis());
@@ -289,24 +289,73 @@ public class OnlineAPIAIService implements AIService {
 
     // ========== Helper Methods ==========
 
+    /**
+     * 获取API端点URL
+     * 优先使用endpoint，如果没有配置则使用baseUrl（向后兼容）
+     */
     private String getEndpoint() {
-        return properties.getBaseUrl() + "/chat/completions";
+        String baseEndpoint = properties.getEndpoint();
+
+        // 向后兼容：如果没有配置endpoint但配置了baseUrl，使用baseUrl
+        if ((baseEndpoint == null || baseEndpoint.isEmpty()) &&
+            properties.getBaseUrl() != null && !properties.getBaseUrl().isEmpty()) {
+            log.warn("Using deprecated 'baseUrl' configuration. Please migrate to 'endpoint'");
+            baseEndpoint = properties.getBaseUrl();
+        }
+
+        // 如果endpoint/baseUrl都没配置，使用默认值
+        if (baseEndpoint == null || baseEndpoint.isEmpty()) {
+            log.warn("No endpoint configured, using default qianwen endpoint");
+            baseEndpoint = "https://dashscope.aliyuncs.com/api/v1";
+        }
+
+        return baseEndpoint + "/chat/completions";
+    }
+
+    /**
+     * 获取基础端点URL（不含路径）
+     */
+    private String getBaseEndpoint() {
+        String baseEndpoint = properties.getEndpoint();
+
+        // 向后兼容
+        if ((baseEndpoint == null || baseEndpoint.isEmpty()) &&
+            properties.getBaseUrl() != null && !properties.getBaseUrl().isEmpty()) {
+            baseEndpoint = properties.getBaseUrl();
+        }
+
+        if (baseEndpoint == null || baseEndpoint.isEmpty()) {
+            baseEndpoint = "https://dashscope.aliyuncs.com/api/v1";
+        }
+
+        return baseEndpoint;
     }
 
     private HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
+        String provider = properties.getProvider().toLowerCase();
+
+        // 千问/通义 (Qianwen/Tongyi) 格式
+        if ("qianwen".equals(provider) || "tongyi".equals(provider)) {
+            headers.set("Authorization", "Bearer " + properties.getApiKey());
+            headers.set("X-DashScope-SSE", "enable");  // 启用流式响应
+        }
         // OpenAI 格式
-        if ("openai".equalsIgnoreCase(properties.getProvider())) {
+        else if ("openai".equals(provider)) {
             headers.set("Authorization", "Bearer " + properties.getApiKey());
         }
         // Claude 格式
-        else if ("claude".equalsIgnoreCase(properties.getProvider())) {
+        else if ("claude".equals(provider)) {
             headers.set("x-api-key", properties.getApiKey());
             headers.set("anthropic-version", "2023-06-01");
         }
-        // 通用格式
+        // 智谱AI (Zhipu) 格式
+        else if ("zhipu".equals(provider)) {
+            headers.set("Authorization", "Bearer " + properties.getApiKey());
+        }
+        // 通用格式（默认）
         else {
             headers.set("Authorization", "Bearer " + properties.getApiKey());
         }

@@ -39,14 +39,42 @@ omni-agent:
 
   # 4. AI 配置 (Artificial Intelligence)
   ai:
-    type: ollama
+    # type: ollama  # 本地Ollama（开发/测试）
+    type: online    # 在线API（生产环境推荐）
+
+    # Ollama 本地配置（开发/测试环境）
     ollama:
-      # Ollama 配置
       base-url: http://localhost:11434
       model: qwen2.5:latest
       temperature: 0.7
       max-tokens: 2000
       timeout: 30000  # 30秒
+
+    # Online API 配置（生产环境推荐）⭐
+    online:
+      # API提供商: qianwen(千问), openai, claude, zhipu(智谱)
+      provider: qianwen
+
+      # API端点（推荐使用endpoint，更适合企业网关）
+      endpoint: https://dashscope.aliyuncs.com/api/v1
+
+      # API Key（从阿里云DashScope获取）
+      # 获取地址: https://dashscope.console.aliyun.com/
+      api-key: ${QW_API_KEY:your-api-key-here}
+
+      # 模型选择
+      # qwen-plus: 平衡性能和成本（推荐）
+      # qwen-turbo: 快速响应
+      # qwen-max: 最强性能
+      default-model: qwen-plus
+
+      # 生成参数
+      temperature: 0.7      # 0.0-2.0，控制随机性
+      max-tokens: 2048      # 最大生成token数
+      top-p: 0.9           # 核采样参数
+      timeout: 60000       # 60秒超时
+      max-retries: 3       # 最大重试次数
+      stream-enabled: true # 启用流式响应
 
 # ========== 日志配置 ==========
 logging:

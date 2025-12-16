@@ -16,29 +16,45 @@ public class OnlineAPIProperties {
 
     /**
      * API 提供商
-     * 支持: openai, claude, qianwen, etc.
-     * 默认: openai
+     * 支持: openai, claude, qianwen (tongyi), zhipu, etc.
+     * 默认: qianwen
      */
-    private String provider = "openai";
+    private String provider = "qianwen";
 
     /**
-     * API Base URL
+     * API Endpoint（推荐使用 endpoint 而不是 baseUrl）
+     * 更适合企业内部网关和API代理场景
+     *
+     * 千问 (Qianwen/Tongyi): https://dashscope.aliyuncs.com/api/v1
      * OpenAI: https://api.openai.com/v1
      * Claude: https://api.anthropic.com/v1
+     * 智谱AI: https://open.bigmodel.cn/api/paas/v4
      */
-    private String baseUrl = "https://api.openai.com/v1";
+    private String endpoint = "https://dashscope.aliyuncs.com/api/v1";
 
     /**
-     * API Key
+     * API Base URL（已废弃，推荐使用 endpoint）
+     * @deprecated 使用 endpoint 代替
+     */
+    @Deprecated
+    private String baseUrl;
+
+    /**
+     * API Key / Access Token
+     * 千问使用 API Key (从阿里云DashScope获取)
+     * OpenAI使用 API Key
+     * Claude使用 API Key
      */
     private String apiKey;
 
     /**
      * 默认模型
+     * 千问 (Qianwen): qwen-plus, qwen-turbo, qwen-max
      * OpenAI: gpt-3.5-turbo, gpt-4
      * Claude: claude-3-opus, claude-3-sonnet
+     * 智谱AI: glm-4, glm-3-turbo
      */
-    private String defaultModel = "gpt-3.5-turbo";
+    private String defaultModel = "qwen-plus";
 
     /**
      * 请求超时时间（毫秒）
