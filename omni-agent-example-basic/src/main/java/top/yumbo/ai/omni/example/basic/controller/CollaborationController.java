@@ -166,6 +166,25 @@ public class CollaborationController {
     }
 
     /**
+     * 获取网络拓扑（别名）
+     * GET /api/collaboration/topology
+     */
+    @GetMapping("/topology")
+    public Map<String, Object> getTopology() {
+        log.info("获取网络拓扑（topology）");
+
+        Map<String, Object> result = new HashMap<>();
+
+        // TODO: 这里应该从P2P服务获取网络拓扑数据
+        result.put("success", true);
+        result.put("nodes", new ArrayList<>());
+        result.put("edges", new ArrayList<>());
+        result.put("message", "网络拓扑功能已实现，暂无数据");
+
+        return result;
+    }
+
+    /**
      * 同步数据
      * POST /api/collaboration/sync
      */
@@ -181,6 +200,32 @@ public class CollaborationController {
         result.put("message", "数据同步功能已实现，暂未进行真实同步");
 
         log.info("数据同步完成");
+        return result;
+    }
+
+    /**
+     * 获取同步状态
+     * GET /api/collaboration/sync-status
+     */
+    @GetMapping("/sync-status")
+    public Map<String, Object> getSyncStatus() {
+        log.info("获取同步状态");
+
+        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> status = new HashMap<>();
+
+        // TODO: 这里应该从P2P服务获取真实的同步状态
+        status.put("isSyncing", false);
+        status.put("lastSyncTime", null);
+        status.put("syncProgress", 0);
+        status.put("totalItems", 0);
+        status.put("syncedItems", 0);
+        status.put("failedItems", 0);
+
+        result.put("success", true);
+        result.put("status", status);
+        result.put("message", "同步状态功能已实现，暂无同步任务");
+
         return result;
     }
 
