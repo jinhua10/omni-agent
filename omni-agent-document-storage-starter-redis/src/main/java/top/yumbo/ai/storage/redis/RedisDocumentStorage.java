@@ -321,6 +321,41 @@ public class RedisDocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Optimization Data Storage (TODO: 待实现) ==========
+
+    @Override
+    public String saveOptimizationData(String documentId, top.yumbo.ai.storage.api.model.OptimizationData data) {
+        // TODO: 待实现Redis优化数据存储
+        log.warn("saveOptimizationData not implemented for Redis yet");
+        return null;
+    }
+
+    @Override
+    public Optional<top.yumbo.ai.storage.api.model.OptimizationData> getOptimizationData(String documentId, String optimizationType) {
+        // TODO: 待实现Redis优化数据获取
+        log.warn("getOptimizationData not implemented for Redis yet");
+        return Optional.empty();
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.OptimizationData> getAllOptimizationData(String documentId) {
+        // TODO: 待实现Redis所有优化数据获取
+        log.warn("getAllOptimizationData not implemented for Redis yet");
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void deleteOptimizationData(String documentId, String optimizationType) {
+        // TODO: 待实现Redis优化数据删除
+        log.warn("deleteOptimizationData not implemented for Redis yet");
+    }
+
+    @Override
+    public void deleteAllOptimizationData(String documentId) {
+        // TODO: 待实现Redis所有优化数据删除
+        log.warn("deleteAllOptimizationData not implemented for Redis yet");
+    }
+
     // ========== Document Management ==========
 
     @Override
@@ -328,6 +363,7 @@ public class RedisDocumentStorage implements DocumentStorageService {
         deleteChunksByDocument(documentId);
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
+        deleteAllOptimizationData(documentId);
 
         // 删除文档元数据
         String docKey = getDocumentKey(documentId);

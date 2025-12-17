@@ -362,6 +362,41 @@ public class S3DocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Optimization Data Storage (TODO: 待实现) ==========
+
+    @Override
+    public String saveOptimizationData(String documentId, top.yumbo.ai.storage.api.model.OptimizationData data) {
+        // TODO: 待实现S3优化数据存储
+        log.warn("saveOptimizationData not implemented for S3 yet");
+        return null;
+    }
+
+    @Override
+    public java.util.Optional<top.yumbo.ai.storage.api.model.OptimizationData> getOptimizationData(String documentId, String optimizationType) {
+        // TODO: 待实现S3优化数据获取
+        log.warn("getOptimizationData not implemented for S3 yet");
+        return java.util.Optional.empty();
+    }
+
+    @Override
+    public java.util.List<top.yumbo.ai.storage.api.model.OptimizationData> getAllOptimizationData(String documentId) {
+        // TODO: 待实现S3所有优化数据获取
+        log.warn("getAllOptimizationData not implemented for S3 yet");
+        return new java.util.ArrayList<>();
+    }
+
+    @Override
+    public void deleteOptimizationData(String documentId, String optimizationType) {
+        // TODO: 待实现S3优化数据删除
+        log.warn("deleteOptimizationData not implemented for S3 yet");
+    }
+
+    @Override
+    public void deleteAllOptimizationData(String documentId) {
+        // TODO: 待实现S3所有优化数据删除
+        log.warn("deleteAllOptimizationData not implemented for S3 yet");
+    }
+
     // ========== Document Management ==========
 
     @Override
@@ -369,6 +404,7 @@ public class S3DocumentStorage implements DocumentStorageService {
         deleteChunksByDocument(documentId);
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
+        deleteAllOptimizationData(documentId);
         log.info("Cleaned up all data for document: {}", documentId);
     }
 

@@ -341,6 +341,41 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Optimization Data Storage (TODO: 待实现) ==========
+
+    @Override
+    public String saveOptimizationData(String documentId, top.yumbo.ai.storage.api.model.OptimizationData data) {
+        // TODO: 待实现MongoDB优化数据存储
+        log.warn("saveOptimizationData not implemented for MongoDB yet");
+        return null;
+    }
+
+    @Override
+    public Optional<top.yumbo.ai.storage.api.model.OptimizationData> getOptimizationData(String documentId, String optimizationType) {
+        // TODO: 待实现MongoDB优化数据获取
+        log.warn("getOptimizationData not implemented for MongoDB yet");
+        return Optional.empty();
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.OptimizationData> getAllOptimizationData(String documentId) {
+        // TODO: 待实现MongoDB所有优化数据获取
+        log.warn("getAllOptimizationData not implemented for MongoDB yet");
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void deleteOptimizationData(String documentId, String optimizationType) {
+        // TODO: 待实现MongoDB优化数据删除
+        log.warn("deleteOptimizationData not implemented for MongoDB yet");
+    }
+
+    @Override
+    public void deleteAllOptimizationData(String documentId) {
+        // TODO: 待实现MongoDB所有优化数据删除
+        log.warn("deleteAllOptimizationData not implemented for MongoDB yet");
+    }
+
     // ========== Document Management ==========
 
     @Override
@@ -348,6 +383,7 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
         deleteChunksByDocument(documentId);
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
+        deleteAllOptimizationData(documentId);
         log.info("Cleaned up all data for document: {}", documentId);
     }
 

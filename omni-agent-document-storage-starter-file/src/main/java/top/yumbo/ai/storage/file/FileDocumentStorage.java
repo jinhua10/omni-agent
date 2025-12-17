@@ -5,6 +5,7 @@ import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.storage.api.model.Chunk;
 import top.yumbo.ai.storage.api.model.Image;
 import top.yumbo.ai.storage.api.model.PPLData;
+import top.yumbo.ai.storage.api.model.OptimizationData;
 
 import java.io.*;
 import java.nio.file.*;
@@ -34,6 +35,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     private final Path chunksPath;
     private final Path imagesPath;
     private final Path pplPath;
+    private final Path optimizationPath;  // 新增：优化数据路径
     private final Path documentsPath;
 
     public FileDocumentStorage(String baseDirectory) {
@@ -41,6 +43,7 @@ public class FileDocumentStorage implements DocumentStorageService {
         this.chunksPath = basePath.resolve("chunks");
         this.imagesPath = basePath.resolve("images");
         this.pplPath = basePath.resolve("ppl");
+        this.optimizationPath = basePath.resolve("optimization");  // 新增
         this.documentsPath = basePath.resolve("documents");
 
         initDirectories();
@@ -52,6 +55,7 @@ public class FileDocumentStorage implements DocumentStorageService {
             Files.createDirectories(chunksPath);
             Files.createDirectories(imagesPath);
             Files.createDirectories(pplPath);
+            Files.createDirectories(optimizationPath);  // 新增
             Files.createDirectories(documentsPath);
         } catch (IOException e) {
             log.error("Failed to create storage directories", e);
@@ -348,6 +352,107 @@ public class FileDocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Optimization Data Storage (通用RAG优化数据) ==========
+
+    @Override
+    public String saveOptimizationData(String documentId, OptimizationData data) {
+        try {
+            Path docOptDir = optimizationPath.resolve(documentId);
+            Files.createDirectories(docOptDir);
+
+            // 使用优化类型作为文件名
+            String fileName = data.getOptimizationType() + ".opt";
+            Path optFile = docOptDir.resolve(fileName);
+
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(optFile.toFile()))) {
+                oos.writeObject(data);
+            }
+
+            log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), documentId);
+            return documentId + ":" + data.getOptimizationType();
+        } catch (IOException e) {
+            log.error("Failed to save optimization data", e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<OptimizationData> getOptimizationData(String documentId, String optimizationType) {
+        try {
+            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType + ".opt");
+            if (!Files.exists(optFile)) {
+                return Optional.empty();
+            }
+
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(optFile.toFile()))) {
+                return Optional.of((OptimizationData) ois.readObject());
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            log.error("Failed to get {} optimization data for document: {}", optimizationType, documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<OptimizationData> getAllOptimizationData(String documentId) {
+        try {
+            Path docOptDir = optimizationPath.resolve(documentId);
+            if (!Files.exists(docOptDir)) {
+                return Collections.emptyList();
+            }
+
+            return Files.list(docOptDir)
+                    .filter(p -> p.toString().endsWith(".opt"))
+                    .map(p -> {
+                        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(p.toFile()))) {
+                            return (OptimizationData) ois.readObject();
+                        } catch (IOException | ClassNotFoundException e) {
+                            log.error("Failed to read optimization file: {}", p, e);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            log.error("Failed to list optimization data for document: {}", documentId, e);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public void deleteOptimizationData(String documentId, String optimizationType) {
+        try {
+            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType + ".opt");
+            if (Files.exists(optFile)) {
+                Files.delete(optFile);
+                log.info("Deleted {} optimization data for document: {}", optimizationType, documentId);
+            }
+        } catch (IOException e) {
+            log.error("Failed to delete {} optimization data for document: {}", optimizationType, documentId, e);
+        }
+    }
+
+    @Override
+    public void deleteAllOptimizationData(String documentId) {
+        try {
+            Path docOptDir = optimizationPath.resolve(documentId);
+            if (Files.exists(docOptDir)) {
+                Files.walk(docOptDir)
+                        .sorted(Comparator.reverseOrder())
+                        .forEach(p -> {
+                            try {
+                                Files.delete(p);
+                            } catch (IOException e) {
+                                log.error("Failed to delete: {}", p, e);
+                            }
+                        });
+                log.info("Deleted all optimization data for document: {}", documentId);
+            }
+        } catch (IOException e) {
+            log.error("Failed to delete all optimization data for document: {}", documentId, e);
+        }
+    }
+
     // ========== Document Management ==========
 
     @Override
@@ -355,6 +460,7 @@ public class FileDocumentStorage implements DocumentStorageService {
         deleteChunksByDocument(documentId);
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
+        deleteAllOptimizationData(documentId);  // 新增：清理优化数据
         log.info("Cleaned up all data for document: {}", documentId);
     }
 
@@ -362,7 +468,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     public boolean documentExists(String documentId) {
         return Files.exists(chunksPath.resolve(documentId)) ||
                Files.exists(imagesPath.resolve(documentId)) ||
-               Files.exists(pplPath.resolve(documentId));
+               Files.exists(pplPath.resolve(documentId)) ||
+               Files.exists(optimizationPath.resolve(documentId));  // 新增
     }
 
     @Override
@@ -404,6 +511,21 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docPplDir = pplPath.resolve(documentId);
             if (Files.exists(docPplDir)) {
                 size += Files.walk(docPplDir)
+                        .filter(Files::isRegularFile)
+                        .mapToLong(p -> {
+                            try {
+                                return Files.size(p);
+                            } catch (IOException e) {
+                                return 0;
+                            }
+                        })
+                        .sum();
+            }
+
+            // Calculate optimization data size (新增)
+            Path docOptDir = optimizationPath.resolve(documentId);
+            if (Files.exists(docOptDir)) {
+                size += Files.walk(docOptDir)
                         .filter(Files::isRegularFile)
                         .mapToLong(p -> {
                             try {
