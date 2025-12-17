@@ -297,18 +297,27 @@ public class DocumentManagementController {
                 }
             }
 
-            // 删除文档的所有分块
+            // 1. 删除物理文件（原始文档）
+            boolean fileDeleted = FileStorageUtil.deleteFileByDocumentId(actualDocumentId);
+            if (fileDeleted) {
+                log.info("物理文件删除成功: {}", actualDocumentId);
+            } else {
+                log.warn("物理文件删除失败或文件不存在: {}", actualDocumentId);
+            }
+
+            // 2. 删除文档的所有分块
             storageService.deleteChunksByDocument(actualDocumentId);
-            // 删除文档的所有图片
+            // 3. 删除文档的所有图片
             storageService.deleteImagesByDocument(actualDocumentId);
-            // 删除RAG索引
+            // 4. 删除RAG索引
             boolean deleted = ragService.deleteDocument(actualDocumentId);
 
             if (deleted) {
                 result.put("status", "success");
-                result.put("message", "文档删除成功");
+                result.put("message", "文档删除成功（包括物理文件）");
                 result.put("documentId", actualDocumentId);
-                log.info("文档删除成功: {}", actualDocumentId);
+                result.put("fileDeleted", fileDeleted);
+                log.info("文档删除成功: {}，物理文件删除: {}", actualDocumentId, fileDeleted);
             } else {
                 result.put("status", "error");
                 result.put("message", "文档删除失败：RAG删除返回false");
@@ -339,8 +348,13 @@ public class DocumentManagementController {
 
             for (String documentId : request.getDocumentIds()) {
                 try {
+                    // 删除物理文件
+                    FileStorageUtil.deleteFileByDocumentId(documentId);
+                    // 删除分块
                     storageService.deleteChunksByDocument(documentId);
+                    // 删除图片
                     storageService.deleteImagesByDocument(documentId);
+                    // 删除RAG索引
                     ragService.deleteDocument(documentId);
                     successCount++;
                 } catch (Exception e) {

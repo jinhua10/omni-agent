@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 
 /**
  * 文件存储工具类
@@ -119,6 +120,44 @@ public class FileStorageUtil {
             }
         } catch (IOException e) {
             log.error("删除文件失败: documentId={}, filename={}", documentId, filename, e);
+            return false;
+        }
+    }
+
+    /**
+     * 通过文档ID删除文件（搜索以documentId开头的文件）
+     *
+     * @param documentId 文档ID
+     * @return 是否删除成功
+     */
+    public static boolean deleteFileByDocumentId(String documentId) {
+        try {
+            // 在上传目录中搜索以 documentId_ 开头的文件
+            List<Path> matchingFiles = Files.list(uploadDir)
+                    .filter(path -> path.getFileName().toString().startsWith(documentId + "_"))
+                    .collect(java.util.stream.Collectors.toList());
+
+            if (matchingFiles.isEmpty()) {
+                log.warn("未找到文档ID对应的文件: {}", documentId);
+                return false;
+            }
+
+            // 删除所有匹配的文件
+            boolean allDeleted = true;
+            for (Path filePath : matchingFiles) {
+                try {
+                    Files.delete(filePath);
+                    log.info("✅ 物理文件删除成功: {}", filePath);
+                } catch (IOException e) {
+                    log.error("❌ 物理文件删除失败: {}", filePath, e);
+                    allDeleted = false;
+                }
+            }
+
+            return allDeleted;
+
+        } catch (IOException e) {
+            log.error("搜索文件失败: documentId={}", documentId, e);
             return false;
         }
     }
