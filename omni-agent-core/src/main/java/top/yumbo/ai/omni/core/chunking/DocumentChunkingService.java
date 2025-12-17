@@ -8,6 +8,7 @@ import top.yumbo.ai.storage.api.model.Chunk;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 文档分块服务 - 负责文档的切分和存储
@@ -35,6 +36,7 @@ import java.util.List;
 public class DocumentChunkingService {
 
     private final DocumentStorageService storageService;
+    private final ChunkingStrategyManager strategyManager;
 
     // 默认分块大小
     private static final int DEFAULT_CHUNK_SIZE = 500;
@@ -43,14 +45,17 @@ public class DocumentChunkingService {
     private static final int DEFAULT_OVERLAP_SIZE = 50;
 
     /**
-     * 构造函数 - Spring 自动注入存储服务
+     * 构造函数 - Spring 自动注入存储服务和策略管理器
      *
      * @param storageService 文档存储服务接口
+     * @param strategyManager 分块策略管理器
      */
     @Autowired
-    public DocumentChunkingService(DocumentStorageService storageService) {
+    public DocumentChunkingService(DocumentStorageService storageService,
+                                  ChunkingStrategyManager strategyManager) {
         this.storageService = storageService;
-        log.info("DocumentChunkingService initialized with storage: {}",
+        this.strategyManager = strategyManager;
+        log.info("DocumentChunkingService initialized with storage: {} and strategy manager",
                  storageService.getClass().getSimpleName());
     }
 
@@ -83,18 +88,33 @@ public class DocumentChunkingService {
     }
 
     /**
-     * 切分文档（不存储）
+     * 切分文档（不存储）- 自动选择最佳策略
      *
      * @param documentId 文档ID
      * @param content 文档内容
      * @return 分块列表
      */
     public List<Chunk> chunkDocument(String documentId, String content) {
-        return chunkDocument(documentId, content, DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP_SIZE);
+        // 从 documentId 提取文件名（如果有）
+        String fileName = extractFileName(documentId);
+        return chunkDocument(documentId, content, fileName);
     }
 
     /**
-     * 切分文档（指定大小）
+     * 切分文档（不存储）- 自动选择最佳策略（带文件名）
+     *
+     * @param documentId 文档ID
+     * @param content 文档内容
+     * @param fileName 文件名（用于推断文档类型）
+     * @return 分块列表
+     */
+    public List<Chunk> chunkDocument(String documentId, String content, String fileName) {
+        // 使用策略管理器自动选择最佳分块策略
+        return strategyManager.chunkWithAutoStrategy(documentId, content, fileName);
+    }
+
+    /**
+     * 切分文档（不存储）- 使用固定大小策略（向后兼容）
      *
      * @param documentId 文档ID
      * @param content 文档内容
@@ -103,51 +123,28 @@ public class DocumentChunkingService {
      * @return 分块列表
      */
     public List<Chunk> chunkDocument(String documentId, String content,
-                                     int chunkSize, int overlapSize) {
-        List<Chunk> chunks = new ArrayList<>();
-
-        if (content == null || content.isEmpty()) {
-            return chunks;
-        }
-
-        int contentLength = content.length();
-        int position = 0;
-        int sequence = 0;
-
-        while (position < contentLength) {
-            // 计算当前分块的结束位置
-            int endPosition = Math.min(position + chunkSize, contentLength);
-
-            // 提取分块内容
-            String chunkContent = content.substring(position, endPosition);
-
-            // 创建分块对象
-            Chunk chunk = Chunk.builder()
-                .documentId(documentId)
-                .content(chunkContent)
-                .sequence(sequence)
-                .startPosition(position)
-                .endPosition(endPosition)
-                .createdAt(System.currentTimeMillis())
-                .build();
-
-            chunks.add(chunk);
-
-            // 移动到下一个分块（考虑重叠）
-            int nextPosition = endPosition - overlapSize;
-
-            // 确保position不会是负数，且能够前进
-            if (nextPosition <= position || nextPosition >= contentLength) {
-                break;
-            }
-
-            position = nextPosition;
-            sequence++;
-        }
-
-        log.debug("Chunked document {} into {} chunks", documentId, chunks.size());
-        return chunks;
+                                    int chunkSize, int overlapSize) {
+        Map<String, Object> params = Map.of(
+            "chunkSize", chunkSize,
+            "overlapSize", overlapSize
+        );
+        return strategyManager.chunkWithStrategy(documentId, content, "fixed_size", params);
     }
+
+    /**
+     * 从 documentId 提取文件名
+     */
+    private String extractFileName(String documentId) {
+        if (documentId == null) {
+            return null;
+        }
+        // 格式: doc_timestamp_filename
+        String[] parts = documentId.split("_", 3);
+        return parts.length >= 3 ? parts[2] : null;
+    }
+
+    // 注意：固定大小分块逻辑已移至 FixedSizeChunkingStrategy
+    // 本服务现在使用策略模式，通过 ChunkingStrategyManager 动态选择分块算法
 
     /**
      * 获取文档的所有分块

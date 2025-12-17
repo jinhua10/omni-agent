@@ -38,6 +38,7 @@ public class FileWatcherService {
     private final ConfigPersistenceService configService;
     private final RAGService ragService;
     private final DocumentStorageService storageService;
+    private final top.yumbo.ai.omni.core.chunking.DocumentChunkingService chunkingService;
 
     private WatchService watchService;
     private ExecutorService executorService;
@@ -365,13 +366,21 @@ public class FileWatcherService {
                             return;
                         }
 
-                        // ⭐ 步骤2: 分块
-                        List<Chunk> chunks = chunkDocument(docId, content);
-                        log.info("✂️ 分块: {} 个", chunks.size());
+                        // ⭐ 步骤2: 智能分块（根据文件类型自动选择策略）
+                        // 传入文件名，自动推断文档类型并选择最佳分块算法：
+                        // - 技术文档 (README.md) → Semantic Chunking
+                        // - API文档 (api.yaml) → 结构化分块
+                        // - 代码文件 (.java/.py) → Semantic Chunking
+                        // - FAQ文档 → 句子边界分块
+                        // - 长文章 → 段落分块
+                        // - 通用文档 → 固定大小分块
+                        List<Chunk> chunks = chunkingService.chunkDocument(docId, content, record.getFileName());
+                        log.info("✂️ 智能分块完成: {} 个分块（文件类型: {}）",
+                                chunks.size(), record.getFileName());
 
                         // ⭐ 步骤3: 存储分块
-                        storageService.saveChunks(docId, chunks);
-                        log.info("💾 分块已存储");
+                        List<String> chunkIds = storageService.saveChunks(docId, chunks);
+                        log.info("💾 分块已存储: {} 个", chunkIds.size());
 
                         // ⭐ 步骤4: RAG索引
                         Document document = Document.builder()
@@ -411,46 +420,38 @@ public class FileWatcherService {
         }
     }
 
-    /**
-     * 文档分块
-     */
-    private List<Chunk> chunkDocument(String documentId, String content) {
-        List<Chunk> chunks = new ArrayList<>();
-
-        int chunkSize = 500;
-        int overlap = 50;
-        int position = 0;
-        int sequence = 0;
-
-        while (position < content.length()) {
-            int end = Math.min(position + chunkSize, content.length());
-            String chunkText = content.substring(position, end);
-
-            if (chunkText.trim().isEmpty()) {
-                break;
-            }
-
-            Chunk chunk = Chunk.builder()
-                    .documentId(documentId)
-                    .content(chunkText)
-                    .sequence(sequence)
-                    .startPosition(position)
-                    .endPosition(end)
-                    .createdAt(System.currentTimeMillis())
-                    .build();
-
-            chunks.add(chunk);
-
-            position = end - overlap;
-            sequence++;
-
-            if (position >= content.length()) {
-                break;
-            }
-        }
-
-        return chunks;
-    }
+    // ========== 分块策略相关 ==========
+    //
+    // ✅ 已实现：根据文档类型自动选择分块策略
+    // - DocumentChunkingService → ChunkingStrategyManager → 具体Strategy
+    // - 支持多种内置策略：固定大小、句子边界、段落、语义感知等
+    //
+    // 🔮 未来扩展：通过 marketplace 模块加载自定义算法
+    //
+    // 当前架构：
+    // FileWatcherService
+    //   → DocumentChunkingService
+    //       → ChunkingStrategyManager (管理所有策略)
+    //           ├─ FixedSizeChunkingStrategy (默认)
+    //           ├─ SentenceBoundaryChunkingStrategy
+    //           ├─ ParagraphChunkingStrategy
+    //           ├─ SemanticChunkingStrategy (TODO)
+    //           ├─ PPLChunkingStrategy (TODO - 基于困惑度)
+    //           └─ MarketplaceChunkingStrategy (TODO - 从市场加载)
+    //
+    // 扩展示例：
+    // 1. 在配置文件中指定策略：
+    //    "chunkingStrategy": "semantic"  // 强制使用语义分块
+    //
+    // 2. 从算法市场加载：
+    //    String algorithmId = currentConfig.getChunkingAlgorithmId();
+    //    if (algorithmId != null) {
+    //        chunks = marketplaceService.executeChunkingAlgorithm(
+    //            algorithmId, docId, content, fileName
+    //        );
+    //    } else {
+    //        chunks = chunkingService.chunkDocument(docId, content, fileName);
+    //    }
 
     /**
      * 推断文件类型

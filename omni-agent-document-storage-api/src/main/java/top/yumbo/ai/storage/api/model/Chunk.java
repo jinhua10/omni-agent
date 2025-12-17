@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.NotBlank;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -22,6 +24,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class Chunk implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
