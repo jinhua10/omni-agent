@@ -11,10 +11,10 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>omni-agent-web</artifactId>
+    <artifactId>omni-agent-marketplace</artifactId>
     <packaging>jar</packaging>
-    <name>OmniAgent Web</name>
-    <description>Web controllers for OmniAgent - providing REST APIs for third-party integration</description>
+    <name>OmniAgent Marketplace</name>
+    <description>算法市场 - 支持用户上传和分享自定义RAG优化算法</description>
 
     <dependencies>
         <!-- OmniAgent Core -->
@@ -24,23 +24,30 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- OmniAgent Common (for HTTP client adapter) -->
+        <!-- OmniAgent Common (for HTTP client) -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
             <artifactId>omni-agent-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Spring Boot Web -->
+        <!-- Document Storage API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-document-storage-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Web (for RestTemplate) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- Spring Boot Validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
         <!-- Lombok -->
@@ -50,15 +57,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Swagger/OpenAPI (可选) -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.3.0</version>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- OkHttp3 (可选，用于更好的HTTP性能) -->
+        <!-- OkHttp3 (可选，高性能) -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>

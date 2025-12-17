@@ -56,6 +56,10 @@
 
         <module>omni-agent-web</module>
 
+        <!-- ========== 算法市场 (Algorithm Marketplace) ========== -->
+
+        <module>omni-agent-marketplace</module>
+
         <!-- ========== 以下模块待创建 ========== -->
 
 

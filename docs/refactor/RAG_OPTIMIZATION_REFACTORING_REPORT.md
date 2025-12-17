@@ -328,7 +328,16 @@ System.out.println("Best algorithm: " + best.getOptimizationType());
 ### 长期（3个月）
 1. ✅ 自动算法选择引擎（智能推荐最佳算法组合）
 2. ✅ 优化效果可视化Dashboard（实时性能监控和图表展示）
-3. ⏳ 算法市场（用户共享自定义算法）
+3. ✅ 算法市场（独立模块，生产就绪）✨
+   - ✅ **独立模块**: `omni-agent-marketplace`
+   - ✅ Pipeline（配置化）- 组合已有组件，无需编译，最安全
+   - ✅ Script（脚本）- JavaScript实现，沙箱隔离 + 超时控制
+   - ✅ Remote（远程）- HTTP服务，使用 RestTemplate/OkHttp3
+   - ✅ 安全措施完善：审核机制、资源限制、黑名单过滤、SSRF防护
+   - ✅ 架构合理：不依赖 core，可使用 common 的 HttpClientAdapter
+   - ✅ 完整示例代码：`AlgorithmMarketExample.java`
+   - 📝 模块文档：`omni-agent-marketplace/README.md`
+   - 📝 详细实现文档：`docs/ALGORITHM_MARKET_GUIDE.md`
 
 ---
 
