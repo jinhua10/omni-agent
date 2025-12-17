@@ -30,7 +30,13 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- ========== 四维可插拔 Starters - 冗余备份方案 ========== -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-web</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- ========== 七维可插拔 Starters - 冗余备份方案 ========== -->
 
         <!-- 1. Persistence Starters - 异构冗余 -->
         <!-- 主存储：SQLite（本地轻量级数据库） -->

@@ -48,6 +48,10 @@
 
         <module>omni-agent-core</module>
 
+        <!-- ========== Web 层 (Web Layer) ========== -->
+
+        <module>omni-agent-web</module>
+
         <!-- ========== 以下模块待创建 ========== -->
 
 
