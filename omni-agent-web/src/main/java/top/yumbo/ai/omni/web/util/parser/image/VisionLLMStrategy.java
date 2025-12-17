@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map;
 
 /**
@@ -74,9 +72,9 @@ public class VisionLLMStrategy implements ImageContentExtractorStrategy {
     // 默认提示词：精简模式
     private static final String DEFAULT_SYSTEM_PROMPT =
             "请分析这张图片并提取其中的关键信息。" +
-            "如果图片包含文字，请完整准确地提取所有文字内容。" +
-            "如果是图表或示意图，请描述其主要内容和含义。" +
-            "保持输出简洁，只提取核心信息。";
+                    "如果图片包含文字，请完整准确地提取所有文字内容。" +
+                    "如果是图表或示意图，请描述其主要内容和含义。" +
+                    "保持输出简洁，只提取核心信息。";
 
     /**
      * 构造函数（默认使用 RestTemplate）
@@ -111,7 +109,7 @@ public class VisionLLMStrategy implements ImageContentExtractorStrategy {
      * @param httpClientAdapter HTTP客户端适配器（null则使用默认RestTemplate）
      */
     public VisionLLMStrategy(String apiKey, String model, String apiEndpoint,
-                            String systemPrompt, HttpClientAdapter httpClientAdapter) {
+                             String systemPrompt, HttpClientAdapter httpClientAdapter) {
         this.apiKey = apiKey;
         this.model = model != null && !model.isEmpty() ? model : DEFAULT_MODEL;
         this.apiEndpoint = apiEndpoint != null && !apiEndpoint.isEmpty() ? apiEndpoint : DEFAULT_API_ENDPOINT;
