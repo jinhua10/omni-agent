@@ -66,6 +66,14 @@ public class RedisDocumentStorage implements DocumentStorageService {
         return properties.getKeyPrefix() + "ppl:" + documentId;
     }
 
+    private String getOptimizationKey(String documentId, String optimizationType) {
+        return properties.getKeyPrefix() + "opt:" + documentId + ":" + optimizationType;
+    }
+
+    private String getDocumentOptimizationsKey(String documentId) {
+        return properties.getKeyPrefix() + "doc:" + documentId + ":optimizations";
+    }
+
     private String getDocumentKey(String documentId) {
         return properties.getKeyPrefix() + "doc:" + documentId;
     }
@@ -321,39 +329,102 @@ public class RedisDocumentStorage implements DocumentStorageService {
         }
     }
 
-    // ========== Optimization Data Storage (TODO: 待实现) ==========
+    // ========== Optimization Data Storage ==========
 
     @Override
     public String saveOptimizationData(String documentId, top.yumbo.ai.storage.api.model.OptimizationData data) {
-        // TODO: 待实现Redis优化数据存储
-        log.warn("saveOptimizationData not implemented for Redis yet");
-        return null;
+        try {
+            String optKey = getOptimizationKey(documentId, data.getOptimizationType());
+            redisTemplate.opsForValue().set(optKey, data);
+
+            // 添加到文档的优化类型集合
+            String docOptsKey = getDocumentOptimizationsKey(documentId);
+            redisTemplate.opsForSet().add(docOptsKey, data.getOptimizationType());
+
+            // 设置过期时间
+            if (properties.getTtl() > 0) {
+                redisTemplate.expire(optKey, properties.getTtl(), java.util.concurrent.TimeUnit.SECONDS);
+                redisTemplate.expire(docOptsKey, properties.getTtl(), java.util.concurrent.TimeUnit.SECONDS);
+            }
+
+            log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), documentId);
+            return documentId + ":" + data.getOptimizationType();
+        } catch (Exception e) {
+            log.error("Failed to save optimization data", e);
+            return null;
+        }
     }
 
     @Override
     public Optional<top.yumbo.ai.storage.api.model.OptimizationData> getOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现Redis优化数据获取
-        log.warn("getOptimizationData not implemented for Redis yet");
-        return Optional.empty();
+        try {
+            String optKey = getOptimizationKey(documentId, optimizationType);
+            Object obj = redisTemplate.opsForValue().get(optKey);
+            if (obj instanceof top.yumbo.ai.storage.api.model.OptimizationData) {
+                return Optional.of((top.yumbo.ai.storage.api.model.OptimizationData) obj);
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get {} optimization data for document: {}", optimizationType, documentId, e);
+            return Optional.empty();
+        }
     }
 
     @Override
     public List<top.yumbo.ai.storage.api.model.OptimizationData> getAllOptimizationData(String documentId) {
-        // TODO: 待实现Redis所有优化数据获取
-        log.warn("getAllOptimizationData not implemented for Redis yet");
-        return new ArrayList<>();
+        try {
+            String docOptsKey = getDocumentOptimizationsKey(documentId);
+            Set<Object> optimizationTypes = redisTemplate.opsForSet().members(docOptsKey);
+
+            if (optimizationTypes == null || optimizationTypes.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            return optimizationTypes.stream()
+                    .map(type -> getOptimizationData(documentId, type.toString()))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to get all optimization data for document: {}", documentId, e);
+            return new ArrayList<>();
+        }
     }
 
     @Override
     public void deleteOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现Redis优化数据删除
-        log.warn("deleteOptimizationData not implemented for Redis yet");
+        try {
+            String optKey = getOptimizationKey(documentId, optimizationType);
+            redisTemplate.delete(optKey);
+
+            // 从文档的优化类型集合中移除
+            String docOptsKey = getDocumentOptimizationsKey(documentId);
+            redisTemplate.opsForSet().remove(docOptsKey, optimizationType);
+
+            log.info("Deleted {} optimization data for document: {}", optimizationType, documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete {} optimization data for document: {}", optimizationType, documentId, e);
+        }
     }
 
     @Override
     public void deleteAllOptimizationData(String documentId) {
-        // TODO: 待实现Redis所有优化数据删除
-        log.warn("deleteAllOptimizationData not implemented for Redis yet");
+        try {
+            String docOptsKey = getDocumentOptimizationsKey(documentId);
+            Set<Object> optimizationTypes = redisTemplate.opsForSet().members(docOptsKey);
+
+            if (optimizationTypes != null) {
+                for (Object type : optimizationTypes) {
+                    String optKey = getOptimizationKey(documentId, type.toString());
+                    redisTemplate.delete(optKey);
+                }
+            }
+
+            redisTemplate.delete(docOptsKey);
+            log.info("Deleted all optimization data for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete all optimization data for document: {}", documentId, e);
+        }
     }
 
     // ========== Document Management ==========

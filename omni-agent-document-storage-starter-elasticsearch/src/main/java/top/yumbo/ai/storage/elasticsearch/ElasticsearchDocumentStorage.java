@@ -45,6 +45,7 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
     private final String chunkIndex;
     private final String imageIndex;
     private final String pplIndex;
+    private final String optimizationIndex;
 
     public ElasticsearchDocumentStorage(ElasticsearchClient client,
                                        ElasticsearchStorageProperties properties) {
@@ -55,6 +56,7 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
         this.chunkIndex = properties.getIndexPrefix() + "-chunks";
         this.imageIndex = properties.getIndexPrefix() + "-images";
         this.pplIndex = properties.getIndexPrefix() + "-ppl";
+        this.optimizationIndex = properties.getIndexPrefix() + "-optimizations";
 
         initIndices();
         log.info("ElasticsearchDocumentStorage initialized with prefix: {}", properties.getIndexPrefix());
@@ -65,6 +67,7 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
             createIndexIfNotExists(chunkIndex);
             createIndexIfNotExists(imageIndex);
             createIndexIfNotExists(pplIndex);
+            createIndexIfNotExists(optimizationIndex);
         } catch (Exception e) {
             log.error("Failed to initialize indices", e);
         }
@@ -386,39 +389,105 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
         }
     }
 
-    // ========== Optimization Data Storage (TODO: 待实现) ==========
+    // ========== Optimization Data Storage ==========
 
     @Override
     public String saveOptimizationData(String documentId, top.yumbo.ai.storage.api.model.OptimizationData data) {
-        // TODO: 待实现Elasticsearch优化数据存储
-        log.warn("saveOptimizationData not implemented for Elasticsearch yet");
-        return null;
+        try {
+            String docId = documentId + "_" + data.getOptimizationType();
+
+            co.elastic.clients.elasticsearch.core.IndexRequest<top.yumbo.ai.storage.api.model.OptimizationData> request =
+                co.elastic.clients.elasticsearch.core.IndexRequest.of(i -> i
+                    .index(optimizationIndex)
+                    .id(docId)
+                    .document(data)
+                );
+
+            client.index(request);
+            log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), documentId);
+            return docId;
+        } catch (Exception e) {
+            log.error("Failed to save optimization data", e);
+            return null;
+        }
     }
 
     @Override
     public Optional<top.yumbo.ai.storage.api.model.OptimizationData> getOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现Elasticsearch优化数据获取
-        log.warn("getOptimizationData not implemented for Elasticsearch yet");
-        return Optional.empty();
+        try {
+            String docId = documentId + "_" + optimizationType;
+            co.elastic.clients.elasticsearch.core.GetRequest request =
+                co.elastic.clients.elasticsearch.core.GetRequest.of(g -> g
+                    .index(optimizationIndex)
+                    .id(docId)
+                );
+
+            co.elastic.clients.elasticsearch.core.GetResponse<top.yumbo.ai.storage.api.model.OptimizationData> response =
+                client.get(request, top.yumbo.ai.storage.api.model.OptimizationData.class);
+
+            if (response.found()) {
+                return Optional.ofNullable(response.source());
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get {} optimization data for document: {}", optimizationType, documentId, e);
+            return Optional.empty();
+        }
     }
 
     @Override
     public java.util.List<top.yumbo.ai.storage.api.model.OptimizationData> getAllOptimizationData(String documentId) {
-        // TODO: 待实现Elasticsearch所有优化数据获取
-        log.warn("getAllOptimizationData not implemented for Elasticsearch yet");
-        return new java.util.ArrayList<>();
+        try {
+            co.elastic.clients.elasticsearch.core.SearchRequest request =
+                co.elastic.clients.elasticsearch.core.SearchRequest.of(s -> s
+                    .index(optimizationIndex)
+                    .query(q -> q.term(t -> t.field("documentId").value(documentId)))
+                );
+
+            co.elastic.clients.elasticsearch.core.SearchResponse<top.yumbo.ai.storage.api.model.OptimizationData> response =
+                client.search(request, top.yumbo.ai.storage.api.model.OptimizationData.class);
+
+            return response.hits().hits().stream()
+                    .map(co.elastic.clients.elasticsearch.core.search.Hit::source)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to get all optimization data for document: {}", documentId, e);
+            return new java.util.ArrayList<>();
+        }
     }
 
     @Override
     public void deleteOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现Elasticsearch优化数据删除
-        log.warn("deleteOptimizationData not implemented for Elasticsearch yet");
+        try {
+            String docId = documentId + "_" + optimizationType;
+            co.elastic.clients.elasticsearch.core.DeleteRequest request =
+                co.elastic.clients.elasticsearch.core.DeleteRequest.of(d -> d
+                    .index(optimizationIndex)
+                    .id(docId)
+                );
+
+            client.delete(request);
+            log.info("Deleted {} optimization data for document: {}", optimizationType, documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete {} optimization data for document: {}", optimizationType, documentId, e);
+        }
     }
 
     @Override
     public void deleteAllOptimizationData(String documentId) {
-        // TODO: 待实现Elasticsearch所有优化数据删除
-        log.warn("deleteAllOptimizationData not implemented for Elasticsearch yet");
+        try {
+            co.elastic.clients.elasticsearch.core.DeleteByQueryRequest request =
+                co.elastic.clients.elasticsearch.core.DeleteByQueryRequest.of(d -> d
+                    .index(optimizationIndex)
+                    .query(q -> q.term(t -> t.field("documentId").value(documentId)))
+                );
+
+            client.deleteByQuery(request);
+            log.info("Deleted all optimization data for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete all optimization data for document: {}", documentId, e);
+        }
     }
 
     // ========== Document Management ==========

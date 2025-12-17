@@ -85,6 +85,10 @@ public class S3DocumentStorage implements DocumentStorageService {
         return "ppl/" + documentId + "/ppl.json";
     }
 
+    private String getOptimizationKey(String documentId, String optimizationType) {
+        return "optimizations/" + documentId + "/" + optimizationType + ".json";
+    }
+
     // ========== Chunk Storage ==========
 
     @Override
@@ -362,39 +366,125 @@ public class S3DocumentStorage implements DocumentStorageService {
         }
     }
 
-    // ========== Optimization Data Storage (TODO: 待实现) ==========
+    // ========== Optimization Data Storage ==========
 
     @Override
     public String saveOptimizationData(String documentId, top.yumbo.ai.storage.api.model.OptimizationData data) {
-        // TODO: 待实现S3优化数据存储
-        log.warn("saveOptimizationData not implemented for S3 yet");
-        return null;
+        try {
+            String key = getOptimizationKey(documentId, data.getOptimizationType());
+            byte[] jsonData = objectMapper.writeValueAsBytes(data);
+
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .contentType("application/json")
+                    .metadata(java.util.Map.of(
+                        "documentId", documentId,
+                        "optimizationType", data.getOptimizationType()
+                    ))
+                    .build();
+
+            s3Client.putObject(putRequest, software.amazon.awssdk.core.sync.RequestBody.fromBytes(jsonData));
+            log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), documentId);
+            return key;
+        } catch (Exception e) {
+            log.error("Failed to save optimization data", e);
+            return null;
+        }
     }
 
     @Override
     public java.util.Optional<top.yumbo.ai.storage.api.model.OptimizationData> getOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现S3优化数据获取
-        log.warn("getOptimizationData not implemented for S3 yet");
-        return java.util.Optional.empty();
+        try {
+            String key = getOptimizationKey(documentId, optimizationType);
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+            top.yumbo.ai.storage.api.model.OptimizationData optData =
+                objectMapper.readValue(data, top.yumbo.ai.storage.api.model.OptimizationData.class);
+            return java.util.Optional.of(optData);
+        } catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e) {
+            return java.util.Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get {} optimization data for document: {}", optimizationType, documentId, e);
+            return java.util.Optional.empty();
+        }
     }
 
     @Override
     public java.util.List<top.yumbo.ai.storage.api.model.OptimizationData> getAllOptimizationData(String documentId) {
-        // TODO: 待实现S3所有优化数据获取
-        log.warn("getAllOptimizationData not implemented for S3 yet");
-        return new java.util.ArrayList<>();
+        try {
+            String prefix = "optimizations/" + documentId + "/";
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            return listResponse.contents().stream()
+                    .map(s3Object -> {
+                        try {
+                            GetObjectRequest getRequest = GetObjectRequest.builder()
+                                    .bucket(properties.getBucketName())
+                                    .key(s3Object.key())
+                                    .build();
+                            byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+                            return objectMapper.readValue(data, top.yumbo.ai.storage.api.model.OptimizationData.class);
+                        } catch (Exception e) {
+                            log.error("Failed to read optimization data", e);
+                            return null;
+                        }
+                    })
+                    .filter(java.util.Objects::nonNull)
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to get all optimization data for document: {}", documentId, e);
+            return new java.util.ArrayList<>();
+        }
     }
 
     @Override
     public void deleteOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现S3优化数据删除
-        log.warn("deleteOptimizationData not implemented for S3 yet");
+        try {
+            String key = getOptimizationKey(documentId, optimizationType);
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+            log.info("Deleted {} optimization data for document: {}", optimizationType, documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete {} optimization data for document: {}", optimizationType, documentId, e);
+        }
     }
 
     @Override
     public void deleteAllOptimizationData(String documentId) {
-        // TODO: 待实现S3所有优化数据删除
-        log.warn("deleteAllOptimizationData not implemented for S3 yet");
+        try {
+            String prefix = "optimizations/" + documentId + "/";
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            for (software.amazon.awssdk.services.s3.model.S3Object s3Object : listResponse.contents()) {
+                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .key(s3Object.key())
+                        .build();
+                s3Client.deleteObject(deleteRequest);
+            }
+            log.info("Deleted all optimization data for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete all optimization data for document: {}", documentId, e);
+        }
     }
 
     // ========== Document Management ==========

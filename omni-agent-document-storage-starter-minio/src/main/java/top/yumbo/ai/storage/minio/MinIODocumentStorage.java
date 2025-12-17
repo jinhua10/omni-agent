@@ -83,6 +83,10 @@ public class MinIODocumentStorage implements DocumentStorageService {
         return "ppl/" + documentId + "/ppl.json";
     }
 
+    private String getOptimizationKey(String documentId, String optimizationType) {
+        return "optimizations/" + documentId + "/" + optimizationType + ".json";
+    }
+
     private String getDocumentPrefix(String documentId) {
         return documentId + "/";
     }
@@ -375,39 +379,133 @@ public class MinIODocumentStorage implements DocumentStorageService {
         }
     }
 
-    // ========== Optimization Data Storage (TODO: 待实现) ==========
+    // ========== Optimization Data Storage ==========
 
     @Override
     public String saveOptimizationData(String documentId, top.yumbo.ai.storage.api.model.OptimizationData data) {
-        // TODO: 待实现MinIO优化数据存储
-        log.warn("saveOptimizationData not implemented for MinIO yet");
-        return null;
+        try {
+            String key = getOptimizationKey(documentId, data.getOptimizationType());
+            byte[] jsonData = objectMapper.writeValueAsBytes(data);
+
+            minioClient.putObject(
+                io.minio.PutObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(key)
+                    .stream(new java.io.ByteArrayInputStream(jsonData), jsonData.length, -1)
+                    .contentType("application/json")
+                    .build()
+            );
+
+            log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), documentId);
+            return key;
+        } catch (Exception e) {
+            log.error("Failed to save optimization data", e);
+            return null;
+        }
     }
 
     @Override
     public java.util.Optional<top.yumbo.ai.storage.api.model.OptimizationData> getOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现MinIO优化数据获取
-        log.warn("getOptimizationData not implemented for MinIO yet");
-        return java.util.Optional.empty();
+        try {
+            String key = getOptimizationKey(documentId, optimizationType);
+
+            java.io.InputStream stream = minioClient.getObject(
+                io.minio.GetObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(key)
+                    .build()
+            );
+
+            top.yumbo.ai.storage.api.model.OptimizationData optData =
+                objectMapper.readValue(stream, top.yumbo.ai.storage.api.model.OptimizationData.class);
+            return java.util.Optional.of(optData);
+        } catch (io.minio.errors.ErrorResponseException e) {
+            if ("NoSuchKey".equals(e.errorResponse().code())) {
+                return java.util.Optional.empty();
+            }
+            log.error("Failed to get {} optimization data for document: {}", optimizationType, documentId, e);
+            return java.util.Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get {} optimization data for document: {}", optimizationType, documentId, e);
+            return java.util.Optional.empty();
+        }
     }
 
     @Override
     public java.util.List<top.yumbo.ai.storage.api.model.OptimizationData> getAllOptimizationData(String documentId) {
-        // TODO: 待实现MinIO所有优化数据获取
-        log.warn("getAllOptimizationData not implemented for MinIO yet");
-        return new java.util.ArrayList<>();
+        try {
+            String prefix = "optimizations/" + documentId + "/";
+            Iterable<io.minio.Result<io.minio.messages.Item>> results = minioClient.listObjects(
+                io.minio.ListObjectsArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build()
+            );
+
+            java.util.List<top.yumbo.ai.storage.api.model.OptimizationData> dataList = new java.util.ArrayList<>();
+            for (io.minio.Result<io.minio.messages.Item> result : results) {
+                try {
+                    io.minio.messages.Item item = result.get();
+                    java.io.InputStream stream = minioClient.getObject(
+                        io.minio.GetObjectArgs.builder()
+                            .bucket(properties.getBucketName())
+                            .object(item.objectName())
+                            .build()
+                    );
+                    top.yumbo.ai.storage.api.model.OptimizationData data =
+                        objectMapper.readValue(stream, top.yumbo.ai.storage.api.model.OptimizationData.class);
+                    dataList.add(data);
+                } catch (Exception e) {
+                    log.error("Failed to read optimization data", e);
+                }
+            }
+            return dataList;
+        } catch (Exception e) {
+            log.error("Failed to get all optimization data for document: {}", documentId, e);
+            return new java.util.ArrayList<>();
+        }
     }
 
     @Override
     public void deleteOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现MinIO优化数据删除
-        log.warn("deleteOptimizationData not implemented for MinIO yet");
+        try {
+            String key = getOptimizationKey(documentId, optimizationType);
+            minioClient.removeObject(
+                io.minio.RemoveObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(key)
+                    .build()
+            );
+            log.info("Deleted {} optimization data for document: {}", optimizationType, documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete {} optimization data for document: {}", optimizationType, documentId, e);
+        }
     }
 
     @Override
     public void deleteAllOptimizationData(String documentId) {
-        // TODO: 待实现MinIO所有优化数据删除
-        log.warn("deleteAllOptimizationData not implemented for MinIO yet");
+        try {
+            String prefix = "optimizations/" + documentId + "/";
+            Iterable<io.minio.Result<io.minio.messages.Item>> results = minioClient.listObjects(
+                io.minio.ListObjectsArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build()
+            );
+
+            for (io.minio.Result<io.minio.messages.Item> result : results) {
+                io.minio.messages.Item item = result.get();
+                minioClient.removeObject(
+                    io.minio.RemoveObjectArgs.builder()
+                        .bucket(properties.getBucketName())
+                        .object(item.objectName())
+                        .build()
+                );
+            }
+            log.info("Deleted all optimization data for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete all optimization data for document: {}", documentId, e);
+        }
     }
 
     // ========== Document Management ==========

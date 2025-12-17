@@ -341,39 +341,122 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
         }
     }
 
-    // ========== Optimization Data Storage (TODO: 待实现) ==========
+    // ========== Optimization Data Storage ==========
 
     @Override
     public String saveOptimizationData(String documentId, top.yumbo.ai.storage.api.model.OptimizationData data) {
-        // TODO: 待实现MongoDB优化数据存储
-        log.warn("saveOptimizationData not implemented for MongoDB yet");
-        return null;
+        try {
+            String filename = documentId + "_opt_" + data.getOptimizationType();
+
+            Document metadata = new Document()
+                    .append("documentId", documentId)
+                    .append("optimizationType", data.getOptimizationType())
+                    .append("type", "optimization");
+
+            GridFSUploadOptions options = new GridFSUploadOptions()
+                    .metadata(metadata);
+
+            byte[] jsonData = objectMapper.writeValueAsBytes(data);
+            ObjectId fileId = gridFSBucket.uploadFromStream(
+                    filename,
+                    new ByteArrayInputStream(jsonData),
+                    options
+            );
+
+            log.debug("Saved {} optimization data for document: {} with GridFS ID: {}",
+                     data.getOptimizationType(), documentId, fileId);
+            return documentId + ":" + data.getOptimizationType();
+        } catch (Exception e) {
+            log.error("Failed to save optimization data", e);
+            return null;
+        }
     }
 
     @Override
     public Optional<top.yumbo.ai.storage.api.model.OptimizationData> getOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现MongoDB优化数据获取
-        log.warn("getOptimizationData not implemented for MongoDB yet");
-        return Optional.empty();
+        try {
+            String filename = documentId + "_opt_" + optimizationType;
+            GridFSFile file = gridFSBucket.find(
+                    new Document("filename", filename)
+            ).first();
+
+            if (file == null) {
+                return Optional.empty();
+            }
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            gridFSBucket.downloadToStream(file.getObjectId(), outputStream);
+
+            top.yumbo.ai.storage.api.model.OptimizationData optData =
+                objectMapper.readValue(outputStream.toByteArray(),
+                                     top.yumbo.ai.storage.api.model.OptimizationData.class);
+            return Optional.of(optData);
+        } catch (Exception e) {
+            log.error("Failed to get {} optimization data for document: {}", optimizationType, documentId, e);
+            return Optional.empty();
+        }
     }
 
     @Override
     public List<top.yumbo.ai.storage.api.model.OptimizationData> getAllOptimizationData(String documentId) {
-        // TODO: 待实现MongoDB所有优化数据获取
-        log.warn("getAllOptimizationData not implemented for MongoDB yet");
-        return new ArrayList<>();
+        try {
+            List<GridFSFile> files = gridFSBucket.find(
+                    new Document("metadata.documentId", documentId)
+                            .append("metadata.type", "optimization")
+            ).into(new ArrayList<>());
+
+            return files.stream()
+                    .map(file -> {
+                        try {
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            gridFSBucket.downloadToStream(file.getObjectId(), outputStream);
+                            return objectMapper.readValue(outputStream.toByteArray(),
+                                                        top.yumbo.ai.storage.api.model.OptimizationData.class);
+                        } catch (Exception e) {
+                            log.error("Failed to read optimization data file", e);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to get all optimization data for document: {}", documentId, e);
+            return new ArrayList<>();
+        }
     }
 
     @Override
     public void deleteOptimizationData(String documentId, String optimizationType) {
-        // TODO: 待实现MongoDB优化数据删除
-        log.warn("deleteOptimizationData not implemented for MongoDB yet");
+        try {
+            String filename = documentId + "_opt_" + optimizationType;
+            GridFSFile file = gridFSBucket.find(
+                    new Document("filename", filename)
+            ).first();
+
+            if (file != null) {
+                gridFSBucket.delete(file.getObjectId());
+                log.info("Deleted {} optimization data for document: {}", optimizationType, documentId);
+            }
+        } catch (Exception e) {
+            log.error("Failed to delete {} optimization data for document: {}", optimizationType, documentId, e);
+        }
     }
 
     @Override
     public void deleteAllOptimizationData(String documentId) {
-        // TODO: 待实现MongoDB所有优化数据删除
-        log.warn("deleteAllOptimizationData not implemented for MongoDB yet");
+        try {
+            List<GridFSFile> files = gridFSBucket.find(
+                    new Document("metadata.documentId", documentId)
+                            .append("metadata.type", "optimization")
+            ).into(new ArrayList<>());
+
+            for (GridFSFile file : files) {
+                gridFSBucket.delete(file.getObjectId());
+            }
+            log.info("Deleted all optimization data for document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete all optimization data for document: {}", documentId, e);
+        }
     }
 
     // ========== Document Management ==========
