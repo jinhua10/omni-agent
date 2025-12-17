@@ -161,12 +161,12 @@ public class ChunkingStrategyManager {
      */
     private String selectBestStrategy(DocumentType docType, String content) {
         return switch (docType) {
-            case TECHNICAL -> "semantic";  // 技术文档用语义分块
-            case API -> "structured";      // API文档用结构化分块
-            case CODE -> "semantic";       // 代码用语义分块
-            case FAQ -> "sentence_boundary"; // FAQ用句子边界
+            case TECHNICAL -> "semantic";  // 技术文档用语义分块（保持主题连贯）
+            case API -> "ppl";             // API文档用PPL分块（保持接口完整）
+            case CODE -> "semantic";       // 代码用语义分块（保持逻辑完整）
+            case FAQ -> "sentence_boundary"; // FAQ用句子边界（保持问答完整）
             case MARKDOWN -> "paragraph";  // Markdown用段落分块
-            case LONG_ARTICLE -> "paragraph"; // 长文章用段落分块
+            case LONG_ARTICLE -> "ppl";    // 长文章用PPL分块（检测主题转换）
             default -> DEFAULT_STRATEGY;   // 默认固定大小
         };
     }
