@@ -32,15 +32,36 @@ import java.util.*;
 public class OnlineAPIAIService implements AIService {
 
     private final RestTemplate restTemplate;
+    private final top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter;
     private final OnlineAPIProperties properties;
     private String currentModel;
 
+    /**
+     * 构造函数（使用 RestTemplate，向后兼容）
+     */
     public OnlineAPIAIService(RestTemplate restTemplate, OnlineAPIProperties properties) {
+        this(restTemplate, properties, null);
+    }
+
+    /**
+     * 构造函数（支持自定义 HttpClientAdapter）
+     */
+    public OnlineAPIAIService(RestTemplate restTemplate, OnlineAPIProperties properties,
+                              top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter) {
         this.restTemplate = restTemplate;
         this.properties = properties;
         this.currentModel = properties.getDefaultModel();
-        log.info("OnlineAPIAIService initialized with provider: {}, model: {}",
-                properties.getProvider(), currentModel);
+
+        // 如果没有提供 httpClientAdapter，使用默认的 RestTemplateAdapter
+        if (httpClientAdapter == null && restTemplate != null) {
+            this.httpClientAdapter = new top.yumbo.ai.omni.common.http.RestTemplateAdapter(restTemplate);
+        } else {
+            this.httpClientAdapter = httpClientAdapter;
+        }
+
+        log.info("OnlineAPIAIService initialized with provider: {}, model: {}, HTTP Client: {}",
+                properties.getProvider(), currentModel,
+                this.httpClientAdapter != null ? this.httpClientAdapter.getName() : "RestTemplate");
     }
 
     // ========== Text Generation ==========

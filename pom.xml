@@ -44,6 +44,10 @@
         <!-- Behavior API (Behavior Analysis API) -->
         <module>omni-agent-behavior-api</module>
 
+        <!-- ========== 通用工具模块 (Common Module) ========== -->
+
+        <module>omni-agent-common</module>
+
         <!-- ========== 核心业务模块 (Core Module) ========== -->
 
         <module>omni-agent-core</module>

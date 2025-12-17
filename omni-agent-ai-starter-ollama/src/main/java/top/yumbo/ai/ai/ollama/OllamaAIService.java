@@ -31,15 +31,36 @@ import java.util.*;
 public class OllamaAIService implements AIService {
 
     private final RestTemplate restTemplate;
+    private final top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter;
     private final OllamaProperties properties;
     private String currentModel;
 
+    /**
+     * 构造函数（使用 RestTemplate，向后兼容）
+     */
     public OllamaAIService(RestTemplate restTemplate, OllamaProperties properties) {
+        this(restTemplate, properties, null);
+    }
+
+    /**
+     * 构造函数（支持自定义 HttpClientAdapter）
+     */
+    public OllamaAIService(RestTemplate restTemplate, OllamaProperties properties,
+                          top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter) {
         this.restTemplate = restTemplate;
         this.properties = properties;
         this.currentModel = properties.getDefaultModel();
-        log.info("OllamaAIService initialized - baseUrl: {}, model: {}",
-                properties.getBaseUrl(), currentModel);
+
+        // 如果没有提供 httpClientAdapter，使用默认的 RestTemplateAdapter
+        if (httpClientAdapter == null && restTemplate != null) {
+            this.httpClientAdapter = new top.yumbo.ai.omni.common.http.RestTemplateAdapter(restTemplate);
+        } else {
+            this.httpClientAdapter = httpClientAdapter;
+        }
+
+        log.info("OllamaAIService initialized - baseUrl: {}, model: {}, HTTP Client: {}",
+                properties.getBaseUrl(), currentModel,
+                this.httpClientAdapter != null ? this.httpClientAdapter.getName() : "RestTemplate");
     }
 
     @Override

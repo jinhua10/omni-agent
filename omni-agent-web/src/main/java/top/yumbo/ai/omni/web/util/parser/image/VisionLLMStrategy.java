@@ -5,14 +5,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.web.client.RestTemplate;
+import top.yumbo.ai.omni.common.http.HttpClientAdapter;
+import top.yumbo.ai.omni.common.http.RestTemplateAdapter;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Base64;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map;
 
 /**
  * Vision LLM 策略
@@ -52,16 +58,18 @@ public class VisionLLMStrategy implements ImageContentExtractorStrategy {
     private final String apiKey;
     private final String model;
     private final String apiEndpoint;
-    private final OkHttpClient httpClient;
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final String systemPrompt;
     private boolean available = false;
+
+    // HTTP客户端抽象接口（支持 RestTemplate 和 OkHttpClient）
+    private final HttpClientAdapter httpClientAdapter;
 
     // 默认配置
     private static final String DEFAULT_API_ENDPOINT = "https://api.openai.com/v1/chat/completions";
     private static final String DEFAULT_MODEL = "gpt-4o";
     private static final int DEFAULT_TIMEOUT = 120;
-    private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     // 默认提示词：精简模式
     private static final String DEFAULT_SYSTEM_PROMPT =
@@ -71,14 +79,14 @@ public class VisionLLMStrategy implements ImageContentExtractorStrategy {
             "保持输出简洁，只提取核心信息。";
 
     /**
-     * 构造函数
+     * 构造函数（默认使用 RestTemplate）
      *
      * @param apiKey      API密钥
      * @param model       模型名称（如 qwen-vl-plus, deepseek-vl, gpt-4o）
      * @param apiEndpoint API端点
      */
     public VisionLLMStrategy(String apiKey, String model, String apiEndpoint) {
-        this(apiKey, model, apiEndpoint, DEFAULT_SYSTEM_PROMPT);
+        this(apiKey, model, apiEndpoint, DEFAULT_SYSTEM_PROMPT, null);
     }
 
     /**
@@ -90,16 +98,36 @@ public class VisionLLMStrategy implements ImageContentExtractorStrategy {
      * @param systemPrompt 系统提示词
      */
     public VisionLLMStrategy(String apiKey, String model, String apiEndpoint, String systemPrompt) {
+        this(apiKey, model, apiEndpoint, systemPrompt, null);
+    }
+
+    /**
+     * 构造函数（支持自定义 HTTP 客户端）
+     *
+     * @param apiKey            API密钥
+     * @param model             模型名称
+     * @param apiEndpoint       API端点
+     * @param systemPrompt      系统提示词
+     * @param httpClientAdapter HTTP客户端适配器（null则使用默认RestTemplate）
+     */
+    public VisionLLMStrategy(String apiKey, String model, String apiEndpoint,
+                            String systemPrompt, HttpClientAdapter httpClientAdapter) {
         this.apiKey = apiKey;
         this.model = model != null && !model.isEmpty() ? model : DEFAULT_MODEL;
         this.apiEndpoint = apiEndpoint != null && !apiEndpoint.isEmpty() ? apiEndpoint : DEFAULT_API_ENDPOINT;
         this.systemPrompt = systemPrompt != null && !systemPrompt.isEmpty() ? systemPrompt : DEFAULT_SYSTEM_PROMPT;
 
-        this.httpClient = new OkHttpClient.Builder()
-                .connectTimeout(DEFAULT_TIMEOUT, TimeUnit.SECONDS)
-                .readTimeout(DEFAULT_TIMEOUT, TimeUnit.SECONDS)
-                .writeTimeout(DEFAULT_TIMEOUT, TimeUnit.SECONDS)
-                .build();
+        // 如果没有提供 httpClientAdapter，则使用默认的 RestTemplate
+        if (httpClientAdapter == null) {
+            this.restTemplate = new RestTemplateBuilder()
+                    .setConnectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
+                    .setReadTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
+                    .build();
+            this.httpClientAdapter = new RestTemplateAdapter(this.restTemplate);
+        } else {
+            this.restTemplate = null;
+            this.httpClientAdapter = httpClientAdapter;
+        }
 
         this.objectMapper = new ObjectMapper();
 
@@ -156,6 +184,7 @@ public class VisionLLMStrategy implements ImageContentExtractorStrategy {
         log.info("Vision LLM 服务已启用");
         log.info("  模型: {}", model);
         log.info("  端点: {}", apiEndpoint);
+        log.info("  HTTP客户端: {}", httpClientAdapter.getName());
     }
 
     @Override
@@ -243,26 +272,24 @@ public class VisionLLMStrategy implements ImageContentExtractorStrategy {
 
         requestJson.set("messages", messages);
 
-        // 发送请求
-        String requestBody = objectMapper.writeValueAsString(requestJson);
-        log.debug("Vision API 请求: model={}, endpoint={}", model, apiEndpoint);
+        // 构建请求头
+        Map<String, String> headers = new java.util.HashMap<>();
+        headers.put("Content-Type", "application/json");
+        headers.put("Authorization", "Bearer " + apiKey);
 
-        Request request = new Request.Builder()
-                .url(apiEndpoint)
-                .post(RequestBody.create(requestBody, JSON))
-                .addHeader("Authorization", "Bearer " + apiKey)
-                .addHeader("Content-Type", "application/json")
-                .build();
+        log.debug("Vision API 请求: model={}, endpoint={}, client={}",
+                model, apiEndpoint, httpClientAdapter.getName());
 
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                String errorBody = response.body() != null ? response.body().string() : "Unknown error";
-                log.error("Vision API 调用失败: code={}, body={}", response.code(), errorBody);
-                throw new IOException("Vision API 返回错误: " + response.code());
-            }
+        try {
+            // 使用适配器发送 POST 请求
+            String responseBody = httpClientAdapter.post(
+                    apiEndpoint,
+                    headers,
+                    objectMapper.writeValueAsString(requestJson)
+            );
 
-            String responseBody = response.body().string();
-            log.debug("Vision API 响应长度: {} bytes", responseBody.length());
+            log.debug("Vision API 响应长度: {} bytes",
+                    responseBody != null ? responseBody.length() : 0);
 
             // 解析响应
             JsonNode responseJson = objectMapper.readTree(responseBody);
@@ -281,6 +308,10 @@ public class VisionLLMStrategy implements ImageContentExtractorStrategy {
 
             log.warn("Vision API 响应格式异常: {}", responseBody);
             return String.format("[图片: %s - API 响应格式异常]", imageName);
+
+        } catch (Exception e) {
+            log.error("Vision API 请求失败: {}", e.getMessage(), e);
+            throw e;
         }
     }
 

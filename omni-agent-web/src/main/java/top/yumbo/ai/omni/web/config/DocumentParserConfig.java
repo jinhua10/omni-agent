@@ -5,10 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import top.yumbo.ai.omni.example.basic.util.DocumentParser;
-import top.yumbo.ai.omni.example.basic.util.parser.SimpleDocumentParser;
-import top.yumbo.ai.omni.example.basic.util.parser.image.SmartImageExtractor;
-import top.yumbo.ai.omni.example.basic.util.parser.image.VisionLLMStrategy;
+import top.yumbo.ai.omni.web.util.DocumentParser;
+import top.yumbo.ai.omni.web.util.parser.SimpleDocumentParser;
+import top.yumbo.ai.omni.web.util.parser.image.SmartImageExtractor;
+import top.yumbo.ai.omni.web.util.parser.image.VisionLLMStrategy;
 
 /**
  * 文档解析器配置
