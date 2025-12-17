@@ -399,7 +399,22 @@ public class DocumentManagementController {
                             DocumentInfo docInfo = new DocumentInfo();
                             docInfo.setDocumentId(doc.getId());
                             docInfo.setFileName(doc.getTitle() != null ? doc.getTitle() : doc.getId());
-                            docInfo.setFileSize(doc.getContent() != null ? doc.getContent().length() : 0);
+
+                            // 尝试从原始文件获取实际大小
+                            long actualFileSize = 0;
+                            try {
+                                Path filePath = FileStorageUtil.findFileByName(doc.getTitle());
+                                if (filePath != null && Files.exists(filePath)) {
+                                    actualFileSize = Files.size(filePath);
+                                } else {
+                                    actualFileSize = doc.getContent() != null ? doc.getContent().getBytes().length : 0;
+                                }
+                            } catch (Exception e) {
+                                log.debug("无法获取文件大小: {}", doc.getTitle());
+                                actualFileSize = doc.getContent() != null ? doc.getContent().getBytes().length : 0;
+                            }
+
+                            docInfo.setFileSize(actualFileSize);
                             docInfo.setFileType("text");
                             docInfo.setUploadTime(new Date());
                             docInfo.setIndexed(true);
@@ -418,7 +433,23 @@ public class DocumentManagementController {
                     DocumentInfo docInfo = new DocumentInfo();
                     docInfo.setDocumentId(doc.getId());
                     docInfo.setFileName(doc.getTitle() != null ? doc.getTitle() : doc.getId());
-                    docInfo.setFileSize(doc.getContent() != null ? doc.getContent().length() : 0);
+
+                    // 尝试从原始文件获取实际大小
+                    long actualFileSize = 0;
+                    try {
+                        Path filePath = FileStorageUtil.findFileByName(doc.getTitle());
+                        if (filePath != null && Files.exists(filePath)) {
+                            actualFileSize = Files.size(filePath);
+                        } else {
+                            // 如果找不到原始文件，使用内容长度作为估算
+                            actualFileSize = doc.getContent() != null ? doc.getContent().getBytes().length : 0;
+                        }
+                    } catch (Exception e) {
+                        log.debug("无法获取文件大小: {}", doc.getTitle());
+                        actualFileSize = doc.getContent() != null ? doc.getContent().getBytes().length : 0;
+                    }
+
+                    docInfo.setFileSize(actualFileSize);
                     docInfo.setFileType(doc.getType() != null ? doc.getType() : "text");
                     docInfo.setUploadTime(doc.getCreatedAt() != null ? new Date(doc.getCreatedAt()) : new Date());
                     docInfo.setIndexed(true);
