@@ -94,10 +94,10 @@ omni-agent:
   # 5. Vision LLM 配置（图片转文字）⭐
   vision-llm:
     # 是否启用图片提取功能
-    enabled: false
+    enabled: true
 
     # API 配置
-    api-key: ${VISION_LLM_API_KEY:${AI_API_KEY:your-api-key-here}}
+    api-key: ${QW_API_KEY:your-api-key-here}
 
     # 模型选择（支持多模态视觉理解的模型）
     # - qwen-vl-plus: 千问视觉理解增强版（推荐，中文效果好）
