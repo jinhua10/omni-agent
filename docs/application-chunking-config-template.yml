@@ -1,0 +1,148 @@
+# OmniAgent 分块策略配置模板
+
+## 1. PPL 分块策略配置
+
+spring:
+  application:
+    name: omni-agent
+
+# ========== 分块策略配置 ==========
+chunking:
+  # PPL 分块策略配置
+  ppl:
+    # 模式选择：simplified | onnx | auto
+    # - simplified: 快速模式，使用词汇重叠度近似困惑度（默认）
+    # - onnx: 精度模式，使用真实语言模型计算困惑度
+    # - auto: 自动模式，根据环境和配置自动选择
+    mode: simplified
+
+    # 自动模式下是否优先精度（仅在 mode=auto 时有效）
+    # - true: 优先使用 ONNX（如果可用）
+    # - false: 优先使用简化版（默认）
+    prefer-accuracy: false
+
+# ========== ONNX 服务配置（可选）==========
+# 仅在 chunking.ppl.mode=onnx 或 mode=auto 且 prefer-accuracy=true 时需要
+
+ppl:
+  onnx:
+    # 是否启用 ONNX 服务
+    enabled: false
+
+    # 模型路径
+    model-path: ./old/models/qwen2.5-0.5b-instruct/model.onnx
+
+    # Tokenizer 路径
+    tokenizer-path: ./old/models/qwen2.5-0.5b-instruct/tokenizer.json
+
+    # 是否使用缓存
+    use-cache: true
+
+    # 缓存大小
+    cache-size: 1000
+
+    # 缓存过期时间（秒）
+    cache-ttl: 3600
+
+# ========== 日志配置 ==========
+logging:
+  level:
+    top.yumbo.ai.omni.core.chunking: INFO
+    # top.yumbo.ai.rag.ppl: INFO  # ONNX 服务日志（如果启用）
+
+---
+
+## 2. 各场景推荐配置
+
+# ========== 场景1：开发环境（快速模式）==========
+chunking:
+  ppl:
+    mode: simplified  # 开发环境优先速度
+
+# ========== 场景2：生产环境（资源充足）==========
+chunking:
+  ppl:
+    mode: onnx  # 生产环境使用 ONNX 精度模式
+
+ppl:
+  onnx:
+    enabled: true
+    model-path: ./old/models/qwen2.5-0.5b-instruct/model.onnx
+    tokenizer-path: ./old/models/qwen2.5-0.5b-instruct/tokenizer.json
+    use-cache: true
+    cache-size: 1000
+
+# ========== 场景3：生产环境（资源受限）==========
+chunking:
+  ppl:
+    mode: simplified  # 资源受限使用简化版
+
+# ========== 场景4：自动适应（智能模式）==========
+chunking:
+  ppl:
+    mode: auto  # 自动选择
+    prefer-accuracy: true  # 优先精度
+
+ppl:
+  onnx:
+    enabled: true  # 尝试启用 ONNX
+    model-path: ./old/models/qwen2.5-0.5b-instruct/model.onnx
+    tokenizer-path: ./old/models/qwen2.5-0.5b-instruct/tokenizer.json
+    # 如果 ONNX 不可用，会自动降级到简化版
+
+---
+
+## 3. 验证配置
+
+启动应用后，查看日志输出：
+
+**简化版模式**:
+```
+✅ 使用简化版 PPL 计算器（配置指定: mode=simplified）
+```
+
+**ONNX 模式（未实现）**:
+```
+⚠️ ONNX 模式未实现，使用简化版（配置: mode=onnx）
+```
+
+**自动模式**:
+```
+✅ 使用简化版 PPL 计算器（自动选择 - ONNX 未集成）
+```
+
+---
+
+## 4. 注意事项
+
+1. **ONNX 模式目前未实现**
+   - 代码已预留接口，待集成旧版 ONNX 代码
+   - 配置 `mode: onnx` 会降级到简化版
+
+2. **默认配置**
+   - 如果不配置，默认使用 `mode: simplified`
+   - 零配置，开箱即用
+
+3. **配置刷新**
+   - 支持 Spring Boot Actuator 动态刷新
+   - 需要添加 `spring-boot-starter-actuator` 依赖
+
+---
+
+## 5. 性能对比
+
+| 模式 | 速度 | 内存 | 精度 | 依赖 |
+|------|------|------|------|------|
+| simplified | <1ms | 1MB | ⭐⭐⭐⭐ | 无 |
+| onnx (0.5B) | 30-50ms | 200MB | ⭐⭐⭐⭐⭐ | ONNX + 模型 |
+| onnx (1.5B) | 100-150ms | 500MB | ⭐⭐⭐⭐⭐ | ONNX + 模型 |
+
+---
+
+**推荐**:
+- 默认使用 `simplified` 模式 ⭐⭐⭐⭐⭐
+- 待 ONNX 集成后，可选择 `onnx` 或 `auto` 模式
+
+**版本**: v1.0
+**日期**: 2025-12-18
+

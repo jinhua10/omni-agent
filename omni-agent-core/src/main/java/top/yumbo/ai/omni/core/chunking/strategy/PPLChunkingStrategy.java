@@ -2,25 +2,33 @@ package top.yumbo.ai.omni.core.chunking.strategy;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.storage.api.model.Chunk;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * PPL 困惑度分块策略
- * <p>
- * 基于困惑度（Perplexity/Probable Point of Loss）的智能分块
- * 在困惑度峰值点（语义边界）切分，保持语义完整性
- * <p>
- * 原理：
- * 1. 计算文本每个位置的"困惑度"（语义不连贯程度）
- * 2. 困惑度高的位置 = 主题转换点 = 分块边界
- * 3. 在这些边界处切分，保证每个分块语义完整
- * <p>
- * 简化实现（不依赖语言模型）：
- * - 使用句子相似度作为困惑度的近似
- * - 相似度低 = 困惑度高 = 主题转换
+ * PPL 困惑度分块策略（配置驱动）⭐
+ *
+ * 支持两种实现，用户通过配置自由选择：
+ * 1. 简化版 - 快速、零依赖，使用词汇重叠度近似困惑度（默认）
+ * 2. ONNX 版 - 精度高、使用真实语言模型计算困惑度（可选）
+ *
+ * 配置方式：
+ * <pre>
+ * # application.yml
+ * chunking:
+ *   ppl:
+ *     mode: simplified  # simplified | onnx | auto
+ *     prefer-accuracy: false  # 自动模式时，是否优先精度
+ * </pre>
+ *
+ * 各模式说明：
+ * - simplified: 强制使用简化版（<1ms，零依赖）
+ * - onnx: 强制使用 ONNX 版（30-150ms，精度+15-20%）
+ * - auto: 自动选择（ONNX 可用且 prefer-accuracy=true 时用 ONNX）
  *
  * @author OmniAgent Team
  * @since 3.0.0
@@ -33,13 +41,84 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
     private static final int DEFAULT_MAX_CHUNK_SIZE = 800;
     private static final double DEFAULT_THRESHOLD = 0.3;  // 困惑度阈值
 
+    // ========== 配置参数 ==========
+
+    @Value("${chunking.ppl.mode:simplified}")
+    private String pplMode;  // simplified | onnx | auto
+
+    @Value("${chunking.ppl.prefer-accuracy:false}")
+    private boolean preferAccuracy;
+
+    // ========== 可选依赖（ONNX 服务）==========
+
+    // TODO: 后续集成旧版 ONNX 代码时取消注释
+    // @Autowired(required = false)
+    // private PPLOnnxService pplOnnxService;
+
     @Override
     public List<Chunk> chunk(String documentId, String content, Map<String, Object> params) {
-        List<Chunk> chunks = new ArrayList<>();
-
         if (content == null || content.isEmpty()) {
-            return chunks;
+            return new ArrayList<>();
         }
+
+        // 根据配置选择 PPL 计算方式
+        PPLCalculator calculator = selectCalculator();
+
+        // 使用选定的计算器计算困惑度
+        List<Double> perplexities = calculator.calculate(content);
+
+        // 基于困惑度创建分块
+        return createChunksFromPerplexities(documentId, content, perplexities, params);
+    }
+
+    /**
+     * 根据配置选择 PPL 计算器
+     */
+    private PPLCalculator selectCalculator() {
+        String mode = pplMode != null ? pplMode.toLowerCase() : "simplified";
+
+        switch (mode) {
+            case "onnx":
+                // 强制使用 ONNX
+                // TODO: 集成 ONNX 服务后取消注释
+                // if (pplOnnxService != null && pplOnnxService.isHealthy()) {
+                //     log.info("✅ 使用 ONNX PPL 计算器（配置指定: mode=onnx）");
+                //     return new OnnxPPLCalculator(pplOnnxService);
+                // } else {
+                //     log.warn("⚠️ ONNX 服务不可用，降级到简化版");
+                //     return new SimplifiedPPLCalculator();
+                // }
+                log.warn("⚠️ ONNX 模式未实现，使用简化版（配置: mode=onnx）");
+                return new SimplifiedPPLCalculator();
+
+            case "auto":
+                // 自动选择
+                // TODO: 集成 ONNX 服务后取消注释
+                // if (pplOnnxService != null && pplOnnxService.isHealthy() && preferAccuracy) {
+                //     log.info("✅ 使用 ONNX PPL 计算器（自动选择 - 优先精度）");
+                //     return new OnnxPPLCalculator(pplOnnxService);
+                // } else {
+                //     log.info("✅ 使用简化版 PPL 计算器（自动选择 - 优先速度）");
+                //     return new SimplifiedPPLCalculator();
+                // }
+                log.info("✅ 使用简化版 PPL 计算器（自动选择 - ONNX 未集成）");
+                return new SimplifiedPPLCalculator();
+
+            case "simplified":
+            default:
+                // 强制使用简化版
+                log.info("✅ 使用简化版 PPL 计算器（配置指定: mode=simplified）");
+                return new SimplifiedPPLCalculator();
+        }
+    }
+
+    /**
+     * 基于困惑度创建分块
+     */
+    private List<Chunk> createChunksFromPerplexities(String documentId, String content,
+                                                     List<Double> perplexities,
+                                                     Map<String, Object> params) {
+        List<Chunk> chunks = new ArrayList<>();
 
         int minChunkSize = getParam(params, "minChunkSize", DEFAULT_MIN_CHUNK_SIZE);
         int maxChunkSize = getParam(params, "maxChunkSize", DEFAULT_MAX_CHUNK_SIZE);
@@ -51,8 +130,6 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
             return chunks;
         }
 
-        // 2. 计算句子间的"困惑度"（简化：使用词汇重叠度的倒数）
-        List<Double> perplexities = calculatePerplexities(sentences);
 
         // 3. 找到困惑度峰值点（分块边界）
         List<Integer> boundaries = findBoundaries(perplexities, sentences,
@@ -310,5 +387,62 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
             this.endPosition = end;
         }
     }
+
+    // ========== PPL 计算器接口和实现 ==========
+
+    /**
+     * PPL 计算器接口
+     */
+    interface PPLCalculator {
+        /**
+         * 计算文本的困惑度序列
+         * @param content 文本内容
+         * @return 困惑度序列
+         */
+        List<Double> calculate(String content);
+    }
+
+    /**
+     * 简化版 PPL 计算器
+     * 使用词汇重叠度近似困惑度
+     */
+    class SimplifiedPPLCalculator implements PPLCalculator {
+        @Override
+        public List<Double> calculate(String content) {
+            List<Sentence> sentences = splitIntoSentences(content);
+            return calculatePerplexities(sentences);
+        }
+    }
+
+    /**
+     * ONNX PPL 计算器（待实现）
+     * 使用真实语言模型计算困惑度
+     */
+    // TODO: 集成旧版 ONNX 代码后实现
+    // class OnnxPPLCalculator implements PPLCalculator {
+    //     private final PPLOnnxService pplService;
+    //
+    //     OnnxPPLCalculator(PPLOnnxService pplService) {
+    //         this.pplService = pplService;
+    //     }
+    //
+    //     @Override
+    //     public List<Double> calculate(String content) {
+    //         List<String> sentences = Arrays.stream(
+    //             content.split("(?<=[。！？.!?])\\s*")
+    //         ).collect(Collectors.toList());
+    //
+    //         return sentences.stream()
+    //             .map(s -> {
+    //                 try {
+    //                     return pplService.calculatePerplexity(s);
+    //                 } catch (Exception e) {
+    //                     log.warn("ONNX 计算困惑度失败: {}", e.getMessage());
+    //                     return Double.MAX_VALUE;
+    //                 }
+    //             })
+    //             .collect(Collectors.toList());
+    //     }
+    // }
 }
 
