@@ -51,9 +51,8 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
 
     // ========== 可选依赖（ONNX 服务）==========
 
-    // TODO: 后续集成旧版 ONNX 代码时取消注释
-    // @Autowired(required = false)
-    // private PPLOnnxService pplOnnxService;
+    @Autowired(required = false)
+    private top.yumbo.ai.omni.ppl.onnx.PPLOnnxService pplOnnxService;
 
     @Override
     public List<Chunk> chunk(String documentId, String content, Map<String, Object> params) {
@@ -80,29 +79,23 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
         switch (mode) {
             case "onnx":
                 // 强制使用 ONNX
-                // TODO: 集成 ONNX 服务后取消注释
-                // if (pplOnnxService != null && pplOnnxService.isHealthy()) {
-                //     log.info("✅ 使用 ONNX PPL 计算器（配置指定: mode=onnx）");
-                //     return new OnnxPPLCalculator(pplOnnxService);
-                // } else {
-                //     log.warn("⚠️ ONNX 服务不可用，降级到简化版");
-                //     return new SimplifiedPPLCalculator();
-                // }
-                log.warn("⚠️ ONNX 模式未实现，使用简化版（配置: mode=onnx）");
-                return new SimplifiedPPLCalculator();
+                if (pplOnnxService != null && pplOnnxService.isHealthy()) {
+                    log.info("✅ 使用 ONNX PPL 计算器（配置指定: mode=onnx）");
+                    return new OnnxPPLCalculator(pplOnnxService);
+                } else {
+                    log.warn("⚠️ ONNX 服务不可用，降级到简化版");
+                    return new SimplifiedPPLCalculator();
+                }
 
             case "auto":
                 // 自动选择
-                // TODO: 集成 ONNX 服务后取消注释
-                // if (pplOnnxService != null && pplOnnxService.isHealthy() && preferAccuracy) {
-                //     log.info("✅ 使用 ONNX PPL 计算器（自动选择 - 优先精度）");
-                //     return new OnnxPPLCalculator(pplOnnxService);
-                // } else {
-                //     log.info("✅ 使用简化版 PPL 计算器（自动选择 - 优先速度）");
-                //     return new SimplifiedPPLCalculator();
-                // }
-                log.info("✅ 使用简化版 PPL 计算器（自动选择 - ONNX 未集成）");
-                return new SimplifiedPPLCalculator();
+                if (pplOnnxService != null && pplOnnxService.isHealthy() && preferAccuracy) {
+                    log.info("✅ 使用 ONNX PPL 计算器（自动选择 - 优先精度）");
+                    return new OnnxPPLCalculator(pplOnnxService);
+                } else {
+                    log.info("✅ 使用简化版 PPL 计算器（自动选择 - 优先速度）");
+                    return new SimplifiedPPLCalculator();
+                }
 
             case "simplified":
             default:
@@ -415,34 +408,34 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
     }
 
     /**
-     * ONNX PPL 计算器（待实现）
+     * ONNX PPL 计算器
      * 使用真实语言模型计算困惑度
      */
-    // TODO: 集成旧版 ONNX 代码后实现
-    // class OnnxPPLCalculator implements PPLCalculator {
-    //     private final PPLOnnxService pplService;
-    //
-    //     OnnxPPLCalculator(PPLOnnxService pplService) {
-    //         this.pplService = pplService;
-    //     }
-    //
-    //     @Override
-    //     public List<Double> calculate(String content) {
-    //         List<String> sentences = Arrays.stream(
-    //             content.split("(?<=[。！？.!?])\\s*")
-    //         ).collect(Collectors.toList());
-    //
-    //         return sentences.stream()
-    //             .map(s -> {
-    //                 try {
-    //                     return pplService.calculatePerplexity(s);
-    //                 } catch (Exception e) {
-    //                     log.warn("ONNX 计算困惑度失败: {}", e.getMessage());
-    //                     return Double.MAX_VALUE;
-    //                 }
-    //             })
-    //             .collect(Collectors.toList());
-    //     }
-    // }
+    class OnnxPPLCalculator implements PPLCalculator {
+        private final top.yumbo.ai.omni.ppl.onnx.PPLOnnxService pplService;
+
+        OnnxPPLCalculator(top.yumbo.ai.omni.ppl.onnx.PPLOnnxService pplService) {
+            this.pplService = pplService;
+        }
+
+        @Override
+        public List<Double> calculate(String content) {
+            List<String> sentences = Arrays.stream(
+                content.split("(?<=[。！？.!?])\\s*")
+            ).filter(s -> !s.trim().isEmpty())
+             .collect(Collectors.toList());
+
+            return sentences.stream()
+                .map(s -> {
+                    try {
+                        return pplService.calculatePerplexity(s);
+                    } catch (Exception e) {
+                        log.warn("ONNX 计算困惑度失败: {}", e.getMessage());
+                        return Double.MAX_VALUE;
+                    }
+                })
+                .collect(Collectors.toList());
+        }
+    }
 }
 

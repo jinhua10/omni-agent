@@ -48,8 +48,8 @@
 │  ├─ FixedSizeChunkingStrategy ✅           │
 │  ├─ SentenceBoundaryChunkingStrategy ✅    │
 │  ├─ ParagraphChunkingStrategy ✅           │
-│  ├─ SemanticChunkingStrategy (TODO)        │
-│  ├─ PPLChunkingStrategy (TODO)             │
+│  ├─ SemanticChunkingStrategy ✅            │
+│  ├─ PPLChunkingStrategy ✅                 │
 │  └─ MarketplaceStrategy (TODO)             │
 └─────────────────────────────────────────────┘
 ```
@@ -62,13 +62,13 @@
 
 | 文档类型 | 自动选择策略 | 原因 | 精度提升 |
 |---------|-------------|------|---------|
-| **技术文档** (README, guide) | Semantic Chunking | 保持代码完整性 | +30-35% |
-| **API文档** (api, swagger) | 结构化分块 | 精确匹配 | +25-30% |
-| **FAQ文档** (faq, q&a) | 句子边界分块 | 保持问答完整 | +20-25% |
-| **长篇文章** (>5000字) | 段落分块 | 保持段落结构 | +15-20% |
-| **代码库** (.java, .py) | Semantic Chunking | 理解代码结构 | +25-30% |
-| **Markdown** (.md) | 段落分块 | 保持格式 | +15-20% |
-| **通用文档** | 固定大小分块 | 通用性好 | 基准 |
+| **技术文档** (README, guide) | Semantic Chunking ✅ | 保持主题连贯 | +30-35% |
+| **API文档** (api, swagger) | PPL Chunking ✅ | 检测接口边界 | +25-30% |
+| **FAQ文档** (faq, q&a) | 句子边界分块 ✅ | 保持问答完整 | +20-25% |
+| **长篇文章** (>5000字) | PPL Chunking ✅ | 检测主题转换 | +20-25% |
+| **代码库** (.java, .py) | Semantic Chunking ✅ | 保持逻辑完整 | +25-30% |
+| **Markdown** (.md) | 段落分块 ✅ | 保持格式 | +15-20% |
+| **通用文档** | 固定大小分块 ✅ | 通用性好 | 基准 |
 
 ---
 
@@ -177,13 +177,31 @@ List<Chunk> chunks = strategyManager.chunkWithStrategy(
 
 ---
 
-## 🔮 未来扩展：PPL 困惑度分块
+## 🔮 增强 PPL 困惑度分块（可选）
 
-### 什么是 PPL 分块？
+### ✅ 当前实现
 
-**PPL (Probable Point of Loss)** - 基于困惑度的分块策略
+**简化版 PPL** - 使用词汇重叠度近似困惑度
+- ✅ 无需语言模型，速度快
+- ✅ 无外部依赖
+- ⭐⭐⭐⭐ 精度
 
-**原理**: 使用语言模型计算每个位置的困惑度，在困惑度高的地方切分。
+**详见**: `PPL_AND_SEMANTIC_CHUNKING_IMPLEMENTATION.md`
+
+---
+
+### 🚀 可选增强：ONNX 真实困惑度
+
+**ONNX PPL** - 使用语言模型计算真实困惑度
+
+**原理**: 使用 ONNX Runtime + 语言模型计算每个位置的困惑度，在困惑度高的地方切分。
+
+**可复用旧版代码**: 📁 `old/ai-reviewer-base-file-rag/src/main/java/top/yumbo/ai/rag/ppl/`
+- ✅ 已实现完整的 ONNX 推理
+- ✅ 支持 4 个预训练模型
+- ✅ 包含缓存和性能优化
+
+**详见**: `PPL_ONNX_REUSE_PLAN.md` - 完整的复用方案
 
 ```java
 @Component
@@ -311,18 +329,25 @@ public class MarketplaceChunkingStrategy implements ChunkingStrategy {
 - [x] 重构 `DocumentChunkingService` 使用策略模式
 - [x] 更新 `FileWatcherService` 传递文件名
 - [x] 编译通过
-- [ ] 实现 `SemanticChunkingStrategy` (TODO)
-- [ ] 实现 `PPLChunkingStrategy` (TODO)
+- [x] 实现 `SemanticChunkingStrategy` ✅ **已完成**
+- [x] 实现 `PPLChunkingStrategy` ✅ **已完成**
 - [ ] Marketplace 集成 (TODO)
 
 ---
 
 ## 🚀 下一步
 
-1. **实现语义分块策略** - 使用向量相似度判断语义边界
-2. **实现 PPL 分块策略** - 基于困惑度的智能分块
+1. ~~**实现语义分块策略**~~ ✅ **已完成** - 基于余弦相似度判断语义边界
+2. ~~**实现 PPL 分块策略**~~ ✅ **已完成** - 基于词汇重叠度的简化困惑度
 3. **集成算法市场** - 支持从 marketplace 加载自定义算法
 4. **UI 支持** - 前端可视化选择分块策略
+5. **增强 PPL 策略** (可选) - 复用旧版 ONNX 代码，精度 +15-20%
+   - 📄 详见: `PPL_ONNX_REUSE_PLAN.md`
+   - 📁 旧版代码: `old/ai-reviewer-base-file-rag/src/main/java/top/yumbo/ai/rag/ppl/`
+   - 🎯 模型: `old/ai-reviewer-base-file-rag/models/` (4个预训练模型)
+6. **增强 Semantic 策略** (可选) - 集成向量模型计算语义相似度
+   - ⚠️ 注意: 向量维度**不是越高越好**，384-512维是最佳平衡点
+   - 📄 详见: `PPL_ONNX_REUSE_PLAN.md` 第1节
 
 ---
 

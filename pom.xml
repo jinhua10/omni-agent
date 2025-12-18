@@ -56,6 +56,9 @@
 
         <module>omni-agent-web</module>
 
+        <!-- PPL ONNX Service -->
+        <module>omni-agent-ppl-onnx</module>
+
         <!-- ========== 算法市场 (Algorithm Marketplace) ========== -->
 
         <module>omni-agent-marketplace</module>

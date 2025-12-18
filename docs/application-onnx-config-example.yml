@@ -1,0 +1,29 @@
+# ONNX PPL 配置示例
+# 将此配置添加到 application.yml 中启用 ONNX 模式
+
+spring:
+  application:
+    name: omni-agent
+
+# ========== PPL 分块策略配置 ==========
+chunking:
+  ppl:
+    mode: onnx  # simplified | onnx | auto
+    prefer-accuracy: true
+
+# ========== ONNX 服务配置 ==========
+ppl:
+  onnx:
+    enabled: true
+    model-path: ./old/models/qwen2.5-0.5b-instruct/model.onnx
+    tokenizer-path: ./old/models/qwen2.5-0.5b-instruct/tokenizer.json
+    use-cache: true
+    cache-size: 1000
+    cache-ttl: 3600
+
+# ========== 日志配置 ==========
+logging:
+  level:
+    top.yumbo.ai.omni.core.chunking: INFO
+    top.yumbo.ai.omni.ppl.onnx: INFO
+
