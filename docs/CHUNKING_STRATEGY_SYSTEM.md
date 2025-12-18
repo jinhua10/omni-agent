@@ -1,7 +1,8 @@
 # 🎯 智能分块策略系统
 
-**版本**: v3.0  
-**日期**: 2025-12-18
+**版本**: v3.1  
+**日期**: 2025-12-19  
+**状态**: ✅ 所有内置策略已完成
 
 ---
 
@@ -328,9 +329,10 @@ public class MarketplaceChunkingStrategy implements ChunkingStrategy {
 - [x] 创建 `ChunkingStrategyManager` 管理器
 - [x] 重构 `DocumentChunkingService` 使用策略模式
 - [x] 更新 `FileWatcherService` 传递文件名
-- [x] 编译通过
+- [x] 编译通过（BUILD SUCCESS）
 - [x] 实现 `SemanticChunkingStrategy` ✅ **已完成**
-- [x] 实现 `PPLChunkingStrategy` ✅ **已完成**
+- [x] 实现 `PPLChunkingStrategy` ✅ **已完成** (支持 ONNX)
+- [x] 所有策略验证通过 ✅ **详见**: `CHUNKING_STRATEGIES_VERIFICATION.md`
 - [ ] Marketplace 集成 (TODO)
 
 ---

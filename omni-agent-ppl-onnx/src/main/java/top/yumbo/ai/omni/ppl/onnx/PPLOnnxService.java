@@ -12,13 +12,14 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
 
 /**
  * 基于 ONNX Runtime 的 PPL 服务实现（简化版）
- *
+ * <p>
  * 用于计算文本的困惑度（Perplexity）
  *
  * @author OmniAgent Team
@@ -176,7 +177,8 @@ public class PPLOnnxService {
                 for (OnnxTensor tensor : tensorsToClose) {
                     try {
                         tensor.close();
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
 
                 // 缓存结果

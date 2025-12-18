@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * 文档分块策略接口
- *
+ * <p>
  * 定义文档分块的统一接口，支持多种分块算法：
  * - 固定大小分块
  * - 语义感知分块
@@ -24,8 +24,8 @@ public interface ChunkingStrategy {
      * 对文档进行分块
      *
      * @param documentId 文档ID
-     * @param content 文档内容
-     * @param params 分块参数（可选）
+     * @param content    文档内容
+     * @param params     分块参数（可选）
      * @return 分块列表
      */
     List<Chunk> chunk(String documentId, String content, Map<String, Object> params);

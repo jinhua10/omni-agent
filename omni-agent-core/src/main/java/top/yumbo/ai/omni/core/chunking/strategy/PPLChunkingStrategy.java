@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 
 /**
  * PPL 困惑度分块策略（配置驱动）⭐
- *
+ * <p>
  * 支持两种实现，用户通过配置自由选择：
  * 1. 简化版 - 快速、零依赖，使用词汇重叠度近似困惑度（默认）
  * 2. ONNX 版 - 精度高、使用真实语言模型计算困惑度（可选）
- *
+ * <p>
  * 配置方式：
  * <pre>
  * # application.yml
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  *     mode: simplified  # simplified | onnx | auto
  *     prefer-accuracy: false  # 自动模式时，是否优先精度
  * </pre>
- *
+ * <p>
  * 各模式说明：
  * - simplified: 强制使用简化版（<1ms，零依赖）
  * - onnx: 强制使用 ONNX 版（30-150ms，精度+15-20%）
@@ -389,6 +389,7 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
     interface PPLCalculator {
         /**
          * 计算文本的困惑度序列
+         *
          * @param content 文本内容
          * @return 困惑度序列
          */
@@ -421,20 +422,20 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
         @Override
         public List<Double> calculate(String content) {
             List<String> sentences = Arrays.stream(
-                content.split("(?<=[。！？.!?])\\s*")
-            ).filter(s -> !s.trim().isEmpty())
-             .collect(Collectors.toList());
+                            content.split("(?<=[。！？.!?])\\s*")
+                    ).filter(s -> !s.trim().isEmpty())
+                    .toList();
 
             return sentences.stream()
-                .map(s -> {
-                    try {
-                        return pplService.calculatePerplexity(s);
-                    } catch (Exception e) {
-                        log.warn("ONNX 计算困惑度失败: {}", e.getMessage());
-                        return Double.MAX_VALUE;
-                    }
-                })
-                .collect(Collectors.toList());
+                    .map(s -> {
+                        try {
+                            return pplService.calculatePerplexity(s);
+                        } catch (Exception e) {
+                            log.warn("ONNX 计算困惑度失败: {}", e.getMessage());
+                            return Double.MAX_VALUE;
+                        }
+                    })
+                    .collect(Collectors.toList());
         }
     }
 }
