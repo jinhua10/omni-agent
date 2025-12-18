@@ -5,6 +5,8 @@ import top.yumbo.ai.omni.core.chunking.strategy.ChunkingStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.AbstractMarketplaceStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyExecutionException;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.*;
+import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
+import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingOutput;
 import top.yumbo.ai.storage.api.model.Chunk;
 
 import java.util.List;
@@ -115,40 +117,6 @@ public abstract class ChunkingStrategyAdapter extends AbstractMarketplaceStrateg
         return SecurityLevel.SAFE;  // 内置策略，完全安全
     }
 
-    /**
-     * 分块输入
-     */
-    public static class ChunkingInput {
-        private final String documentId;
-        private final String content;
 
-        public ChunkingInput(String documentId, String content) {
-            this.documentId = documentId;
-            this.content = content;
-        }
-
-        public String getDocumentId() {
-            return documentId;
-        }
-
-        public String getContent() {
-            return content;
-        }
-    }
-
-    /**
-     * 分块输出
-     */
-    public static class ChunkingOutput {
-        private final List<Chunk> chunks;
-
-        public ChunkingOutput(List<Chunk> chunks) {
-            this.chunks = chunks;
-        }
-
-        public List<Chunk> getChunks() {
-            return chunks;
-        }
-    }
 }
 

@@ -3,6 +3,7 @@ package top.yumbo.ai.omni.marketplace.strategy.adapters;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.core.chunking.strategy.SemanticChunkingStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.UsageExample;
+import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 
 import java.util.List;
 import java.util.Map;
