@@ -3,6 +3,7 @@ package top.yumbo.ai.omni.web.controller;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -49,6 +50,10 @@ public class DocumentManagementController {
     private final DocumentProcessorManager documentProcessorManager;
     private final ChunkingStrategyManager chunkingStrategyManager;
     private final ImageStorageService imageStorageService;
+
+    // 可选依赖：RAG 优化服务 ⭐
+    @Autowired(required = false)
+    private top.yumbo.ai.omni.core.optimization.RAGOptimizationService ragOptimizationService;
 
     /**
      * 上传文档（简化版：直接索引到RAG）
@@ -183,6 +188,17 @@ public class DocumentManagementController {
                     }
 
                     log.info("✅ 索引完成: 共索引 {} 个文档块", indexed);
+
+                    // === 可选：生成 PPL 和 Optimization 数据 ⭐
+                    if (ragOptimizationService != null) {
+                        try {
+                            log.info("📊 生成 RAG 优化数据...");
+                            generateOptimizationData(filename, content, chunks);
+                        } catch (Exception optEx) {
+                            log.warn("⚠️ 生成优化数据失败（不影响主流程）: {}", optEx.getMessage());
+                        }
+                    }
+
                     response.setMessage("文档上传成功，已分块并索引（" + indexed + " 个块）");
 
                 } catch (Exception e) {
@@ -354,6 +370,16 @@ public class DocumentManagementController {
 
                                 ragService.indexDocument(document);
                                 indexed++;
+                            }
+
+                            // === 可选：生成 PPL 和 Optimization 数据 ⭐
+                            if (ragOptimizationService != null) {
+                                try {
+                                    log.info("📊 生成 RAG 优化数据: {}", filename);
+                                    generateOptimizationData(filename, content, chunks);
+                                } catch (Exception optEx) {
+                                    log.warn("⚠️ 生成优化数据失败: {}", optEx.getMessage());
+                                }
                             }
 
                             uploadResult.setMessage("上传成功，已分块并索引（" + indexed + " 个块）");
@@ -717,6 +743,98 @@ public class DocumentManagementController {
         return result;
     }
 
+    /**
+     * 生成并保存 PPL 和 Optimization 数据
+     *
+     * @param documentId 文档ID（使用文件名）
+     * @param content 文档内容
+     * @param chunks 文档分块列表
+     */
+    private void generateOptimizationData(String documentId, String content, List<Chunk> chunks) {
+        if (ragOptimizationService == null) {
+            return;
+        }
+
+        try {
+            // 1. 生成 PPL (Probable Point of Loss) 数据
+            // 分析文档中的关键点，用于优化检索
+            List<String> probablePoints = new ArrayList<>();
+            Map<String, Float> scores = new HashMap<>();
+
+            // 简单实现：使用分块的序号作为关键点
+            for (int i = 0; i < chunks.size(); i++) {
+                Chunk chunk = chunks.get(i);
+                String pointId = "chunk_" + i;
+                probablePoints.add(pointId);
+
+                // 简单评分：根据内容长度和位置
+                float score = 0.5f + (float) i / chunks.size() * 0.5f;
+                if (chunk.getContent().length() > 500) {
+                    score += 0.2f;
+                }
+                scores.put(pointId, Math.min(score, 1.0f));
+            }
+
+            // 保存 PPL 数据
+            top.yumbo.ai.storage.api.model.PPLData pplData = top.yumbo.ai.storage.api.model.PPLData.builder()
+                    .documentId(documentId)
+                    .probablePoints(probablePoints)
+                    .scores(scores)
+                    .modelVersion("simple-v1.0")
+                    .analyzedAt(System.currentTimeMillis())
+                    .metadata(Map.of(
+                            "chunkCount", chunks.size(),
+                            "contentLength", content.length(),
+                            "generatedBy", "DocumentManagementController"
+                    ))
+                    .build();
+
+            String pplResult = storageService.savePPLData(documentId, pplData);
+            if (pplResult != null) {
+                log.info("✅ PPL 数据已保存: {}", documentId);
+            }
+
+            // 2. 生成通用 Optimization 数据
+            // 保存文档的基本统计信息，用于 RAG 优化
+            Map<String, Object> optimizationInfo = new HashMap<>();
+            optimizationInfo.put("totalChunks", chunks.size());
+            optimizationInfo.put("avgChunkSize", chunks.stream()
+                    .mapToInt(c -> c.getContent().length())
+                    .average()
+                    .orElse(0.0));
+            optimizationInfo.put("totalContentLength", content.length());
+            optimizationInfo.put("probablePoints", probablePoints);
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("generatedAt", System.currentTimeMillis());
+            metadata.put("version", "1.0");
+            metadata.put("generator", "auto");
+
+            Map<String, Double> metrics = new HashMap<>();
+            metrics.put("chunkCount", (double) chunks.size());
+            metrics.put("avgChunkSize", chunks.stream()
+                    .mapToInt(c -> c.getContent().length())
+                    .average()
+                    .orElse(0.0));
+
+            String optResult = ragOptimizationService.saveOptimizationData(
+                    documentId,
+                    "DOCUMENT_STATS",  // 优化类型
+                    optimizationInfo,
+                    metadata,
+                    metrics
+            );
+
+            if (optResult != null) {
+                log.info("✅ Optimization 数据已保存: {} type=DOCUMENT_STATS", documentId);
+            }
+
+        } catch (Exception e) {
+            log.error("生成优化数据失败: {}", documentId, e);
+            throw e;
+        }
+    }
+
     // ========== 辅助方法 ==========
 
     /**
@@ -789,4 +907,6 @@ public class DocumentManagementController {
         private boolean indexed;
     }
 }
+
+
 
