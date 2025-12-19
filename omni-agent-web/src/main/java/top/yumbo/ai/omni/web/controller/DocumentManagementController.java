@@ -372,7 +372,7 @@ public class DocumentManagementController {
                                 indexed++;
                             }
 
-                            // === 可选：生成 PPL 和 Optimization 数据 ⭐
+                            // 可选：生成 PPL 和 Optimization 数据 ⭐
                             if (ragOptimizationService != null) {
                                 try {
                                     log.info("📊 生成 RAG 优化数据: {}", filename);
@@ -745,10 +745,11 @@ public class DocumentManagementController {
 
     /**
      * 生成并保存 PPL 和 Optimization 数据
+     * ⭐ 从 ChunkingStrategyManager 生成的 chunks 的 metadata 中提取 PPL 数据
      *
      * @param documentId 文档ID（使用文件名）
      * @param content 文档内容
-     * @param chunks 文档分块列表
+     * @param chunks 文档分块列表（已包含 PPL 数据在 metadata 中）
      */
     private void generateOptimizationData(String documentId, String content, List<Chunk> chunks) {
         if (ragOptimizationService == null) {
@@ -756,46 +757,72 @@ public class DocumentManagementController {
         }
 
         try {
-            // 1. 生成 PPL (Probable Point of Loss) 数据
-            // 分析文档中的关键点，用于优化检索
+            // 1. 从 chunks 的 metadata 中提取 PPL (Probable Point of Loss) 数据 ⭐
+            // ChunkingStrategyManager 在分块时已经计算了 avgPerplexity
             List<String> probablePoints = new ArrayList<>();
             Map<String, Float> scores = new HashMap<>();
+            String strategyName = "unknown";
 
-            // 简单实现：使用分块的序号作为关键点
             for (int i = 0; i < chunks.size(); i++) {
                 Chunk chunk = chunks.get(i);
                 String pointId = "chunk_" + i;
                 probablePoints.add(pointId);
 
-                // 简单评分：根据内容长度和位置
-                float score = 0.5f + (float) i / chunks.size() * 0.5f;
-                if (chunk.getContent().length() > 500) {
-                    score += 0.2f;
+                // 从 metadata 中提取 avgPerplexity（如果存在）
+                if (chunk.getMetadata() != null) {
+                    Object avgPerplexityObj = chunk.getMetadata().get("avgPerplexity");
+                    if (avgPerplexityObj != null) {
+                        // PPL 分块策略已经计算了困惑度
+                        double avgPerplexity = ((Number) avgPerplexityObj).doubleValue();
+                        // 将困惑度转换为评分（困惑度越低，质量越高）
+                        // 归一化到 0-1 范围，困惑度通常在 0-10 之间
+                        float score = (float) Math.max(0.0, 1.0 - (avgPerplexity / 10.0));
+                        scores.put(pointId, score);
+                    } else {
+                        // 如果没有 PPL 数据，使用基于位置和长度的简单评分
+                        float score = 0.5f + (float) i / chunks.size() * 0.3f;
+                        if (chunk.getContent().length() > 500) {
+                            score += 0.2f;
+                        }
+                        scores.put(pointId, Math.min(score, 1.0f));
+                    }
+
+                    // 提取分块策略名称
+                    Object strategyObj = chunk.getMetadata().get("strategy");
+                    if (strategyObj != null && i == 0) {
+                        strategyName = strategyObj.toString();
+                    }
+                } else {
+                    // 没有 metadata，使用默认评分
+                    scores.put(pointId, 0.5f);
                 }
-                scores.put(pointId, Math.min(score, 1.0f));
             }
 
             // 保存 PPL 数据
+            String modelVersion = strategyName.equals("ppl") ? "ppl-chunking-v1.0" : "simple-v1.0";
             top.yumbo.ai.storage.api.model.PPLData pplData = top.yumbo.ai.storage.api.model.PPLData.builder()
                     .documentId(documentId)
                     .probablePoints(probablePoints)
                     .scores(scores)
-                    .modelVersion("simple-v1.0")
+                    .modelVersion(modelVersion)
                     .analyzedAt(System.currentTimeMillis())
                     .metadata(Map.of(
                             "chunkCount", chunks.size(),
                             "contentLength", content.length(),
+                            "chunkingStrategy", strategyName,
+                            "extractedFromChunks", true,  // 标记：从分块结果提取
                             "generatedBy", "DocumentManagementController"
                     ))
                     .build();
 
             String pplResult = storageService.savePPLData(documentId, pplData);
             if (pplResult != null) {
-                log.info("✅ PPL 数据已保存: {}", documentId);
+                log.info("✅ PPL 数据已保存: {} (strategy={}, chunks={})",
+                        documentId, strategyName, chunks.size());
             }
 
             // 2. 生成通用 Optimization 数据
-            // 保存文档的基本统计信息，用于 RAG 优化
+            // 保存文档的基本统计信息和分块质量指标
             Map<String, Object> optimizationInfo = new HashMap<>();
             optimizationInfo.put("totalChunks", chunks.size());
             optimizationInfo.put("avgChunkSize", chunks.stream()
@@ -803,17 +830,47 @@ public class DocumentManagementController {
                     .average()
                     .orElse(0.0));
             optimizationInfo.put("totalContentLength", content.length());
+            optimizationInfo.put("chunkingStrategy", strategyName);
             optimizationInfo.put("probablePoints", probablePoints);
+
+            // 如果是 PPL 分块，收集所有困惑度数据
+            if (strategyName.equals("ppl")) {
+                List<Double> perplexities = chunks.stream()
+                        .filter(c -> c.getMetadata() != null && c.getMetadata().containsKey("avgPerplexity"))
+                        .map(c -> ((Number) c.getMetadata().get("avgPerplexity")).doubleValue())
+                        .collect(Collectors.toList());
+
+                if (!perplexities.isEmpty()) {
+                    optimizationInfo.put("perplexities", perplexities);
+                    optimizationInfo.put("avgPerplexity", perplexities.stream()
+                            .mapToDouble(Double::doubleValue)
+                            .average()
+                            .orElse(0.0));
+                    optimizationInfo.put("minPerplexity", perplexities.stream()
+                            .mapToDouble(Double::doubleValue)
+                            .min()
+                            .orElse(0.0));
+                    optimizationInfo.put("maxPerplexity", perplexities.stream()
+                            .mapToDouble(Double::doubleValue)
+                            .max()
+                            .orElse(0.0));
+                }
+            }
 
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("generatedAt", System.currentTimeMillis());
             metadata.put("version", "1.0");
             metadata.put("generator", "auto");
+            metadata.put("chunkingStrategy", strategyName);
 
             Map<String, Double> metrics = new HashMap<>();
             metrics.put("chunkCount", (double) chunks.size());
             metrics.put("avgChunkSize", chunks.stream()
                     .mapToInt(c -> c.getContent().length())
+                    .average()
+                    .orElse(0.0));
+            metrics.put("avgQualityScore", scores.values().stream()
+                    .mapToDouble(Float::doubleValue)
                     .average()
                     .orElse(0.0));
 
@@ -826,7 +883,8 @@ public class DocumentManagementController {
             );
 
             if (optResult != null) {
-                log.info("✅ Optimization 数据已保存: {} type=DOCUMENT_STATS", documentId);
+                log.info("✅ Optimization 数据已保存: {} type=DOCUMENT_STATS (strategy={})",
+                        documentId, strategyName);
             }
 
         } catch (Exception e) {
