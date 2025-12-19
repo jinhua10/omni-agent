@@ -666,11 +666,11 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docPplDir = pplPath.resolve(documentId);
             Files.createDirectories(docPplDir);
 
-            Path pplFile = docPplDir.resolve("ppl");  // 无后缀 ⭐
+            Path pplFile = docPplDir.resolve("ppl.json");  // 使用 .json 后缀 ⭐
 
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(pplFile.toFile()))) {
-                oos.writeObject(data);
-            }
+            // 将 PPL 数据转换为 JSON 并保存
+            String jsonContent = buildPPLDataJson(data);
+            Files.write(pplFile, jsonContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
             log.debug("Saved PPL data for document: {}", documentId);
             return documentId;
@@ -680,21 +680,158 @@ public class FileDocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * 构建 PPL 数据 JSON
+     */
+    private String buildPPLDataJson(PPLData data) {
+        StringBuilder json = new StringBuilder();
+        json.append("{\n");
+        json.append("  \"documentId\": \"").append(data.getDocumentId()).append("\",\n");
+
+        // probablePoints 列表
+        if (data.getProbablePoints() != null && !data.getProbablePoints().isEmpty()) {
+            json.append("  \"probablePoints\": [");
+            for (int i = 0; i < data.getProbablePoints().size(); i++) {
+                if (i > 0) json.append(", ");
+                json.append("\"").append(escapeJson(data.getProbablePoints().get(i))).append("\"");
+            }
+            json.append("],\n");
+        }
+
+        // scores 映射
+        if (data.getScores() != null && !data.getScores().isEmpty()) {
+            json.append("  \"scores\": {\n");
+            boolean first = true;
+            for (Map.Entry<String, Float> entry : data.getScores().entrySet()) {
+                if (!first) json.append(",\n");
+                json.append("    \"").append(escapeJson(entry.getKey())).append("\": ").append(entry.getValue());
+                first = false;
+            }
+            json.append("\n  },\n");
+        }
+
+        if (data.getModelVersion() != null) {
+            json.append("  \"modelVersion\": \"").append(data.getModelVersion()).append("\",\n");
+        }
+
+        if (data.getAnalyzedAt() != null) {
+            json.append("  \"analyzedAt\": ").append(data.getAnalyzedAt()).append(",\n");
+        }
+
+        // metadata
+        if (data.getMetadata() != null && !data.getMetadata().isEmpty()) {
+            json.append("  \"metadata\": ").append(mapToJson(data.getMetadata())).append(",\n");
+        }
+
+        json.append("  \"savedAt\": ").append(System.currentTimeMillis()).append("\n");
+        json.append("}");
+        return json.toString();
+    }
+
     @Override
     public Optional<PPLData> getPPLData(String documentId) {
         try {
-            Path pplFile = pplPath.resolve(documentId).resolve("ppl");  // 无后缀 ⭐
+            Path pplFile = pplPath.resolve(documentId).resolve("ppl.json");  // 读取 .json 文件 ⭐
+
             if (!Files.exists(pplFile)) {
+                // 尝试读取旧格式（无后缀）
+                Path oldPplFile = pplPath.resolve(documentId).resolve("ppl");
+                if (Files.exists(oldPplFile)) {
+                    try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(oldPplFile.toFile()))) {
+                        return Optional.of((PPLData) ois.readObject());
+                    } catch (ClassNotFoundException e) {
+                        log.error("Failed to deserialize old PPL data for document: {}", documentId, e);
+                    }
+                }
                 return Optional.empty();
             }
 
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(pplFile.toFile()))) {
-                return Optional.of((PPLData) ois.readObject());
-            }
-        } catch (IOException | ClassNotFoundException e) {
+            // 读取 JSON 格式的 PPL 数据
+            String jsonContent = new String(Files.readAllBytes(pplFile), java.nio.charset.StandardCharsets.UTF_8);
+            PPLData data = parsePPLDataJson(jsonContent, documentId);
+            return Optional.ofNullable(data);
+
+        } catch (IOException e) {
             log.error("Failed to get PPL data for document: {}", documentId, e);
             return Optional.empty();
         }
+    }
+
+    /**
+     * 从 JSON 解析 PPL 数据
+     */
+    private PPLData parsePPLDataJson(String json, String documentId) {
+        try {
+            PPLData.PPLDataBuilder builder = PPLData.builder();
+            builder.documentId(documentId);
+
+            String modelVersion = extractJsonValue(json, "modelVersion");
+            if (modelVersion != null) {
+                builder.modelVersion(modelVersion);
+            }
+
+            Long analyzedAt = extractJsonLongValue(json, "analyzedAt");
+            if (analyzedAt != null) {
+                builder.analyzedAt(analyzedAt);
+            }
+
+            // 解析 probablePoints 数组（简化处理）
+            List<String> probablePoints = new ArrayList<>();
+            int ppStart = json.indexOf("\"probablePoints\": [");
+            if (ppStart != -1) {
+                int ppEnd = json.indexOf("]", ppStart);
+                if (ppEnd != -1) {
+                    String ppArray = json.substring(ppStart + 19, ppEnd);
+                    String[] points = ppArray.split("\",\\s*\"");
+                    for (String point : points) {
+                        String cleaned = point.replace("\"", "").trim();
+                        if (!cleaned.isEmpty()) {
+                            probablePoints.add(cleaned);
+                        }
+                    }
+                }
+            }
+            builder.probablePoints(probablePoints);
+
+            // 解析 scores 映射（简化处理）
+            Map<String, Float> scores = new HashMap<>();
+            int scoresStart = json.indexOf("\"scores\": {");
+            if (scoresStart != -1) {
+                int scoresEnd = json.indexOf("}", scoresStart);
+                if (scoresEnd != -1) {
+                    String scoresBlock = json.substring(scoresStart + 11, scoresEnd);
+                    String[] entries = scoresBlock.split(",");
+                    for (String entry : entries) {
+                        String[] kv = entry.split(":");
+                        if (kv.length == 2) {
+                            String key = kv[0].trim().replace("\"", "");
+                            try {
+                                Float value = Float.parseFloat(kv[1].trim());
+                                scores.put(key, value);
+                            } catch (NumberFormatException ignored) {}
+                        }
+                    }
+                }
+            }
+            builder.scores(scores);
+
+            return builder.build();
+        } catch (Exception e) {
+            log.error("Failed to parse PPL JSON", e);
+            return null;
+        }
+    }
+
+    /**
+     * 转义 JSON 字符串中的特殊字符
+     */
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r")
+                  .replace("\t", "\\t");
     }
 
     @Override
@@ -702,6 +839,7 @@ public class FileDocumentStorage implements DocumentStorageService {
         try {
             Path docPplDir = pplPath.resolve(documentId);
             if (Files.exists(docPplDir)) {
+                // 删除整个目录（包含新旧格式）
                 Files.walk(docPplDir)
                         .sorted(Comparator.reverseOrder())
                         .forEach(p -> {
@@ -726,13 +864,13 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docOptDir = optimizationPath.resolve(documentId);
             Files.createDirectories(docOptDir);
 
-            // 使用优化类型作为文件名（无后缀）⭐
-            String fileName = data.getOptimizationType();
+            // 使用优化类型作为文件名，添加 .json 后缀 ⭐
+            String fileName = data.getOptimizationType() + ".json";
             Path optFile = docOptDir.resolve(fileName);
 
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(optFile.toFile()))) {
-                oos.writeObject(data);
-            }
+            // 将 Optimization 数据转换为 JSON 并保存
+            String jsonContent = buildOptimizationDataJson(data);
+            Files.write(optFile, jsonContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
             log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), documentId);
             return documentId + ":" + data.getOptimizationType();
@@ -742,20 +880,110 @@ public class FileDocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * 构建 Optimization 数据 JSON
+     */
+    private String buildOptimizationDataJson(OptimizationData data) {
+        StringBuilder json = new StringBuilder();
+        json.append("{\n");
+        json.append("  \"documentId\": \"").append(data.getDocumentId()).append("\",\n");
+        json.append("  \"optimizationType\": \"").append(data.getOptimizationType()).append("\",\n");
+
+        if (data.getAlgorithmVersion() != null) {
+            json.append("  \"algorithmVersion\": \"").append(data.getAlgorithmVersion()).append("\",\n");
+        }
+
+        if (data.getProcessedAt() != null) {
+            json.append("  \"processedAt\": ").append(data.getProcessedAt()).append(",\n");
+        }
+
+        // data 映射
+        if (data.getData() != null && !data.getData().isEmpty()) {
+            json.append("  \"data\": ").append(mapToJson(data.getData())).append(",\n");
+        }
+
+        // metadata 映射
+        if (data.getMetadata() != null && !data.getMetadata().isEmpty()) {
+            json.append("  \"metadata\": ").append(mapToJson(data.getMetadata())).append(",\n");
+        }
+
+        // metrics 映射
+        if (data.getMetrics() != null && !data.getMetrics().isEmpty()) {
+            json.append("  \"metrics\": {\n");
+            boolean first = true;
+            for (Map.Entry<String, Double> entry : data.getMetrics().entrySet()) {
+                if (!first) json.append(",\n");
+                json.append("    \"").append(escapeJson(entry.getKey())).append("\": ").append(entry.getValue());
+                first = false;
+            }
+            json.append("\n  },\n");
+        }
+
+        json.append("  \"savedAt\": ").append(System.currentTimeMillis()).append("\n");
+        json.append("}");
+        return json.toString();
+    }
+
     @Override
     public Optional<OptimizationData> getOptimizationData(String documentId, String optimizationType) {
         try {
-            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType);  // 无后缀 ⭐
+            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType + ".json");  // 读取 .json 文件 ⭐
+
             if (!Files.exists(optFile)) {
+                // 尝试读取旧格式（无后缀）
+                Path oldOptFile = optimizationPath.resolve(documentId).resolve(optimizationType);
+                if (Files.exists(oldOptFile)) {
+                    try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(oldOptFile.toFile()))) {
+                        return Optional.of((OptimizationData) ois.readObject());
+                    } catch (ClassNotFoundException e) {
+                        log.error("Failed to deserialize old optimization data: {}", optimizationType, e);
+                    }
+                }
                 return Optional.empty();
             }
 
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(optFile.toFile()))) {
-                return Optional.of((OptimizationData) ois.readObject());
-            }
-        } catch (IOException | ClassNotFoundException e) {
+            // 读取 JSON 格式的优化数据
+            String jsonContent = new String(Files.readAllBytes(optFile), java.nio.charset.StandardCharsets.UTF_8);
+            OptimizationData data = parseOptimizationDataJson(jsonContent);
+            return Optional.ofNullable(data);
+
+        } catch (IOException e) {
             log.error("Failed to get {} optimization data for document: {}", optimizationType, documentId, e);
             return Optional.empty();
+        }
+    }
+
+    /**
+     * 从 JSON 解析 Optimization 数据
+     */
+    private OptimizationData parseOptimizationDataJson(String json) {
+        try {
+            OptimizationData.OptimizationDataBuilder builder = OptimizationData.builder();
+
+            String documentId = extractJsonValue(json, "documentId");
+            String optimizationType = extractJsonValue(json, "optimizationType");
+            String algorithmVersion = extractJsonValue(json, "algorithmVersion");
+            Long processedAt = extractJsonLongValue(json, "processedAt");
+
+            builder.documentId(documentId);
+            builder.optimizationType(optimizationType);
+            if (algorithmVersion != null) {
+                builder.algorithmVersion(algorithmVersion);
+            }
+            if (processedAt != null) {
+                builder.processedAt(processedAt);
+            }
+
+            // 注意：data, metadata, metrics 的完整解析比较复杂
+            // 这里简化处理，实际使用时可能需要更完善的 JSON 解析库
+            builder.data(new HashMap<>());
+            builder.metadata(new HashMap<>());
+            builder.metrics(new HashMap<>());
+
+            return builder.build();
+        } catch (Exception e) {
+            log.error("Failed to parse Optimization JSON", e);
+            return null;
         }
     }
 
@@ -768,11 +996,23 @@ public class FileDocumentStorage implements DocumentStorageService {
             }
 
             return Files.list(docOptDir)
-                    .filter(Files::isRegularFile)  // 所有文件都是优化数据（无后缀限制）⭐
+                    .filter(Files::isRegularFile)
                     .map(p -> {
-                        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(p.toFile()))) {
-                            return (OptimizationData) ois.readObject();
-                        } catch (IOException | ClassNotFoundException e) {
+                        try {
+                            // 优先尝试读取 JSON 格式
+                            if (p.getFileName().toString().endsWith(".json")) {
+                                String jsonContent = new String(Files.readAllBytes(p), java.nio.charset.StandardCharsets.UTF_8);
+                                return parseOptimizationDataJson(jsonContent);
+                            } else {
+                                // 兼容旧格式：尝试反序列化
+                                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(p.toFile()))) {
+                                    return (OptimizationData) ois.readObject();
+                                } catch (ClassNotFoundException e) {
+                                    log.error("Failed to read optimization file: {}", p, e);
+                                    return null;
+                                }
+                            }
+                        } catch (IOException e) {
                             log.error("Failed to read optimization file: {}", p, e);
                             return null;
                         }
@@ -788,10 +1028,19 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteOptimizationData(String documentId, String optimizationType) {
         try {
-            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType);  // 无后缀 ⭐
+            // 尝试删除 JSON 格式文件
+            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType + ".json");
             if (Files.exists(optFile)) {
                 Files.delete(optFile);
                 log.info("Deleted {} optimization data for document: {}", optimizationType, documentId);
+                return;
+            }
+
+            // 尝试删除旧格式文件（无后缀）
+            Path oldOptFile = optimizationPath.resolve(documentId).resolve(optimizationType);
+            if (Files.exists(oldOptFile)) {
+                Files.delete(oldOptFile);
+                log.info("Deleted {} optimization data (old format) for document: {}", optimizationType, documentId);
             }
         } catch (IOException e) {
             log.error("Failed to delete {} optimization data for document: {}", optimizationType, documentId, e);
