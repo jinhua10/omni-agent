@@ -58,6 +58,7 @@ import DocumentUpload from './DocumentUpload'
 import DocumentDetail from './DocumentDetail'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useMessage } from '../../hooks/useMessage'
+import { useQA } from '../../contexts/QAContext'
 import axios from 'axios'
 import '../../assets/css/document/document-browser.css'
 
@@ -100,6 +101,12 @@ function DocumentBrowser() {
   // ============================================================================
   const { t } = useLanguage()
   const message = useMessage()
+  const {
+    aiAnalysisDocs,
+    addDocToAIAnalysis,
+    removeDocFromAIAnalysis,
+    setShowFloatingAI
+  } = useQA()
 
   // ============================================================================
   // State / 状态管理
@@ -268,14 +275,59 @@ function DocumentBrowser() {
   }, [])
 
   /**
-   * AI交互 / AI interaction
+   * AI交互 - 添加/移除文件到AI分析面板 / AI interaction - Add/Remove files to AI analysis panel
+   *
+   * 点击切换：第一次点击加入，第二次点击取消
+   * Click to toggle: first click adds, second click removes
    *
    * @param {object} item - 文件项 / File item
    */
   const handleAIChat = useCallback((item) => {
-    // TODO: 实现AI交互功能 / Implement AI interaction
-    antdMessage.info(`AI交互功能开发中: ${item.name}`)
-  }, [])
+    const files = Array.isArray(item) ? item : [item]
+    const fileItems = files.filter(file => file.type === 'file')
+
+    if (fileItems.length === 0) {
+      antdMessage.warning(t('document.browse.noFilesSelected'))
+      return
+    }
+
+    // 检查每个文件是否已在AI面板中
+    fileItems.forEach(file => {
+      const docId = file.path || file.name
+      const isInPanel = aiAnalysisDocs.some(doc => {
+        const existingId = doc.id || doc.filePath || doc.path || doc.name || doc.fileName || doc.title
+        return existingId === docId || existingId === file.name
+      })
+
+      const docData = {
+        id: file.path,
+        name: file.name,
+        fileName: file.name,
+        filePath: file.path,
+        fileSize: file.size,
+        title: file.name
+      }
+
+      if (isInPanel) {
+        // 已在面板中，移除
+        removeDocFromAIAnalysis(docId)
+        antdMessage.success(
+          t('document.browse.removeFromAIPanelSuccess', { name: file.name })
+            .replace('{name}', file.name)
+        )
+      } else {
+        // 不在面板中，添加
+        addDocToAIAnalysis(docData)
+        antdMessage.success(
+          t('document.browse.addToAIPanelSuccess', { count: 1 })
+            .replace('{count}', '1')
+        )
+      }
+    })
+
+    // 显示AI面板
+    setShowFloatingAI(true)
+  }, [aiAnalysisDocs, addDocToAIAnalysis, removeDocFromAIAnalysis, setShowFloatingAI, t])
 
   /**
    * 创建文件夹 / Create folder
@@ -446,6 +498,53 @@ function DocumentBrowser() {
     })
   }, [selectedItems, items, handleRebuildIndex, t])
 
+  /**
+   * 批量添加到AI分析 / Batch add to AI analysis
+   */
+  const handleBatchAddToAI = useCallback(() => {
+    if (selectedItems.length === 0) {
+      antdMessage.warning(t('document.browse.noFilesSelected'))
+      return
+    }
+
+    const selectedFiles = selectedItems.map(key =>
+      items.find(item => item.path === key)
+    ).filter(Boolean)
+
+    handleAIChat(selectedFiles)
+  }, [selectedItems, items, handleAIChat])
+
+  /**
+   * 处理拖拽开始 / Handle drag start
+   */
+  const handleDragStart = useCallback((e, record) => {
+    // 如果拖拽的是选中的文件之一，拖拽所有选中的文件
+    // 否则只拖拽当前文件
+    let filesToDrag
+    if (selectedItems.includes(record.path)) {
+      filesToDrag = selectedItems.map(key =>
+        items.find(item => item.path === key)
+      ).filter(Boolean)
+    } else {
+      filesToDrag = [record]
+    }
+
+    const dragData = {
+      type: 'documents',
+      documents: filesToDrag
+        .filter(item => item.type === 'file')
+        .map(item => ({
+          fileName: item.name,
+          filePath: item.path,
+          fileSize: item.size
+        }))
+    }
+
+    e.dataTransfer.effectAllowed = 'copy'
+    e.dataTransfer.setData('text/plain', JSON.stringify(dragData))
+    e.dataTransfer.setData('application/json', JSON.stringify(dragData))
+  }, [selectedItems, items])
+
   // ============================================================================
   // 表格列定义 / Table columns definition
   // ============================================================================
@@ -465,71 +564,19 @@ function DocumentBrowser() {
           <span
             onClick={() => handleItemClick(record)}
             style={{ cursor: 'pointer', color: '#1890ff' }}
+            draggable={record.type === 'file'}
+            onDragStart={(e) => record.type === 'file' && handleDragStart(e, record)}
           >
             {name}
           </span>
         </Space>
       )
     },
-    {
-      title: t('document.browse.type'),
-      dataIndex: 'type',
-      key: 'type',
-      width: 100,
-      render: (type) => (
-        <Tag color={type === 'directory' ? 'gold' : 'blue'}>
-          {type === 'directory' ? t('document.browse.folder') : t('document.browse.file')}
-        </Tag>
-      )
-    },
-    {
-      title: t('document.browse.indexStatus'),
-      dataIndex: 'indexStatus',
-      key: 'indexStatus',
-      width: 120,
-      render: (status, record) => {
-        if (record.type === 'directory') return '-'
-
-        const statusInfo = {
-          'pending': { icon: <ClockCircleOutlined />, color: 'default', text: t('document.browse.statusPending') },
-          'indexing': { icon: <SyncOutlined spin />, color: 'processing', text: t('document.browse.statusIndexing') },
-          'done': { icon: <CheckCircleOutlined />, color: 'success', text: t('document.browse.statusDone') },
-          'completed': { icon: <CheckCircleOutlined />, color: 'success', text: t('document.browse.statusDone') },
-          'failed': { icon: <ErrorIcon />, color: 'error', text: t('document.browse.statusFailed') },
-          'error': { icon: <ErrorIcon />, color: 'error', text: t('document.browse.statusFailed') }
-        }
-
-        const info = statusInfo[status] || statusInfo['pending']
-
-        return (
-          <Tag icon={info.icon} color={info.color}>
-            {info.text}
-          </Tag>
-        )
-      }
-    },
-    {
-      title: t('document.browse.size'),
-      dataIndex: 'size',
-      key: 'size',
-      width: 120,
-      render: (size, record) => (
-        record.type === 'file' ? formatFileSize(size) : '-'
-      )
-    },
-    {
-      title: t('document.browse.modified'),
-      dataIndex: 'modified',
-      key: 'modified',
-      width: 180,
-      render: (modified, record) => (
-        record.type === 'file' ? formatDateTime(modified) : '-'
-      )
-    },
+    // ...existing code...
     {
       title: t('document.browse.actions'),
       key: 'actions',
-      width: 300,
+      width: 350,
       render: (_, record) => (
         <Space>
           {record.type === 'file' && (
@@ -556,9 +603,23 @@ function DocumentBrowser() {
                   }}
                 />
               </Tooltip>
-              <Tooltip title={t('document.browse.aiChat')}>
+              <Tooltip title={
+                aiAnalysisDocs.some(doc => {
+                  const existingId = doc.id || doc.filePath || doc.path || doc.name || doc.fileName || doc.title
+                  return existingId === record.path || existingId === record.name
+                })
+                  ? t('document.browse.removeFromAIPanel')
+                  : t('document.browse.addToAIPanel')
+              }>
                 <Button
-                  type="text"
+                  type={
+                    aiAnalysisDocs.some(doc => {
+                      const existingId = doc.id || doc.filePath || doc.path || doc.name || doc.fileName || doc.title
+                      return existingId === record.path || existingId === record.name
+                    })
+                      ? 'primary'
+                      : 'text'
+                  }
                   size="small"
                   icon={<MessageOutlined />}
                   onClick={(e) => {
@@ -660,14 +721,23 @@ function DocumentBrowser() {
             </Button>
           </Space.Compact>
 
-          {/* 批量重建按钮 / Batch rebuild button */}
+          {/* 批量操作按钮 / Batch operation buttons */}
           {selectedItems.length > 0 && (
-            <Button
-              icon={<SyncOutlined />}
-              onClick={handleBatchRebuild}
-            >
-              {t('document.browse.batchRebuild')} ({selectedItems.length})
-            </Button>
+            <>
+              <Button
+                icon={<SyncOutlined />}
+                onClick={handleBatchRebuild}
+              >
+                {t('document.browse.batchRebuild')} ({selectedItems.length})
+              </Button>
+              <Button
+                type="primary"
+                icon={<MessageOutlined />}
+                onClick={handleBatchAddToAI}
+              >
+                {t('document.browse.batchAddToAI')} ({selectedItems.length})
+              </Button>
+            </>
           )}
 
           {/* 搜索框 / Search box */}

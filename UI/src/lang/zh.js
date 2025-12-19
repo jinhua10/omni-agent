@@ -288,6 +288,12 @@ export default {
       rebuildIndexStarted: '索引重建已开始',
       rebuildIndexFailed: '索引重建失败',
       noFilesSelected: '请先选择文件',
+      // AI分析 / AI Analysis
+      addToAIPanel: '加入AI分析',
+      removeFromAIPanel: '移出AI分析',
+      batchAddToAI: '批量加入AI分析',
+      addToAIPanelSuccess: '已添加 {count} 个文件到AI分析面板',
+      removeFromAIPanelSuccess: '已将 {name} 移出AI分析面板',
     },
 
     // Shell页面专用 / Shell page specific

@@ -323,6 +323,12 @@ export default {
       rebuildIndexStarted: 'Index rebuild started',
       rebuildIndexFailed: 'Index rebuild failed',
       noFilesSelected: 'Please select files first',
+      // AI Analysis
+      addToAIPanel: 'Add to AI Analysis',
+      removeFromAIPanel: 'Remove from AI Analysis',
+      batchAddToAI: 'Batch Add to AI',
+      addToAIPanelSuccess: 'Added {count} file(s) to AI analysis panel',
+      removeFromAIPanelSuccess: 'Removed {name} from AI analysis panel',
     },
   },
 
