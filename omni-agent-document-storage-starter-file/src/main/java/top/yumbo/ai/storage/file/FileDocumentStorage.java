@@ -144,9 +144,14 @@ public class FileDocumentStorage implements DocumentStorageService {
             String chunkFilename = String.format("chunk_%03d.md", sequence);  // 添加.md后缀
             Path chunkFile = docChunkDir.resolve(chunkFilename);
 
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(chunkFile.toFile()))) {
-                oos.writeObject(chunk);
-            }
+            // 直接保存分块的文本内容，而不是序列化对象 ⭐
+            Files.write(chunkFile, chunk.getContent().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+            // 同时保存元数据到 JSON 文件，方便查询
+            String metadataFilename = chunkFilename + ".meta";
+            Path metadataFile = docChunkDir.resolve(metadataFilename);
+            String metadataJson = buildChunkMetadataJson(chunk, chunkFilename);
+            Files.write(metadataFile, metadataJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
             log.debug("Saved chunk: {} -> {}/{}", chunkId, documentId, chunkFilename);
             return chunkId;
@@ -157,7 +162,57 @@ public class FileDocumentStorage implements DocumentStorageService {
     }
 
     /**
+     * 构建分块元数据 JSON
+     */
+    private String buildChunkMetadataJson(Chunk chunk, String filename) {
+        StringBuilder json = new StringBuilder();
+        json.append("{\n");
+        json.append("  \"id\": \"").append(chunk.getId()).append("\",\n");
+        json.append("  \"documentId\": \"").append(chunk.getDocumentId()).append("\",\n");
+        json.append("  \"filename\": \"").append(filename).append("\",\n");
+        json.append("  \"sequence\": ").append(chunk.getSequence()).append(",\n");
+        if (chunk.getStartPosition() != null) {
+            json.append("  \"startPosition\": ").append(chunk.getStartPosition()).append(",\n");
+        }
+        if (chunk.getEndPosition() != null) {
+            json.append("  \"endPosition\": ").append(chunk.getEndPosition()).append(",\n");
+        }
+        json.append("  \"size\": ").append(chunk.getSize()).append(",\n");
+        if (chunk.getMetadata() != null && !chunk.getMetadata().isEmpty()) {
+            json.append("  \"metadata\": ").append(mapToJson(chunk.getMetadata())).append(",\n");
+        }
+        json.append("  \"createdAt\": ").append(chunk.getCreatedAt() != null ? chunk.getCreatedAt() : System.currentTimeMillis()).append("\n");
+        json.append("}");
+        return json.toString();
+    }
+
+    /**
+     * 将 Map 转换为简单的 JSON 字符串
+     */
+    private String mapToJson(Map<String, Object> map) {
+        StringBuilder json = new StringBuilder();
+        json.append("{");
+        boolean first = true;
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (!first) json.append(", ");
+            json.append("\"").append(entry.getKey()).append("\": ");
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                json.append("\"").append(value).append("\"");
+            } else if (value instanceof Number || value instanceof Boolean) {
+                json.append(value);
+            } else {
+                json.append("\"").append(value).append("\"");
+            }
+            first = false;
+        }
+        json.append("}");
+        return json.toString();
+    }
+
+    /**
      * 从 documentId 提取原文件名
+     *
      * @deprecated 不再使用，保留用于向后兼容
      * 新的设计中 documentId 就是原始文件名
      */
@@ -188,29 +243,31 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<Chunk> getChunk(String chunkId) {
         try {
-            // 在所有文档的分块目录中搜索
-            List<Path> chunkFiles = Files.walk(chunksPath, 2)
+            // 在所有文档的分块目录中搜索元数据文件
+            List<Path> metadataFiles = Files.walk(chunksPath, 2)
                     .filter(Files::isRegularFile)
-                    .filter(p -> {
-                        String name = p.getFileName().toString();
-                        // 匹配 chunk_xxx 格式（无后缀）⭐
-                        return name.startsWith("chunk_");
-                    })
+                    .filter(p -> p.getFileName().toString().endsWith(".meta"))
                     .collect(Collectors.toList());
 
-            if (chunkFiles.isEmpty()) {
+            if (metadataFiles.isEmpty()) {
                 return Optional.empty();
             }
 
-            // 如果找到多个，尝试精确匹配chunkId
-            for (Path chunkFile : chunkFiles) {
-                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(chunkFile.toFile()))) {
-                    Chunk chunk = (Chunk) ois.readObject();
-                    if (chunkId.equals(chunk.getId())) {
-                        return Optional.of(chunk);
+            // 查找匹配的元数据文件
+            for (Path metadataFile : metadataFiles) {
+                try {
+                    String metadataJson = new String(Files.readAllBytes(metadataFile), java.nio.charset.StandardCharsets.UTF_8);
+                    if (metadataJson.contains("\"id\": \"" + chunkId + "\"")) {
+                        // 找到匹配的元数据，读取分块
+                        String chunkFilename = metadataFile.getFileName().toString().replace(".meta", "");
+                        Path chunkFile = metadataFile.getParent().resolve(chunkFilename);
+
+                        if (Files.exists(chunkFile)) {
+                            return Optional.of(loadChunkFromFiles(chunkFile, metadataFile));
+                        }
                     }
-                } catch (IOException | ClassNotFoundException e) {
-                    log.error("Failed to read chunk file: {}", chunkFile, e);
+                } catch (IOException e) {
+                    log.error("Failed to read metadata file: {}", metadataFile, e);
                 }
             }
 
@@ -231,12 +288,24 @@ public class FileDocumentStorage implements DocumentStorageService {
 
             return Files.list(docChunkDir)
                     .filter(Files::isRegularFile)
-                    .filter(p -> p.getFileName().toString().startsWith("chunk_"))  // 匹配chunk_开头（无后缀）⭐
-                    .map(p -> {
-                        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(p.toFile()))) {
-                            return (Chunk) ois.readObject();
-                        } catch (IOException | ClassNotFoundException e) {
-                            log.error("Failed to read chunk file: {}", p, e);
+                    .filter(p -> !p.getFileName().toString().endsWith(".meta")) // 只处理分块文件
+                    .filter(p -> p.getFileName().toString().startsWith("chunk_"))
+                    .map(chunkFile -> {
+                        try {
+                            Path metadataFile = chunkFile.getParent().resolve(chunkFile.getFileName() + ".meta");
+                            if (Files.exists(metadataFile)) {
+                                return loadChunkFromFiles(chunkFile, metadataFile);
+                            } else {
+                                // 兼容旧格式：尝试反序列化
+                                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(chunkFile.toFile()))) {
+                                    return (Chunk) ois.readObject();
+                                } catch (Exception oldFormatEx) {
+                                    log.warn("Cannot load chunk (old or new format): {}", chunkFile);
+                                    return null;
+                                }
+                            }
+                        } catch (IOException e) {
+                            log.error("Failed to read chunk file: {}", chunkFile, e);
                             return null;
                         }
                     })
@@ -245,6 +314,55 @@ public class FileDocumentStorage implements DocumentStorageService {
         } catch (IOException e) {
             log.error("Failed to get chunks for document: {}", documentId, e);
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 从分块文件和元数据文件加载 Chunk 对象
+     */
+    private Chunk loadChunkFromFiles(Path chunkFile, Path metadataFile) throws IOException {
+        // 读取分块文本内容
+        String content = new String(Files.readAllBytes(chunkFile), java.nio.charset.StandardCharsets.UTF_8);
+
+        // 读取元数据
+        String metadataJson = new String(Files.readAllBytes(metadataFile), java.nio.charset.StandardCharsets.UTF_8);
+
+        // 解析元数据
+        String id = extractJsonValue(metadataJson, "id");
+        String documentId = extractJsonValue(metadataJson, "documentId");
+        Integer sequence = extractJsonIntValue(metadataJson, "sequence");
+        Integer startPosition = extractJsonIntValue(metadataJson, "startPosition");
+        Integer endPosition = extractJsonIntValue(metadataJson, "endPosition");
+        Long createdAt = extractJsonLongValue(metadataJson, "createdAt");
+
+        return Chunk.builder()
+                .id(id)
+                .documentId(documentId)
+                .content(content)
+                .sequence(sequence != null ? sequence : 0)
+                .startPosition(startPosition)
+                .endPosition(endPosition)
+                .createdAt(createdAt)
+                .build();
+    }
+
+    /**
+     * 从 JSON 字符串中提取 Long 值
+     */
+    private Long extractJsonLongValue(String json, String key) {
+        String pattern = "\"" + key + "\": ";
+        int start = json.indexOf(pattern);
+        if (start == -1) return null;
+        start += pattern.length();
+        int end = json.indexOf(",", start);
+        if (end == -1) {
+            end = json.indexOf("\n", start);
+        }
+        if (end == -1) return null;
+        try {
+            return Long.parseLong(json.substring(start, end).trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
@@ -364,7 +482,7 @@ public class FileDocumentStorage implements DocumentStorageService {
             List<Path> metadataFiles = Files.walk(imagesPath, 2)
                     .filter(Files::isRegularFile)
                     .filter(p -> p.getFileName().toString().endsWith(".meta"))
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (metadataFiles.isEmpty()) {
                 return Optional.empty();
@@ -715,9 +833,9 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public boolean documentExists(String documentId) {
         return Files.exists(chunksPath.resolve(documentId)) ||
-               Files.exists(imagesPath.resolve(documentId)) ||
-               Files.exists(pplPath.resolve(documentId)) ||
-               Files.exists(optimizationPath.resolve(documentId));  // 新增
+                Files.exists(imagesPath.resolve(documentId)) ||
+                Files.exists(pplPath.resolve(documentId)) ||
+                Files.exists(optimizationPath.resolve(documentId));  // 新增
     }
 
     @Override
