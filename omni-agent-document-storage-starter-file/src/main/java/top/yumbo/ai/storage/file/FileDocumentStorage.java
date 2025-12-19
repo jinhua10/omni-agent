@@ -68,19 +68,15 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveDocument(String documentId, String filename, byte[] fileData) {
         try {
-            Files.createDirectories(documentsPath);
+            // 在 documents 目录下创建 documentId 子目录
+            Path docDir = documentsPath.resolve(documentId);
+            Files.createDirectories(docDir);
 
-            // 使用 documentId 作为文件名，保留原始扩展名
-            String extension = "";
-            int lastDot = filename.lastIndexOf('.');
-            if (lastDot > 0) {
-                extension = filename.substring(lastDot);
-            }
-
-            Path documentFile = documentsPath.resolve(documentId + extension);
+            // 在子目录中保存原始文件名 ⭐ 修改
+            Path documentFile = docDir.resolve(filename);
             Files.write(documentFile, fileData);
 
-            log.debug("Saved document: {} ({})", documentId, filename);
+            log.debug("Saved document: {} -> {}", documentId, filename);
             return documentId;
         } catch (IOException e) {
             log.error("Failed to save document: {}", documentId, e);
@@ -91,13 +87,19 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<byte[]> getDocument(String documentId) {
         try {
-            // 查找匹配的文件（可能有不同扩展名）
-            Path[] matchingFiles = Files.list(documentsPath)
-                    .filter(p -> p.getFileName().toString().startsWith(documentId))
+            // 在 documentId 子目录中查找文件
+            Path docDir = documentsPath.resolve(documentId);
+            if (!Files.exists(docDir) || !Files.isDirectory(docDir)) {
+                return Optional.empty();
+            }
+
+            // 读取目录中的第一个文件（应该只有一个原始文件）
+            Path[] files = Files.list(docDir)
+                    .filter(Files::isRegularFile)
                     .toArray(Path[]::new);
 
-            if (matchingFiles.length > 0) {
-                byte[] data = Files.readAllBytes(matchingFiles[0]);
+            if (files.length > 0) {
+                byte[] data = Files.readAllBytes(files[0]);
                 return Optional.of(data);
             }
             return Optional.empty();
@@ -110,19 +112,22 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteDocument(String documentId) {
         try {
-            // 查找并删除匹配的文件
-            Files.list(documentsPath)
-                    .filter(p -> p.getFileName().toString().startsWith(documentId))
-                    .forEach(p -> {
-                        try {
-                            Files.delete(p);
-                            log.debug("Deleted document file: {}", p);
-                        } catch (IOException e) {
-                            log.error("Failed to delete document file: {}", p, e);
-                        }
-                    });
+            // 删除整个 documentId 子目录
+            Path docDir = documentsPath.resolve(documentId);
+            if (Files.exists(docDir)) {
+                Files.walk(docDir)
+                        .sorted(Comparator.reverseOrder())
+                        .forEach(p -> {
+                            try {
+                                Files.delete(p);
+                            } catch (IOException e) {
+                                log.error("Failed to delete: {}", p, e);
+                            }
+                        });
+                log.debug("Deleted document directory: {}", documentId);
+            }
         } catch (IOException e) {
-            log.error("Failed to list documents for deletion: {}", documentId, e);
+            log.error("Failed to delete document: {}", documentId, e);
         }
     }
 
@@ -134,14 +139,17 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docChunkDir = chunksPath.resolve(documentId);
             Files.createDirectories(docChunkDir);
 
+            // 使用有意义的文件名：chunk_序号.chunk ⭐ 修改
             String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
-            Path chunkFile = docChunkDir.resolve(chunkId + ".chunk");
+            int sequence = chunk.getSequence();  // 直接获取，不需要null检查
+            String filename = String.format("chunk_%03d.chunk", sequence);
+            Path chunkFile = docChunkDir.resolve(filename);
 
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(chunkFile.toFile()))) {
                 oos.writeObject(chunk);
             }
 
-            log.debug("Saved chunk: {}", chunkId);
+            log.debug("Saved chunk: {} -> {}", chunkId, filename);
             return chunkId;
         } catch (IOException e) {
             log.error("Failed to save chunk", e);
@@ -167,7 +175,7 @@ public class FileDocumentStorage implements DocumentStorageService {
             // Search in all document directories
             List<Path> chunkFiles = Files.walk(chunksPath, 2)
                     .filter(p -> p.toString().endsWith(chunkId + ".chunk"))
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (chunkFiles.isEmpty()) {
                 return Optional.empty();
@@ -255,14 +263,29 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docImageDir = imagesPath.resolve(documentId);
             Files.createDirectories(docImageDir);
 
+            // 使用有意义的文件名：page_页码_img_序号.格式 ⭐ 修改
             String imageId = image.getId() != null ? image.getId() : UUID.randomUUID().toString();
-            Path imageFile = docImageDir.resolve(imageId + ".img");
+
+            // 构建文件名
+            String filename;
+            if (image.getPageNumber() != null && image.getPageNumber() > 0) {
+                // 如果有页码信息，使用 page_01_img_01.png 格式
+                int pageNum = image.getPageNumber();
+                String format = image.getFormat() != null ? image.getFormat() : "img";
+                filename = String.format("page_%03d_img.%s", pageNum, format);
+            } else {
+                // 如果没有页码，使用 image_01.png 格式
+                String format = image.getFormat() != null ? image.getFormat() : "img";
+                filename = String.format("image_%s.%s", imageId.substring(0, Math.min(8, imageId.length())), format);
+            }
+
+            Path imageFile = docImageDir.resolve(filename);
 
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(imageFile.toFile()))) {
                 oos.writeObject(image);
             }
 
-            log.debug("Saved image: {}", imageId);
+            log.debug("Saved image: {} -> {}", imageId, filename);
             return imageId;
         } catch (IOException e) {
             log.error("Failed to save image", e);
@@ -273,18 +296,34 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<Image> getImage(String imageId) {
         try {
+            // 在所有文档的图片目录中搜索
             List<Path> imageFiles = Files.walk(imagesPath, 2)
-                    .filter(p -> p.toString().endsWith(imageId + ".img"))
-                    .collect(Collectors.toList());
+                    .filter(Files::isRegularFile)
+                    .filter(p -> {
+                        String name = p.getFileName().toString();
+                        // 匹配 page_xxx_img.xxx 或 image_xxx.xxx 或包含imageId的文件
+                        return name.startsWith("page_") || name.startsWith("image_") || name.contains(imageId);
+                    })
+                    .toList();
 
             if (imageFiles.isEmpty()) {
                 return Optional.empty();
             }
 
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(imageFiles.get(0).toFile()))) {
-                return Optional.of((Image) ois.readObject());
+            // 如果找到多个，尝试精确匹配imageId
+            for (Path imageFile : imageFiles) {
+                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(imageFile.toFile()))) {
+                    Image img = (Image) ois.readObject();
+                    if (imageId.equals(img.getId())) {
+                        return Optional.of(img);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    log.error("Failed to read image file: {}", imageFile, e);
+                }
             }
-        } catch (IOException | ClassNotFoundException e) {
+
+            return Optional.empty();
+        } catch (IOException e) {
             log.error("Failed to get image: {}", imageId, e);
             return Optional.empty();
         }
@@ -299,7 +338,12 @@ public class FileDocumentStorage implements DocumentStorageService {
             }
 
             return Files.list(docImageDir)
-                    .filter(p -> p.toString().endsWith(".img"))
+                    .filter(Files::isRegularFile)
+                    .filter(p -> {
+                        String name = p.getFileName().toString();
+                        // 匹配所有图片文件
+                        return name.startsWith("page_") || name.startsWith("image_");
+                    })
                     .map(p -> {
                         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(p.toFile()))) {
                             return (Image) ois.readObject();
