@@ -50,6 +50,7 @@ public class DemoController {
     private final HOPEKnowledgeManager hopeManager;
     private final RoleService roleService;
     private final QueryService queryService;
+    private final top.yumbo.ai.omni.core.query.EnhancedQueryService enhancedQueryService;
 
     /**
      * 健康检查
@@ -858,9 +859,34 @@ public class DemoController {
     }
 
     /**
-     * 双轨流式问答 ⭐ NEW (使用 SseEmitter)
-     * 同时返回AI答案流和参考文档
-     * GET /api/qa/stream/dual-track
+     * 双轨流式问答 ⭐ 重构版
+     *
+     * <p>双轨输出架构：</p>
+     * <ul>
+     *   <li><b>左轨（left）</b>：传统 RAG + LLM 回答
+     *       <br>- 检索相关文档
+     *       <br>- 构建上下文
+     *       <br>- LLM生成答案
+     *   </li>
+     *   <li><b>右轨（right）</b>：HOPE智能系统 / 角色知识库
+     *       <br>- HOPE三层知识架构（自我学习）
+     *       <br>- 算法市场优化
+     *       <br>- 知识最小概念综合
+     *       <br>- 角色专业回答（如果选择角色）
+     *   </li>
+     * </ul>
+     *
+     * <p>知识模式说明：</p>
+     * <ul>
+     *   <li>none: 单轨模式，仅LLM</li>
+     *   <li>rag: 双轨模式，左轨RAG+LLM，右轨HOPE智能系统</li>
+     *   <li>role: 双轨模式，左轨RAG+LLM，右轨角色知识库</li>
+     * </ul>
+     *
+     * @param question 用户问题
+     * @param knowledgeMode 知识库模式: none | rag | role
+     * @param roleName 角色名称（role模式必需）
+     * @return SSE流
      */
     @GetMapping(value = "/qa/stream/dual-track", produces = "text/event-stream")
     public SseEmitter dualTrackStream(
@@ -868,7 +894,7 @@ public class DemoController {
             @RequestParam(defaultValue = "none") String knowledgeMode,
             @RequestParam(required = false) String roleName) {
 
-        log.info("双轨流式问答: question={}, mode={}, role={}", question, knowledgeMode, roleName);
+        log.info("🚂 双轨流式问答: question={}, mode={}, role={}", question, knowledgeMode, roleName);
 
         // 创建 SseEmitter，超时时间 5 分钟
         SseEmitter emitter = new SseEmitter(300000L);
@@ -876,134 +902,396 @@ public class DemoController {
         // 异步处理
         new Thread(() -> {
             try {
-                // 1. 先发送参考文档（如果需要）
-                if (!"none".equals(knowledgeMode)) {
+                // 判断是否为双轨模式
+                final boolean isDualTrack = !"none".equals(knowledgeMode);
+
+                if (!isDualTrack) {
+                    // === 单轨模式（仅LLM） ===
+                    handleSingleTrack(emitter, question);
+                } else {
+                    // === 双轨模式 ===
+                    // 1. 检索参考文档
                     List<SearchResult> references = ragService.searchByText(question, 5);
                     log.info("📚 检索到 {} 个参考文档", references.size());
 
-                    for (SearchResult ref : references) {
-                        try {
-                            String refJson = String.format(
-                                    "{\"type\":\"reference\",\"title\":\"%s\",\"content\":\"%s\",\"score\":%.2f}",
-                                    escapeJson(ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : ""),
-                                    escapeJson(ref.getDocument().getContent()),
-                                    ref.getScore()
-                            );
-                            emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
-                                    .data(refJson));
-                            log.info("📄 发送参考文档: {}",
-                                    ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : "无标题");
-                        } catch (Exception e) {
-                            log.error("❌ 发送参考文档失败: {}", e.getMessage());
-                        }
+                    // 发送参考文档或友好提示
+                    sendReferences(emitter, references);
+
+                    // 2. 并行生成双轨回答
+                    if ("role".equals(knowledgeMode)) {
+                        // 角色模式：左轨RAG+LLM，右轨角色专业回答
+                        handleRoleMode(emitter, question, roleName, references);
+                    } else {
+                        // RAG模式：左轨RAG+LLM，右轨HOPE智能系统
+                        handleRagMode(emitter, question, references);
                     }
-                } else {
-                    log.info("🚫 不使用知识库模式，跳过参考文档检索");
                 }
-
-                // 2. 构建AI提示词
-                String prompt;
-                if ("none".equals(knowledgeMode)) {
-                    prompt = question;
-                } else if ("role".equals(knowledgeMode) && roleName != null) {
-                    Role role = roleService.getRole(roleName);
-                    List<SearchResult> references = ragService.searchByText(question, 5);
-                    String context = buildRoleContext(references);
-                    prompt = String.format(
-                            "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                            role.getName(), role.getDescription(), context, question
-                    );
-                } else {
-                    List<SearchResult> references = ragService.searchByText(question, 5);
-                    String context = buildContext(references);
-                    prompt = String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", context, question);
-                }
-
-                // 3. 流式发送AI答案
-                List<ChatMessage> messages = List.of(
-                        ChatMessage.builder()
-                                .role("user")
-                                .content(prompt)
-                                .build()
-                );
-
-                log.info("🚀 开始流式生成答案...");
-
-                // 订阅 AI 流式输出
-                // 根据知识库模式决定事件类型：none -> llm, role -> right, rag -> right
-                final String eventType = "none".equals(knowledgeMode) ? "llm" : "right";
-
-                aiService.chatFlux(messages)
-                        .doOnNext(token -> {
-                            try {
-                                // 发送流式 token，使用对应的事件类型
-                                String jsonData = String.format(
-                                        "{\"content\":\"%s\",\"chunkIndex\":%d}",
-                                        escapeJson(token),
-                                        0  // 临时使用固定索引
-                                );
-                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
-                                        .name(eventType)  // ⭐ 根据模式指定事件名称: llm 或 right
-                                        .data(jsonData));
-                                log.debug("📤 [{}] 发送 token: [{}]", eventType, token);
-                            } catch (Exception e) {
-                                log.error("❌ 发送 token 失败: {}", e.getMessage());
-                                emitter.completeWithError(e);
-                            }
-                        })
-                        .doOnComplete(() -> {
-                            try {
-                                // 发送完成标记
-                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
-                                        .name("complete")  // ⭐ 指定事件名称
-                                        .data("{\"type\":\"complete\"}"));
-                                log.info("✅ 答案流生成完成");
-                                emitter.complete();
-                            } catch (Exception e) {
-                                log.error("❌ 发送完成标记失败: {}", e.getMessage());
-                                emitter.completeWithError(e);
-                            }
-                        })
-                        .doOnError(e -> {
-                            log.error("❌ 答案流生成失败: {}", e.getMessage());
-                            try {
-                                emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
-                                        .name("error")  // ⭐ 指定事件名称
-                                        .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}"));
-                            } catch (Exception ex) {
-                                log.error("❌ 发送错误消息失败: {}", ex.getMessage());
-                            }
-                            emitter.completeWithError(e);
-                        })
-                        .subscribe();  // 启动订阅
 
             } catch (Exception e) {
                 log.error("❌ 双轨流式问答失败", e);
-                try {
-                    emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
-                            .data("{\"type\":\"error\",\"message\":\"" + escapeJson(e.getMessage()) + "\"}"));
-                    emitter.completeWithError(e);
-                } catch (Exception ex) {
-                    log.error("❌ 发送错误消息失败: {}", ex.getMessage());
-                }
+                sendError(emitter, e.getMessage());
             }
         }).start();
 
         // 设置超时和错误处理
+        setupEmitterCallbacks(emitter);
+
+        return emitter;
+    }
+
+    /**
+     * 处理单轨模式（仅LLM）
+     */
+    private void handleSingleTrack(SseEmitter emitter, String question) {
+        log.info("🚂 单轨模式：纯LLM");
+
+        List<ChatMessage> messages = List.of(
+                ChatMessage.builder()
+                        .role("user")
+                        .content(question)
+                        .build()
+        );
+
+        aiService.chatFlux(messages)
+                .doOnNext(token -> {
+                    try {
+                        sendToken(emitter, "llm", token);
+                    } catch (Exception e) {
+                        log.error("❌ 发送LLM token失败: {}", e.getMessage());
+                    }
+                })
+                .doOnComplete(() -> sendComplete(emitter))
+                .doOnError(e -> sendError(emitter, e.getMessage()))
+                .subscribe();
+    }
+
+    /**
+     * 处理RAG模式：左轨RAG+LLM，右轨HOPE智能系统
+     */
+    private void handleRagMode(SseEmitter emitter, String question, List<SearchResult> references) {
+        log.info("🚂 双轨模式：RAG + HOPE智能系统");
+
+        // CountDownLatch用于协调两个轨道
+        java.util.concurrent.CountDownLatch leftTrackLatch = new java.util.concurrent.CountDownLatch(1);
+
+        // 左轨：传统RAG + LLM（使用普通检索）
+        String leftContext = buildContext(references);
+        String leftPrompt = leftContext.isEmpty()
+                ? String.format("问题：%s\n\n注意：未检索到相关文档，请基于你的通用知识回答。", question)
+                : String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", leftContext, question);
+
+        List<ChatMessage> leftMessages = List.of(
+                ChatMessage.builder()
+                        .role("user")
+                        .content(leftPrompt)
+                        .build()
+        );
+
+        log.info("⬅️ 启动左轨：传统RAG+LLM");
+
+        aiService.chatFlux(leftMessages)
+                .doOnNext(token -> {
+                    try {
+                        sendToken(emitter, "left", token);
+                    } catch (Exception e) {
+                        log.error("❌ 发送左轨token失败: {}", e.getMessage());
+                    }
+                })
+                .doOnComplete(() -> {
+                    log.info("✅ 左轨完成");
+                    leftTrackLatch.countDown();
+                })
+                .doOnError(e -> {
+                    log.error("❌ 左轨失败: {}", e.getMessage());
+                    sendWarning(emitter, "left", "左轨（RAG+LLM）生成失败");
+                    leftTrackLatch.countDown();
+                })
+                .subscribe();
+
+        // 等待左轨完成
+        try {
+            leftTrackLatch.await(120, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            log.error("❌ 左轨超时", e);
+        }
+
+        // 右轨：HOPE智能系统（自我学习 + 算法市场优化）
+        log.info("➡️ 启动右轨：HOPE智能系统 + 算法市场优化");
+
+        // 使用HOPE进行智能查询
+        HOPEKnowledgeManager.QueryResult hopeResult = hopeManager.smartQuery(question, null);
+
+        // 使用增强查询服务进行优化检索（查询扩展 + 重排序）
+        List<SearchResult> enhancedReferences;
+        try {
+            log.info("🔍 使用算法市场增强检索（查询扩展 + 重排序）");
+            enhancedReferences = enhancedQueryService.fullyEnhancedSearch(question, 5);
+            log.info("📈 增强检索完成：获得 {} 个优化结果", enhancedReferences.size());
+        } catch (Exception e) {
+            log.warn("⚠️ 增强检索失败，使用原始检索结果: {}", e.getMessage());
+            enhancedReferences = references;
+        }
+
+        // 构建HOPE增强提示词（使用优化后的检索结果）
+        String rightPrompt = buildHOPEPrompt(question, hopeResult, enhancedReferences);
+
+        List<ChatMessage> rightMessages = List.of(
+                ChatMessage.builder()
+                        .role("user")
+                        .content(rightPrompt)
+                        .build()
+        );
+
+        aiService.chatFlux(rightMessages)
+                .doOnNext(token -> {
+                    try {
+                        sendToken(emitter, "right", token);
+                    } catch (Exception e) {
+                        log.error("❌ 发送右轨token失败: {}", e.getMessage());
+                    }
+                })
+                .doOnComplete(() -> {
+                    log.info("✅ 右轨完成");
+                    sendComplete(emitter);
+                })
+                .doOnError(e -> {
+                    log.error("❌ 右轨失败: {}", e.getMessage());
+                    sendWarning(emitter, "right", "右轨（HOPE智能系统）生成失败：" + e.getMessage());
+                    sendError(emitter, e.getMessage());
+                })
+                .subscribe();
+    }
+
+    /**
+     * 处理角色模式：左轨RAG+LLM，右轨角色专业回答
+     */
+    private void handleRoleMode(SseEmitter emitter, String question, String roleName, List<SearchResult> references) {
+        log.info("🚂 双轨模式：RAG + 角色知识库 (role={})", roleName);
+
+        // 获取角色信息
+        Role role = roleService.getRole(roleName != null ? roleName : "default");
+        log.info("🎭 使用角色: {} - {}", role.getName(), role.getDescription());
+
+        // CountDownLatch用于协调两个轨道
+        java.util.concurrent.CountDownLatch leftTrackLatch = new java.util.concurrent.CountDownLatch(1);
+
+        // 左轨：传统RAG + LLM
+        String leftContext = buildContext(references);
+        String leftPrompt = leftContext.isEmpty()
+                ? String.format("问题：%s\n\n注意：未检索到相关文档，请基于你的通用知识回答。", question)
+                : String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", leftContext, question);
+
+        List<ChatMessage> leftMessages = List.of(
+                ChatMessage.builder()
+                        .role("user")
+                        .content(leftPrompt)
+                        .build()
+        );
+
+        log.info("⬅️ 启动左轨：传统RAG+LLM");
+
+        aiService.chatFlux(leftMessages)
+                .doOnNext(token -> {
+                    try {
+                        sendToken(emitter, "left", token);
+                    } catch (Exception e) {
+                        log.error("❌ 发送左轨token失败: {}", e.getMessage());
+                    }
+                })
+                .doOnComplete(() -> {
+                    log.info("✅ 左轨完成");
+                    leftTrackLatch.countDown();
+                })
+                .doOnError(e -> {
+                    log.error("❌ 左轨失败: {}", e.getMessage());
+                    sendWarning(emitter, "left", "左轨（RAG+LLM）生成失败");
+                    leftTrackLatch.countDown();
+                })
+                .subscribe();
+
+        // 等待左轨完成
+        try {
+            leftTrackLatch.await(120, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            log.error("❌ 左轨超时", e);
+        }
+
+        // 右轨：角色专业回答
+        log.info("➡️ 启动右轨：角色 [{}] 专业回答", role.getName());
+
+        // 构建角色提示词
+        String roleContext = buildRoleContext(references);
+        String rightPrompt = String.format(
+                "你是%s，%s\n\n" +
+                "作为专业角色，请基于以下知识给出你的专业见解：\n\n%s\n\n" +
+                "问题：%s\n\n" +
+                "请以你的角色身份，结合专业知识回答。",
+                role.getName(),
+                role.getDescription(),
+                roleContext.isEmpty() ? "暂无特定知识，请基于角色专业性回答" : roleContext,
+                question
+        );
+
+        List<ChatMessage> rightMessages = List.of(
+                ChatMessage.builder()
+                        .role("user")
+                        .content(rightPrompt)
+                        .build()
+        );
+
+        aiService.chatFlux(rightMessages)
+                .doOnNext(token -> {
+                    try {
+                        sendToken(emitter, "right", token);
+                    } catch (Exception e) {
+                        log.error("❌ 发送右轨token失败: {}", e.getMessage());
+                    }
+                })
+                .doOnComplete(() -> {
+                    log.info("✅ 右轨完成");
+                    sendComplete(emitter);
+                })
+                .doOnError(e -> {
+                    log.error("❌ 右轨失败: {}", e.getMessage());
+                    sendWarning(emitter, "right", "右轨（角色专业回答）生成失败：" + e.getMessage());
+                    sendError(emitter, e.getMessage());
+                })
+                .subscribe();
+    }
+
+    /**
+     * 构建HOPE增强提示词
+     */
+    private String buildHOPEPrompt(String question, HOPEKnowledgeManager.QueryResult hopeResult,
+                                    List<SearchResult> references) {
+        StringBuilder prompt = new StringBuilder();
+
+        prompt.append("【HOPE智能系统 - 自我学习回答】\n\n");
+        prompt.append(String.format("问题类型：%s\n", hopeResult.getQuestionType()));
+        prompt.append(String.format("建议知识层：%s\n", hopeResult.getSuggestedLayer()));
+        prompt.append(String.format("置信度：%.2f\n\n", hopeResult.getConfidence()));
+
+        // 如果HOPE已有答案，使用它
+        if (hopeResult.getAnswer() != null && !hopeResult.getAnswer().isEmpty()) {
+            prompt.append("系统学习到的答案：\n");
+            prompt.append(hopeResult.getAnswer()).append("\n\n");
+        }
+
+        // 添加检索到的上下文
+        String context = buildContext(references);
+        if (!context.isEmpty()) {
+            prompt.append("补充知识：\n");
+            prompt.append(context).append("\n\n");
+        }
+
+        prompt.append("问题：").append(question).append("\n\n");
+        prompt.append("请综合系统学习的知识和补充知识，给出专业且经过自我学习优化的回答。");
+
+        return prompt.toString();
+    }
+
+    /**
+     * 发送参考文档或友好提示
+     */
+    private void sendReferences(SseEmitter emitter, List<SearchResult> references) {
+        try {
+            if (references.isEmpty()) {
+                String noResultJson = "{\"type\":\"info\",\"message\":\"未检索到相关文档，将基于通用知识和系统学习回答\"}";
+                emitter.send(SseEmitter.event().data(noResultJson));
+                log.info("💡 发送无检索结果提示");
+            } else {
+                for (SearchResult ref : references) {
+                    String refJson = String.format(
+                            "{\"type\":\"reference\",\"title\":\"%s\",\"content\":\"%s\",\"score\":%.2f}",
+                            escapeJson(ref.getDocument().getTitle() != null ? ref.getDocument().getTitle() : ""),
+                            escapeJson(ref.getDocument().getContent()),
+                            ref.getScore()
+                    );
+                    emitter.send(SseEmitter.event().data(refJson));
+                    log.debug("📄 发送参考文档");
+                }
+            }
+        } catch (Exception e) {
+            log.error("❌ 发送参考文档失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 发送token
+     */
+    private void sendToken(SseEmitter emitter, String track, String token) throws Exception {
+        String jsonData = String.format(
+                "{\"content\":\"%s\",\"chunkIndex\":%d}",
+                escapeJson(token),
+                0
+        );
+        emitter.send(SseEmitter.event()
+                .name(track)
+                .data(jsonData));
+        log.debug("📤 [{}] token: [{}]", track.toUpperCase(), token);
+    }
+
+    /**
+     * 发送完成标记
+     */
+    private void sendComplete(SseEmitter emitter) {
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("complete")
+                    .data("{\"type\":\"complete\"}"));
+            log.info("✅ 双轨流式问答完成");
+            emitter.complete();
+        } catch (Exception e) {
+            log.error("❌ 发送完成标记失败: {}", e.getMessage());
+            emitter.completeWithError(e);
+        }
+    }
+
+    /**
+     * 发送警告
+     */
+    private void sendWarning(SseEmitter emitter, String track, String message) {
+        try {
+            String warningJson = String.format(
+                    "{\"type\":\"warning\",\"track\":\"%s\",\"message\":\"%s\"}",
+                    track, escapeJson(message)
+            );
+            emitter.send(SseEmitter.event().data(warningJson));
+        } catch (Exception e) {
+            log.error("❌ 发送警告失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 发送错误
+     */
+    private void sendError(SseEmitter emitter, String message) {
+        try {
+            String errorJson = String.format(
+                    "{\"type\":\"error\",\"message\":\"%s\"}",
+                    escapeJson(message)
+            );
+            emitter.send(SseEmitter.event()
+                    .name("error")
+                    .data(errorJson));
+            emitter.completeWithError(new RuntimeException(message));
+        } catch (Exception e) {
+            log.error("❌ 发送错误消息失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 设置Emitter回调
+     */
+    private void setupEmitterCallbacks(SseEmitter emitter) {
         emitter.onTimeout(() -> {
-            log.warn("⏰ SSE 连接超时");
+            log.warn("⏰ SSE连接超时");
             emitter.complete();
         });
 
-        emitter.onError(e -> {
-            log.error("❌ SSE 连接错误: {}", e.getMessage());
-        });
+        emitter.onError(e -> log.error("❌ SSE连接错误: {}", e.getMessage()));
 
-        emitter.onCompletion(() -> {
-            log.info("✅ SSE 连接关闭");
-        });
-
-        return emitter;
+        emitter.onCompletion(() -> log.info("✅ SSE连接关闭"));
     }
 
     /**

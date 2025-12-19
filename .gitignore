@@ -59,5 +59,7 @@ build/
 .DS_Store
 /**/*.jar
 src.backup
-old/
+/old/
 *.ps1
+/old/ai-reviewer-base-file-rag/
+/old/**

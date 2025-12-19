@@ -353,23 +353,19 @@ export default {
       hopeAnswerLabel: '💡 HOPE Quick Answer',
       llmAnswerLabel: '🤖 LLM Detailed Answer',
       hopeBadge: 'HOPE',
-      leftPanelTitle: 'AI Direct Answer',
-      rightPanelTitle: 'Knowledge Enhanced Answer',
+      leftPanelTitle: '🤖 RAG + LLM Answer',
+      rightPanelTitle: '🧠 HOPE System / Role Expert Answer',
       dualTrackOutput: 'Dual Track Output',
-      leftPanel: 'Left Panel',
-      rightPanel: 'Right Panel',
-    },
-    
-    // Dual-track Architecture
-    dualTrack: {
-      hopeAnswerLabel: '💡 HOPE Fast Answer',
-      llmAnswerLabel: '🤖 LLM Detailed Answer',
-      hopeBadge: 'HOPE',
+      leftPanel: 'Left (Traditional RAG)',
+      rightPanel: 'Right (Intelligent System)',
       llmBadge: 'LLM',
       confidence: 'Confidence',
       source: 'Source',
       responseTime: 'Response Time',
       generatingDetail: 'Generating detailed answer...',
+      leftDescription: 'Retrieve KB + LLM Generation',
+      rightDescription: 'HOPE Self-learning + Algorithm Optimization',
+      roleRightDescription: 'Role Expert Knowledge Answer',
     },
 
     // Knowledge Mode

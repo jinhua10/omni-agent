@@ -112,6 +112,25 @@ public class AlgorithmMarketService {
     }
 
     /**
+     * 获取已注册的算法组件
+     *
+     * @param type 组件类型
+     * @return 算法组件，不存在则返回 null
+     */
+    public AlgorithmComponent getComponent(String type) {
+        return components.get(type);
+    }
+
+    /**
+     * 获取所有已注册的组件类型
+     *
+     * @return 组件类型列表
+     */
+    public Set<String> getRegisteredComponentTypes() {
+        return new HashSet<>(components.keySet());
+    }
+
+    /**
      * 发布算法到市场（带安全审核）
      */
     public String publishAlgorithm(MarketAlgorithm algorithm) throws AlgorithmValidationException {
