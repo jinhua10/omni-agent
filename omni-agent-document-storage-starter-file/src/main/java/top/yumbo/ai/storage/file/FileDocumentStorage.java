@@ -140,10 +140,10 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docChunkDir = chunksPath.resolve(filename);
             Files.createDirectories(docChunkDir);
 
-            // 使用有意义的文件名：chunk_序号.chunk ⭐
+            // 使用有意义的文件名：chunk_序号（无后缀）⭐
             String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
             int sequence = chunk.getSequence();
-            String chunkFilename = String.format("chunk_%03d.chunk", sequence);
+            String chunkFilename = String.format("chunk_%03d", sequence);  // 去掉.chunk后缀
             Path chunkFile = docChunkDir.resolve(chunkFilename);
 
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(chunkFile.toFile()))) {
@@ -188,19 +188,34 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<Chunk> getChunk(String chunkId) {
         try {
-            // Search in all document directories
+            // 在所有文档的分块目录中搜索
             List<Path> chunkFiles = Files.walk(chunksPath, 2)
-                    .filter(p -> p.toString().endsWith(chunkId + ".chunk"))
-                    .toList();
+                    .filter(Files::isRegularFile)
+                    .filter(p -> {
+                        String name = p.getFileName().toString();
+                        // 匹配 chunk_xxx 格式（无后缀）⭐
+                        return name.startsWith("chunk_");
+                    })
+                    .collect(Collectors.toList());
 
             if (chunkFiles.isEmpty()) {
                 return Optional.empty();
             }
 
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(chunkFiles.get(0).toFile()))) {
-                return Optional.of((Chunk) ois.readObject());
+            // 如果找到多个，尝试精确匹配chunkId
+            for (Path chunkFile : chunkFiles) {
+                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(chunkFile.toFile()))) {
+                    Chunk chunk = (Chunk) ois.readObject();
+                    if (chunkId.equals(chunk.getId())) {
+                        return Optional.of(chunk);
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    log.error("Failed to read chunk file: {}", chunkFile, e);
+                }
             }
-        } catch (IOException | ClassNotFoundException e) {
+
+            return Optional.empty();
+        } catch (IOException e) {
             log.error("Failed to get chunk: {}", chunkId, e);
             return Optional.empty();
         }
@@ -216,7 +231,8 @@ public class FileDocumentStorage implements DocumentStorageService {
             }
 
             return Files.list(docChunkDir)
-                    .filter(p -> p.toString().endsWith(".chunk"))
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().startsWith("chunk_"))  // 匹配chunk_开头（无后缀）⭐
                     .map(p -> {
                         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(p.toFile()))) {
                             return (Chunk) ois.readObject();
@@ -282,18 +298,18 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docImageDir = imagesPath.resolve(filename);
             Files.createDirectories(docImageDir);
 
-            // 使用有意义的文件名：page_页码_img.格式 ⭐
+            // 使用有意义的文件名：page_页码_img（无额外后缀）⭐
             String imageId = image.getId() != null ? image.getId() : UUID.randomUUID().toString();
 
             // 构建文件名
             String imageFilename;
             if (image.getPageNumber() != null && image.getPageNumber() > 0) {
-                // 如果有页码信息，使用 page_001_img.png 格式
+                // 如果有页码信息，使用 page_001_img 格式（保留原始格式如.png）
                 int pageNum = image.getPageNumber();
                 String format = image.getFormat() != null ? image.getFormat() : "img";
                 imageFilename = String.format("page_%03d_img.%s", pageNum, format);
             } else {
-                // 如果没有页码，使用 image_xxx.png 格式
+                // 如果没有页码，使用 image_xxx 格式
                 String format = image.getFormat() != null ? image.getFormat() : "img";
                 imageFilename = String.format("image_%s.%s", imageId.substring(0, Math.min(8, imageId.length())), format);
             }
@@ -429,7 +445,7 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docPplDir = pplPath.resolve(filename);
             Files.createDirectories(docPplDir);
 
-            Path pplFile = docPplDir.resolve("ppl.data");
+            Path pplFile = docPplDir.resolve("ppl");  // 无后缀 ⭐
 
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(pplFile.toFile()))) {
                 oos.writeObject(data);
@@ -447,7 +463,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     public Optional<PPLData> getPPLData(String documentId) {
         try {
             String filename = extractFilenameFromDocumentId(documentId);
-            Path pplFile = pplPath.resolve(filename).resolve("ppl.data");
+            Path pplFile = pplPath.resolve(filename).resolve("ppl");  // 无后缀 ⭐
             if (!Files.exists(pplFile)) {
                 return Optional.empty();
             }
@@ -492,8 +508,8 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docOptDir = optimizationPath.resolve(filename);
             Files.createDirectories(docOptDir);
 
-            // 使用优化类型作为文件名
-            String fileName = data.getOptimizationType() + ".opt";
+            // 使用优化类型作为文件名（无后缀）⭐
+            String fileName = data.getOptimizationType();
             Path optFile = docOptDir.resolve(fileName);
 
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(optFile.toFile()))) {
@@ -512,7 +528,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     public Optional<OptimizationData> getOptimizationData(String documentId, String optimizationType) {
         try {
             String filename = extractFilenameFromDocumentId(documentId);
-            Path optFile = optimizationPath.resolve(filename).resolve(optimizationType + ".opt");
+            Path optFile = optimizationPath.resolve(filename).resolve(optimizationType);  // 无后缀 ⭐
             if (!Files.exists(optFile)) {
                 return Optional.empty();
             }
@@ -536,7 +552,7 @@ public class FileDocumentStorage implements DocumentStorageService {
             }
 
             return Files.list(docOptDir)
-                    .filter(p -> p.toString().endsWith(".opt"))
+                    .filter(Files::isRegularFile)  // 所有文件都是优化数据（无后缀限制）⭐
                     .map(p -> {
                         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(p.toFile()))) {
                             return (OptimizationData) ois.readObject();
@@ -557,7 +573,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     public void deleteOptimizationData(String documentId, String optimizationType) {
         try {
             String filename = extractFilenameFromDocumentId(documentId);
-            Path optFile = optimizationPath.resolve(filename).resolve(optimizationType + ".opt");
+            Path optFile = optimizationPath.resolve(filename).resolve(optimizationType);  // 无后缀 ⭐
             if (Files.exists(optFile)) {
                 Files.delete(optFile);
                 log.info("Deleted {} optimization data for document: {}", optimizationType, filename);
