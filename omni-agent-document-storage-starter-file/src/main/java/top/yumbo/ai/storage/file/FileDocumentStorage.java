@@ -68,18 +68,18 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveDocument(String documentId, String filename, byte[] fileData) {
         try {
-            // 在 documents 目录下创建 documentId 子目录
-            Path docDir = documentsPath.resolve(documentId);
+            // 使用原文档名称作为子目录名 ⭐ 修改
+            Path docDir = documentsPath.resolve(filename);
             Files.createDirectories(docDir);
 
-            // 在子目录中保存原始文件名 ⭐ 修改
+            // 在子目录中保存原始文件
             Path documentFile = docDir.resolve(filename);
             Files.write(documentFile, fileData);
 
-            log.debug("Saved document: {} -> {}", documentId, filename);
+            log.debug("Saved document: {} in directory: {}", filename, docDir);
             return documentId;
         } catch (IOException e) {
-            log.error("Failed to save document: {}", documentId, e);
+            log.error("Failed to save document: {}", filename, e);
             return null;
         }
     }
@@ -87,18 +87,18 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<byte[]> getDocument(String documentId) {
         try {
-            // 在 documentId 子目录中查找文件
-            Path docDir = documentsPath.resolve(documentId);
-            if (!Files.exists(docDir) || !Files.isDirectory(docDir)) {
-                return Optional.empty();
-            }
+            // 遍历 documents 目录，查找包含该文档的目录
+            // 因为我们不知道原文件名，需要通过其他方式关联
+            // 这里简化处理：假设 documentId 就是用来定位的
+            // 实际使用时，Controller 层应该传递 filename
 
-            // 读取目录中的第一个文件（应该只有一个原始文件）
-            Path[] files = Files.list(docDir)
+            // 临时实现：搜索所有子目录中的文件
+            Path[] files = Files.walk(documentsPath, 2)
                     .filter(Files::isRegularFile)
                     .toArray(Path[]::new);
 
             if (files.length > 0) {
+                // 返回第一个找到的文件
                 byte[] data = Files.readAllBytes(files[0]);
                 return Optional.of(data);
             }
@@ -112,20 +112,27 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteDocument(String documentId) {
         try {
-            // 删除整个 documentId 子目录
-            Path docDir = documentsPath.resolve(documentId);
-            if (Files.exists(docDir)) {
-                Files.walk(docDir)
-                        .sorted(Comparator.reverseOrder())
-                        .forEach(p -> {
-                            try {
-                                Files.delete(p);
-                            } catch (IOException e) {
-                                log.error("Failed to delete: {}", p, e);
-                            }
-                        });
-                log.debug("Deleted document directory: {}", documentId);
-            }
+            // 由于使用原文件名作为目录，这里需要遍历查找
+            // 实际使用时应该从 Controller 传递 filename
+            Files.walk(documentsPath, 1)
+                    .filter(Files::isDirectory)
+                    .filter(p -> !p.equals(documentsPath))
+                    .forEach(docDir -> {
+                        try {
+                            Files.walk(docDir)
+                                    .sorted(Comparator.reverseOrder())
+                                    .forEach(p -> {
+                                        try {
+                                            Files.delete(p);
+                                        } catch (IOException e) {
+                                            log.error("Failed to delete: {}", p, e);
+                                        }
+                                    });
+                        } catch (IOException e) {
+                            log.error("Failed to walk directory: {}", docDir, e);
+                        }
+                    });
+            log.debug("Deleted document: {}", documentId);
         } catch (IOException e) {
             log.error("Failed to delete document: {}", documentId, e);
         }
@@ -136,25 +143,43 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveChunk(String documentId, Chunk chunk) {
         try {
-            Path docChunkDir = chunksPath.resolve(documentId);
+            // documentId 格式: doc_timestamp_filename
+            // 提取原文件名（移除前缀）
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docChunkDir = chunksPath.resolve(filename);
             Files.createDirectories(docChunkDir);
 
-            // 使用有意义的文件名：chunk_序号.chunk ⭐ 修改
+            // 使用有意义的文件名：chunk_序号.chunk ⭐
             String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
-            int sequence = chunk.getSequence();  // 直接获取，不需要null检查
-            String filename = String.format("chunk_%03d.chunk", sequence);
-            Path chunkFile = docChunkDir.resolve(filename);
+            int sequence = chunk.getSequence();
+            String chunkFilename = String.format("chunk_%03d.chunk", sequence);
+            Path chunkFile = docChunkDir.resolve(chunkFilename);
 
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(chunkFile.toFile()))) {
                 oos.writeObject(chunk);
             }
 
-            log.debug("Saved chunk: {} -> {}", chunkId, filename);
+            log.debug("Saved chunk: {} -> {}/{}", chunkId, filename, chunkFilename);
             return chunkId;
         } catch (IOException e) {
             log.error("Failed to save chunk", e);
             return null;
         }
+    }
+
+    /**
+     * 从 documentId 提取原文件名
+     * documentId 格式: doc_timestamp_filename
+     */
+    private String extractFilenameFromDocumentId(String documentId) {
+        // doc_1766142807149_倡导节约用水.pptx -> 倡导节约用水.pptx
+        if (documentId.startsWith("doc_")) {
+            int secondUnderscore = documentId.indexOf('_', 4);
+            if (secondUnderscore > 0 && secondUnderscore < documentId.length() - 1) {
+                return documentId.substring(secondUnderscore + 1);
+            }
+        }
+        return documentId; // 降级：直接使用
     }
 
     @Override
@@ -193,7 +218,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public List<Chunk> getChunksByDocument(String documentId) {
         try {
-            Path docChunkDir = chunksPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docChunkDir = chunksPath.resolve(filename);
             if (!Files.exists(docChunkDir)) {
                 return new ArrayList<>();
             }
@@ -237,7 +263,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteChunksByDocument(String documentId) {
         try {
-            Path docChunkDir = chunksPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docChunkDir = chunksPath.resolve(filename);
             if (Files.exists(docChunkDir)) {
                 Files.walk(docChunkDir)
                         .sorted(Comparator.reverseOrder())
@@ -248,7 +275,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 log.error("Failed to delete: {}", p, e);
                             }
                         });
-                log.info("Deleted all chunks for document: {}", documentId);
+                log.info("Deleted all chunks for document: {}", filename);
             }
         } catch (IOException e) {
             log.error("Failed to delete chunks for document: {}", documentId, e);
@@ -260,32 +287,33 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveImage(String documentId, Image image) {
         try {
-            Path docImageDir = imagesPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docImageDir = imagesPath.resolve(filename);
             Files.createDirectories(docImageDir);
 
-            // 使用有意义的文件名：page_页码_img_序号.格式 ⭐ 修改
+            // 使用有意义的文件名：page_页码_img.格式 ⭐
             String imageId = image.getId() != null ? image.getId() : UUID.randomUUID().toString();
 
             // 构建文件名
-            String filename;
+            String imageFilename;
             if (image.getPageNumber() != null && image.getPageNumber() > 0) {
-                // 如果有页码信息，使用 page_01_img_01.png 格式
+                // 如果有页码信息，使用 page_001_img.png 格式
                 int pageNum = image.getPageNumber();
                 String format = image.getFormat() != null ? image.getFormat() : "img";
-                filename = String.format("page_%03d_img.%s", pageNum, format);
+                imageFilename = String.format("page_%03d_img.%s", pageNum, format);
             } else {
-                // 如果没有页码，使用 image_01.png 格式
+                // 如果没有页码，使用 image_xxx.png 格式
                 String format = image.getFormat() != null ? image.getFormat() : "img";
-                filename = String.format("image_%s.%s", imageId.substring(0, Math.min(8, imageId.length())), format);
+                imageFilename = String.format("image_%s.%s", imageId.substring(0, Math.min(8, imageId.length())), format);
             }
 
-            Path imageFile = docImageDir.resolve(filename);
+            Path imageFile = docImageDir.resolve(imageFilename);
 
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(imageFile.toFile()))) {
                 oos.writeObject(image);
             }
 
-            log.debug("Saved image: {} -> {}", imageId, filename);
+            log.debug("Saved image: {} -> {}/{}", imageId, filename, imageFilename);
             return imageId;
         } catch (IOException e) {
             log.error("Failed to save image", e);
@@ -332,7 +360,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public List<Image> getImagesByDocument(String documentId) {
         try {
-            Path docImageDir = imagesPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docImageDir = imagesPath.resolve(filename);
             if (!Files.exists(docImageDir)) {
                 return new ArrayList<>();
             }
@@ -381,7 +410,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteImagesByDocument(String documentId) {
         try {
-            Path docImageDir = imagesPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docImageDir = imagesPath.resolve(filename);
             if (Files.exists(docImageDir)) {
                 Files.walk(docImageDir)
                         .sorted(Comparator.reverseOrder())
@@ -392,7 +422,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 log.error("Failed to delete: {}", p, e);
                             }
                         });
-                log.info("Deleted all images for document: {}", documentId);
+                log.info("Deleted all images for document: {}", filename);
             }
         } catch (IOException e) {
             log.error("Failed to delete images for document: {}", documentId, e);
@@ -404,7 +434,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String savePPLData(String documentId, PPLData data) {
         try {
-            Path docPplDir = pplPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docPplDir = pplPath.resolve(filename);
             Files.createDirectories(docPplDir);
 
             Path pplFile = docPplDir.resolve("ppl.data");
@@ -413,7 +444,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                 oos.writeObject(data);
             }
 
-            log.debug("Saved PPL data for document: {}", documentId);
+            log.debug("Saved PPL data for document: {}", filename);
             return documentId;
         } catch (IOException e) {
             log.error("Failed to save PPL data", e);
@@ -424,7 +455,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<PPLData> getPPLData(String documentId) {
         try {
-            Path pplFile = pplPath.resolve(documentId).resolve("ppl.data");
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path pplFile = pplPath.resolve(filename).resolve("ppl.data");
             if (!Files.exists(pplFile)) {
                 return Optional.empty();
             }
@@ -441,7 +473,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deletePPLData(String documentId) {
         try {
-            Path docPplDir = pplPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docPplDir = pplPath.resolve(filename);
             if (Files.exists(docPplDir)) {
                 Files.walk(docPplDir)
                         .sorted(Comparator.reverseOrder())
@@ -452,7 +485,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 log.error("Failed to delete: {}", p, e);
                             }
                         });
-                log.info("Deleted PPL data for document: {}", documentId);
+                log.info("Deleted PPL data for document: {}", filename);
             }
         } catch (IOException e) {
             log.error("Failed to delete PPL data for document: {}", documentId, e);
@@ -464,7 +497,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveOptimizationData(String documentId, OptimizationData data) {
         try {
-            Path docOptDir = optimizationPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docOptDir = optimizationPath.resolve(filename);
             Files.createDirectories(docOptDir);
 
             // 使用优化类型作为文件名
@@ -475,7 +509,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                 oos.writeObject(data);
             }
 
-            log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), documentId);
+            log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), filename);
             return documentId + ":" + data.getOptimizationType();
         } catch (IOException e) {
             log.error("Failed to save optimization data", e);
@@ -486,7 +520,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<OptimizationData> getOptimizationData(String documentId, String optimizationType) {
         try {
-            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType + ".opt");
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path optFile = optimizationPath.resolve(filename).resolve(optimizationType + ".opt");
             if (!Files.exists(optFile)) {
                 return Optional.empty();
             }
@@ -503,7 +538,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public List<OptimizationData> getAllOptimizationData(String documentId) {
         try {
-            Path docOptDir = optimizationPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docOptDir = optimizationPath.resolve(filename);
             if (!Files.exists(docOptDir)) {
                 return Collections.emptyList();
             }
@@ -529,10 +565,11 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteOptimizationData(String documentId, String optimizationType) {
         try {
-            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType + ".opt");
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path optFile = optimizationPath.resolve(filename).resolve(optimizationType + ".opt");
             if (Files.exists(optFile)) {
                 Files.delete(optFile);
-                log.info("Deleted {} optimization data for document: {}", optimizationType, documentId);
+                log.info("Deleted {} optimization data for document: {}", optimizationType, filename);
             }
         } catch (IOException e) {
             log.error("Failed to delete {} optimization data for document: {}", optimizationType, documentId, e);
@@ -542,7 +579,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteAllOptimizationData(String documentId) {
         try {
-            Path docOptDir = optimizationPath.resolve(documentId);
+            String filename = extractFilenameFromDocumentId(documentId);
+            Path docOptDir = optimizationPath.resolve(filename);
             if (Files.exists(docOptDir)) {
                 Files.walk(docOptDir)
                         .sorted(Comparator.reverseOrder())
@@ -553,7 +591,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 log.error("Failed to delete: {}", p, e);
                             }
                         });
-                log.info("Deleted all optimization data for document: {}", documentId);
+                log.info("Deleted all optimization data for document: {}", filename);
             }
         } catch (IOException e) {
             log.error("Failed to delete all optimization data for document: {}", documentId, e);

@@ -24,8 +24,11 @@ import java.util.concurrent.*;
 /**
  * 文件监听服务
  *
- * 监听 data/documents/ 目录的文件变化
- * 完整处理流程：解析文档 → 分块 → 存储 → RAG索引
+ * 新逻辑：
+ * 1. 监听目录扫描未索引文件
+ * 2. 处理文件：解析 → 分块 → 存储 → RAG索引
+ * 3. 成功后归档到 data/storage/documents（保留目录结构）
+ * 4. 失败则记录详细日志，保留在监听目录等待重试
  *
  * @author OmniAgent Team
  * @since 3.0.0
@@ -39,16 +42,20 @@ public class FileWatcherService {
     private final RAGService ragService;
     private final DocumentStorageService storageService;
     private final top.yumbo.ai.omni.core.chunking.DocumentChunkingService chunkingService;
+    private final top.yumbo.ai.omni.core.document.DocumentProcessorManager documentProcessorManager;
+    private final top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager chunkingStrategyManager;
+    private final top.yumbo.ai.omni.core.image.ImageStorageService imageStorageService;
 
     private WatchService watchService;
     private ExecutorService executorService;
+    private ScheduledExecutorService scanExecutor;
     private volatile boolean running = false;
 
-    // 文件变化记录
-    private final ConcurrentHashMap<String, FileChangeRecord> changeRecords = new ConcurrentHashMap<>();
+    // 文件处理记录（相对路径 -> 记录）
+    private final ConcurrentHashMap<String, FileChangeRecord> processingRecords = new ConcurrentHashMap<>();
 
-    // 文件哈希缓存（文件名 -> MD5哈希）
-    private final ConcurrentHashMap<String, String> fileHashCache = new ConcurrentHashMap<>();
+    // 已归档文件缓存（相对路径 -> 归档时间）
+    private final ConcurrentHashMap<String, Long> archivedFiles = new ConcurrentHashMap<>();
 
     // 当前配置
     @Getter
@@ -95,16 +102,9 @@ public class FileWatcherService {
                 log.info("✅ 创建监听目录: {}", watchPath.toAbsolutePath());
             }
 
-            // 创建 WatchService
+            // 创建 WatchService（监听新文件）
             watchService = FileSystems.getDefault().newWatchService();
-
-            // 注册监听事件
-            watchPath.register(
-                    watchService,
-                    StandardWatchEventKinds.ENTRY_CREATE,
-                    StandardWatchEventKinds.ENTRY_MODIFY,
-                    StandardWatchEventKinds.ENTRY_DELETE
-            );
+            registerWatchDirectory(watchPath);
 
             // 启动监听线程
             executorService = Executors.newSingleThreadExecutor();
@@ -112,14 +112,44 @@ public class FileWatcherService {
 
             executorService.submit(this::watchLoop);
 
-            // 扫描现有文件，建立初始哈希缓存
-            scanExistingFiles(watchPath);
+            // 启动定期扫描任务（每30秒扫描一次未处理文件）⭐
+            scanExecutor = Executors.newScheduledThreadPool(1);
+            scanExecutor.scheduleWithFixedDelay(
+                    this::scanAndProcessUnindexedFiles,
+                    5,  // 启动后5秒开始
+                    30, // 每30秒扫描一次
+                    TimeUnit.SECONDS
+            );
 
             log.info("✅ 文件监听已启动: {}", watchPath.toAbsolutePath());
+            log.info("🔍 定期扫描任务已启动（每30秒）");
 
         } catch (IOException e) {
             log.error("❌ 启动文件监听失败", e);
         }
+    }
+
+    /**
+     * 递归注册目录监听（包括子目录）
+     */
+    private void registerWatchDirectory(Path dir) throws IOException {
+        dir.register(
+                watchService,
+                StandardWatchEventKinds.ENTRY_CREATE,
+                StandardWatchEventKinds.ENTRY_DELETE
+        );
+
+        // 递归注册子目录
+        Files.walk(dir, 1)
+                .filter(Files::isDirectory)
+                .filter(p -> !p.equals(dir))
+                .forEach(subDir -> {
+                    try {
+                        registerWatchDirectory(subDir);
+                    } catch (IOException e) {
+                        log.error("注册子目录监听失败: {}", subDir, e);
+                    }
+                });
     }
 
     /**
@@ -140,6 +170,10 @@ public class FileWatcherService {
                 executorService.shutdown();
                 executorService.awaitTermination(5, TimeUnit.SECONDS);
             }
+            if (scanExecutor != null) {
+                scanExecutor.shutdown();
+                scanExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            }
             log.info("✅ 文件监听已停止");
         } catch (Exception e) {
             log.error("❌ 停止文件监听失败", e);
@@ -147,36 +181,62 @@ public class FileWatcherService {
     }
 
     /**
-     * 扫描现有文件，建立初始哈希缓存
+     * 扫描并处理未索引的文件（定期任务）⭐ 核心方法
      */
-    private void scanExistingFiles(Path watchPath) {
-        try {
-            log.info("🔍 扫描现有文件，建立哈希缓存...");
+    private void scanAndProcessUnindexedFiles() {
+        if (!Boolean.TRUE.equals(currentConfig.getAutoIndex())) {
+            return;
+        }
 
-            Files.list(watchPath)
+        try {
+            Path watchPath = Paths.get(currentConfig.getWatchDirectory());
+            log.info("🔍 扫描未索引文件: {}", watchPath);
+
+            // 递归扫描所有文件（包括子目录）
+            Files.walk(watchPath)
                     .filter(Files::isRegularFile)
                     .filter(path -> {
                         String name = path.getFileName().toString();
+                        // 过滤临时文件和隐藏文件
                         return !name.startsWith(".") && !name.startsWith("~") && !name.endsWith(".tmp");
                     })
-                    .forEach(path -> {
-                        String fileName = path.getFileName().toString();
-                        String hash = FileHashUtil.calculateMD5(path);
-                        if (hash != null) {
-                            fileHashCache.put(fileName, hash);
-                            log.debug("  📌 {} -> {}", fileName, hash.substring(0, 8) + "...");
+                    .forEach(filePath -> {
+                        try {
+                            // 获取相对路径（用于判断是否已处理）
+                            Path relativePath = watchPath.relativize(filePath);
+                            String relativePathStr = relativePath.toString();
+
+                            // 检查是否已归档
+                            if (archivedFiles.containsKey(relativePathStr)) {
+                                log.debug("⏭️ 已归档，跳过: {}", relativePathStr);
+                                return;
+                            }
+
+                            // 检查是否正在处理
+                            if (processingRecords.containsKey(relativePathStr)) {
+                                FileChangeRecord record = processingRecords.get(relativePathStr);
+                                if (record.getProcessed() != null && record.getProcessed()) {
+                                    log.debug("⏭️ 已处理，跳过: {}", relativePathStr);
+                                    return;
+                                }
+                            }
+
+                            // 处理文件
+                            log.info("📄 发现未索引文件: {}", relativePathStr);
+                            processNewFile(filePath, relativePath);
+
+                        } catch (Exception e) {
+                            log.error("❌ 处理文件失败: {}", filePath, e);
                         }
                     });
 
-            log.info("✅ 哈希缓存建立完成，共 {} 个文件", fileHashCache.size());
-
         } catch (IOException e) {
-            log.error("❌ 扫描现有文件失败", e);
+            log.error("❌ 扫描文件失败", e);
         }
     }
 
     /**
-     * 监听循环
+     * 监听循环（简化版：只响应新文件创建）
      */
     private void watchLoop() {
         log.info("🔍 开始监听文件变化...");
@@ -195,11 +255,13 @@ public class FileWatcherService {
                         continue;
                     }
 
-                    @SuppressWarnings("unchecked")
-                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
-                    Path filename = ev.context();
-
-                    handleFileChange(kind, filename);
+                    // 只处理新文件创建，定期扫描会处理所有未处理的文件
+                    if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                        @SuppressWarnings("unchecked")
+                        WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                        Path filename = ev.context();
+                        log.info("📄 检测到新文件: {}", filename);
+                      }
                 }
 
                 key.reset();
@@ -215,209 +277,154 @@ public class FileWatcherService {
         log.info("🛑 文件监听循环结束");
     }
 
-    /**
-     * 处理文件变化（使用 MD5 哈希值判断内容是否真正改变）
-     */
-    private void handleFileChange(WatchEvent.Kind<?> kind, Path filename) {
-        String fileName = filename.toString();
-
-        // 忽略临时文件和隐藏文件
-        if (fileName.startsWith(".") || fileName.startsWith("~") || fileName.endsWith(".tmp")) {
-            return;
-        }
-
-        Path filePath = Paths.get(currentConfig.getWatchDirectory(), fileName);
-
-        ChangeType changeType;
-        if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-            changeType = ChangeType.CREATE;
-            log.info("📄 检测到新文件: {}", fileName);
-
-            // 计算新文件的哈希值并缓存
-            String hash = FileHashUtil.calculateMD5(filePath);
-            if (hash != null) {
-                fileHashCache.put(fileName, hash);
-                log.debug("📌 缓存文件哈希: {} -> {}", fileName, hash.substring(0, 8) + "...");
-            }
-
-        } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-            // ⭐ 使用哈希值判断内容是否真正改变
-            String oldHash = fileHashCache.get(fileName);
-            String newHash = FileHashUtil.calculateMD5(filePath);
-
-            if (newHash == null) {
-                log.warn("⚠️ 无法计算文件哈希: {}", fileName);
-                return;
-            }
-
-            // 如果哈希值相同，说明内容没变，忽略此次 MODIFY 事件
-            if (FileHashUtil.isSameHash(oldHash, newHash)) {
-                log.debug("⏭️ 文件内容未改变，忽略: {}", fileName);
-                return;  // 过滤掉虚假的 MODIFY 事件
-            }
-
-            changeType = ChangeType.MODIFY;
-            log.info("✏️ 检测到文件内容修改: {} (哈希变化)", fileName);
-
-            // 更新哈希缓存
-            fileHashCache.put(fileName, newHash);
-
-        } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-            changeType = ChangeType.DELETE;
-            log.info("🗑️ 检测到文件删除: {}", fileName);
-
-            // 移除哈希缓存
-            fileHashCache.remove(fileName);
-
-        } else {
-            return;
-        }
-
-        // 记录变化
-        FileChangeRecord record = recordFileChange(fileName, changeType, filePath);
-
-        // 如果启用自动索引，则自动处理
-        if (Boolean.TRUE.equals(currentConfig.getAutoIndex())) {
-            processFileChange(record);
-        }
-    }
 
     /**
-     * 记录文件变化
+     * 处理新文件（完整流程：解析 → 分块 → 存储 → RAG索引 → 归档）⭐
      */
-    private FileChangeRecord recordFileChange(String fileName, ChangeType changeType, Path filePath) {
-        String recordId = UUID.randomUUID().toString();
+    private void processNewFile(Path filePath, Path relativePath) {
+        String relativePathStr = relativePath.toString().replace('\\', '/');
+        String filename = filePath.getFileName().toString();
 
-        Long fileSize = null;
-        Long fileModifiedTime = null;
-        String fileHash = null;
-        String oldFileHash = null;
-
-        try {
-            if (Files.exists(filePath)) {
-                fileSize = Files.size(filePath);
-                fileModifiedTime = Files.getLastModifiedTime(filePath).toMillis();
-
-                // 计算文件哈希
-                if (changeType != ChangeType.DELETE) {
-                    fileHash = FileHashUtil.calculateMD5(filePath);
-                    oldFileHash = fileHashCache.get(fileName);
-                }
-            }
-        } catch (IOException e) {
-            log.warn("⚠️ 无法获取文件属性: {}", fileName, e);
-        }
-
-        // 尝试从文件名提取 documentId
-        String documentId = extractDocumentId(fileName);
-
+        // 创建处理记录
         FileChangeRecord record = FileChangeRecord.builder()
-                .id(recordId)
+                .id(UUID.randomUUID().toString())
                 .filePath(filePath.toString())
-                .fileName(fileName)
-                .documentId(documentId)
-                .changeType(changeType)
-                .fileSize(fileSize)
-                .fileModifiedTime(fileModifiedTime)
-                .fileHash(fileHash)
-                .oldFileHash(oldFileHash)
+                .fileName(filename)
+                .changeType(ChangeType.CREATE)
                 .changedAt(System.currentTimeMillis())
                 .processed(false)
                 .build();
 
-        changeRecords.put(recordId, record);
+        processingRecords.put(relativePathStr, record);
 
-        log.debug("📝 记录文件变化: id={}, type={}, file={}", recordId, changeType, fileName);
-
-        return record;
-    }
-
-    /**
-     * 处理文件变化（完整流程：解析 → 分块 → 存储 → 索引）
-     */
-    private void processFileChange(FileChangeRecord record) {
         try {
-            log.info("🔄 自动处理文件变化: {}", record.getFileName());
+            log.info("🔄 开始处理文件: {}", relativePathStr);
 
-            Path filePath = Paths.get(record.getFilePath());
+            // 生成 documentId（使用相对路径，保留目录结构）
+            String documentId = "doc_" + System.currentTimeMillis() + "_" +
+                    relativePathStr.replace("/", "_").replace("\\", "_");
 
-            switch (record.getChangeType()) {
-                case CREATE, MODIFY -> {
-                    if (Files.exists(filePath)) {
-                        String docId = record.getDocumentId();
-                        if (docId == null) {
-                            docId = "doc_" + System.currentTimeMillis();
-                        }
+            // ========== 步骤1: 读取文件 ==========
+            byte[] fileData = Files.readAllBytes(filePath);
+            log.info("📄 读取文件: {} bytes", fileData.length);
 
-                        // ⭐ 步骤1: 解析文档内容
-                        String content;
-                        try {
-                            content = DocumentParserUtil.parseDocument(filePath.toFile());
-                            log.info("📄 文档解析成功: {} 字符", content.length());
-                        } catch (Exception e) {
-                            log.warn("⚠️ 文档解析失败: {}", record.getFileName(), e);
-                            record.setNote("解析失败: " + e.getMessage());
-                            return;
-                        }
+            // ========== 步骤2: 使用 DocumentProcessorManager 处理文档 ==========
+            String content;
+            List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> images = null;
 
-                        if (content == null || content.trim().isEmpty()) {
-                            log.warn("⚠️ 文档内容为空: {}", record.getFileName());
-                            record.setNote("文档内容为空");
-                            return;
-                        }
+            try {
+                log.info("🔄 使用 DocumentProcessorManager 处理文档...");
 
-                        // ⭐ 步骤2: 智能分块（根据文件类型自动选择策略）
-                        // 传入文件名，自动推断文档类型并选择最佳分块算法：
-                        // - 技术文档 (README.md) → Semantic Chunking
-                        // - API文档 (api.yaml) → 结构化分块
-                        // - 代码文件 (.java/.py) → Semantic Chunking
-                        // - FAQ文档 → 句子边界分块
-                        // - 长文章 → 段落分块
-                        // - 通用文档 → 固定大小分块
-                        List<Chunk> chunks = chunkingService.chunkDocument(docId, content, record.getFileName());
-                        log.info("✂️ 智能分块完成: {} 个分块（文件类型: {}）",
-                                chunks.size(), record.getFileName());
+                top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
+                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+                        .fileBytes(fileData)
+                        .fileExtension(getFileExtension(filename))
+                        .originalFileName(filename)
+                        .fileSize((long) fileData.length)
+                        .options(new HashMap<>())
+                        .build();
 
-                        // ⭐ 步骤3: 存储分块
-                        List<String> chunkIds = storageService.saveChunks(docId, chunks);
-                        log.info("💾 分块已存储: {} 个", chunkIds.size());
+                top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
+                    documentProcessorManager.processDocument(context);
 
-                        // ⭐ 步骤4: RAG索引
-                        Document document = Document.builder()
-                                .id(docId)
-                                .title(record.getFileName())
-                                .content(content)
-                                .source("file-watcher")
-                                .type(getFileType(record.getFileName()))
-                                .metadata(Map.of(
-                                        "fileName", record.getFileName(),
-                                        "fileSize", record.getFileSize() != null ? record.getFileSize() : 0L,
-                                        "chunks", chunks.size()
-                                ))
-                                .build();
-
-                        ragService.indexDocument(document);
-                        log.info("✅ 处理完成: {}", record.getFileName());
-                    }
+                if (result.isSuccess()) {
+                    content = result.getContent();
+                    images = result.getImages();
+                    log.info("✅ 文档处理成功: {} chars, {} images",
+                            content.length(), images != null ? images.size() : 0);
+                } else {
+                    throw new Exception("文档处理失败: " + result.getError());
                 }
-                case DELETE -> {
-                    if (record.getDocumentId() != null) {
-                        String docId = record.getDocumentId();
-                        storageService.deleteChunksByDocument(docId);
-                        storageService.deleteImagesByDocument(docId);
-                        ragService.deleteDocument(docId);
-                        log.info("✅ 删除完成: {}", record.getFileName());
+
+            } catch (Exception e) {
+                log.warn("⚠️ DocumentProcessor 失败，降级使用 DocumentParserUtil: {}", e.getMessage());
+                content = DocumentParserUtil.parseDocument(filePath.toFile());
+            }
+
+            if (content == null || content.trim().isEmpty()) {
+                throw new Exception("文档内容为空");
+            }
+
+            // ========== 步骤3: 保存原始文档到存储 ==========
+            log.info("💾 保存原始文档到存储服务...");
+            String savedDocId = storageService.saveDocument(documentId, relativePathStr, fileData);
+            if (savedDocId == null) {
+                throw new Exception("保存原始文档失败");
+            }
+
+            // ========== 步骤4: 保存提取的图片 ==========
+            if (images != null && !images.isEmpty()) {
+                log.info("🖼️ 保存提取的图片: {} 张", images.size());
+                for (var image : images) {
+                    try {
+                        imageStorageService.saveImage(documentId, image.getData(), image.getFormat());
+                    } catch (Exception ex) {
+                        log.warn("⚠️ 保存图片失败: {}", ex.getMessage());
                     }
                 }
             }
 
+            // ========== 步骤5: 智能分块 ==========
+            log.info("✂️ 智能分块...");
+            List<Chunk> chunks = chunkingStrategyManager.chunkWithAutoStrategy(
+                    documentId, content, filename);
+            log.info("✅ 分块完成: {} 个块", chunks.size());
+
+            // ========== 步骤6: 保存分块 ==========
+            log.info("💾 保存分块到存储...");
+            List<String> chunkIds = storageService.saveChunks(documentId, chunks);
+            log.info("✅ 分块已保存: {} 个", chunkIds.size());
+
+            // ========== 步骤7: RAG索引 ==========
+            log.info("📇 索引到 RAG...");
+            for (Chunk chunk : chunks) {
+                top.yumbo.ai.rag.api.model.Document document = top.yumbo.ai.rag.api.model.Document.builder()
+                        .id(chunk.getId())
+                        .title(filename + " (块 " + chunk.getSequence() + ")")
+                        .content(chunk.getContent())
+                        .summary("块 " + chunk.getSequence())
+                        .source("file-watcher")
+                        .type(getFileType(filename))
+                        .metadata(Map.of(
+                                "fileName", filename,
+                                "relativePath", relativePathStr,
+                                "documentId", documentId
+                        ))
+                        .build();
+
+                ragService.indexDocument(document);
+            }
+            log.info("✅ RAG索引完成");
+
+            // ========== 步骤8: 归档成功，从监听目录移除 ==========
+            Files.delete(filePath);
+            log.info("🗑️ 已从监听目录移除: {}", relativePathStr);
+
+            // 标记为已归档
+            archivedFiles.put(relativePathStr, System.currentTimeMillis());
             record.setProcessed(true);
             record.setProcessedAt(System.currentTimeMillis());
+            record.setNote("成功归档到: " + relativePathStr);
+
+            log.info("✅ 处理完成: {}", relativePathStr);
 
         } catch (Exception e) {
-            log.error("❌ 处理失败: {}", record.getFileName(), e);
-            record.setNote("处理失败: " + e.getMessage());
+            log.error("❌ 处理失败: {} - {}", relativePathStr, e.getMessage(), e);
+            record.setProcessed(false);
+            record.setNote("失败: " + e.getMessage());
+            // 失败的文件保留在监听目录，等待下次扫描重试
         }
+    }
+
+    /**
+     * 获取文件扩展名
+     */
+    private String getFileExtension(String filename) {
+        int lastDot = filename.lastIndexOf('.');
+        if (lastDot > 0 && lastDot < filename.length() - 1) {
+            return filename.substring(lastDot + 1);
+        }
+        return "";
     }
 
     // ========== 分块策略相关 ==========
@@ -482,40 +489,36 @@ public class FileWatcherService {
     // ========== 公开API ==========
 
     public List<FileChangeRecord> getUnprocessedChanges() {
-        return changeRecords.values().stream()
-                .filter(r -> !r.getProcessed())
+        return processingRecords.values().stream()
+                .filter(r -> !Boolean.TRUE.equals(r.getProcessed()))
                 .sorted(Comparator.comparing(FileChangeRecord::getChangedAt).reversed())
                 .toList();
     }
 
     public List<FileChangeRecord> getAllChanges() {
-        return changeRecords.values().stream()
+        return processingRecords.values().stream()
                 .sorted(Comparator.comparing(FileChangeRecord::getChangedAt).reversed())
                 .toList();
     }
 
     public boolean processChange(String recordId) {
-        FileChangeRecord record = changeRecords.get(recordId);
-        if (record == null) return false;
-        processFileChange(record);
-        return record.getProcessed();
+        // 手动触发重试（暂不实现，因为自动扫描会处理）
+        return false;
     }
 
     public int processAllUnprocessed() {
-        List<FileChangeRecord> unprocessed = getUnprocessedChanges();
-        int count = 0;
-        for (FileChangeRecord record : unprocessed) {
-            processFileChange(record);
-            if (record.getProcessed()) count++;
-        }
-        return count;
+        // 触发立即扫描
+        scanAndProcessUnindexedFiles();
+        return (int) processingRecords.values().stream()
+                .filter(r -> Boolean.TRUE.equals(r.getProcessed()))
+                .count();
     }
 
     public int clearProcessedRecords() {
         int count = 0;
-        Iterator<Map.Entry<String, FileChangeRecord>> it = changeRecords.entrySet().iterator();
+        Iterator<Map.Entry<String, FileChangeRecord>> it = processingRecords.entrySet().iterator();
         while (it.hasNext()) {
-            if (it.next().getValue().getProcessed()) {
+            if (Boolean.TRUE.equals(it.next().getValue().getProcessed())) {
                 it.remove();
                 count++;
             }
