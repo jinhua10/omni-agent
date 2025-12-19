@@ -75,13 +75,13 @@ public class ConceptExtractor {
     private static final Set<String> OPERATION_KEYWORDS = Set.of(
             "配置", "部署", "安装", "优化", "调试", "测试", "运行",
             "启动", "停止", "重启", "更新", "升级", "迁移",
-            "配置", "设置", "管理", "监控", "日志", "备份"
+            "设置", "管理", "监控", "日志", "备份"
     );
 
     /**
      * 从文本中提取概念
      *
-     * @param text 输入文本
+     * @param text       输入文本
      * @param documentId 文档ID
      * @return 提取的概念列表
      */
@@ -233,7 +233,7 @@ public class ConceptExtractor {
                 int cooccurrenceCount = 0;
                 for (String sentence : sentences) {
                     if (sentence.contains(concept1.getName()) &&
-                        sentence.contains(concept2.getName())) {
+                            sentence.contains(concept2.getName())) {
                         cooccurrenceCount++;
                     }
                 }
