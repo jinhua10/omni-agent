@@ -269,6 +269,25 @@ export default {
       loadFailed: '加载失败',
       emptyFolder: '文件夹为空',
       searchResults: '搜索结果',
+      // 索引状态 / Index status
+      indexStatus: '索引状态',
+      statusPending: '待索引',
+      statusIndexing: '索引中',
+      statusDone: '已完成',
+      statusFailed: '失败',
+      // 状态过滤 / Status filter
+      filterAll: '全部',
+      filterIndexing: '索引中',
+      filterDone: '已完成',
+      filterFailed: '失败',
+      // 重建索引 / Rebuild index
+      rebuildIndex: '重建索引',
+      batchRebuild: '批量重建',
+      confirmRebuildIndex: '确认重建索引',
+      rebuildIndexWarning: '将重建 {count} 个文件的索引，确定继续吗？',
+      rebuildIndexStarted: '索引重建已开始',
+      rebuildIndexFailed: '索引重建失败',
+      noFilesSelected: '请先选择文件',
     },
 
     // Shell页面专用 / Shell page specific

@@ -304,6 +304,25 @@ export default {
       loadFailed: 'Failed to load',
       emptyFolder: 'Folder is empty',
       searchResults: 'Search Results',
+      // Index status
+      indexStatus: 'Index Status',
+      statusPending: 'Pending',
+      statusIndexing: 'Indexing',
+      statusDone: 'Done',
+      statusFailed: 'Failed',
+      // Status filter
+      filterAll: 'All',
+      filterIndexing: 'Indexing',
+      filterDone: 'Done',
+      filterFailed: 'Failed',
+      // Rebuild index
+      rebuildIndex: 'Rebuild Index',
+      batchRebuild: 'Batch Rebuild',
+      confirmRebuildIndex: 'Confirm Rebuild Index',
+      rebuildIndexWarning: 'Rebuild index for {count} file(s), continue?',
+      rebuildIndexStarted: 'Index rebuild started',
+      rebuildIndexFailed: 'Index rebuild failed',
+      noFilesSelected: 'Please select files first',
     },
   },
 
