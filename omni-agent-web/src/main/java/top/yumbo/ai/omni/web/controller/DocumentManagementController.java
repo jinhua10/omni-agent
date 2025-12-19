@@ -221,30 +221,87 @@ public class DocumentManagementController {
                     // 保存原始文件
                     FileStorageUtil.saveFile(file, documentId);
 
-                    // 使用 DocumentParserUtil 解析文档内容
+                    // === 使用 DocumentProcessorManager 处理文档 ===
                     String content;
+                    String fileExtension = getFileExtension(filename);
+
                     try {
-                        content = DocumentParserUtil.parseDocument(file);
+                        log.info("🔄 使用 DocumentProcessorManager 处理文档: {}", filename);
+
+                        DocumentProcessor.ProcessingContext context = DocumentProcessor.ProcessingContext.builder()
+                                .fileBytes(file.getBytes())
+                                .filePath(null)
+                                .fileExtension(fileExtension)
+                                .originalFileName(filename)
+                                .fileSize(file.getSize())
+                                .options(new HashMap<>())
+                                .build();
+
+                        DocumentProcessor.ProcessingResult result = documentProcessorManager.processDocument(context);
+
+                        if (result.isSuccess()) {
+                            content = result.getContent();
+                            log.info("✅ 文档处理成功: processor={}, 内容长度={} chars",
+                                    result.getProcessorName(), content.length());
+                        } else {
+                            throw new Exception("文档处理失败: " + result.getError());
+                        }
+
                     } catch (Exception e) {
-                        log.warn("文档解析失败，使用原始字节内容: {}", e.getMessage());
-                        content = new String(file.getBytes(), StandardCharsets.UTF_8);
+                        log.warn("⚠️ DocumentProcessor 处理失败，降级使用 DocumentParserUtil: {}", e.getMessage());
+                        try {
+                            content = DocumentParserUtil.parseDocument(file);
+                        } catch (Exception ex) {
+                            log.warn("⚠️ DocumentParserUtil 也失败，使用原始字节内容");
+                            content = new String(file.getBytes(), StandardCharsets.UTF_8);
+                        }
                     }
 
-                    // 直接索引到RAG
+                    // === 使用 ChunkingStrategyManager 进行分块 ===
                     if (autoIndex) {
-                        Document document = Document.builder()
-                            .id(documentId)
-                            .title(filename)
-                            .content(content)
-                            .source("upload")
-                            .type("document")
-                            .build();
+                        try {
+                            log.info("📦 使用 ChunkingStrategyManager 进行分块: {}", filename);
 
-                        ragService.indexDocument(document);
+                            List<Chunk> chunks = chunkingStrategyManager.chunkWithAutoStrategy(
+                                    documentId, content, filename);
+                            log.info("✅ 分块完成: 共 {} 个块", chunks.size());
+
+                            int indexed = 0;
+                            for (Chunk chunk : chunks) {
+                                Document document = Document.builder()
+                                        .id(chunk.getId())
+                                        .title(filename + " (块 " + chunk.getSequence() + ")")
+                                        .content(chunk.getContent())
+                                        .summary("块 " + chunk.getSequence())
+                                        .source("upload")
+                                        .type("chunk")
+                                        .build();
+
+                                ragService.indexDocument(document);
+                                indexed++;
+                            }
+
+                            uploadResult.setMessage("上传成功，已分块并索引（" + indexed + " 个块）");
+
+                        } catch (Exception e) {
+                            log.warn("⚠️ 分块失败，降级使用整文档索引: {}", e.getMessage());
+
+                            Document document = Document.builder()
+                                    .id(documentId)
+                                    .title(filename)
+                                    .content(content)
+                                    .source("upload")
+                                    .type("document")
+                                    .build();
+
+                            ragService.indexDocument(document);
+                            uploadResult.setMessage("上传成功（未分块）");
+                        }
+                    } else {
+                        uploadResult.setMessage("上传成功（未索引）");
                     }
 
                     uploadResult.setSuccess(true);
-                    uploadResult.setMessage("上传成功");
                     uploadResult.setDocumentId(documentId);
                     uploadResult.setFileSize(file.getSize());
                     successCount++;
