@@ -45,7 +45,9 @@ import {
   MessageOutlined,
   ReloadOutlined,
   HomeOutlined,
-  FolderOpenOutlined
+  FolderOpenOutlined,
+  SearchOutlined,
+  CloseCircleOutlined
 } from '@ant-design/icons'
 import DocumentUpload from './DocumentUpload'
 import DocumentDetail from './DocumentDetail'
@@ -102,6 +104,7 @@ function DocumentBrowser() {
   const [items, setItems] = useState([]) // 文件和文件夹列表 / Files and folders list
   const [loading, setLoading] = useState(false) // 加载状态 / Loading state
   const [selectedItems, setSelectedItems] = useState([]) // 选中的项 / Selected items
+  const [searchKeyword, setSearchKeyword] = useState('') // 搜索关键词 / Search keyword
 
   // UI 状态 / UI state
   const [uploadVisible, setUploadVisible] = useState(false) // 上传对话框 / Upload dialog
@@ -340,6 +343,29 @@ function DocumentBrowser() {
   }, [currentPath, navigateTo, t])
 
   // ============================================================================
+  // 搜索过滤 / Search filtering
+  // ============================================================================
+
+  const filteredItems = useMemo(() => {
+    if (!searchKeyword.trim()) {
+      return items
+    }
+
+    const keyword = searchKeyword.toLowerCase()
+    return items.filter(item => {
+      const name = item.name.toLowerCase()
+      return name.includes(keyword)
+    })
+  }, [items, searchKeyword])
+
+  /**
+   * 清除搜索 / Clear search
+   */
+  const handleClearSearch = useCallback(() => {
+    setSearchKeyword('')
+  }, [])
+
+  // ============================================================================
   // 表格列定义 / Table columns definition
   // ============================================================================
 
@@ -481,6 +507,24 @@ function DocumentBrowser() {
           >
             {t('common.refresh')}
           </Button>
+
+          {/* 搜索框 / Search box */}
+          <Input
+            placeholder={t('document.searchPlaceholder')}
+            prefix={<SearchOutlined />}
+            suffix={
+              searchKeyword ? (
+                <CloseCircleOutlined
+                  onClick={handleClearSearch}
+                  style={{ cursor: 'pointer', color: '#999' }}
+                />
+              ) : null
+            }
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            style={{ width: 300 }}
+            allowClear
+          />
         </Space>
 
         {/* 统计信息 / Statistics */}
@@ -494,13 +538,18 @@ function DocumentBrowser() {
       {/* 面包屑导航 / Breadcrumb navigation */}
       <div className="browser-breadcrumb">
         <Breadcrumb items={breadcrumbItems} />
+        {searchKeyword && (
+          <Tag color="blue" style={{ marginLeft: 16 }}>
+            {t('document.browse.searchResults')}: {filteredItems.length}
+          </Tag>
+        )}
       </div>
 
       {/* 文件列表 / File list */}
       <Table
         className="browser-table"
         columns={columns}
-        dataSource={items}
+        dataSource={filteredItems}
         loading={loading}
         rowKey="path"
         pagination={false}

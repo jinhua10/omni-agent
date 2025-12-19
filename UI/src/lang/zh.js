@@ -268,6 +268,7 @@ export default {
       aiChat: 'AI交互',
       loadFailed: '加载失败',
       emptyFolder: '文件夹为空',
+      searchResults: '搜索结果',
     },
 
     // Shell页面专用 / Shell page specific

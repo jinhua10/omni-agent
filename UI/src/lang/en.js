@@ -303,6 +303,7 @@ export default {
       aiChat: 'AI Interaction',
       loadFailed: 'Failed to load',
       emptyFolder: 'Folder is empty',
+      searchResults: 'Search Results',
     },
   },
 
