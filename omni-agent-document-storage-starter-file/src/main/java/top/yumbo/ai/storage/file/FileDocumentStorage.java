@@ -138,10 +138,10 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docChunkDir = chunksPath.resolve(documentId);
             Files.createDirectories(docChunkDir);
 
-            // 使用有意义的文件名：chunk_序号（无后缀）⭐
+            // 使用有意义的文件名：chunk_序号.md ⭐
             String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
             int sequence = chunk.getSequence();
-            String chunkFilename = String.format("chunk_%03d", sequence);  // 去掉.chunk后缀
+            String chunkFilename = String.format("chunk_%03d.md", sequence);  // 添加.md后缀
             Path chunkFile = docChunkDir.resolve(chunkFilename);
 
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(chunkFile.toFile()))) {
