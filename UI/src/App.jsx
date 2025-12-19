@@ -20,7 +20,7 @@ import ThemeEngineErrorBoundary from './components/theme/ThemeEngineErrorBoundar
 import { FloatingAIButton, FloatingAIPanel, DOCK_POSITIONS } from './components/ai'
 import ResizeSplitter from './components/ai/ResizeSplitter'
 import { QAPanel } from './components/qa'
-import { DocumentList } from './components/document'
+import { DocumentManagement } from './components/document'
 import { RoleList } from './components/role'
 import { FeedbackPanel } from './components/feedback'
 import { CollaborationPanel } from './components/collaboration'
@@ -139,7 +139,7 @@ function AppContent() {
       case 'qa':
         return <QAPanel />
       case 'documents':
-        return <DocumentList />
+        return <DocumentManagement />
       case 'roles':
         return <RoleList />
       case 'feedback':

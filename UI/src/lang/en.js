@@ -145,6 +145,14 @@ export default {
   // ============================================================================
   document: {
     title: 'Document Management',
+
+    // View mode toggle
+    viewMode: {
+      browser: 'Browser View',
+      list: 'List View',
+      card: 'Card View',
+    },
+
     upload: 'Upload Document',
     uploadTip: 'Click or drag files to this area to upload',
     uploadHint: 'Support PDF, Word, Excel, PPT formats, max 100MB per file, batch upload supported',
@@ -259,6 +267,42 @@ export default {
     sortOrder: {
       asc: 'Ascending',
       desc: 'Descending',
+    },
+
+    // FTP-style browser
+    browse: {
+      root: 'Root',
+      name: 'Name',
+      type: 'Type',
+      size: 'Size',
+      modified: 'Modified',
+      actions: 'Actions',
+      folder: 'Folder',
+      file: 'File',
+      files: 'Files',
+      folders: 'Folders',
+      totalSize: 'Total Size',
+      upload: 'Upload File',
+      uploadTitle: 'Upload Document',
+      createFolder: 'New Folder',
+      createFolderTitle: 'Create Folder',
+      createFolderSuccess: 'Folder created successfully',
+      createFolderFailed: 'Failed to create folder',
+      folderNameRequired: 'Please enter folder name',
+      folderNamePlaceholder: 'Enter folder name',
+      download: 'Download',
+      downloadStarted: 'Download started',
+      downloadFailed: 'Download failed',
+      delete: 'Delete',
+      confirmDelete: 'Confirm Delete',
+      deleteWarning: 'This action cannot be undone. Are you sure to delete',
+      deleteSuccess: 'Deleted successfully',
+      deleteFailed: 'Failed to delete',
+      viewDetail: 'View Details',
+      detailTitle: 'Document Details',
+      aiChat: 'AI Interaction',
+      loadFailed: 'Failed to load',
+      emptyFolder: 'Folder is empty',
     },
   },
 

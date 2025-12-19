@@ -145,6 +145,14 @@ export default {
   // ============================================================================
   document: {
     title: '文档管理',
+
+    // 视图模式切换 / View mode toggle
+    viewMode: {
+      browser: '浏览器视图',
+      list: '列表视图',
+      card: '卡片视图',
+    },
+
     upload: '上传文档',
     uploadTip: '点击或拖拽文件到此区域上传',
     uploadHint: '支持 PDF、Word、Excel、PPT 等格式，单个文件不超过 100MB，支持多文件批量上传',
@@ -224,6 +232,42 @@ export default {
     sortOrder: {
       asc: '升序',
       desc: '降序',
+    },
+
+    // FTP风格浏览器 / FTP-style browser
+    browse: {
+      root: '根目录',
+      name: '名称',
+      type: '类型',
+      size: '大小',
+      modified: '修改时间',
+      actions: '操作',
+      folder: '文件夹',
+      file: '文件',
+      files: '文件',
+      folders: '文件夹',
+      totalSize: '总大小',
+      upload: '上传文件',
+      uploadTitle: '上传文档',
+      createFolder: '新建文件夹',
+      createFolderTitle: '创建文件夹',
+      createFolderSuccess: '文件夹创建成功',
+      createFolderFailed: '文件夹创建失败',
+      folderNameRequired: '请输入文件夹名称',
+      folderNamePlaceholder: '请输入文件夹名称',
+      download: '下��',
+      downloadStarted: '开始下载',
+      downloadFailed: '下载失败',
+      delete: '删除',
+      confirmDelete: '确认删除',
+      deleteWarning: '此操作不可恢复，确定要删除',
+      deleteSuccess: '删除成功',
+      deleteFailed: '删除失败',
+      viewDetail: '查看详情',
+      detailTitle: '文档详情',
+      aiChat: 'AI交互',
+      loadFailed: '加载失败',
+      emptyFolder: '文件夹为空',
     },
 
     // Shell页面专用 / Shell page specific

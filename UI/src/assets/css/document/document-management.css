@@ -1,0 +1,115 @@
+/**
+ * 文档管理主页面样式
+ * Document Management Main Page Styles
+ *
+ * @author OmniAgent Team
+ * @since 2025-12-19
+ */
+
+.document-management {
+  width: 100%;
+  min-height: calc(100vh - 120px);
+}
+
+/* 页面头部 / Page header */
+.document-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 0;
+}
+
+.document-management-header .page-title {
+  margin: 0;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 视图切换器 / View switcher */
+.document-management-header .ant-segmented {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.document-management-header .ant-segmented-item {
+  padding: 8px 16px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.document-management-header .ant-segmented-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.document-management-header .ant-segmented-item-selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #fff !important;
+}
+
+.document-management-header .ant-segmented-item-selected .anticon {
+  color: #fff;
+}
+
+/* 内容区域 / Content area */
+.document-management-content {
+  background: #fff;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 响应式设计 / Responsive design */
+@media (max-width: 768px) {
+  .document-management-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .document-management-header .page-title {
+    font-size: 24px;
+  }
+
+  .document-management-header .ant-segmented {
+    width: 100%;
+  }
+
+  .document-management-header .ant-segmented-item {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* 动画效果 / Animation effects */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.document-management-content > * {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* 暗色模式支持 / Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .document-management-content {
+    background: #1f1f1f;
+  }
+
+  .document-management-header {
+    background: linear-gradient(135deg, #434343 0%, #000000 100%);
+  }
+}
+

@@ -1,0 +1,223 @@
+/**
+ * FTP风格文档浏览器样式 / FTP-Style Document Browser Styles
+ *
+ * @author OmniAgent Team
+ * @since 2025-12-19
+ */
+
+.document-browser {
+  padding: 24px;
+  background: #fff;
+  border-radius: 8px;
+  min-height: calc(100vh - 120px);
+}
+
+/* 工具栏 / Toolbar */
+.browser-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+}
+
+.browser-stats {
+  display: flex;
+  gap: 8px;
+}
+
+/* 面包屑导航 / Breadcrumb */
+.browser-breadcrumb {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  border-left: 3px solid #1890ff;
+}
+
+.browser-breadcrumb .ant-breadcrumb {
+  font-size: 14px;
+}
+
+.browser-breadcrumb .ant-breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 文件列表表格 / File list table */
+.browser-table {
+  background: #fff;
+  border-radius: 4px;
+}
+
+.browser-table .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #262626;
+}
+
+.browser-table .ant-table-tbody > tr {
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.browser-table .ant-table-tbody > tr:hover {
+  background: #f0f7ff;
+}
+
+.browser-table .ant-table-tbody > tr > td {
+  padding: 12px 16px;
+}
+
+/* 文件/文件夹图标 / File/Folder icons */
+.browser-table .anticon {
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+.browser-table .anticon-folder {
+  color: #faad14;
+}
+
+.browser-table .anticon-file {
+  color: #1890ff;
+}
+
+/* 操作按钮 / Action buttons */
+.browser-table .ant-space-item button {
+  transition: all 0.2s;
+}
+
+.browser-table .ant-space-item button:hover {
+  transform: scale(1.1);
+}
+
+/* Tag样式 / Tag styles */
+.browser-stats .ant-tag {
+  padding: 4px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.browser-table .ant-tag {
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+/* 响应式设计 / Responsive design */
+@media (max-width: 768px) {
+  .document-browser {
+    padding: 16px;
+  }
+
+  .browser-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .browser-stats {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .browser-table .ant-table {
+    font-size: 12px;
+  }
+
+  .browser-table .ant-table-tbody > tr > td {
+    padding: 8px;
+  }
+}
+
+/* 加载状态 / Loading state */
+.browser-table .ant-spin-nested-loading {
+  min-height: 400px;
+}
+
+/* 空状态 / Empty state */
+.browser-table .ant-empty {
+  padding: 60px 0;
+}
+
+.browser-table .ant-empty-description {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+/* 模态框样式 / Modal styles */
+.ant-modal .ant-modal-header {
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ant-modal .ant-modal-body {
+  padding: 24px;
+}
+
+/* 动画效果 / Animation effects */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.document-browser {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 文件类型图标颜色 / File type icon colors */
+.browser-table .file-icon-pdf {
+  color: #f5222d;
+}
+
+.browser-table .file-icon-doc {
+  color: #2f54eb;
+}
+
+.browser-table .file-icon-xls {
+  color: #52c41a;
+}
+
+.browser-table .file-icon-ppt {
+  color: #fa8c16;
+}
+
+.browser-table .file-icon-txt {
+  color: #595959;
+}
+
+.browser-table .file-icon-image {
+  color: #722ed1;
+}
+
+/* 高亮当前路径 / Highlight current path */
+.browser-breadcrumb .ant-breadcrumb-link:hover {
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* 操作按钮组 / Action button group */
+.browser-table .ant-space-compact {
+  display: inline-flex;
+}
+
+.browser-table .ant-btn-text:hover {
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.browser-table .ant-btn-text.ant-btn-dangerous:hover {
+  background: rgba(255, 77, 79, 0.1);
+}
+

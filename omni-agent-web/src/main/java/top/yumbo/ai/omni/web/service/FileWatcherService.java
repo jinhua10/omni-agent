@@ -387,8 +387,10 @@ public class FileWatcherService {
                         .type(getFileType(filename))
                         .metadata(Map.of(
                                 "fileName", filename,
-                                "relativePath", relativePathStr,
-                                "documentId", documentId
+                                "relativePath", relativePathStr,           // ⭐ 相对路径
+                                "storagePath", relativePathStr,            // ⭐ 存储路径（用于下载）
+                                "documentId", documentId,
+                                "chunkIndex", chunk.getSequence()
                         ))
                         .build();
 

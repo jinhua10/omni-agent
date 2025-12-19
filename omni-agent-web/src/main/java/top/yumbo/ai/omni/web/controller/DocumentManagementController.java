@@ -170,6 +170,12 @@ public class DocumentManagementController {
                                 .summary("块 " + chunk.getSequence())
                                 .source("upload")
                                 .type("chunk")
+                                .metadata(Map.of(
+                                        "fileName", filename,
+                                        "storagePath", filename,                    // ⭐ 存储路径
+                                        "documentId", documentId,
+                                        "chunkIndex", chunk.getSequence()
+                                ))
                                 .build();
 
                         ragService.indexDocument(document);
@@ -337,6 +343,12 @@ public class DocumentManagementController {
                                         .summary("块 " + chunk.getSequence())
                                         .source("upload")
                                         .type("chunk")
+                                        .metadata(Map.of(
+                                                "fileName", filename,
+                                                "storagePath", filename,                    // ⭐ 存储路径
+                                                "documentId", documentId,
+                                                "chunkIndex", chunk.getSequence()
+                                        ))
                                         .build();
 
                                 ragService.indexDocument(document);

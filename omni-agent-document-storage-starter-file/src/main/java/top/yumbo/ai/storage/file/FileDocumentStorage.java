@@ -68,15 +68,20 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveDocument(String documentId, String filename, byte[] fileData) {
         try {
-            // 使用原文档名称作为子目录名 ⭐ 修改
-            Path docDir = documentsPath.resolve(filename);
-            Files.createDirectories(docDir);
+            // 使用原文件名直接保存（保留相对路径中的目录结构）⭐
+            // 例如: filename = "设计图/架构图.pptx"
+            //      保存为: documents/设计图/架构图.pptx
+            Path documentFile = documentsPath.resolve(filename);
 
-            // 在子目录中保存原始文件
-            Path documentFile = docDir.resolve(filename);
+            // 确保父目录存在
+            Path parentDir = documentFile.getParent();
+            if (parentDir != null) {
+                Files.createDirectories(parentDir);
+            }
+
             Files.write(documentFile, fileData);
 
-            log.debug("Saved document: {} in directory: {}", filename, docDir);
+            log.debug("Saved document: {}", filename);
             return documentId;
         } catch (IOException e) {
             log.error("Failed to save document: {}", filename, e);
@@ -87,18 +92,14 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<byte[]> getDocument(String documentId) {
         try {
-            // 遍历 documents 目录，查找包含该文档的目录
-            // 因为我们不知道原文件名，需要通过其他方式关联
-            // 这里简化处理：假设 documentId 就是用来定位的
-            // 实际使用时，Controller 层应该传递 filename
-
-            // 临时实现：搜索所有子目录中的文件
-            Path[] files = Files.walk(documentsPath, 2)
+            // 由于使用原文件名直接存储，需要通过其他方式查找
+            // 这里简化处理：遍历查找
+            Path[] files = Files.walk(documentsPath, 10)
                     .filter(Files::isRegularFile)
                     .toArray(Path[]::new);
 
             if (files.length > 0) {
-                // 返回第一个找到的文件
+                // 返回第一个找到的文件（需要更好的查找机制）
                 byte[] data = Files.readAllBytes(files[0]);
                 return Optional.of(data);
             }
@@ -112,27 +113,17 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteDocument(String documentId) {
         try {
-            // 由于使用原文件名作为目录，这里需要遍历查找
-            // 实际使用时应该从 Controller 传递 filename
-            Files.walk(documentsPath, 1)
-                    .filter(Files::isDirectory)
-                    .filter(p -> !p.equals(documentsPath))
-                    .forEach(docDir -> {
+            // 遍历删除（需要更好的删除机制）
+            Files.walk(documentsPath, 10)
+                    .filter(Files::isRegularFile)
+                    .forEach(p -> {
                         try {
-                            Files.walk(docDir)
-                                    .sorted(Comparator.reverseOrder())
-                                    .forEach(p -> {
-                                        try {
-                                            Files.delete(p);
-                                        } catch (IOException e) {
-                                            log.error("Failed to delete: {}", p, e);
-                                        }
-                                    });
+                            Files.delete(p);
+                            log.debug("Deleted document file: {}", p);
                         } catch (IOException e) {
-                            log.error("Failed to walk directory: {}", docDir, e);
+                            log.error("Failed to delete: {}", p, e);
                         }
                     });
-            log.debug("Deleted document: {}", documentId);
         } catch (IOException e) {
             log.error("Failed to delete document: {}", documentId, e);
         }
