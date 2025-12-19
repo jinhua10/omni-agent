@@ -295,27 +295,32 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docImageDir = imagesPath.resolve(documentId);
             Files.createDirectories(docImageDir);
 
-            // 使用有意义的文件名：page_页码_img（无额外后缀）⭐
+            // 使用有意义的文件名：page_页码_img ⭐
             String imageId = image.getId() != null ? image.getId() : UUID.randomUUID().toString();
 
             // 构建文件名
             String imageFilename;
             if (image.getPageNumber() != null && image.getPageNumber() > 0) {
-                // 如果有页码信息，使用 page_001_img 格式（保留原始格式如.png）
+                // 如果有页码信息，使用 page_001_img.png 格式
                 int pageNum = image.getPageNumber();
-                String format = image.getFormat() != null ? image.getFormat() : "img";
+                String format = image.getFormat() != null ? image.getFormat() : "png";
                 imageFilename = String.format("page_%03d_img.%s", pageNum, format);
             } else {
-                // 如果没有页码，使用 image_xxx 格式
-                String format = image.getFormat() != null ? image.getFormat() : "img";
+                // 如果没有页码，使用 image_xxx.png 格式
+                String format = image.getFormat() != null ? image.getFormat() : "png";
                 imageFilename = String.format("image_%s.%s", imageId.substring(0, Math.min(8, imageId.length())), format);
             }
 
             Path imageFile = docImageDir.resolve(imageFilename);
 
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(imageFile.toFile()))) {
-                oos.writeObject(image);
-            }
+            // 直接保存图片的二进制数据，而不是序列化对象 ⭐
+            Files.write(imageFile, image.getData());
+
+            // 同时保存元数据到 JSON 文件，方便查询
+            String metadataFilename = imageFilename + ".meta";
+            Path metadataFile = docImageDir.resolve(metadataFilename);
+            String metadataJson = buildImageMetadataJson(image, imageFilename);
+            Files.write(metadataFile, metadataJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
             log.debug("Saved image: {} -> {}/{}", imageId, documentId, imageFilename);
             return imageId;
@@ -325,34 +330,61 @@ public class FileDocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * 构建图片元数据 JSON
+     */
+    private String buildImageMetadataJson(Image image, String filename) {
+        StringBuilder json = new StringBuilder();
+        json.append("{\n");
+        json.append("  \"id\": \"").append(image.getId()).append("\",\n");
+        json.append("  \"documentId\": \"").append(image.getDocumentId()).append("\",\n");
+        json.append("  \"filename\": \"").append(filename).append("\",\n");
+        json.append("  \"format\": \"").append(image.getFormat()).append("\",\n");
+        if (image.getWidth() != null) {
+            json.append("  \"width\": ").append(image.getWidth()).append(",\n");
+        }
+        if (image.getHeight() != null) {
+            json.append("  \"height\": ").append(image.getHeight()).append(",\n");
+        }
+        if (image.getPageNumber() != null) {
+            json.append("  \"pageNumber\": ").append(image.getPageNumber()).append(",\n");
+        }
+        json.append("  \"size\": ").append(image.getSize()).append(",\n");
+        json.append("  \"createdAt\": ").append(System.currentTimeMillis()).append("\n");
+        json.append("}");
+        return json.toString();
+    }
+
     // ...existing code...
 
     @Override
     public Optional<Image> getImage(String imageId) {
         try {
-            // 在所有文档的图片目录中搜索
-            List<Path> imageFiles = Files.walk(imagesPath, 2)
+            // 在所有文档的图片目录中搜索元数据文件
+            List<Path> metadataFiles = Files.walk(imagesPath, 2)
                     .filter(Files::isRegularFile)
-                    .filter(p -> {
-                        String name = p.getFileName().toString();
-                        // 匹配 page_xxx_img.xxx 或 image_xxx.xxx 或包含imageId的文件
-                        return name.startsWith("page_") || name.startsWith("image_") || name.contains(imageId);
-                    })
+                    .filter(p -> p.getFileName().toString().endsWith(".meta"))
                     .collect(Collectors.toList());
 
-            if (imageFiles.isEmpty()) {
+            if (metadataFiles.isEmpty()) {
                 return Optional.empty();
             }
 
-            // 如果找到多个，尝试精确匹配imageId
-            for (Path imageFile : imageFiles) {
-                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(imageFile.toFile()))) {
-                    Image img = (Image) ois.readObject();
-                    if (imageId.equals(img.getId())) {
-                        return Optional.of(img);
+            // 查找匹配的元数据文件
+            for (Path metadataFile : metadataFiles) {
+                try {
+                    String metadataJson = new String(Files.readAllBytes(metadataFile), java.nio.charset.StandardCharsets.UTF_8);
+                    if (metadataJson.contains("\"id\": \"" + imageId + "\"")) {
+                        // 找到匹配的元数据，读取图片
+                        String imageFilename = metadataFile.getFileName().toString().replace(".meta", "");
+                        Path imageFile = metadataFile.getParent().resolve(imageFilename);
+
+                        if (Files.exists(imageFile)) {
+                            return Optional.of(loadImageFromFiles(imageFile, metadataFile));
+                        }
                     }
-                } catch (IOException | ClassNotFoundException e) {
-                    log.error("Failed to read image file: {}", imageFile, e);
+                } catch (IOException e) {
+                    log.error("Failed to read metadata file: {}", metadataFile, e);
                 }
             }
 
@@ -373,16 +405,27 @@ public class FileDocumentStorage implements DocumentStorageService {
 
             return Files.list(docImageDir)
                     .filter(Files::isRegularFile)
+                    .filter(p -> !p.getFileName().toString().endsWith(".meta")) // 只处理图片文件
                     .filter(p -> {
                         String name = p.getFileName().toString();
-                        // 匹配所有图片文件
                         return name.startsWith("page_") || name.startsWith("image_");
                     })
-                    .map(p -> {
-                        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(p.toFile()))) {
-                            return (Image) ois.readObject();
-                        } catch (IOException | ClassNotFoundException e) {
-                            log.error("Failed to read image file: {}", p, e);
+                    .map(imageFile -> {
+                        try {
+                            Path metadataFile = imageFile.getParent().resolve(imageFile.getFileName() + ".meta");
+                            if (Files.exists(metadataFile)) {
+                                return loadImageFromFiles(imageFile, metadataFile);
+                            } else {
+                                // 兼容旧格式：尝试反序列化
+                                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(imageFile.toFile()))) {
+                                    return (Image) ois.readObject();
+                                } catch (Exception oldFormatEx) {
+                                    log.warn("Cannot load image (old or new format): {}", imageFile);
+                                    return null;
+                                }
+                            }
+                        } catch (IOException e) {
+                            log.error("Failed to read image file: {}", imageFile, e);
                             return null;
                         }
                     })
@@ -391,6 +434,68 @@ public class FileDocumentStorage implements DocumentStorageService {
         } catch (IOException e) {
             log.error("Failed to get images for document: {}", documentId, e);
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 从图片文件和元数据文件加载 Image 对象
+     */
+    private Image loadImageFromFiles(Path imageFile, Path metadataFile) throws IOException {
+        // 读取图片二进制数据
+        byte[] imageData = Files.readAllBytes(imageFile);
+
+        // 读取元数据
+        String metadataJson = new String(Files.readAllBytes(metadataFile), java.nio.charset.StandardCharsets.UTF_8);
+
+        // 解析元数据 (简单的 JSON 解析)
+        String id = extractJsonValue(metadataJson, "id");
+        String documentId = extractJsonValue(metadataJson, "documentId");
+        String format = extractJsonValue(metadataJson, "format");
+        Integer width = extractJsonIntValue(metadataJson, "width");
+        Integer height = extractJsonIntValue(metadataJson, "height");
+        Integer pageNumber = extractJsonIntValue(metadataJson, "pageNumber");
+
+        return Image.builder()
+                .id(id)
+                .documentId(documentId)
+                .data(imageData)
+                .format(format)
+                .width(width)
+                .height(height)
+                .pageNumber(pageNumber)
+                .build();
+    }
+
+    /**
+     * 从 JSON 字符串中提取字符串值
+     */
+    private String extractJsonValue(String json, String key) {
+        String pattern = "\"" + key + "\": \"";
+        int start = json.indexOf(pattern);
+        if (start == -1) return null;
+        start += pattern.length();
+        int end = json.indexOf("\"", start);
+        if (end == -1) return null;
+        return json.substring(start, end);
+    }
+
+    /**
+     * 从 JSON 字符串中提取整数值
+     */
+    private Integer extractJsonIntValue(String json, String key) {
+        String pattern = "\"" + key + "\": ";
+        int start = json.indexOf(pattern);
+        if (start == -1) return null;
+        start += pattern.length();
+        int end = json.indexOf(",", start);
+        if (end == -1) {
+            end = json.indexOf("\n", start);
+        }
+        if (end == -1) return null;
+        try {
+            return Integer.parseInt(json.substring(start, end).trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
