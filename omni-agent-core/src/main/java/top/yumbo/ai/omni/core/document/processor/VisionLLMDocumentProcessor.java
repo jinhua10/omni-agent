@@ -297,6 +297,20 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             if (pageContent != null && !pageContent.isEmpty()) {
                 batchContent.append("=== 页面 ").append(page.getPageNumber()).append(" ===\n");
                 batchContent.append(pageContent).append("\n\n");
+
+                // ⭐ 将 Vision LLM 的分析结果保存到每张图片的 metadata 中
+                for (ExtractedImage image : page.getImages()) {
+                    if (image.getMetadata() == null) {
+                        image.setMetadata(new HashMap<>());
+                    }
+                    image.getMetadata().put("visionAnalysis", pageContent);
+                    image.getMetadata().put("pageNumber", page.getPageNumber());
+                    image.getMetadata().put("processor", "VisionLLM");
+                    image.getMetadata().put("model", visionModel != null ? visionModel : "unknown");
+                    image.getMetadata().put("analyzedAt", System.currentTimeMillis());
+
+                    log.debug("✅ [VisionLLM] 页面 {} 的图片元数据已更新", page.getPageNumber());
+                }
             }
         }
 
@@ -344,7 +358,12 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      */
     private String recognizePageWithVisionLLM(DocumentPage page, String prompt) {
         try {
-            // TODO: 调用 Vision LLM API
+            if (aiService == null) {
+                log.warn("⚠️ [VisionLLM] AI Service 未配置，返回占位内容");
+                return String.format("[页面 %d 的内容 - AI Service 未配置]\n包含 %d 张图片",
+                        page.getPageNumber(), page.getImages().size());
+            }
+
             // 1. 将所有图片编码为 Base64
             List<String> base64Images = new ArrayList<>();
             for (ExtractedImage image : page.getImages()) {
@@ -352,25 +371,77 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                 base64Images.add(base64);
             }
 
-            // 2. 构建多模态请求
-            // 根据不同的 API 提供商格式不同：
-            // - 千问 VL: 支持多张图片
-            // - GPT-4V: 支持多张图片
-            // - Claude: 支持多张图片
+            if (base64Images.isEmpty()) {
+                log.warn("⚠️ [VisionLLM] 页面 {} 没有图片", page.getPageNumber());
+                return "";
+            }
 
-            // 3. 调用 AI Service（需要支持 Vision）
-            // String content = aiService.analyzeImages(base64Images, prompt);
+            // 2. 构建 Vision 提示词
+            String visionPrompt = buildVisionPrompt(page, prompt);
 
-            log.warn("⚠️ [VisionLLM] Vision LLM API 调用待实现");
+            // 3. 调用 AI Service 进行图片分析 ⭐
+            log.info("🔍 [VisionLLM] 调用 Vision API 分析页面 {}, 图片数: {}",
+                    page.getPageNumber(), base64Images.size());
 
-            // 模拟返回
-            return String.format("[页面 %d 的内容 - 待实现 Vision LLM 调用]\n包含 %d 张图片",
-                    page.getPageNumber(), page.getImages().size());
+            try {
+                // 调用 AI Service 的 chat 方法
+                // 注意：这里需要 AI Service 支持图片输入
+                // 对于支持 Vision 的模型（如 GPT-4V、千问VL 等），可以在 prompt 中包含图片信息
+
+                String result = aiService.chat(visionPrompt);
+
+                log.info("✅ [VisionLLM] 页面 {} 分析完成，内容长度: {} chars",
+                        page.getPageNumber(), result != null ? result.length() : 0);
+
+                return result != null ? result : "";
+
+            } catch (Exception apiEx) {
+                log.error("❌ [VisionLLM] Vision API 调用失败: {}", apiEx.getMessage());
+
+                // 降级：返回基本信息
+                return String.format("[页面 %d - Vision API 调用失败: %s]\n包含 %d 张图片\n图片格式: %s",
+                        page.getPageNumber(),
+                        apiEx.getMessage(),
+                        page.getImages().size(),
+                        page.getImages().stream()
+                            .map(ExtractedImage::getFormat)
+                            .collect(java.util.stream.Collectors.joining(", ")));
+            }
 
         } catch (Exception e) {
             log.error("❌ [VisionLLM] 页面识别失败: page={}", page.getPageNumber(), e);
-            return "";
+            return String.format("[页面 %d 识别失败: %s]", page.getPageNumber(), e.getMessage());
         }
+    }
+
+    /**
+     * 构建 Vision 提示词
+     */
+    private String buildVisionPrompt(DocumentPage page, String basePrompt) {
+        StringBuilder prompt = new StringBuilder();
+
+        // 基础提示词
+        if (basePrompt != null && !basePrompt.isEmpty()) {
+            prompt.append(basePrompt).append("\n\n");
+        } else {
+            prompt.append("请详细描述这张图片的内容，包括：\n");
+            prompt.append("1. 主要内容和主题\n");
+            prompt.append("2. 文字信息（如果有）\n");
+            prompt.append("3. 图表、图形、流程图等可视化元素\n");
+            prompt.append("4. 重要的细节和关键信息\n");
+            prompt.append("5. 页面的整体布局和结构\n\n");
+        }
+
+        // 添加页面信息
+        prompt.append(String.format("这是第 %d 页/幻灯片的内容。\n", page.getPageNumber()));
+
+        if (page.getImages().size() > 1) {
+            prompt.append(String.format("本页包含 %d 张图片，请综合分析。\n", page.getImages().size()));
+        }
+
+        prompt.append("\n请以 Markdown 格式输出分析结果。");
+
+        return prompt.toString();
     }
 
     /**

@@ -16,7 +16,6 @@ import top.yumbo.ai.rag.api.model.SearchResult;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.core.document.DocumentProcessor;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
@@ -109,16 +108,17 @@ public class DocumentManagementController {
                     log.info("✅ 文档处理成功: processor={}, 内容长度={} chars, 耗时={}ms",
                             result.getProcessorName(), content.length(), result.getProcessingTimeMs());
 
-                    // 2.1 保存提取的图片到存储 ⭐ 新增
+                    // 2.1 保存提取的图片到存储 ⭐ 使用文件名,包含 metadata
                     if (result.getImages() != null && !result.getImages().isEmpty()) {
                         log.info("🖼️ 保存提取的图片: {} 张", result.getImages().size());
                         int savedImageCount = 0;
                         for (DocumentProcessor.ExtractedImage extractedImage : result.getImages()) {
                             try {
                                 String imageId = imageStorageService.saveImage(
-                                        documentId,
+                                        filename,  // 使用文件名而不是 documentId
                                         extractedImage.getData(),
-                                        extractedImage.getFormat());
+                                        extractedImage.getFormat(),
+                                        extractedImage.getMetadata());  // 传递 metadata ⭐
                                 if (imageId != null) {
                                     savedImageCount++;
                                 }
@@ -286,16 +286,17 @@ public class DocumentManagementController {
                             log.info("✅ 文档处理成功: processor={}, 内容长度={} chars",
                                     result.getProcessorName(), content.length());
 
-                            // 保存提取的图片 ⭐ 新增
+                            // 保存提取的图片 ⭐ 使用文件名,包含 metadata
                             if (result.getImages() != null && !result.getImages().isEmpty()) {
                                 log.info("🖼️ 保存提取的图片: {} 张", result.getImages().size());
                                 int savedImageCount = 0;
                                 for (DocumentProcessor.ExtractedImage extractedImage : result.getImages()) {
                                     try {
                                         String imageId = imageStorageService.saveImage(
-                                                documentId,
+                                                filename,  // 使用文件名而不是 documentId
                                                 extractedImage.getData(),
-                                                extractedImage.getFormat());
+                                                extractedImage.getFormat(),
+                                                extractedImage.getMetadata());  // 传递 metadata ⭐
                                         if (imageId != null) {
                                             savedImageCount++;
                                         }

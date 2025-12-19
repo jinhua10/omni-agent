@@ -468,6 +468,12 @@ public class FileDocumentStorage implements DocumentStorageService {
             json.append("  \"pageNumber\": ").append(image.getPageNumber()).append(",\n");
         }
         json.append("  \"size\": ").append(image.getSize()).append(",\n");
+
+        // 添加 metadata 字段（包含图片描述等信息）⭐
+        if (image.getMetadata() != null && !image.getMetadata().isEmpty()) {
+            json.append("  \"metadata\": ").append(mapToJson(image.getMetadata())).append(",\n");
+        }
+
         json.append("  \"createdAt\": ").append(System.currentTimeMillis()).append("\n");
         json.append("}");
         return json.toString();

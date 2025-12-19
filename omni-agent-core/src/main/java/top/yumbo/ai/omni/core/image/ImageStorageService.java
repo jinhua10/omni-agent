@@ -41,6 +41,13 @@ public class ImageStorageService {
      * 保存图像
      */
     public String saveImage(String documentId, byte[] imageData, String format) {
+        return saveImage(documentId, imageData, format, null);
+    }
+
+    /**
+     * 保存图像（带元数据）⭐
+     */
+    public String saveImage(String documentId, byte[] imageData, String format, java.util.Map<String, Object> metadata) {
         if (imageData == null || imageData.length == 0) {
             log.warn("Empty image data for document: {}", documentId);
             return null;
@@ -51,6 +58,7 @@ public class ImageStorageService {
                 .documentId(documentId)
                 .data(imageData)
                 .format(format)
+                .metadata(metadata)  // 添加 metadata ⭐
                 .createdAt(System.currentTimeMillis())
                 .build();
 

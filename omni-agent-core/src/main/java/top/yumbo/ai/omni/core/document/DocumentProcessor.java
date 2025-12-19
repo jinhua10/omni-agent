@@ -191,6 +191,9 @@ public interface DocumentProcessor {
 
         /** 图片在页面中的位置（可选，用于 PPT 等布局重要的文档） */
         private Object position;  // 可以是任意位置对象，如 ImagePosition
+
+        /** 元数据（可选，用于存储 Vision LLM 分析结果等） ⭐ */
+        private java.util.Map<String, Object> metadata;
     }
 
     /**
