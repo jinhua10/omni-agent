@@ -53,6 +53,12 @@ public class DemoController {
     private final top.yumbo.ai.omni.marketplace.EnhancedQueryService enhancedQueryService;
 
     /**
+     * 线程池（用于双轨并行处理）
+     */
+    private final java.util.concurrent.ExecutorService executorService =
+            java.util.concurrent.Executors.newFixedThreadPool(10);
+
+    /**
      * 健康检查
      */
     @GetMapping("/health")
@@ -899,8 +905,8 @@ public class DemoController {
         // 创建 SseEmitter，超时时间 5 分钟
         SseEmitter emitter = new SseEmitter(300000L);
 
-        // 异步处理
-        new Thread(() -> {
+        // 使用线程池异步处理
+        executorService.submit(() -> {
             try {
                 // 判断是否为双轨模式
                 final boolean isDualTrack = !"none".equals(knowledgeMode);
@@ -931,7 +937,7 @@ public class DemoController {
                 log.error("❌ 双轨流式问答失败", e);
                 sendError(emitter, e.getMessage());
             }
-        }).start();
+        });
 
         // 设置超时和错误处理
         setupEmitterCallbacks(emitter);
@@ -966,197 +972,279 @@ public class DemoController {
     }
 
     /**
-     * 处理RAG模式：左轨RAG+LLM，右轨HOPE智能系统
+     * 处理RAG模式：左轨RAG+LLM，右轨HOPE智能系统（并行执行）
      */
     private void handleRagMode(SseEmitter emitter, String question, List<SearchResult> references) {
-        log.info("🚂 双轨模式：RAG + HOPE智能系统");
+        log.info("🚂 双轨模式：RAG + HOPE智能系统（并行执行）");
 
-        // CountDownLatch用于协调两个轨道
-        java.util.concurrent.CountDownLatch leftTrackLatch = new java.util.concurrent.CountDownLatch(1);
+        // CountDownLatch用于等待两个轨道都完成
+        java.util.concurrent.CountDownLatch bothTracksLatch = new java.util.concurrent.CountDownLatch(2);
+        java.util.concurrent.atomic.AtomicBoolean hasError = new java.util.concurrent.atomic.AtomicBoolean(false);
 
-        // 左轨：传统RAG + LLM（使用普通检索）
-        String leftContext = buildContext(references);
-        String leftPrompt = leftContext.isEmpty()
-                ? String.format("问题：%s\n\n注意：未检索到相关文档，请基于你的通用知识回答。", question)
-                : String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", leftContext, question);
+        // === 左轨：传统RAG + LLM（线程池执行） ===
+        executorService.submit(() -> {
+            try {
+                String leftContext = buildContext(references);
+                String leftPrompt = leftContext.isEmpty()
+                        ? String.format("问题：%s\n\n注意：未检索到相关文档，请基于你的通用知识回答。", question)
+                        : String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", leftContext, question);
 
-        List<ChatMessage> leftMessages = List.of(
-                ChatMessage.builder()
-                        .role("user")
-                        .content(leftPrompt)
-                        .build()
-        );
+                List<ChatMessage> leftMessages = List.of(
+                        ChatMessage.builder()
+                                .role("user")
+                                .content(leftPrompt)
+                                .build()
+                );
 
-        log.info("⬅️ 启动左轨：传统RAG+LLM");
+                log.info("⬅️ 启动左轨：传统RAG+LLM");
 
-        aiService.chatFlux(leftMessages)
-                .doOnNext(token -> {
-                    try {
-                        sendToken(emitter, "left", token);
-                    } catch (Exception e) {
-                        log.error("❌ 发送左轨token失败: {}", e.getMessage());
-                    }
-                })
-                .doOnComplete(() -> {
-                    log.info("✅ 左轨完成");
-                    leftTrackLatch.countDown();
-                })
-                .doOnError(e -> {
-                    log.error("❌ 左轨失败: {}", e.getMessage());
-                    sendWarning(emitter, "left", "左轨（RAG+LLM）生成失败");
-                    leftTrackLatch.countDown();
-                })
-                .subscribe();
+                java.util.concurrent.CountDownLatch leftLatch = new java.util.concurrent.CountDownLatch(1);
 
-        // 等待左轨完成
+                aiService.chatFlux(leftMessages)
+                        .doOnNext(token -> {
+                            try {
+                                sendToken(emitter, "left", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送左轨token失败: {}", e.getMessage());
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ 左轨完成");
+                            leftLatch.countDown();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ 左轨失败: {}", e.getMessage());
+                            sendWarning(emitter, "left", "左轨（RAG+LLM）生成失败");
+                            hasError.set(true);
+                            leftLatch.countDown();
+                        })
+                        .subscribe();
+
+                // 等待左轨完成
+                leftLatch.await(120, java.util.concurrent.TimeUnit.SECONDS);
+
+            } catch (Exception e) {
+                log.error("❌ 左轨执行异常", e);
+                hasError.set(true);
+            } finally {
+                bothTracksLatch.countDown();
+            }
+        });
+
+        // === 右轨：HOPE智能系统 + 算法市场优化（线程池执行） ===
+        executorService.submit(() -> {
+            try {
+                log.info("➡️ 启动右轨：HOPE智能系统 + 算法市场优化");
+
+                // 使用HOPE进行智能查询
+                HOPEKnowledgeManager.QueryResult hopeResult = hopeManager.smartQuery(question, null);
+
+                // 使用增强查询服务进行优化检索（查询扩展 + 重排序）
+                List<SearchResult> enhancedReferences;
+                try {
+                    log.info("🔍 使用算法市场增强检索（查询扩展 + 重排序）");
+                    enhancedReferences = enhancedQueryService.fullyEnhancedSearch(question, 5);
+                    log.info("📈 增强检索完成：获得 {} 个优化结果", enhancedReferences.size());
+                } catch (Exception e) {
+                    log.warn("⚠️ 增强检索失败，使用原始检索结果: {}", e.getMessage());
+                    enhancedReferences = references;
+                }
+
+                // 构建HOPE增强提示词（使用优化后的检索结果）
+                String rightPrompt = buildHOPEPrompt(question, hopeResult, enhancedReferences);
+
+                List<ChatMessage> rightMessages = List.of(
+                        ChatMessage.builder()
+                                .role("user")
+                                .content(rightPrompt)
+                                .build()
+                );
+
+                java.util.concurrent.CountDownLatch rightLatch = new java.util.concurrent.CountDownLatch(1);
+
+                aiService.chatFlux(rightMessages)
+                        .doOnNext(token -> {
+                            try {
+                                sendToken(emitter, "right", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送右轨token失败: {}", e.getMessage());
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ 右轨完成");
+                            rightLatch.countDown();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ 右轨失败: {}", e.getMessage());
+                            sendWarning(emitter, "right", "右轨（HOPE智能系统）生成失败：" + e.getMessage());
+                            hasError.set(true);
+                            rightLatch.countDown();
+                        })
+                        .subscribe();
+
+                // 等待右轨完成
+                rightLatch.await(120, java.util.concurrent.TimeUnit.SECONDS);
+
+            } catch (Exception e) {
+                log.error("❌ 右轨执行异常", e);
+                hasError.set(true);
+            } finally {
+                bothTracksLatch.countDown();
+            }
+        });
+
+        // 等待两个轨道都完成（最多4分钟）
         try {
-            leftTrackLatch.await(120, java.util.concurrent.TimeUnit.SECONDS);
+            bothTracksLatch.await(240, java.util.concurrent.TimeUnit.SECONDS);
+            log.info("✅ 双轨并行执行完成");
+
+            if (!hasError.get()) {
+                sendComplete(emitter);
+            } else {
+                sendError(emitter, "部分轨道执行失败");
+            }
         } catch (InterruptedException e) {
-            log.error("❌ 左轨超时", e);
+            log.error("❌ 等待双轨完成超时", e);
+            sendError(emitter, "双轨执行超时");
         }
-
-        // 右轨：HOPE智能系统（自我学习 + 算法市场优化）
-        log.info("➡️ 启动右轨：HOPE智能系统 + 算法市场优化");
-
-        // 使用HOPE进行智能查询
-        HOPEKnowledgeManager.QueryResult hopeResult = hopeManager.smartQuery(question, null);
-
-        // 使用增强查询服务进行优化检索（查询扩展 + 重排序）
-        List<SearchResult> enhancedReferences;
-        try {
-            log.info("🔍 使用算法市场增强检索（查询扩展 + 重排序）");
-            enhancedReferences = enhancedQueryService.fullyEnhancedSearch(question, 5);
-            log.info("📈 增强检索完成：获得 {} 个优化结果", enhancedReferences.size());
-        } catch (Exception e) {
-            log.warn("⚠️ 增强检索失败，使用原始检索结果: {}", e.getMessage());
-            enhancedReferences = references;
-        }
-
-        // 构建HOPE增强提示词（使用优化后的检索结果）
-        String rightPrompt = buildHOPEPrompt(question, hopeResult, enhancedReferences);
-
-        List<ChatMessage> rightMessages = List.of(
-                ChatMessage.builder()
-                        .role("user")
-                        .content(rightPrompt)
-                        .build()
-        );
-
-        aiService.chatFlux(rightMessages)
-                .doOnNext(token -> {
-                    try {
-                        sendToken(emitter, "right", token);
-                    } catch (Exception e) {
-                        log.error("❌ 发送右轨token失败: {}", e.getMessage());
-                    }
-                })
-                .doOnComplete(() -> {
-                    log.info("✅ 右轨完成");
-                    sendComplete(emitter);
-                })
-                .doOnError(e -> {
-                    log.error("❌ 右轨失败: {}", e.getMessage());
-                    sendWarning(emitter, "right", "右轨（HOPE智能系统）生成失败：" + e.getMessage());
-                    sendError(emitter, e.getMessage());
-                })
-                .subscribe();
     }
 
     /**
-     * 处理角色模式：左轨RAG+LLM，右轨角色专业回答
+     * 处理角色模式：左轨RAG+LLM，右轨角色专业回答（并行执行）
      */
     private void handleRoleMode(SseEmitter emitter, String question, String roleName, List<SearchResult> references) {
-        log.info("🚂 双轨模式：RAG + 角色知识库 (role={})", roleName);
+        log.info("🚂 双轨模式：RAG + 角色知识库 (role={})（并行执行）", roleName);
 
         // 获取角色信息
         Role role = roleService.getRole(roleName != null ? roleName : "default");
         log.info("🎭 使用角色: {} - {}", role.getName(), role.getDescription());
 
-        // CountDownLatch用于协调两个轨道
-        java.util.concurrent.CountDownLatch leftTrackLatch = new java.util.concurrent.CountDownLatch(1);
+        // CountDownLatch用于等待两个轨道都完成
+        java.util.concurrent.CountDownLatch bothTracksLatch = new java.util.concurrent.CountDownLatch(2);
+        java.util.concurrent.atomic.AtomicBoolean hasError = new java.util.concurrent.atomic.AtomicBoolean(false);
 
-        // 左轨：传统RAG + LLM
-        String leftContext = buildContext(references);
-        String leftPrompt = leftContext.isEmpty()
-                ? String.format("问题：%s\n\n注意：未检索到相关文档，请基于你的通用知识回答。", question)
-                : String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", leftContext, question);
+        // === 左轨：传统RAG + LLM（线程池执行） ===
+        executorService.submit(() -> {
+            try {
+                String leftContext = buildContext(references);
+                String leftPrompt = leftContext.isEmpty()
+                        ? String.format("问题：%s\n\n注意：未检索到相关文档，请基于你的通用知识回答。", question)
+                        : String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", leftContext, question);
 
-        List<ChatMessage> leftMessages = List.of(
-                ChatMessage.builder()
-                        .role("user")
-                        .content(leftPrompt)
-                        .build()
-        );
+                List<ChatMessage> leftMessages = List.of(
+                        ChatMessage.builder()
+                                .role("user")
+                                .content(leftPrompt)
+                                .build()
+                );
 
-        log.info("⬅️ 启动左轨：传统RAG+LLM");
+                log.info("⬅️ 启动左轨：传统RAG+LLM");
 
-        aiService.chatFlux(leftMessages)
-                .doOnNext(token -> {
-                    try {
-                        sendToken(emitter, "left", token);
-                    } catch (Exception e) {
-                        log.error("❌ 发送左轨token失败: {}", e.getMessage());
-                    }
-                })
-                .doOnComplete(() -> {
-                    log.info("✅ 左轨完成");
-                    leftTrackLatch.countDown();
-                })
-                .doOnError(e -> {
-                    log.error("❌ 左轨失败: {}", e.getMessage());
-                    sendWarning(emitter, "left", "左轨（RAG+LLM）生成失败");
-                    leftTrackLatch.countDown();
-                })
-                .subscribe();
+                java.util.concurrent.CountDownLatch leftLatch = new java.util.concurrent.CountDownLatch(1);
 
-        // 等待左轨完成
+                aiService.chatFlux(leftMessages)
+                        .doOnNext(token -> {
+                            try {
+                                sendToken(emitter, "left", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送左轨token失败: {}", e.getMessage());
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ 左轨完成");
+                            leftLatch.countDown();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ 左轨失败: {}", e.getMessage());
+                            sendWarning(emitter, "left", "左轨（RAG+LLM）生成失败");
+                            hasError.set(true);
+                            leftLatch.countDown();
+                        })
+                        .subscribe();
+
+                // 等待左轨完成
+                leftLatch.await(120, java.util.concurrent.TimeUnit.SECONDS);
+
+            } catch (Exception e) {
+                log.error("❌ 左轨执行异常", e);
+                hasError.set(true);
+            } finally {
+                bothTracksLatch.countDown();
+            }
+        });
+
+        // === 右轨：角色专业回答（线程池执行） ===
+        executorService.submit(() -> {
+            try {
+                log.info("➡️ 启动右轨：角色 [{}] 专业回答", role.getName());
+
+                // 构建角色提示词
+                String roleContext = buildRoleContext(references);
+                String rightPrompt = String.format(
+                        "你是%s，%s\n\n" +
+                        "作为专业角色，请基于以下知识给出你的专业见解：\n\n%s\n\n" +
+                        "问题：%s\n\n" +
+                        "请以你的角色身份，结合专业知识回答。",
+                        role.getName(),
+                        role.getDescription(),
+                        roleContext.isEmpty() ? "暂无特定知识，请基于角色专业性回答" : roleContext,
+                        question
+                );
+
+                List<ChatMessage> rightMessages = List.of(
+                        ChatMessage.builder()
+                                .role("user")
+                                .content(rightPrompt)
+                                .build()
+                );
+
+                java.util.concurrent.CountDownLatch rightLatch = new java.util.concurrent.CountDownLatch(1);
+
+                aiService.chatFlux(rightMessages)
+                        .doOnNext(token -> {
+                            try {
+                                sendToken(emitter, "right", token);
+                            } catch (Exception e) {
+                                log.error("❌ 发送右轨token失败: {}", e.getMessage());
+                            }
+                        })
+                        .doOnComplete(() -> {
+                            log.info("✅ 右轨完成");
+                            rightLatch.countDown();
+                        })
+                        .doOnError(e -> {
+                            log.error("❌ 右轨失败: {}", e.getMessage());
+                            sendWarning(emitter, "right", "右轨（角色专业回答）生成失败：" + e.getMessage());
+                            hasError.set(true);
+                            rightLatch.countDown();
+                        })
+                        .subscribe();
+
+                // 等待右轨完成
+                rightLatch.await(120, java.util.concurrent.TimeUnit.SECONDS);
+
+            } catch (Exception e) {
+                log.error("❌ 右轨执行异常", e);
+                hasError.set(true);
+            } finally {
+                bothTracksLatch.countDown();
+            }
+        });
+
+        // 等待两个轨道都完成（最多4分钟）
         try {
-            leftTrackLatch.await(120, java.util.concurrent.TimeUnit.SECONDS);
+            bothTracksLatch.await(240, java.util.concurrent.TimeUnit.SECONDS);
+            log.info("✅ 双轨并行执行完成");
+
+            if (!hasError.get()) {
+                sendComplete(emitter);
+            } else {
+                sendError(emitter, "部分轨道执行失败");
+            }
         } catch (InterruptedException e) {
-            log.error("❌ 左轨超时", e);
+            log.error("❌ 等待双轨完成超时", e);
+            sendError(emitter, "双轨执行超时");
         }
-
-        // 右轨：角色专业回答
-        log.info("➡️ 启动右轨：角色 [{}] 专业回答", role.getName());
-
-        // 构建角色提示词
-        String roleContext = buildRoleContext(references);
-        String rightPrompt = String.format(
-                "你是%s，%s\n\n" +
-                "作为专业角色，请基于以下知识给出你的专业见解：\n\n%s\n\n" +
-                "问题：%s\n\n" +
-                "请以你的角色身份，结合专业知识回答。",
-                role.getName(),
-                role.getDescription(),
-                roleContext.isEmpty() ? "暂无特定知识，请基于角色专业性回答" : roleContext,
-                question
-        );
-
-        List<ChatMessage> rightMessages = List.of(
-                ChatMessage.builder()
-                        .role("user")
-                        .content(rightPrompt)
-                        .build()
-        );
-
-        aiService.chatFlux(rightMessages)
-                .doOnNext(token -> {
-                    try {
-                        sendToken(emitter, "right", token);
-                    } catch (Exception e) {
-                        log.error("❌ 发送右轨token失败: {}", e.getMessage());
-                    }
-                })
-                .doOnComplete(() -> {
-                    log.info("✅ 右轨完成");
-                    sendComplete(emitter);
-                })
-                .doOnError(e -> {
-                    log.error("❌ 右轨失败: {}", e.getMessage());
-                    sendWarning(emitter, "right", "右轨（角色专业回答）生成失败：" + e.getMessage());
-                    sendError(emitter, e.getMessage());
-                })
-                .subscribe();
     }
 
     /**
