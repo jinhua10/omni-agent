@@ -12,9 +12,23 @@ spring:
       max-file-size: 100MB      # 单个文件最大100MB
       max-request-size: 100MB   # 整个请求最大100MB
       file-size-threshold: 2KB  # 文件写入磁盘的阈值
+# ========== PPL ONNX 配置 ⭐ ==========
+ppl:
+  onnx:
+    # 启用 ONNX PPL 服务
+    enabled: true
 
+    # ONNX 模型路径（BGE-base-zh）
+    model-path: ./models/bge-base-zh/model.onnx
+
+    # Tokenizer 路径
+    tokenizer-path: ./models/bge-base-zh
+
+    # 缓存配置
+    use-cache: true          # 启用缓存
+    cache-size: 1000         # 缓存大小
+    cache-ttl: 3600          # 缓存过期时间（秒）
 # ========== OmniAgent 四维可插拔配置 ==========
-
 # 1. 持久化配置 (Persistence)
 # 支持多种后端：file, sqlite, h2, memory, redis, mongodb, elasticsearch
 omni-agent:
@@ -247,7 +261,38 @@ omni-agent:
       max-retries: 3       # 最大重试次数
       stream-enabled: true # 启用流式响应
 
-  # 5. Vision LLM 配置（图片转文字）⭐
+  # 5. 分块策略配置 (Chunking Strategy) ⭐
+  chunking:
+    # 默认策略：auto（自动选择）、fixed_size（固定大小）、semantic（语义）、ppl（困惑度）
+    default-strategy: ppl
+
+    # PPL 困惑度分块策略配置
+    ppl:
+      # 模式选择：simplified（简化版，快速）、onnx（ONNX版，精确）、auto（自动选择）
+      mode: onnx  # ⭐ 使用 ONNX 模式
+
+      # 自动模式时是否优先精度（为true时会优先使用ONNX）
+      prefer-accuracy: true  # ⭐ 优先精度
+
+      # 分块大小范围
+      min-chunk-size: 200      # 最小分块大小（字符数）
+      max-chunk-size: 800      # 最大分块大小（字符数）
+
+      # 困惑度阈值（0.0-1.0，值越高越严格）
+      threshold: 0.3
+
+    # 固定大小分块策略配置（备用）
+    fixed-size:
+      chunk-size: 500          # 分块大小
+      overlap: 50              # 重叠大小
+
+    # 语义分块策略配置（备用）
+    semantic:
+      min-chunk-size: 200
+      max-chunk-size: 1000
+      similarity-threshold: 0.75
+
+  # 6. Vision LLM 配置（图片转文字）⭐
   vision-llm:
     # 是否启用图片提取功能
     enabled: true
