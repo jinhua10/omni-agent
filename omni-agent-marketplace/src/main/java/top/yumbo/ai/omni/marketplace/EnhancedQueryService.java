@@ -1,10 +1,8 @@
-package top.yumbo.ai.omni.core.query;
+package top.yumbo.ai.omni.marketplace;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.omni.marketplace.AlgorithmMarketService;
-import top.yumbo.ai.omni.marketplace.model.MarketAlgorithm;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.SearchResult;
 
@@ -296,4 +294,5 @@ public class EnhancedQueryService {
         return stats;
     }
 }
+
 

@@ -31,6 +31,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- OmniAgent Marketplace (for enhanced query) -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-marketplace</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Boot Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

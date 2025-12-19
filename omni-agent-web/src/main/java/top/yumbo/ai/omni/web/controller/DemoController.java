@@ -50,7 +50,7 @@ public class DemoController {
     private final HOPEKnowledgeManager hopeManager;
     private final RoleService roleService;
     private final QueryService queryService;
-    private final top.yumbo.ai.omni.core.query.EnhancedQueryService enhancedQueryService;
+    private final top.yumbo.ai.omni.marketplace.EnhancedQueryService enhancedQueryService;
 
     /**
      * 健康检查
