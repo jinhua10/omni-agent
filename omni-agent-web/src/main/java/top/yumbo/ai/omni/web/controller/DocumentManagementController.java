@@ -76,13 +76,13 @@ public class DocumentManagementController {
             String documentId = "doc_" + System.currentTimeMillis() + "_" +
                 filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 
-            // 保存原始文件到 DocumentStorageService ⭐ 修改
+            // 保存原始文件到 DocumentStorageService (保存到 data/storage/documents/文件名.原扩展名)
             log.info("💾 保存原始文件到存储服务...");
-            String savedDocId = storageService.saveDocument(documentId, filename, file.getBytes());
+            String savedDocId = storageService.saveDocument(filename, filename, file.getBytes());
             if (savedDocId == null) {
                 throw new Exception("保存原始文件失败");
             }
-            log.info("✅ 原始文件已保存: documentId={}", documentId);
+            log.info("✅ 原始文件已保存: {}", filename);
 
             // === 新流程：使用 DocumentProcessorManager 处理文档 ===
             String content;
@@ -154,9 +154,9 @@ public class DocumentManagementController {
                             chunks.size(),
                             chunks.isEmpty() ? "unknown" : chunks.get(0).getMetadata().get("strategy"));
 
-                    // 2. 保存分块到 DocumentStorageService（会保存到 ./data/chunks 目录）⭐
+                    // 2. 保存分块到 DocumentStorageService（会保存到 ./data/storage/chunks/文件名/ 目录）⭐
                     log.info("💾 保存分块到存储服务...");
-                    List<String> savedChunkIds = storageService.saveChunks(documentId, chunks);
+                    List<String> savedChunkIds = storageService.saveChunks(filename, chunks);
                     log.info("✅ 分块已保存到存储: {} 个文件", savedChunkIds.size());
 
                     // 3. 为每个块创建文档并索引到 RAG
@@ -257,8 +257,8 @@ public class DocumentManagementController {
                     String documentId = "doc_" + System.currentTimeMillis() + "_" +
                         filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 
-                    // 保存原始文件到 DocumentStorageService ⭐ 修改
-                    String savedDocId = storageService.saveDocument(documentId, filename, file.getBytes());
+                    // 保存原始文件到 DocumentStorageService (保存到 data/storage/documents/文件名.原扩展名)
+                    String savedDocId = storageService.saveDocument(filename, filename, file.getBytes());
                     if (savedDocId == null) {
                         throw new Exception("保存原始文件失败");
                     }
@@ -330,7 +330,7 @@ public class DocumentManagementController {
 
                             // 保存分块到存储服务⭐
                             log.info("💾 保存分块到存储服务: {}", filename);
-                            List<String> savedChunkIds = storageService.saveChunks(documentId, chunks);
+                            List<String> savedChunkIds = storageService.saveChunks(filename, chunks);
                             log.info("✅ 分块已保存: {} 个文件", savedChunkIds.size());
 
                             // 索引到 RAG

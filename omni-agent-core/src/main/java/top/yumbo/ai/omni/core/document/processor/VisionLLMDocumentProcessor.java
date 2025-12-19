@@ -162,14 +162,6 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
     private List<DocumentPage> extractPages(ProcessingContext context) throws Exception {
         String ext = context.getFileExtension().toLowerCase();
 
-        // TODO: 根据文件类型使用不同的提取策略
-        // - PDF: 使用 Apache PDFBox
-        // - PPT: 使用 Apache POI
-        // - Word/Excel: 使用 Apache POI
-        // - 图片: 直接作为单页
-
-        log.warn("⚠️ [VisionLLM] 页面提取功能待实现，当前返回模拟数据");
-
         // 如果是图片文件，直接作为单页
         if (isImageFile(ext)) {
             byte[] imageData;
@@ -193,8 +185,94 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             return List.of(page);
         }
 
-        // Office 文档待实现
+        // PowerPoint 文档处理
+        if (ext.equals("pptx") || ext.equals("ppt")) {
+            return extractPptxPages(context);
+        }
+
+        // PDF 文档待实现
+        if (ext.equals("pdf")) {
+            log.warn("⚠️ [VisionLLM] PDF 页面提取功能待实现");
+            throw new Exception("PDF 文档页面提取功能待实现");
+        }
+
+        // 其他 Office 文档待实现
+        log.warn("⚠️ [VisionLLM] {} 格式的页面提取功能待实现", ext);
         throw new Exception("Office 文档页面提取功能待实现: " + ext);
+    }
+
+    /**
+     * 提取 PowerPoint 文档的页面
+     *
+     * @param context 处理上下文
+     * @return 页面列表
+     */
+    private List<DocumentPage> extractPptxPages(ProcessingContext context) throws Exception {
+        try {
+            java.io.InputStream inputStream;
+            if (context.getFileBytes() != null) {
+                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
+            } else {
+                inputStream = new java.io.FileInputStream(context.getFilePath());
+            }
+
+            try (org.apache.poi.xslf.usermodel.XMLSlideShow ppt =
+                    new org.apache.poi.xslf.usermodel.XMLSlideShow(inputStream)) {
+
+                List<DocumentPage> pages = new ArrayList<>();
+                java.util.List<org.apache.poi.xslf.usermodel.XSLFSlide> slides = ppt.getSlides();
+
+                log.info("🔍 [VisionLLM] PowerPoint 包含 {} 张幻灯片", slides.size());
+
+                // 获取幻灯片尺寸
+                java.awt.Dimension pageSize = ppt.getPageSize();
+                int width = (int) pageSize.getWidth();
+                int height = (int) pageSize.getHeight();
+
+                // 转换每张幻灯片为图片
+                for (int i = 0; i < slides.size(); i++) {
+                    org.apache.poi.xslf.usermodel.XSLFSlide slide = slides.get(i);
+
+                    // 将幻灯片渲染为 BufferedImage
+                    java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
+                            width, height, java.awt.image.BufferedImage.TYPE_INT_RGB);
+                    java.awt.Graphics2D graphics = img.createGraphics();
+
+                    // 设置白色背景
+                    graphics.setPaint(java.awt.Color.WHITE);
+                    graphics.fillRect(0, 0, width, height);
+
+                    // 渲染幻灯片
+                    slide.draw(graphics);
+                    graphics.dispose();
+
+                    // 将 BufferedImage 转换为 PNG 字节数组
+                    java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                    javax.imageio.ImageIO.write(img, "png", baos);
+                    byte[] imageData = baos.toByteArray();
+
+                    // 创建 ExtractedImage
+                    ExtractedImage image = ExtractedImage.builder()
+                            .data(imageData)
+                            .format("png")
+                            .pageNumber(i + 1)
+                            .position(new ImagePosition(0, 0, width, height))
+                            .build();
+
+                    // 创建 DocumentPage
+                    DocumentPage page = new DocumentPage(i + 1);
+                    page.addImage(image);
+                    pages.add(page);
+
+                    log.debug("✅ [VisionLLM] 成功渲染幻灯片 {} / {}", i + 1, slides.size());
+                }
+
+                return pages;
+            }
+        } catch (Exception e) {
+            log.error("❌ [VisionLLM] PowerPoint 页面提取失败", e);
+            throw new Exception("PowerPoint 页面提取失败: " + e.getMessage(), e);
+        }
     }
 
     /**

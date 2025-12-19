@@ -372,7 +372,7 @@ public class FileWatcherService {
 
             // ========== 步骤6: 保存分块 ==========
             log.info("💾 保存分块到存储...");
-            List<String> chunkIds = storageService.saveChunks(documentId, chunks);
+            List<String> chunkIds = storageService.saveChunks(filename, chunks);
             log.info("✅ 分块已保存: {} 个", chunkIds.size());
 
             // ========== 步骤7: RAG索引 ==========
