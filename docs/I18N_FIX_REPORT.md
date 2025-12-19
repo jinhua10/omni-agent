@@ -406,10 +406,14 @@ describe('i18n keys', () => {
 console.log(t('document.viewMode.browser'));  // → "浏览器视图"
 console.log(t('document.viewMode.list'));     // → "列表视图"
 console.log(t('document.view'));              // → "查看"
+console.log(t('document.browse.folders'));    // → "文件夹"
+console.log(t('document.browse.root'));       // → "根目录"
+console.log(t('document.browse.upload'));     // → "上传文件"
 ```
 
 预期结果：
 - ✅ 视图切换器显示正确的文本
+- ✅ FTP浏览器界面所有文本显示正确
 - ✅ 语言切换功能正常
 - ✅ 其他文档操作不受影响
 

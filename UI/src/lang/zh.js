@@ -255,7 +255,7 @@ export default {
       createFolderFailed: '文件夹创建失败',
       folderNameRequired: '请输入文件夹名称',
       folderNamePlaceholder: '请输入文件夹名称',
-      download: '下��',
+      download: '下载',
       downloadStarted: '开始下载',
       downloadFailed: '下载失败',
       delete: '删除',
