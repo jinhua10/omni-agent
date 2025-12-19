@@ -1,9 +1,9 @@
 package top.yumbo.ai.omni.web.controller;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -51,9 +51,6 @@ public class DocumentManagementController {
     private final ChunkingStrategyManager chunkingStrategyManager;
     private final ImageStorageService imageStorageService;
 
-    // 可选依赖：RAG 优化服务 ⭐
-    @Autowired(required = false)
-    private top.yumbo.ai.omni.core.optimization.RAGOptimizationService ragOptimizationService;
 
     /**
      * 上传文档（简化版：直接索引到RAG）
@@ -76,157 +73,17 @@ public class DocumentManagementController {
             String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
             log.info("上传文档: filename={}, size={} bytes", filename, file.getSize());
 
-            // 生成文档ID
-            String documentId = "doc_" + System.currentTimeMillis() + "_" +
-                filename.replaceAll("[^a-zA-Z0-9._-]", "_");
-
-            // 保存原始文件到 DocumentStorageService (保存到 data/storage/documents/文件名.原扩展名)
-            log.info("💾 保存原始文件到存储服务...");
-            String savedDocId = storageService.saveDocument(filename, filename, file.getBytes());
-            if (savedDocId == null) {
-                throw new Exception("保存原始文件失败");
-            }
-            log.info("✅ 原始文件已保存: {}", filename);
-
-            // === 新流程：使用 DocumentProcessorManager 处理文档 ===
-            String content;
-            String fileExtension = getFileExtension(filename);
-
-            try {
-                log.info("🔄 使用 DocumentProcessorManager 处理文档...");
-
-                // 1. 构建处理上下文
-                DocumentProcessor.ProcessingContext context = DocumentProcessor.ProcessingContext.builder()
-                        .fileBytes(file.getBytes())
-                        .filePath(null)  // 使用字节数组，不需要路径
-                        .fileExtension(fileExtension)
-                        .originalFileName(filename)
-                        .fileSize(file.getSize())
-                        .options(new HashMap<>())
-                        .build();
-
-                // 2. 处理文档（文本提取 / Vision LLM 识别）
-                DocumentProcessor.ProcessingResult result = documentProcessorManager.processDocument(context);
-
-                if (result.isSuccess()) {
-                    content = result.getContent();
-                    log.info("✅ 文档处理成功: processor={}, 内容长度={} chars, 耗时={}ms",
-                            result.getProcessorName(), content.length(), result.getProcessingTimeMs());
-
-                    // 2.1 保存提取的图片到存储 ⭐ 使用文件名,包含 metadata
-                    if (result.getImages() != null && !result.getImages().isEmpty()) {
-                        log.info("🖼️ 保存提取的图片: {} 张", result.getImages().size());
-                        int savedImageCount = 0;
-                        for (DocumentProcessor.ExtractedImage extractedImage : result.getImages()) {
-                            try {
-                                String imageId = imageStorageService.saveImage(
-                                        filename,  // 使用文件名而不是 documentId
-                                        extractedImage.getData(),
-                                        extractedImage.getFormat(),
-                                        extractedImage.getMetadata());  // 传递 metadata ⭐
-                                if (imageId != null) {
-                                    savedImageCount++;
-                                }
-                            } catch (Exception ex) {
-                                log.warn("⚠️ 保存图片失败: {}", ex.getMessage());
-                            }
-                        }
-                        log.info("✅ 图片已保存: {} 张", savedImageCount);
-                    }
-                } else {
-                    throw new Exception("文档处理失败: " + result.getError());
-                }
-
-            } catch (Exception e) {
-                log.warn("⚠️ DocumentProcessor 处理失败，降级使用 DocumentParserUtil: {}", e.getMessage());
-                try {
-                    content = DocumentParserUtil.parseDocument(file);
-                } catch (Exception ex) {
-                    log.warn("⚠️ DocumentParserUtil 也失败，使用原始字节内容");
-                    content = new String(file.getBytes(), StandardCharsets.UTF_8);
-                }
-            }
-
-            // === 新流程：使用 ChunkingStrategyManager 进行分块 ===
-            if (autoIndex) {
-                try {
-                    log.info("📦 使用 ChunkingStrategyManager 进行分块...");
-
-                    // 1. 使用分块策略管理器进行分块（自动选择策略）
-                    List<Chunk> chunks = chunkingStrategyManager.chunkWithAutoStrategy(
-                            documentId, content, filename);
-                    log.info("✅ 分块完成: 共 {} 个块, 策略: {}",
-                            chunks.size(),
-                            chunks.isEmpty() ? "unknown" : chunks.get(0).getMetadata().get("strategy"));
-
-                    // 2. 保存分块到 DocumentStorageService（会保存到 ./data/storage/chunks/文件名/ 目录）⭐
-                    log.info("💾 保存分块到存储服务...");
-                    List<String> savedChunkIds = storageService.saveChunks(filename, chunks);
-                    log.info("✅ 分块已保存到存储: {} 个文件", savedChunkIds.size());
-
-                    // 3. 为每个块创建文档并索引到 RAG
-                    log.info("📇 索引分块到 RAG...");
-                    int indexed = 0;
-                    for (Chunk chunk : chunks) {
-                        Document document = Document.builder()
-                                .id(chunk.getId())
-                                .title(filename + " (块 " + chunk.getSequence() + ")")
-                                .content(chunk.getContent())
-                                .summary("块 " + chunk.getSequence())
-                                .source("upload")
-                                .type("chunk")
-                                .metadata(Map.of(
-                                        "fileName", filename,
-                                        "storagePath", filename,                    // ⭐ 存储路径
-                                        "documentId", documentId,
-                                        "chunkIndex", chunk.getSequence()
-                                ))
-                                .build();
-
-                        ragService.indexDocument(document);
-                        indexed++;
-                    }
-
-                    log.info("✅ 索引完成: 共索引 {} 个文档块", indexed);
-
-                    // === 可选：生成 PPL 和 Optimization 数据 ⭐
-                    if (ragOptimizationService != null) {
-                        try {
-                            log.info("📊 生成 RAG 优化数据...");
-                            generateOptimizationData(filename, content, chunks);
-                        } catch (Exception optEx) {
-                            log.warn("⚠️ 生成优化数据失败（不影响主流程）: {}", optEx.getMessage());
-                        }
-                    }
-
-                    response.setMessage("文档上传成功，已分块并索引（" + indexed + " 个块）");
-
-                } catch (Exception e) {
-                    log.warn("⚠️ 分块失败，降级使用整文档索引: {}", e.getMessage());
-
-                    // 降级：直接索引整个文档
-                    Document document = Document.builder()
-                            .id(documentId)
-                            .title(filename)
-                            .content(content)
-                            .source("upload")
-                            .type("document")
-                            .build();
-
-                    ragService.indexDocument(document);
-                    response.setMessage("文档上传成功（未分块）");
-                }
-            } else {
-                response.setMessage("文档上传成功（未索引）");
-            }
+            // 调用核心处理方法
+            DocumentUploadResult uploadResult = processAndIndexDocument(file, autoIndex);
 
             response.setSuccess(true);
+            response.setMessage(uploadResult.getMessage());
             response.setFileName(filename);
             response.setFileSize(file.getSize());
-            response.setDocumentId(documentId);
+            response.setDocumentId(uploadResult.getDocumentId());
             response.setAutoIndexed(autoIndex);
 
-            log.info("文档上传成功: id={}", documentId);
+            log.info("文档上传成功: id={}", uploadResult.getDocumentId());
 
         } catch (Exception e) {
             log.error("文档上传失败", e);
@@ -267,143 +124,12 @@ public class DocumentManagementController {
                         continue;
                     }
 
-                    String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
-
-                    // 生成文档ID
-                    String documentId = "doc_" + System.currentTimeMillis() + "_" +
-                        filename.replaceAll("[^a-zA-Z0-9._-]", "_");
-
-                    // 保存原始文件到 DocumentStorageService (保存到 data/storage/documents/文件名.原扩展名)
-                    String savedDocId = storageService.saveDocument(filename, filename, file.getBytes());
-                    if (savedDocId == null) {
-                        throw new Exception("保存原始文件失败");
-                    }
-
-                    // === 使用 DocumentProcessorManager 处理文档 ===
-                    String content;
-                    String fileExtension = getFileExtension(filename);
-
-                    try {
-                        log.info("🔄 使用 DocumentProcessorManager 处理文档: {}", filename);
-
-                        DocumentProcessor.ProcessingContext context = DocumentProcessor.ProcessingContext.builder()
-                                .fileBytes(file.getBytes())
-                                .filePath(null)
-                                .fileExtension(fileExtension)
-                                .originalFileName(filename)
-                                .fileSize(file.getSize())
-                                .options(new HashMap<>())
-                                .build();
-
-                        DocumentProcessor.ProcessingResult result = documentProcessorManager.processDocument(context);
-
-                        if (result.isSuccess()) {
-                            content = result.getContent();
-                            log.info("✅ 文档处理成功: processor={}, 内容长度={} chars",
-                                    result.getProcessorName(), content.length());
-
-                            // 保存提取的图片 ⭐ 使用文件名,包含 metadata
-                            if (result.getImages() != null && !result.getImages().isEmpty()) {
-                                log.info("🖼️ 保存提取的图片: {} 张", result.getImages().size());
-                                int savedImageCount = 0;
-                                for (DocumentProcessor.ExtractedImage extractedImage : result.getImages()) {
-                                    try {
-                                        String imageId = imageStorageService.saveImage(
-                                                filename,  // 使用文件名而不是 documentId
-                                                extractedImage.getData(),
-                                                extractedImage.getFormat(),
-                                                extractedImage.getMetadata());  // 传递 metadata ⭐
-                                        if (imageId != null) {
-                                            savedImageCount++;
-                                        }
-                                    } catch (Exception ex) {
-                                        log.warn("⚠️ 保存图片失败: {}", ex.getMessage());
-                                    }
-                                }
-                                log.info("✅ 图片已保存: {} 张", savedImageCount);
-                            }
-                        } else {
-                            throw new Exception("文档处理失败: " + result.getError());
-                        }
-
-                    } catch (Exception e) {
-                        log.warn("⚠️ DocumentProcessor 处理失败，降级使用 DocumentParserUtil: {}", e.getMessage());
-                        try {
-                            content = DocumentParserUtil.parseDocument(file);
-                        } catch (Exception ex) {
-                            log.warn("⚠️ DocumentParserUtil 也失败，使用原始字节内容");
-                            content = new String(file.getBytes(), StandardCharsets.UTF_8);
-                        }
-                    }
-
-                    // === 使用 ChunkingStrategyManager 进行分块 ===
-                    if (autoIndex) {
-                        try {
-                            log.info("📦 使用 ChunkingStrategyManager 进行分块: {}", filename);
-
-                            List<Chunk> chunks = chunkingStrategyManager.chunkWithAutoStrategy(
-                                    documentId, content, filename);
-                            log.info("✅ 分块完成: 共 {} 个块", chunks.size());
-
-                            // 保存分块到存储服务⭐
-                            log.info("💾 保存分块到存储服务: {}", filename);
-                            List<String> savedChunkIds = storageService.saveChunks(filename, chunks);
-                            log.info("✅ 分块已保存: {} 个文件", savedChunkIds.size());
-
-                            // 索引到 RAG
-                            int indexed = 0;
-                            for (Chunk chunk : chunks) {
-                                Document document = Document.builder()
-                                        .id(chunk.getId())
-                                        .title(filename + " (块 " + chunk.getSequence() + ")")
-                                        .content(chunk.getContent())
-                                        .summary("块 " + chunk.getSequence())
-                                        .source("upload")
-                                        .type("chunk")
-                                        .metadata(Map.of(
-                                                "fileName", filename,
-                                                "storagePath", filename,                    // ⭐ 存储路径
-                                                "documentId", documentId,
-                                                "chunkIndex", chunk.getSequence()
-                                        ))
-                                        .build();
-
-                                ragService.indexDocument(document);
-                                indexed++;
-                            }
-
-                            // 可选：生成 PPL 和 Optimization 数据 ⭐
-                            if (ragOptimizationService != null) {
-                                try {
-                                    log.info("📊 生成 RAG 优化数据: {}", filename);
-                                    generateOptimizationData(filename, content, chunks);
-                                } catch (Exception optEx) {
-                                    log.warn("⚠️ 生成优化数据失败: {}", optEx.getMessage());
-                                }
-                            }
-
-                            uploadResult.setMessage("上传成功，已分块并索引（" + indexed + " 个块）");
-
-                        } catch (Exception e) {
-                            log.warn("⚠️ 分块失败，降级使用整文档索引: {}", e.getMessage());
-
-                            Document document = Document.builder()
-                                    .id(documentId)
-                                    .title(filename)
-                                    .content(content)
-                                    .source("upload")
-                                    .type("document")
-                                    .build();
-
-                            ragService.indexDocument(document);
-                            uploadResult.setMessage("上传成功（未分块）");
-                        }
-                    } else {
-                        uploadResult.setMessage("上传成功（未索引）");
-                    }
+                    // 调用核心处理方法
+                    DocumentUploadResult docResult = processAndIndexDocument(file, autoIndex);
 
                     uploadResult.setSuccess(true);
-                    uploadResult.setDocumentId(documentId);
+                    uploadResult.setMessage(docResult.getMessage());
+                    uploadResult.setDocumentId(docResult.getDocumentId());
                     uploadResult.setFileSize(file.getSize());
                     successCount++;
 
@@ -487,7 +213,7 @@ public class DocumentManagementController {
     /**
      * 删除文档
      * DELETE /api/documents/{documentId}
-     *
+     * <p>
      * 注意：documentId可以是文档ID或文件名，会自动查找匹配的文档
      */
     @DeleteMapping("/{documentId}")
@@ -719,14 +445,14 @@ public class DocumentManagementController {
         try {
             // 使用RAG搜索文档
             List<top.yumbo.ai.rag.api.model.SearchResult> searchResults =
-                ragService.searchByText(keyword, limit);
+                    ragService.searchByText(keyword, limit);
 
             // 提取唯一的文档源
             List<String> documentIds = searchResults.stream()
-                .map(sr -> sr.getDocument().getSource())
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
+                    .map(sr -> sr.getDocument().getSource())
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
 
             result.put("status", "success");
             result.put("keyword", keyword);
@@ -743,157 +469,192 @@ public class DocumentManagementController {
         return result;
     }
 
+
+    // ========== 辅助方法 ==========
+
     /**
-     * 生成并保存 PPL 和 Optimization 数据
-     * ⭐ 从 ChunkingStrategyManager 生成的 chunks 的 metadata 中提取 PPL 数据
+     * 核心文档处理和索引方法（单文件上传和批量上传共用）
      *
-     * @param documentId 文档ID（使用文件名）
-     * @param content 文档内容
-     * @param chunks 文档分块列表（已包含 PPL 数据在 metadata 中）
+     * @param file 上传的文件
+     * @param autoIndex 是否自动索引
+     * @return 文档上传结果
+     * @throws Exception 处理异常
      */
-    private void generateOptimizationData(String documentId, String content, List<Chunk> chunks) {
-        if (ragOptimizationService == null) {
-            return;
+    private DocumentUploadResult processAndIndexDocument(MultipartFile file, boolean autoIndex) throws Exception {
+        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
+
+        // 生成文档ID
+        String documentId = "doc_" + System.currentTimeMillis() + "_" +
+                filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+
+        // 1. 保存原始文件到 DocumentStorageService
+        log.info("💾 保存原始文件到存储服务: {}", filename);
+        String savedDocId = storageService.saveDocument(filename, filename, file.getBytes());
+        if (savedDocId == null) {
+            throw new Exception("保存原始文件失败");
+        }
+        log.info("✅ 原始文件已保存: {}", filename);
+
+        // 2. 使用 DocumentProcessorManager 处理文档
+        String content = processDocumentContent(file, filename);
+
+        // 3. 如果需要索引，进行分块和索引
+        String message;
+        if (autoIndex) {
+            message = chunkAndIndexDocument(documentId, filename, content);
+        } else {
+            message = "文档上传成功（未索引）";
         }
 
+        return new DocumentUploadResult(documentId, message);
+    }
+
+    /**
+     * 处理文档内容（文本提取和图片保存）
+     *
+     * @param file 上传的文件
+     * @param filename 文件名
+     * @return 提取的文本内容
+     * @throws Exception 处理异常
+     */
+    private String processDocumentContent(MultipartFile file, String filename) throws Exception {
+        String fileExtension = getFileExtension(filename);
+        String content;
+
         try {
-            // 1. 从 chunks 的 metadata 中提取 PPL (Probable Point of Loss) 数据 ⭐
-            // ChunkingStrategyManager 在分块时已经计算了 avgPerplexity
-            List<String> probablePoints = new ArrayList<>();
-            Map<String, Float> scores = new HashMap<>();
-            String strategyName = "unknown";
+            log.info("🔄 使用 DocumentProcessorManager 处理文档: {}", filename);
 
-            for (int i = 0; i < chunks.size(); i++) {
-                Chunk chunk = chunks.get(i);
-                String pointId = "chunk_" + i;
-                probablePoints.add(pointId);
-
-                // 从 metadata 中提取 avgPerplexity（如果存在）
-                if (chunk.getMetadata() != null) {
-                    Object avgPerplexityObj = chunk.getMetadata().get("avgPerplexity");
-                    if (avgPerplexityObj != null) {
-                        // PPL 分块策略已经计算了困惑度
-                        double avgPerplexity = ((Number) avgPerplexityObj).doubleValue();
-                        // 将困惑度转换为评分（困惑度越低，质量越高）
-                        // 归一化到 0-1 范围，困惑度通常在 0-10 之间
-                        float score = (float) Math.max(0.0, 1.0 - (avgPerplexity / 10.0));
-                        scores.put(pointId, score);
-                    } else {
-                        // 如果没有 PPL 数据，使用基于位置和长度的简单评分
-                        float score = 0.5f + (float) i / chunks.size() * 0.3f;
-                        if (chunk.getContent().length() > 500) {
-                            score += 0.2f;
-                        }
-                        scores.put(pointId, Math.min(score, 1.0f));
-                    }
-
-                    // 提取分块策略名称
-                    Object strategyObj = chunk.getMetadata().get("strategy");
-                    if (strategyObj != null && i == 0) {
-                        strategyName = strategyObj.toString();
-                    }
-                } else {
-                    // 没有 metadata，使用默认评分
-                    scores.put(pointId, 0.5f);
-                }
-            }
-
-            // 保存 PPL 数据
-            String modelVersion = strategyName.equals("ppl") ? "ppl-chunking-v1.0" : "simple-v1.0";
-            top.yumbo.ai.storage.api.model.PPLData pplData = top.yumbo.ai.storage.api.model.PPLData.builder()
-                    .documentId(documentId)
-                    .probablePoints(probablePoints)
-                    .scores(scores)
-                    .modelVersion(modelVersion)
-                    .analyzedAt(System.currentTimeMillis())
-                    .metadata(Map.of(
-                            "chunkCount", chunks.size(),
-                            "contentLength", content.length(),
-                            "chunkingStrategy", strategyName,
-                            "extractedFromChunks", true,  // 标记：从分块结果提取
-                            "generatedBy", "DocumentManagementController"
-                    ))
+            // 构建处理上下文
+            DocumentProcessor.ProcessingContext context = DocumentProcessor.ProcessingContext.builder()
+                    .fileBytes(file.getBytes())
+                    .filePath(null)
+                    .fileExtension(fileExtension)
+                    .originalFileName(filename)
+                    .fileSize(file.getSize())
+                    .options(new HashMap<>())
                     .build();
 
-            String pplResult = storageService.savePPLData(documentId, pplData);
-            if (pplResult != null) {
-                log.info("✅ PPL 数据已保存: {} (strategy={}, chunks={})",
-                        documentId, strategyName, chunks.size());
-            }
+            // 处理文档
+            DocumentProcessor.ProcessingResult result = documentProcessorManager.processDocument(context);
 
-            // 2. 生成通用 Optimization 数据
-            // 保存文档的基本统计信息和分块质量指标
-            Map<String, Object> optimizationInfo = new HashMap<>();
-            optimizationInfo.put("totalChunks", chunks.size());
-            optimizationInfo.put("avgChunkSize", chunks.stream()
-                    .mapToInt(c -> c.getContent().length())
-                    .average()
-                    .orElse(0.0));
-            optimizationInfo.put("totalContentLength", content.length());
-            optimizationInfo.put("chunkingStrategy", strategyName);
-            optimizationInfo.put("probablePoints", probablePoints);
+            if (result.isSuccess()) {
+                content = result.getContent();
+                log.info("✅ 文档处理成功: processor={}, 内容长度={} chars, 耗时={}ms",
+                        result.getProcessorName(), content.length(), result.getProcessingTimeMs());
 
-            // 如果是 PPL 分块，收集所有困惑度数据
-            if (strategyName.equals("ppl")) {
-                List<Double> perplexities = chunks.stream()
-                        .filter(c -> c.getMetadata() != null && c.getMetadata().containsKey("avgPerplexity"))
-                        .map(c -> ((Number) c.getMetadata().get("avgPerplexity")).doubleValue())
-                        .collect(Collectors.toList());
-
-                if (!perplexities.isEmpty()) {
-                    optimizationInfo.put("perplexities", perplexities);
-                    optimizationInfo.put("avgPerplexity", perplexities.stream()
-                            .mapToDouble(Double::doubleValue)
-                            .average()
-                            .orElse(0.0));
-                    optimizationInfo.put("minPerplexity", perplexities.stream()
-                            .mapToDouble(Double::doubleValue)
-                            .min()
-                            .orElse(0.0));
-                    optimizationInfo.put("maxPerplexity", perplexities.stream()
-                            .mapToDouble(Double::doubleValue)
-                            .max()
-                            .orElse(0.0));
-                }
-            }
-
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put("generatedAt", System.currentTimeMillis());
-            metadata.put("version", "1.0");
-            metadata.put("generator", "auto");
-            metadata.put("chunkingStrategy", strategyName);
-
-            Map<String, Double> metrics = new HashMap<>();
-            metrics.put("chunkCount", (double) chunks.size());
-            metrics.put("avgChunkSize", chunks.stream()
-                    .mapToInt(c -> c.getContent().length())
-                    .average()
-                    .orElse(0.0));
-            metrics.put("avgQualityScore", scores.values().stream()
-                    .mapToDouble(Float::doubleValue)
-                    .average()
-                    .orElse(0.0));
-
-            String optResult = ragOptimizationService.saveOptimizationData(
-                    documentId,
-                    "DOCUMENT_STATS",  // 优化类型
-                    optimizationInfo,
-                    metadata,
-                    metrics
-            );
-
-            if (optResult != null) {
-                log.info("✅ Optimization 数据已保存: {} type=DOCUMENT_STATS (strategy={})",
-                        documentId, strategyName);
+                // 保存提取的图片
+                saveExtractedImages(filename, result.getImages());
+            } else {
+                throw new Exception("文档处理失败: " + result.getError());
             }
 
         } catch (Exception e) {
-            log.error("生成优化数据失败: {}", documentId, e);
-            throw e;
+            log.warn("⚠️ DocumentProcessor 处理失败，降级使用 DocumentParserUtil: {}", e.getMessage());
+            try {
+                content = DocumentParserUtil.parseDocument(file);
+            } catch (Exception ex) {
+                log.warn("⚠️ DocumentParserUtil 也失败，使用原始字节内容");
+                content = new String(file.getBytes(), StandardCharsets.UTF_8);
+            }
+        }
+
+        return content;
+    }
+
+    /**
+     * 保存提取的图片
+     *
+     * @param filename 文档文件名
+     * @param images 提取的图片列表
+     */
+    private void saveExtractedImages(String filename, List<DocumentProcessor.ExtractedImage> images) {
+        if (images != null && !images.isEmpty()) {
+            log.info("🖼️ 保存提取的图片: {} 张", images.size());
+            int savedImageCount = 0;
+            for (DocumentProcessor.ExtractedImage extractedImage : images) {
+                try {
+                    String imageId = imageStorageService.saveImage(
+                            filename,  // 使用文件名而不是 documentId
+                            extractedImage.getData(),
+                            extractedImage.getFormat(),
+                            extractedImage.getMetadata());  // 传递 metadata（包含 Vision LLM 分析结果）
+                    if (imageId != null) {
+                        savedImageCount++;
+                    }
+                } catch (Exception ex) {
+                    log.warn("⚠️ 保存图片失败: {}", ex.getMessage());
+                }
+            }
+            log.info("✅ 图片已保存: {} 张", savedImageCount);
         }
     }
 
-    // ========== 辅助方法 ==========
+    /**
+     * 分块并索引文档
+     *
+     * @param documentId 文档ID
+     * @param filename 文件名
+     * @param content 文档内容
+     * @return 结果消息
+     */
+    private String chunkAndIndexDocument(String documentId, String filename, String content) {
+        try {
+            log.info("📦 使用 ChunkingStrategyManager 进行分块: {}", filename);
+
+            // 1. 使用分块策略管理器进行分块（自动选择策略）
+            List<Chunk> chunks = chunkingStrategyManager.chunkWithAutoStrategy(
+                    documentId, content, filename);
+            log.info("✅ 分块完成: 共 {} 个块, 策略: {}",
+                    chunks.size(),
+                    chunks.isEmpty() ? "unknown" : chunks.get(0).getMetadata().get("strategy"));
+
+            // 2. 保存分块到 DocumentStorageService
+            log.info("💾 保存分块到存储服务: {}", filename);
+            List<String> savedChunkIds = storageService.saveChunks(filename, chunks);
+            log.info("✅ 分块已保存到存储: {} 个文件", savedChunkIds.size());
+
+            // 3. 为每个块创建文档并索引到 RAG
+            log.info("📇 索引分块到 RAG: {}", filename);
+            int indexed = 0;
+            for (Chunk chunk : chunks) {
+                Document document = Document.builder()
+                        .id(chunk.getId())
+                        .title(filename + " (块 " + chunk.getSequence() + ")")
+                        .content(chunk.getContent())
+                        .summary("块 " + chunk.getSequence())
+                        .source("upload")
+                        .type("chunk")
+                        .metadata(Map.of(
+                                "fileName", filename,
+                                "storagePath", filename,
+                                "documentId", documentId,
+                                "chunkIndex", chunk.getSequence()
+                        ))
+                        .build();
+
+                ragService.indexDocument(document);
+                indexed++;
+            }
+
+            log.info("✅ 索引完成: 共索引 {} 个文档块", indexed);
+            return String.format("文档上传成功，已分块并索引（%d 个块）", indexed);
+
+        } catch (Exception e) {
+            log.warn("⚠️ 分块失败，降级使用整文档索引: {}", e.getMessage());
+
+            // 降级：直接索引整个文档
+            Document document = Document.builder()
+                    .id(documentId)
+                    .title(filename)
+                    .content(content)
+                    .source("upload")
+                    .type("document")
+                    .build();
+
+            ragService.indexDocument(document);
+            return "文档上传成功（未分块）";
+        }
+    }
 
     /**
      * 获取文件扩展名
@@ -910,6 +671,16 @@ public class DocumentManagementController {
     }
 
     // ========== DTO 类 ==========
+
+    /**
+     * 内部文档上传结果类（用于方法间传递数据）
+     */
+    @Data
+    @AllArgsConstructor
+    private static class DocumentUploadResult {
+        private String documentId;
+        private String message;
+    }
 
     @Data
     public static class UploadResponse {
