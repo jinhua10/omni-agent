@@ -16,6 +16,10 @@ import top.yumbo.ai.rag.api.model.SearchResult;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
+import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.omni.core.document.DocumentProcessor;
+import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
+import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -41,6 +45,8 @@ public class DocumentManagementController {
 
     private final DocumentStorageService storageService;
     private final RAGService ragService;
+    private final DocumentProcessorManager documentProcessorManager;
+    private final ChunkingStrategyManager chunkingStrategyManager;
 
     /**
      * 上传文档（简化版：直接索引到RAG）
@@ -71,31 +77,95 @@ public class DocumentManagementController {
             FileStorageUtil.saveFile(file, documentId);
             log.info("原始文件已保存: documentId={}", documentId);
 
-            // 使用 DocumentParserUtil 解析文档内容
+            // === 新流程：使用 DocumentProcessorManager 处理文档 ===
             String content;
+            String fileExtension = getFileExtension(filename);
+
             try {
-                content = DocumentParserUtil.parseDocument(file);
-                log.info("文档解析成功: {} bytes", content.length());
+                log.info("🔄 使用 DocumentProcessorManager 处理文档...");
+
+                // 1. 构建处理上下文
+                DocumentProcessor.ProcessingContext context = DocumentProcessor.ProcessingContext.builder()
+                        .fileBytes(file.getBytes())
+                        .filePath(null)  // 使用字节数组，不需要路径
+                        .fileExtension(fileExtension)
+                        .originalFileName(filename)
+                        .fileSize(file.getSize())
+                        .options(new HashMap<>())
+                        .build();
+
+                // 2. 处理文档（文本提取 / Vision LLM 识别）
+                DocumentProcessor.ProcessingResult result = documentProcessorManager.processDocument(context);
+
+                if (result.isSuccess()) {
+                    content = result.getContent();
+                    log.info("✅ 文档处理成功: processor={}, 内容长度={} chars, 耗时={}ms",
+                            result.getProcessorName(), content.length(), result.getProcessingTimeMs());
+                } else {
+                    throw new Exception("文档处理失败: " + result.getError());
+                }
+
             } catch (Exception e) {
-                log.warn("文档解析失败，使用原始字节内容: {}", e.getMessage());
-                content = new String(file.getBytes(), StandardCharsets.UTF_8);
+                log.warn("⚠️ DocumentProcessor 处理失败，降级使用 DocumentParserUtil: {}", e.getMessage());
+                try {
+                    content = DocumentParserUtil.parseDocument(file);
+                } catch (Exception ex) {
+                    log.warn("⚠️ DocumentParserUtil 也失败，使用原始字节内容");
+                    content = new String(file.getBytes(), StandardCharsets.UTF_8);
+                }
             }
 
-            // 直接索引到RAG
+            // === 新流程：使用 ChunkingStrategyManager 进行分块 ===
             if (autoIndex) {
-                Document document = Document.builder()
-                    .id(documentId)
-                    .title(filename)
-                    .content(content)
-                    .source("upload")
-                    .type("document")
-                    .build();
+                try {
+                    log.info("📦 使用 ChunkingStrategyManager 进行分块...");
 
-                ragService.indexDocument(document);
+                    // 1. 使用分块策略管理器进行分块（自动选择策略）
+                    List<Chunk> chunks = chunkingStrategyManager.chunkWithAutoStrategy(
+                            documentId, content, filename);
+                    log.info("✅ 分块完成: 共 {} 个块, 策略: {}",
+                            chunks.size(),
+                            chunks.isEmpty() ? "unknown" : chunks.get(0).getMetadata().get("strategy"));
+
+                    // 2. 为每个块创建文档并索引
+                    int indexed = 0;
+                    for (Chunk chunk : chunks) {
+                        Document document = Document.builder()
+                                .id(chunk.getId())
+                                .title(filename + " (块 " + chunk.getSequence() + ")")
+                                .content(chunk.getContent())
+                                .summary("块 " + chunk.getSequence())
+                                .source("upload")
+                                .type("chunk")
+                                .build();
+
+                        ragService.indexDocument(document);
+                        indexed++;
+                    }
+
+                    log.info("✅ 索引完成: 共索引 {} 个文档块", indexed);
+                    response.setMessage("文档上传成功，已分块并索引（" + indexed + " 个块）");
+
+                } catch (Exception e) {
+                    log.warn("⚠️ 分块失败，降级使用整文档索引: {}", e.getMessage());
+
+                    // 降级：直接索引整个文档
+                    Document document = Document.builder()
+                            .id(documentId)
+                            .title(filename)
+                            .content(content)
+                            .source("upload")
+                            .type("document")
+                            .build();
+
+                    ragService.indexDocument(document);
+                    response.setMessage("文档上传成功（未分块）");
+                }
+            } else {
+                response.setMessage("文档上传成功（未索引）");
             }
 
             response.setSuccess(true);
-            response.setMessage("文档上传成功");
             response.setFileName(filename);
             response.setFileSize(file.getSize());
             response.setDocumentId(documentId);
@@ -574,6 +644,22 @@ public class DocumentManagementController {
         }
 
         return result;
+    }
+
+    // ========== 辅助方法 ==========
+
+    /**
+     * 获取文件扩展名
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "";
+        }
+        int lastDot = filename.lastIndexOf('.');
+        if (lastDot > 0 && lastDot < filename.length() - 1) {
+            return filename.substring(lastDot + 1).toLowerCase();
+        }
+        return "";
     }
 
     // ========== DTO 类 ==========

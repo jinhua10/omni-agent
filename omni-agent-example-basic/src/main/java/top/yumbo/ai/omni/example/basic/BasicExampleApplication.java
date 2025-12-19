@@ -38,7 +38,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling  // 启用定时任务（用于备份监控）
 @ComponentScan(basePackages = {
     "top.yumbo.ai.omni.example.basic",
-    "top.yumbo.ai.omni.core"
+    "top.yumbo.ai.omni.core",
+    "top.yumbo.ai.omni.marketplace",
+    "top.yumbo.ai.omni.web"
 })
 public class BasicExampleApplication {
 
