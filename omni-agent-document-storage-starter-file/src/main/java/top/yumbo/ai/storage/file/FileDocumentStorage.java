@@ -110,17 +110,19 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteDocument(String documentId) {
         try {
-            // 遍历删除（需要更好的删除机制）
-            Files.walk(documentsPath, 10)
-                    .filter(Files::isRegularFile)
-                    .forEach(p -> {
-                        try {
-                            Files.delete(p);
-                            log.debug("Deleted document file: {}", p);
-                        } catch (IOException e) {
-                            log.error("Failed to delete: {}", p, e);
-                        }
-                    });
+            // documentId 就是原始文件名
+            Path documentFile = documentsPath.resolve(documentId);
+            if (Files.exists(documentFile)) {
+                Files.delete(documentFile);
+                log.debug("Deleted document file: {}", documentFile);
+            } else {
+                log.warn("Document file not found: {}", documentFile);
+            }
+
+            // 清理相关的所有数据（chunks、images、ppl、optimization）⭐
+            cleanupDocument(documentId);
+
+            log.info("Successfully deleted document and all related data: {}", documentId);
         } catch (IOException e) {
             log.error("Failed to delete document: {}", documentId, e);
         }
@@ -131,10 +133,9 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveChunk(String documentId, Chunk chunk) {
         try {
-            // documentId 格式: doc_timestamp_filename
-            // 提取原文件名（移除前缀）
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docChunkDir = chunksPath.resolve(filename);
+            // 使用原始文件名作为目录（从chunk或documentId获取）
+            // documentId 在调用时应该已经是原始文件名
+            Path docChunkDir = chunksPath.resolve(documentId);
             Files.createDirectories(docChunkDir);
 
             // 使用有意义的文件名：chunk_序号（无后缀）⭐
@@ -147,18 +148,20 @@ public class FileDocumentStorage implements DocumentStorageService {
                 oos.writeObject(chunk);
             }
 
-            log.debug("Saved chunk: {} -> {}/{}", chunkId, filename, chunkFilename);
+            log.debug("Saved chunk: {} -> {}/{}", chunkId, documentId, chunkFilename);
             return chunkId;
         } catch (IOException e) {
-            log.error("Failed to save chunk", e);
+            log.error("Failed to save chunk for document: {}", documentId, e);
             return null;
         }
     }
 
     /**
      * 从 documentId 提取原文件名
-     * documentId 格式: doc_timestamp_filename
+     * @deprecated 不再使用，保留用于向后兼容
+     * 新的设计中 documentId 就是原始文件名
      */
+    @Deprecated
     private String extractFilenameFromDocumentId(String documentId) {
         // doc_1766142807149_倡导节约用水.pptx -> 倡导节约用水.pptx
         if (documentId.startsWith("doc_")) {
@@ -221,8 +224,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public List<Chunk> getChunksByDocument(String documentId) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docChunkDir = chunksPath.resolve(filename);
+            Path docChunkDir = chunksPath.resolve(documentId);
             if (!Files.exists(docChunkDir)) {
                 return new ArrayList<>();
             }
@@ -267,8 +269,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteChunksByDocument(String documentId) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docChunkDir = chunksPath.resolve(filename);
+            Path docChunkDir = chunksPath.resolve(documentId);
             if (Files.exists(docChunkDir)) {
                 Files.walk(docChunkDir)
                         .sorted(Comparator.reverseOrder())
@@ -279,7 +280,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 log.error("Failed to delete: {}", p, e);
                             }
                         });
-                log.info("Deleted all chunks for document: {}", filename);
+                log.info("Deleted all chunks for document: {}", documentId);
             }
         } catch (IOException e) {
             log.error("Failed to delete chunks for document: {}", documentId, e);
@@ -291,8 +292,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveImage(String documentId, Image image) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docImageDir = imagesPath.resolve(filename);
+            Path docImageDir = imagesPath.resolve(documentId);
             Files.createDirectories(docImageDir);
 
             // 使用有意义的文件名：page_页码_img（无额外后缀）⭐
@@ -317,13 +317,15 @@ public class FileDocumentStorage implements DocumentStorageService {
                 oos.writeObject(image);
             }
 
-            log.debug("Saved image: {} -> {}/{}", imageId, filename, imageFilename);
+            log.debug("Saved image: {} -> {}/{}", imageId, documentId, imageFilename);
             return imageId;
         } catch (IOException e) {
             log.error("Failed to save image", e);
             return null;
         }
     }
+
+    // ...existing code...
 
     @Override
     public Optional<Image> getImage(String imageId) {
@@ -336,7 +338,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                         // 匹配 page_xxx_img.xxx 或 image_xxx.xxx 或包含imageId的文件
                         return name.startsWith("page_") || name.startsWith("image_") || name.contains(imageId);
                     })
-                    .toList();
+                    .collect(Collectors.toList());
 
             if (imageFiles.isEmpty()) {
                 return Optional.empty();
@@ -364,8 +366,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public List<Image> getImagesByDocument(String documentId) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docImageDir = imagesPath.resolve(filename);
+            Path docImageDir = imagesPath.resolve(documentId);
             if (!Files.exists(docImageDir)) {
                 return new ArrayList<>();
             }
@@ -393,11 +394,13 @@ public class FileDocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ...existing code...
+
     @Override
     public void deleteImage(String imageId) {
         try {
             Files.walk(imagesPath, 2)
-                    .filter(p -> p.toString().endsWith(imageId + ".img"))
+                    .filter(p -> p.toString().contains(imageId))
                     .forEach(p -> {
                         try {
                             Files.delete(p);
@@ -414,8 +417,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteImagesByDocument(String documentId) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docImageDir = imagesPath.resolve(filename);
+            Path docImageDir = imagesPath.resolve(documentId);
             if (Files.exists(docImageDir)) {
                 Files.walk(docImageDir)
                         .sorted(Comparator.reverseOrder())
@@ -426,7 +428,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 log.error("Failed to delete: {}", p, e);
                             }
                         });
-                log.info("Deleted all images for document: {}", filename);
+                log.info("Deleted all images for document: {}", documentId);
             }
         } catch (IOException e) {
             log.error("Failed to delete images for document: {}", documentId, e);
@@ -438,8 +440,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String savePPLData(String documentId, PPLData data) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docPplDir = pplPath.resolve(filename);
+            Path docPplDir = pplPath.resolve(documentId);
             Files.createDirectories(docPplDir);
 
             Path pplFile = docPplDir.resolve("ppl");  // 无后缀 ⭐
@@ -448,7 +449,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                 oos.writeObject(data);
             }
 
-            log.debug("Saved PPL data for document: {}", filename);
+            log.debug("Saved PPL data for document: {}", documentId);
             return documentId;
         } catch (IOException e) {
             log.error("Failed to save PPL data", e);
@@ -459,8 +460,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<PPLData> getPPLData(String documentId) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path pplFile = pplPath.resolve(filename).resolve("ppl");  // 无后缀 ⭐
+            Path pplFile = pplPath.resolve(documentId).resolve("ppl");  // 无后缀 ⭐
             if (!Files.exists(pplFile)) {
                 return Optional.empty();
             }
@@ -477,8 +477,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deletePPLData(String documentId) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docPplDir = pplPath.resolve(filename);
+            Path docPplDir = pplPath.resolve(documentId);
             if (Files.exists(docPplDir)) {
                 Files.walk(docPplDir)
                         .sorted(Comparator.reverseOrder())
@@ -489,7 +488,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 log.error("Failed to delete: {}", p, e);
                             }
                         });
-                log.info("Deleted PPL data for document: {}", filename);
+                log.info("Deleted PPL data for document: {}", documentId);
             }
         } catch (IOException e) {
             log.error("Failed to delete PPL data for document: {}", documentId, e);
@@ -501,8 +500,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveOptimizationData(String documentId, OptimizationData data) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docOptDir = optimizationPath.resolve(filename);
+            Path docOptDir = optimizationPath.resolve(documentId);
             Files.createDirectories(docOptDir);
 
             // 使用优化类型作为文件名（无后缀）⭐
@@ -513,7 +511,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                 oos.writeObject(data);
             }
 
-            log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), filename);
+            log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), documentId);
             return documentId + ":" + data.getOptimizationType();
         } catch (IOException e) {
             log.error("Failed to save optimization data", e);
@@ -524,8 +522,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<OptimizationData> getOptimizationData(String documentId, String optimizationType) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path optFile = optimizationPath.resolve(filename).resolve(optimizationType);  // 无后缀 ⭐
+            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType);  // 无后缀 ⭐
             if (!Files.exists(optFile)) {
                 return Optional.empty();
             }
@@ -542,8 +539,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public List<OptimizationData> getAllOptimizationData(String documentId) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docOptDir = optimizationPath.resolve(filename);
+            Path docOptDir = optimizationPath.resolve(documentId);
             if (!Files.exists(docOptDir)) {
                 return Collections.emptyList();
             }
@@ -569,11 +565,10 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteOptimizationData(String documentId, String optimizationType) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path optFile = optimizationPath.resolve(filename).resolve(optimizationType);  // 无后缀 ⭐
+            Path optFile = optimizationPath.resolve(documentId).resolve(optimizationType);  // 无后缀 ⭐
             if (Files.exists(optFile)) {
                 Files.delete(optFile);
-                log.info("Deleted {} optimization data for document: {}", optimizationType, filename);
+                log.info("Deleted {} optimization data for document: {}", optimizationType, documentId);
             }
         } catch (IOException e) {
             log.error("Failed to delete {} optimization data for document: {}", optimizationType, documentId, e);
@@ -583,8 +578,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteAllOptimizationData(String documentId) {
         try {
-            String filename = extractFilenameFromDocumentId(documentId);
-            Path docOptDir = optimizationPath.resolve(filename);
+            Path docOptDir = optimizationPath.resolve(documentId);
             if (Files.exists(docOptDir)) {
                 Files.walk(docOptDir)
                         .sorted(Comparator.reverseOrder())
@@ -595,7 +589,7 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 log.error("Failed to delete: {}", p, e);
                             }
                         });
-                log.info("Deleted all optimization data for document: {}", filename);
+                log.info("Deleted all optimization data for document: {}", documentId);
             }
         } catch (IOException e) {
             log.error("Failed to delete all optimization data for document: {}", documentId, e);
