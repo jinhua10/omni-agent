@@ -63,6 +63,69 @@ public class FileDocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Raw Document Storage ==========
+
+    @Override
+    public String saveDocument(String documentId, String filename, byte[] fileData) {
+        try {
+            Files.createDirectories(documentsPath);
+
+            // 使用 documentId 作为文件名，保留原始扩展名
+            String extension = "";
+            int lastDot = filename.lastIndexOf('.');
+            if (lastDot > 0) {
+                extension = filename.substring(lastDot);
+            }
+
+            Path documentFile = documentsPath.resolve(documentId + extension);
+            Files.write(documentFile, fileData);
+
+            log.debug("Saved document: {} ({})", documentId, filename);
+            return documentId;
+        } catch (IOException e) {
+            log.error("Failed to save document: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<byte[]> getDocument(String documentId) {
+        try {
+            // 查找匹配的文件（可能有不同扩展名）
+            Path[] matchingFiles = Files.list(documentsPath)
+                    .filter(p -> p.getFileName().toString().startsWith(documentId))
+                    .toArray(Path[]::new);
+
+            if (matchingFiles.length > 0) {
+                byte[] data = Files.readAllBytes(matchingFiles[0]);
+                return Optional.of(data);
+            }
+            return Optional.empty();
+        } catch (IOException e) {
+            log.error("Failed to get document: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteDocument(String documentId) {
+        try {
+            // 查找并删除匹配的文件
+            Files.list(documentsPath)
+                    .filter(p -> p.getFileName().toString().startsWith(documentId))
+                    .forEach(p -> {
+                        try {
+                            Files.delete(p);
+                            log.debug("Deleted document file: {}", p);
+                        } catch (IOException e) {
+                            log.error("Failed to delete document file: {}", p, e);
+                        }
+                    });
+        } catch (IOException e) {
+            log.error("Failed to list documents for deletion: {}", documentId, e);
+        }
+    }
+
     // ========== Chunk Storage ==========
 
     @Override

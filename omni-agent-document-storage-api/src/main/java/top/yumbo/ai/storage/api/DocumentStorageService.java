@@ -21,6 +21,30 @@ import java.util.Optional;
  */
 public interface DocumentStorageService {
 
+    // ========== 原始文档存储 (Raw Document Storage) ==========
+
+    /**
+     * 保存原始文档文件
+     * @param documentId 文档ID
+     * @param filename 文件名
+     * @param fileData 文件数据
+     * @return 文档存储ID
+     */
+    String saveDocument(String documentId, String filename, byte[] fileData);
+
+    /**
+     * 获取原始文档文件
+     * @param documentId 文档ID
+     * @return 文档数据
+     */
+    Optional<byte[]> getDocument(String documentId);
+
+    /**
+     * 删除原始文档文件
+     * @param documentId 文档ID
+     */
+    void deleteDocument(String documentId);
+
     // ========== 文档分块存储 (Chunk Storage) ==========
 
     /**

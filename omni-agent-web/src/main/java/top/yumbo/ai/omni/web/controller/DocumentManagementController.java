@@ -16,10 +16,12 @@ import top.yumbo.ai.rag.api.model.SearchResult;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.core.document.DocumentProcessor;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
+import top.yumbo.ai.omni.core.image.ImageStorageService;
+import top.yumbo.ai.storage.api.model.Chunk;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +49,7 @@ public class DocumentManagementController {
     private final RAGService ragService;
     private final DocumentProcessorManager documentProcessorManager;
     private final ChunkingStrategyManager chunkingStrategyManager;
+    private final ImageStorageService imageStorageService;
 
     /**
      * 上传文档（简化版：直接索引到RAG）
@@ -73,9 +76,13 @@ public class DocumentManagementController {
             String documentId = "doc_" + System.currentTimeMillis() + "_" +
                 filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 
-            // 保存原始文件
-            FileStorageUtil.saveFile(file, documentId);
-            log.info("原始文件已保存: documentId={}", documentId);
+            // 保存原始文件到 DocumentStorageService ⭐ 修改
+            log.info("💾 保存原始文件到存储服务...");
+            String savedDocId = storageService.saveDocument(documentId, filename, file.getBytes());
+            if (savedDocId == null) {
+                throw new Exception("保存原始文件失败");
+            }
+            log.info("✅ 原始文件已保存: documentId={}", documentId);
 
             // === 新流程：使用 DocumentProcessorManager 处理文档 ===
             String content;
@@ -101,6 +108,26 @@ public class DocumentManagementController {
                     content = result.getContent();
                     log.info("✅ 文档处理成功: processor={}, 内容长度={} chars, 耗时={}ms",
                             result.getProcessorName(), content.length(), result.getProcessingTimeMs());
+
+                    // 2.1 保存提取的图片到存储 ⭐ 新增
+                    if (result.getImages() != null && !result.getImages().isEmpty()) {
+                        log.info("🖼️ 保存提取的图片: {} 张", result.getImages().size());
+                        int savedImageCount = 0;
+                        for (DocumentProcessor.ExtractedImage extractedImage : result.getImages()) {
+                            try {
+                                String imageId = imageStorageService.saveImage(
+                                        documentId,
+                                        extractedImage.getData(),
+                                        extractedImage.getFormat());
+                                if (imageId != null) {
+                                    savedImageCount++;
+                                }
+                            } catch (Exception ex) {
+                                log.warn("⚠️ 保存图片失败: {}", ex.getMessage());
+                            }
+                        }
+                        log.info("✅ 图片已保存: {} 张", savedImageCount);
+                    }
                 } else {
                     throw new Exception("文档处理失败: " + result.getError());
                 }
@@ -127,7 +154,13 @@ public class DocumentManagementController {
                             chunks.size(),
                             chunks.isEmpty() ? "unknown" : chunks.get(0).getMetadata().get("strategy"));
 
-                    // 2. 为每个块创建文档并索引
+                    // 2. 保存分块到 DocumentStorageService（会保存到 ./data/chunks 目录）⭐
+                    log.info("💾 保存分块到存储服务...");
+                    List<String> savedChunkIds = storageService.saveChunks(documentId, chunks);
+                    log.info("✅ 分块已保存到存储: {} 个文件", savedChunkIds.size());
+
+                    // 3. 为每个块创建文档并索引到 RAG
+                    log.info("📇 索引分块到 RAG...");
                     int indexed = 0;
                     for (Chunk chunk : chunks) {
                         Document document = Document.builder()
@@ -218,8 +251,11 @@ public class DocumentManagementController {
                     String documentId = "doc_" + System.currentTimeMillis() + "_" +
                         filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 
-                    // 保存原始文件
-                    FileStorageUtil.saveFile(file, documentId);
+                    // 保存原始文件到 DocumentStorageService ⭐ 修改
+                    String savedDocId = storageService.saveDocument(documentId, filename, file.getBytes());
+                    if (savedDocId == null) {
+                        throw new Exception("保存原始文件失败");
+                    }
 
                     // === 使用 DocumentProcessorManager 处理文档 ===
                     String content;
@@ -243,6 +279,26 @@ public class DocumentManagementController {
                             content = result.getContent();
                             log.info("✅ 文档处理成功: processor={}, 内容长度={} chars",
                                     result.getProcessorName(), content.length());
+
+                            // 保存提取的图片 ⭐ 新增
+                            if (result.getImages() != null && !result.getImages().isEmpty()) {
+                                log.info("🖼️ 保存提取的图片: {} 张", result.getImages().size());
+                                int savedImageCount = 0;
+                                for (DocumentProcessor.ExtractedImage extractedImage : result.getImages()) {
+                                    try {
+                                        String imageId = imageStorageService.saveImage(
+                                                documentId,
+                                                extractedImage.getData(),
+                                                extractedImage.getFormat());
+                                        if (imageId != null) {
+                                            savedImageCount++;
+                                        }
+                                    } catch (Exception ex) {
+                                        log.warn("⚠️ 保存图片失败: {}", ex.getMessage());
+                                    }
+                                }
+                                log.info("✅ 图片已保存: {} 张", savedImageCount);
+                            }
                         } else {
                             throw new Exception("文档处理失败: " + result.getError());
                         }
@@ -266,6 +322,12 @@ public class DocumentManagementController {
                                     documentId, content, filename);
                             log.info("✅ 分块完成: 共 {} 个块", chunks.size());
 
+                            // 保存分块到存储服务⭐
+                            log.info("💾 保存分块到存储服务: {}", filename);
+                            List<String> savedChunkIds = storageService.saveChunks(documentId, chunks);
+                            log.info("✅ 分块已保存: {} 个文件", savedChunkIds.size());
+
+                            // 索引到 RAG
                             int indexed = 0;
                             for (Chunk chunk : chunks) {
                                 Document document = Document.builder()
@@ -424,13 +486,9 @@ public class DocumentManagementController {
                 }
             }
 
-            // 1. 删除物理文件（原始文档）
-            boolean fileDeleted = FileStorageUtil.deleteFileByDocumentId(actualDocumentId);
-            if (fileDeleted) {
-                log.info("物理文件删除成功: {}", actualDocumentId);
-            } else {
-                log.warn("物理文件删除失败或文件不存在: {}", actualDocumentId);
-            }
+            // 1. 删除原始文档文件
+            storageService.deleteDocument(actualDocumentId);
+            log.info("原始文档已删除: {}", actualDocumentId);
 
             // 2. 删除文档的所有分块
             storageService.deleteChunksByDocument(actualDocumentId);
@@ -441,10 +499,9 @@ public class DocumentManagementController {
 
             if (deleted) {
                 result.put("status", "success");
-                result.put("message", "文档删除成功（包括物理文件）");
+                result.put("message", "文档删除成功（包括原始文件、分块、图片）");
                 result.put("documentId", actualDocumentId);
-                result.put("fileDeleted", fileDeleted);
-                log.info("文档删除成功: {}，物理文件删除: {}", actualDocumentId, fileDeleted);
+                log.info("文档删除成功: {}", actualDocumentId);
             } else {
                 result.put("status", "error");
                 result.put("message", "文档删除失败：RAG删除返回false");
@@ -475,8 +532,8 @@ public class DocumentManagementController {
 
             for (String documentId : request.getDocumentIds()) {
                 try {
-                    // 删除物理文件
-                    FileStorageUtil.deleteFileByDocumentId(documentId);
+                    // 删除原始文档
+                    storageService.deleteDocument(documentId);
                     // 删除分块
                     storageService.deleteChunksByDocument(documentId);
                     // 删除图片
