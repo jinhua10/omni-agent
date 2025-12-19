@@ -183,11 +183,14 @@ public interface DocumentProcessor {
         /** 图片格式（png, jpg） */
         private String format;
 
-        /** 图片在文档中的位置 */
+        /** 图片在文档中的页码 */
         private int pageNumber;
 
         /** 图片描述（可选） */
         private String description;
+
+        /** 图片在页面中的位置（可选，用于 PPT 等布局重要的文档） */
+        private Object position;  // 可以是任意位置对象，如 ImagePosition
     }
 
     /**
