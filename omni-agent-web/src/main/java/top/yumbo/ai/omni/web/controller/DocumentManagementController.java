@@ -575,7 +575,7 @@ public class DocumentManagementController {
     }
 
     /**
-     * 获取文档列表（分页）
+     * 获取文档列表（分页）⭐ 从存储服务获取实际文档
      * GET /api/documents/list
      */
     @GetMapping("/list")
@@ -589,109 +589,52 @@ public class DocumentManagementController {
         try {
             log.info("获取文档列表: keyword={}, page={}, pageSize={}", keyword, page, pageSize);
 
-            // 获取文档总数
-            long totalCount = ragService.getDocumentCount();
-            List<DocumentInfo> allDocuments = new ArrayList<>();
+            List<top.yumbo.ai.storage.api.model.DocumentMetadata> metadataList;
+            long totalCount;
 
-            // 如果有关键词，则搜索；否则获取所有文档
+            // 从 DocumentStorageService 获取文档列表 ⭐
             if (keyword != null && !keyword.trim().isEmpty()) {
-                // 关键词搜索
-                log.info("执行关键词搜索: keyword={}", keyword);
-                List<SearchResult> searchResults =
-                    ragService.searchByText(keyword, 100); // 搜索更多结果用于分页
-
-                // 提取唯一的文档
-                Map<String, DocumentInfo> documentMap = new HashMap<>();
-                for (var result : searchResults) {
-                    var doc = result.getDocument();
-                    if (doc != null && doc.getId() != null) {
-                        if (!documentMap.containsKey(doc.getId())) {
-                            DocumentInfo docInfo = new DocumentInfo();
-                            docInfo.setDocumentId(doc.getId());
-                            docInfo.setFileName(doc.getTitle() != null ? doc.getTitle() : doc.getId());
-
-                            // 尝试从原始文件获取实际大小
-                            long actualFileSize = 0;
-                            try {
-                                Path filePath = FileStorageUtil.findFileByName(doc.getTitle());
-                                if (filePath != null && Files.exists(filePath)) {
-                                    actualFileSize = Files.size(filePath);
-                                } else {
-                                    actualFileSize = doc.getContent() != null ? doc.getContent().getBytes().length : 0;
-                                }
-                            } catch (Exception e) {
-                                log.debug("无法获取文件大小: {}", doc.getTitle());
-                                actualFileSize = doc.getContent() != null ? doc.getContent().getBytes().length : 0;
-                            }
-
-                            docInfo.setFileSize(actualFileSize);
-                            docInfo.setFileType("text");
-                            docInfo.setUploadTime(new Date());
-                            docInfo.setIndexed(true);
-                            documentMap.put(doc.getId(), docInfo);
-                        }
-                    }
-                }
-                allDocuments.addAll(documentMap.values());
+                // 搜索文档
+                metadataList = storageService.searchDocuments(keyword);
+                totalCount = metadataList.size();
             } else {
-                // 没有关键词时，获取所有文档（分页）
-                log.info("获取所有文档: totalCount={}", totalCount);
+                // 获取所有文档（分页）
+                totalCount = storageService.getDocumentCount();
                 int offset = (page - 1) * pageSize;
-                List<Document> documents = ragService.getAllDocuments(offset, pageSize);
-
-                for (Document doc : documents) {
-                    DocumentInfo docInfo = new DocumentInfo();
-                    docInfo.setDocumentId(doc.getId());
-                    docInfo.setFileName(doc.getTitle() != null ? doc.getTitle() : doc.getId());
-
-                    // 尝试从原始文件获取实际大小
-                    long actualFileSize = 0;
-                    try {
-                        Path filePath = FileStorageUtil.findFileByName(doc.getTitle());
-                        if (filePath != null && Files.exists(filePath)) {
-                            actualFileSize = Files.size(filePath);
-                        } else {
-                            // 如果找不到原始文件，使用内容长度作为估算
-                            actualFileSize = doc.getContent() != null ? doc.getContent().getBytes().length : 0;
-                        }
-                    } catch (Exception e) {
-                        log.debug("无法获取文件大小: {}", doc.getTitle());
-                        actualFileSize = doc.getContent() != null ? doc.getContent().getBytes().length : 0;
-                    }
-
-                    docInfo.setFileSize(actualFileSize);
-                    docInfo.setFileType(doc.getType() != null ? doc.getType() : "text");
-                    docInfo.setUploadTime(doc.getCreatedAt() != null ? new Date(doc.getCreatedAt()) : new Date());
-                    docInfo.setIndexed(true);
-                    allDocuments.add(docInfo);
-                }
+                metadataList = storageService.listDocuments(offset, pageSize);
             }
 
-            // 分页处理
-            List<DocumentInfo> pagedDocuments;
-            int total;
+            // 转换为 DocumentInfo
+            List<DocumentInfo> documents = metadataList.stream()
+                    .map(metadata -> {
+                        DocumentInfo info = new DocumentInfo();
+                        info.setDocumentId(metadata.getDocumentId());
+                        info.setFileName(metadata.getFilename());
+                        info.setFileSize(metadata.getFileSize() != null ? metadata.getFileSize() : 0);
+                        info.setFileType(metadata.getFileType() != null ? metadata.getFileType() : "unknown");
+                        info.setUploadTime(metadata.getUploadTime() != null ? metadata.getUploadTime() : new Date());
+                        info.setIndexed(metadata.getIndexed() != null ? metadata.getIndexed() : false);
+                        return info;
+                    })
+                    .collect(Collectors.toList());
+
+            // 分页处理（如果是搜索结果，需要在内存中分页）
+            int total = (int) totalCount;
+            int totalPages = (int) Math.ceil((double) total / pageSize);
 
             if (keyword != null && !keyword.trim().isEmpty()) {
                 // 搜索结果需要在内存中分页
-                total = allDocuments.size();
                 int startIndex = (page - 1) * pageSize;
                 int endIndex = Math.min(startIndex + pageSize, total);
-
-                if (startIndex >= total) {
-                    pagedDocuments = new ArrayList<>();
+                if (startIndex < total) {
+                    documents = documents.subList(startIndex, endIndex);
                 } else {
-                    pagedDocuments = allDocuments.subList(startIndex, endIndex);
+                    documents = new ArrayList<>();
                 }
-            } else {
-                // getAllDocuments 已经分页，直接使用
-                pagedDocuments = allDocuments;
-                total = (int) totalCount;
             }
 
-            int totalPages = (int) Math.ceil((double) total / pageSize);
-
             response.setSuccess(true);
-            response.setDocuments(pagedDocuments);
+            response.setDocuments(documents);
             response.setTotal(total);
             response.setPage(page);
             response.setPageSize(pageSize);
@@ -707,6 +650,7 @@ public class DocumentManagementController {
 
         return response;
     }
+
 
     /**
      * 获取文档统计

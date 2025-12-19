@@ -5,6 +5,7 @@ import top.yumbo.ai.storage.api.model.Image;
 import top.yumbo.ai.storage.api.model.PPLData;
 import top.yumbo.ai.storage.api.model.OptimizationData;
 import top.yumbo.ai.storage.api.model.StorageStatistics;
+import top.yumbo.ai.storage.api.model.DocumentMetadata;
 
 import java.util.List;
 import java.util.Optional;
@@ -200,6 +201,33 @@ public interface DocumentStorageService {
     void deleteAllOptimizationData(String documentId);
 
     // ========== 文档管理 (Document Management) ==========
+
+    /**
+     * 列出所有文档
+     * @return 文档信息列表
+     */
+    List<DocumentMetadata> listAllDocuments();
+
+    /**
+     * 列出文档（分页）
+     * @param offset 偏移量
+     * @param limit 限制数量
+     * @return 文档信息列表
+     */
+    List<DocumentMetadata> listDocuments(int offset, int limit);
+
+    /**
+     * 搜索文档（按文件名）
+     * @param keyword 关键词
+     * @return 文档信息列表
+     */
+    List<DocumentMetadata> searchDocuments(String keyword);
+
+    /**
+     * 获取文档总数
+     * @return 文档数量
+     */
+    long getDocumentCount();
 
     /**
      * 清理文档相关的所有数据

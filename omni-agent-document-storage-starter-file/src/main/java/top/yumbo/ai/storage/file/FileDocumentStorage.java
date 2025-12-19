@@ -2,10 +2,7 @@ package top.yumbo.ai.storage.file;
 
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.storage.api.DocumentStorageService;
-import top.yumbo.ai.storage.api.model.Chunk;
-import top.yumbo.ai.storage.api.model.Image;
-import top.yumbo.ai.storage.api.model.PPLData;
-import top.yumbo.ai.storage.api.model.OptimizationData;
+import top.yumbo.ai.storage.api.model.*;
 
 import java.io.*;
 import java.nio.file.*;
@@ -699,7 +696,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     // ========== Statistics ==========
 
     @Override
-    public top.yumbo.ai.storage.api.model.StorageStatistics getStatistics() {
+    public StorageStatistics getStatistics() {
         try {
             long totalDocuments = 0;
             long totalChunks = 0;
@@ -789,5 +786,156 @@ public class FileDocumentStorage implements DocumentStorageService {
     public boolean isHealthy() {
         return Files.exists(basePath) && Files.isWritable(basePath);
     }
+
+    // ========== 文档列表查询方法 ==========
+
+    @Override
+    public List<DocumentMetadata> listAllDocuments() {
+        try {
+            return Files.walk(documentsPath)
+                    .filter(Files::isRegularFile)
+                    .map(this::buildDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            log.error("Failed to list all documents", e);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<DocumentMetadata> listDocuments(int offset, int limit) {
+        try {
+            return Files.walk(documentsPath)
+                    .filter(Files::isRegularFile)
+                    .skip(offset)
+                    .limit(limit)
+                    .map(this::buildDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            log.error("Failed to list documents with pagination", e);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<DocumentMetadata> searchDocuments(String keyword) {
+        try {
+            String lowerKeyword = keyword.toLowerCase();
+            return Files.walk(documentsPath)
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().toLowerCase().contains(lowerKeyword))
+                    .map(this::buildDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            log.error("Failed to search documents", e);
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public long getDocumentCount() {
+        try {
+            return Files.walk(documentsPath)
+                    .filter(Files::isRegularFile)
+                    .count();
+        } catch (IOException e) {
+            log.error("Failed to count documents", e);
+            return 0;
+        }
+    }
+
+    /**
+     * 从文件路径构建文档元数据
+     */
+    private DocumentMetadata buildDocumentMetadata(Path filePath) {
+        try {
+            Path relativePath = documentsPath.relativize(filePath);
+            String relativePathStr = relativePath.toString().replace('\\', '/');
+            String filename = filePath.getFileName().toString();
+
+            // 提取文档ID（从文件名推断）
+            String documentId = "doc_" + filename;
+
+            // 获取文件属性
+            long fileSize = Files.size(filePath);
+            long lastModifiedTime = Files.getLastModifiedTime(filePath).toMillis();
+
+            // 获取文件类型
+            String fileType = getFileExtension(filename);
+
+            // 统计分块数量
+            int chunkCount = countChunks(filename);
+
+            // 统计图片数量
+            int imageCount = countImages(filename);
+
+            return top.yumbo.ai.storage.api.model.DocumentMetadata.builder()
+                    .documentId(documentId)
+                    .filename(filename)
+                    .relativePath(relativePathStr)
+                    .fileSize(fileSize)
+                    .fileType(fileType)
+                    .uploadTime(new Date(lastModifiedTime))
+                    .lastModified(new Date(lastModifiedTime))
+                    .indexed(chunkCount > 0)  // 有分块说明已索引
+                    .chunkCount(chunkCount)
+                    .imageCount(imageCount)
+                    .storagePath(relativePathStr)
+                    .build();
+        } catch (IOException e) {
+            log.error("Failed to build metadata for: {}", filePath, e);
+            return null;
+        }
+    }
+
+    /**
+     * 获取文件扩展名
+     */
+    private String getFileExtension(String filename) {
+        int lastDot = filename.lastIndexOf('.');
+        if (lastDot > 0 && lastDot < filename.length() - 1) {
+            return filename.substring(lastDot + 1);
+        }
+        return "";
+    }
+
+    /**
+     * 统计文档的分块数量
+     */
+    private int countChunks(String filename) {
+        try {
+            Path docChunkDir = chunksPath.resolve(filename);
+            if (!Files.exists(docChunkDir)) {
+                return 0;
+            }
+            return (int) Files.list(docChunkDir)
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().startsWith("chunk_"))
+                    .count();
+        } catch (IOException e) {
+            return 0;
+        }
+    }
+
+    /**
+     * 统计文档的图片数量
+     */
+    private int countImages(String filename) {
+        try {
+            Path docImageDir = imagesPath.resolve(filename);
+            if (!Files.exists(docImageDir)) {
+                return 0;
+            }
+            return (int) Files.list(docImageDir)
+                    .filter(Files::isRegularFile)
+                    .count();
+        } catch (IOException e) {
+            return 0;
+        }
+    }
 }
+
 
