@@ -20,7 +20,7 @@ spring:
 omni-agent:
   persistence:
     # ========== 当前使用的后端类型 ==========
-    type: file
+    type: sqlite
 
     # ========== File 配置（最简单、零依赖）==========
     # type: file
