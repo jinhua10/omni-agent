@@ -16,39 +16,195 @@ spring:
 # ========== OmniAgent 四维可插拔配置 ==========
 
 # 1. 持久化配置 (Persistence)
+# 支持多种后端：file, sqlite, h2, memory, redis, mongodb, elasticsearch
 omni-agent:
   persistence:
-    # 持久化后端类型: sqlite, file, h2, memory, redis, mongodb, elasticsearch
-    type: sqlite
+    # ========== 当前使用的后端类型 ==========
+    type: file
 
-    # SQLite 配置
+    # ========== File 配置（最简单、零依赖）==========
+    # type: file
+    file:
+      base-path: ./data/persistence     # 持久化数据根目录
+      # File持久化将数据以JSON格式存储在文件系统中
+      # 优点：零依赖、最简单、适合小规模数据
+      # 缺点：性能较低、不支持复杂查询
+
+    # ========== SQLite 配置（推荐：轻量级、无需额外服务）==========
     sqlite:
-      db-path: ./data/omni-agent.db
+      db-path: ./data/omni-agent.db     # 数据库文件路径
+      auto-create-tables: true          # 自动创建表
+      show-sql: false                   # 是否显示SQL语句
+      connection-timeout: 30000         # 连接超时（毫秒）
+
+    # ========== H2 配置（开发/测试环境）==========
+    # type: h2
+    h2:
+      db-path: ./data/omni-agent-h2     # H2数据库文件路径（无需.mv.db后缀）
+      mode: file                        # file: 文件模式, memory: 内存模式
       auto-create-tables: true
       show-sql: false
-      connection-timeout: 30000
+      # 内存模式示例：
+      # mode: memory
+      # db-name: testdb
+
+    # ========== Memory 配置（快速测试）==========
+    # type: memory
+    memory:
+      # 内存持久化无需额外配置，数据仅存在于内存中
+      # 优点：速度最快
+      # 缺点：重启后数据丢失
+      initial-capacity: 1000            # 初始容量
+
+    # ========== Redis 配置（高性能、分布式）==========
+    # type: redis
+    redis:
+      host: localhost                   # Redis服务器地址
+      port: 6379                        # Redis端口
+      password:                         # Redis密码（如果有）
+      database: 0                       # 使用的数据库编号
+      timeout: 3000                     # 超时时间（毫秒）
+      # 连接池配置
+      pool:
+        max-active: 8                   # 最大连接数
+        max-idle: 8                     # 最大空闲连接
+        min-idle: 0                     # 最小空闲连接
+        max-wait: -1                    # 最大等待时间（-1表示无限）
+
+    # ========== MongoDB 配置（文档数据库）==========
+    # type: mongodb
+    mongodb:
+      uri: mongodb://localhost:27017    # MongoDB连接URI
+      database: omni-agent              # 数据库名称
+      # 或使用详细配置：
+      # host: localhost
+      # port: 27017
+      # username: admin
+      # password: password
+      # database: omni-agent
+      # auth-database: admin
+
+    # ========== Elasticsearch 配置（全文搜索、大规模）==========
+    # type: elasticsearch
+    elasticsearch:
+      hosts:
+        - localhost:9200                # ES节点地址（支持多个）
+      username:                         # 用户名（如果启用安全）
+      password:                         # 密码
+      connection-timeout: 5000          # 连接超时
+      socket-timeout: 60000             # Socket超时
+      index-prefix: omni-agent          # 索引前缀
 
 
   # 2. 文档存储配置 (Document Storage)
+  # 支持多种后端：file, minio, s3, redis, mongodb, elasticsearch
   document-storage:
+    # ========== 当前使用的后端类型 ==========
     type: file
+
+    # ========== File 配置（推荐：简单、直接）==========
     file:
-      # 文件存储配置
-      base-path: ./data/documents
-      chunk-path: ./data/chunks
-      image-path: ./data/images
-      ppl-path: ./data/ppl
-      max-file-size: 104857600  # 100MB
+      base-path: ./data/documents       # 文档存储根目录
+      chunk-path: ./data/chunks         # 分块存储目录
+      image-path: ./data/images         # 图片存储目录
+      ppl-path: ./data/ppl              # PPL数据存储目录
+      max-file-size: 104857600          # 最大文件大小（100MB）
+
+    # ========== MinIO 配置（对象存储、推荐生产环境）==========
+    # type: minio
+    minio:
+      endpoint: http://localhost:9000   # MinIO服务地址
+      access-key: minioadmin            # 访问密钥
+      secret-key: minioadmin            # 密钥
+      bucket: omni-agent                # 存储桶名称
+      auto-create-bucket: true          # 自动创建存储桶
+
+    # ========== AWS S3 配置（云存储）==========
+    # type: s3
+    s3:
+      region: us-east-1                 # AWS区域
+      access-key: your-access-key       # AWS访问密钥
+      secret-key: your-secret-key       # AWS密钥
+      bucket: omni-agent                # S3存储桶名称
+      endpoint:                         # 自定义端点（可选，用于兼容S3的服务）
+
+    # ========== Redis 配置（缓存式存储）==========
+    # type: redis
+    redis:
+      host: localhost
+      port: 6379
+      database: 1                       # 使用不同的数据库
+      key-prefix: "docs:"                 # 键前缀
+
+    # ========== MongoDB 配置（文档数据库）==========
+    # type: mongodb
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: omni-agent-docs
+      collection: documents             # 集合名称
+
+    # ========== Elasticsearch 配置（全文索引）==========
+    # type: elasticsearch
+    elasticsearch:
+      hosts:
+        - localhost:9200
+      index-name: omni-agent-docs       # 索引名称
 
   # 3. RAG 配置 (Retrieval Augmented Generation)
+  # 支持多种后端：file, h2, sqlite, redis, mongodb, elasticsearch
   rag:
+    # ========== 当前使用的后端类型 ==========
     type: file
+
+    # ========== File 配置（基于 Lucene）==========
     file:
-      # Lucene 索引配置
-      index-path: ./data/rag-index
-      analyzer: smartcn  # 智能中文分词器
-      max-results: 100
-      similarity-threshold: 0.7
+      index-path: ./data/rag-index      # Lucene索引目录
+      analyzer: smartcn                 # 分词器：smartcn(中文), standard(英文)
+      max-results: 100                  # 最大返回结果数
+      similarity-threshold: 0.7         # 相似度阈值（0.0-1.0）
+
+    # ========== H2 配置（内存/文件数据库）==========
+    # type: h2
+    h2:
+      db-path: ./data/rag-h2
+      mode: file                        # file 或 memory
+      vector-dimension: 768             # 向量维度
+      similarity-metric: cosine         # 相似度度量：cosine, euclidean, dot
+
+    # ========== SQLite 配置（轻量级）==========
+    # type: sqlite
+    sqlite:
+      db-path: ./data/rag-sqlite.db
+      vector-dimension: 768
+      similarity-metric: cosine
+
+    # ========== Redis 配置（高性能、分布式）==========
+    # type: redis
+    redis:
+      host: localhost
+      port: 6379
+      database: 2                       # 使用不同的数据库
+      key-prefix: "rag:"
+      vector-dimension: 768
+
+    # ========== MongoDB 配置（文档数据库 + 向量搜索）==========
+    # type: mongodb
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: omni-agent-rag
+      collection: vectors               # 向量集合
+      index-name: vector_index          # 向量索引名称
+
+    # ========== Elasticsearch 配置（全文搜索 + 向量搜索）==========
+    # type: elasticsearch
+    elasticsearch:
+      hosts:
+        - localhost:9200
+      index-name: omni-agent-rag        # 索引名称
+      vector-dimension: 768
+      similarity: cosine                # 相似度算法
+      shard-count: 1                    # 分片数
+      replica-count: 0                  # 副本数
 
   # 4. AI 配置 (Artificial Intelligence)
   ai:
