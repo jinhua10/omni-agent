@@ -63,7 +63,4 @@ src.backup
 *.ps1
 /old/ai-reviewer-base-file-rag/
 /old/**
-/omni-agent-example-basic/data/config/file-watcher-config.json
-/omni-agent-example-basic/data/omni-agent.db
-/omni-agent-example-basic/data/rag-index/segments_1
-/omni-agent-example-basic/data/rag-index/write.lock
+/omni-agent-example-basic/data/**
