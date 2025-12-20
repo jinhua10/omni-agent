@@ -18,6 +18,7 @@ import top.yumbo.ai.rag.api.model.Document;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.core.image.ImageStorageService;
+import top.yumbo.ai.omni.web.service.FileWatcherService;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.net.URLEncoder;
@@ -48,6 +49,7 @@ public class DocumentManagementController {
     private final DocumentProcessorManager documentProcessorManager;
     private final ChunkingStrategyManager chunkingStrategyManager;
     private final ImageStorageService imageStorageService;
+    private final FileWatcherService fileWatcherService;
 
     // ⭐ 直接从配置文件读取监听目录
     @Value("${omni-agent.file-watcher.watch-directory:./data/documents}")
@@ -243,6 +245,120 @@ public class DocumentManagementController {
             log.error("文件下载失败: {}", fileName, e);
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    /**
+     * 获取待处理的文件列表（pending 区域）⭐
+     * GET /api/documents/pending
+     *
+     * 返回 data/documents 目录下等待索引的文件
+     */
+    @GetMapping("/pending")
+    public PendingFilesResponse getPendingFiles() {
+        PendingFilesResponse response = new PendingFilesResponse();
+
+        try {
+            Path watchDir = Paths.get(watchDirectory);
+
+            if (!Files.exists(watchDir)) {
+                response.setSuccess(true);
+                response.setFiles(Collections.emptyList());
+                response.setCount(0);
+                return response;
+            }
+
+            List<PendingFileInfo> pendingFiles = new ArrayList<>();
+
+            // 扫描监听目录
+            Files.walk(watchDir)
+                .filter(Files::isRegularFile)
+                .filter(path -> {
+                    String name = path.getFileName().toString();
+                    // 过滤临时文件和隐藏文件
+                    return !name.startsWith(".") && !name.startsWith("~") && !name.endsWith(".tmp");
+                })
+                .forEach(filePath -> {
+                    try {
+                        Path relativePath = watchDir.relativize(filePath);
+                        String relativePathStr = relativePath.toString().replace('\\', '/');
+                        String fileName = filePath.getFileName().toString();
+
+                        // 检查处理状态
+                        boolean isProcessing = fileWatcherService.isFileProcessing(relativePathStr);
+
+                        PendingFileInfo fileInfo = new PendingFileInfo();
+                        fileInfo.setFileName(fileName);
+                        fileInfo.setRelativePath(relativePathStr);
+                        fileInfo.setFileSize(Files.size(filePath));
+                        fileInfo.setUploadTime(Files.getLastModifiedTime(filePath).toMillis());
+                        fileInfo.setProcessing(isProcessing);
+                        fileInfo.setCancelable(!isProcessing);  // 未开始处理的可以取消
+
+                        pendingFiles.add(fileInfo);
+
+                    } catch (Exception e) {
+                        log.warn("读取文件信息失败: {}", filePath, e);
+                    }
+                });
+
+            response.setSuccess(true);
+            response.setFiles(pendingFiles);
+            response.setCount(pendingFiles.size());
+
+        } catch (Exception e) {
+            log.error("获取待处理文件失败", e);
+            response.setSuccess(false);
+            response.setMessage("获取待处理文件失败: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
+     * 取消文件索引（从待处理列表删除）⭐
+     * DELETE /api/documents/pending/{fileName}
+     *
+     * 只有未开始处理的文件才能取消
+     */
+    @DeleteMapping("/pending/{fileName:.+}")
+    public Map<String, Object> cancelPendingFile(@PathVariable String fileName) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            log.info("🗑️ 取消索引请求: {}", fileName);
+
+            Path watchDir = Paths.get(watchDirectory);
+            Path filePath = watchDir.resolve(fileName);
+
+            if (!Files.exists(filePath)) {
+                result.put("success", false);
+                result.put("message", "文件不存在");
+                return result;
+            }
+
+            // 检查文件是否正在处理
+            boolean isProcessing = fileWatcherService.isFileProcessing(fileName);
+
+            if (isProcessing) {
+                result.put("success", false);
+                result.put("message", "文件正在处理中，无法取消");
+                return result;
+            }
+
+            // 删除文件
+            Files.delete(filePath);
+            log.info("✅ 已取消索引并删除文件: {}", fileName);
+
+            result.put("success", true);
+            result.put("message", "文件已删除");
+
+        } catch (Exception e) {
+            log.error("取消索引失败: {}", fileName, e);
+            result.put("success", false);
+            result.put("message", "取消索引失败: " + e.getMessage());
+        }
+
+        return result;
     }
 
     /**
@@ -562,6 +678,26 @@ public class DocumentManagementController {
         private String fileType;
         private Date uploadTime;
         private boolean indexed;
+    }
+
+    // ========== Pending 文件相关 DTO ⭐ ==========
+
+    @Data
+    public static class PendingFilesResponse {
+        private boolean success;
+        private String message;
+        private List<PendingFileInfo> files;
+        private int count;
+    }
+
+    @Data
+    public static class PendingFileInfo {
+        private String fileName;
+        private String relativePath;
+        private long fileSize;
+        private long uploadTime;
+        private boolean processing;     // 是否正在处理
+        private boolean cancelable;     // 是否可以取消
     }
 }
 

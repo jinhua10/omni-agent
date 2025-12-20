@@ -490,6 +490,36 @@ public class FileWatcherService {
 
     // ========== 公开API ==========
 
+    /**
+     * 检查文件是否正在处理中 ⭐
+     *
+     * @param relativePathOrFileName 相对路径或文件名
+     * @return true 如果文件正在处理中
+     */
+    public boolean isFileProcessing(String relativePathOrFileName) {
+        // 检查完整的相对路径
+        FileChangeRecord record = processingRecords.get(relativePathOrFileName);
+        if (record != null && !Boolean.TRUE.equals(record.getProcessed())) {
+            return true;
+        }
+
+        // 如果传入的是文件名，遍历查找
+        if (!relativePathOrFileName.contains("/") && !relativePathOrFileName.contains("\\")) {
+            for (Map.Entry<String, FileChangeRecord> entry : processingRecords.entrySet()) {
+                String key = entry.getKey();
+                FileChangeRecord rec = entry.getValue();
+
+                // 提取文件名比较
+                String fileName = key.contains("/") ? key.substring(key.lastIndexOf('/') + 1) : key;
+                if (fileName.equals(relativePathOrFileName) && !Boolean.TRUE.equals(rec.getProcessed())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public List<FileChangeRecord> getUnprocessedChanges() {
         return processingRecords.values().stream()
                 .filter(r -> !Boolean.TRUE.equals(r.getProcessed()))
