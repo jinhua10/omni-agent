@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react';
-import { Input, List, Card, Tag, Empty } from 'antd';
+import { Input, Row, Col, Card, Tag, Empty } from 'antd';
 import { SearchOutlined, RobotOutlined } from '@ant-design/icons';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -66,11 +66,9 @@ const AgentSelector = ({ agents, onSelect }) => {
       {filteredAgents.length === 0 ? (
         <Empty description={t('workflowBuilder.agentSelector.noAgents')} />
       ) : (
-        <List
-          grid={{ gutter: 16, column: 2 }}
-          dataSource={filteredAgents}
-          renderItem={(agent) => (
-            <List.Item>
+        <Row gutter={[16, 16]}>
+          {filteredAgents.map((agent) => (
+            <Col span={12} key={agent.name}>
               <Card
                 hoverable
                 onClick={() => onSelect(agent)}
@@ -97,9 +95,9 @@ const AgentSelector = ({ agents, onSelect }) => {
                   ))}
                 </div>
               </Card>
-            </List.Item>
-          )}
-        />
+            </Col>
+          ))}
+        </Row>
       )}
     </div>
   );

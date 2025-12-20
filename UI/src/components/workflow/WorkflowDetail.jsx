@@ -8,7 +8,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getWorkflowDetail, downloadWorkflow, installWorkflow, getWorkflowRatings, rateWorkflow } from '../../api/workflowApi';
+import workflowApi from '../../api/modules/workflow';
+
+const { getWorkflowDetail, downloadWorkflow, installWorkflow, getWorkflowRatings, rateWorkflow } = workflowApi;
 import { useLanguage } from '../../contexts/LanguageContext';
 import RatingStars from './RatingStars';
 import '../../assets/css/workflow/workflow-detail.css';

@@ -8,7 +8,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { searchWorkflows, getPopularWorkflows } from '../../api/workflowApi';
+import workflowApi from '../../api/modules/workflow';
+
+const { searchWorkflows, getPopularWorkflows } = workflowApi;
 import { useLanguage } from '../../contexts/LanguageContext';
 import WorkflowCard from './WorkflowCard';
 import SearchBar from './SearchBar';

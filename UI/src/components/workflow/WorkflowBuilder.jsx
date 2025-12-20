@@ -24,13 +24,15 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import WorkflowCanvas from './WorkflowCanvas';
 import StepEditor from './StepEditor';
 import AgentSelector from './AgentSelector';
-import { 
+import workflowApi from '../../api/modules/workflow';
+import '../../assets/css/workflow/workflow-builder.css';
+
+const { 
   createWorkflow, 
   updateWorkflow, 
   executeWorkflow,
   getAgentList 
-} from '../../api/workflowApi';
-import '../../assets/css/workflow/workflow-builder.css';
+} = workflowApi;
 
 const { TabPane } = Tabs;
 

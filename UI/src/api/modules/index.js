@@ -5,14 +5,15 @@
  * @since 2025-12-12
  */
 
-import documentApi from './modules/document'
-import qaApi from './modules/qa'
-import roleApi from './modules/role'
-import feedbackApi from './modules/feedback'
-import hopeApi from './modules/hope'
-import wishApi from './modules/wish'
-import collaborationApi from './modules/collaboration'
-import adminApi from './modules/admin'
+import documentApi from './document'
+import qaApi from './qa'
+import roleApi from './role'
+import feedbackApi from './feedback'
+import hopeApi from './hope'
+import wishApi from './wish'
+import collaborationApi from './collaboration'
+import adminApi from './admin'
+import workflowApi from './workflow'
 
 /**
  * 导出所有 API 模块 (Export all API modules)
@@ -26,6 +27,7 @@ export default {
   wish: wishApi,
   collaboration: collaborationApi,
   admin: adminApi,
+  workflow: workflowApi,
 }
 
 /**
@@ -40,5 +42,6 @@ export {
   wishApi,
   collaborationApi,
   adminApi,
+  workflowApi,
 }
 
