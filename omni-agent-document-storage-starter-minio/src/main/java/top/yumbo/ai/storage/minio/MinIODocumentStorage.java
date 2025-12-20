@@ -9,6 +9,7 @@ import top.yumbo.ai.storage.api.model.Chunk;
 import top.yumbo.ai.storage.api.model.Image;
 import top.yumbo.ai.storage.api.model.PPLData;
 import top.yumbo.ai.storage.api.model.StorageStatistics;
+import top.yumbo.ai.storage.api.model.DocumentMetadata;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -71,6 +72,10 @@ public class MinIODocumentStorage implements DocumentStorageService {
 
     // ========== Key 生成 ==========
 
+    private String getDocumentKey(String documentId) {
+        return "documents/" + documentId;
+    }
+
     private String getChunkKey(String documentId, String chunkId) {
         return "chunks/" + documentId + "/" + chunkId + ".json";
     }
@@ -89,6 +94,72 @@ public class MinIODocumentStorage implements DocumentStorageService {
 
     private String getDocumentPrefix(String documentId) {
         return documentId + "/";
+    }
+
+    // ========== Raw Document Storage ==========
+
+    @Override
+    public String saveDocument(String documentId, String filename, byte[] fileData) {
+        try {
+            String key = "documents/" + filename;
+
+            minioClient.putObject(
+                PutObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(key)
+                    .stream(new ByteArrayInputStream(fileData), fileData.length, -1)
+                    .contentType("application/octet-stream")
+                    .build()
+            );
+
+            log.info("Saved raw document: {} ({} bytes)", filename, fileData.length);
+            return documentId;
+        } catch (Exception e) {
+            log.error("Failed to save document: {}", filename, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<byte[]> getDocument(String documentId) {
+        try {
+            String key = "documents/" + documentId;
+
+            try (InputStream stream = minioClient.getObject(
+                GetObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(key)
+                    .build()
+            )) {
+                byte[] data = stream.readAllBytes();
+                log.debug("Retrieved document: {} ({} bytes)", documentId, data.length);
+                return Optional.of(data);
+            }
+        } catch (Exception e) {
+            log.error("Failed to get document: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteDocument(String documentId) {
+        try {
+            String key = "documents/" + documentId;
+
+            minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(key)
+                    .build()
+            );
+
+            // 清理相关的所有数据
+            cleanupDocument(documentId);
+
+            log.info("Deleted document and all related data: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete document: {}", documentId, e);
+        }
     }
 
     // ========== Chunk Storage ==========
@@ -559,6 +630,101 @@ public class MinIODocumentStorage implements DocumentStorageService {
             return totalSize;
         } catch (Exception e) {
             log.error("Failed to calculate document size for: {}", documentId, e);
+            return 0;
+        }
+    }
+
+    @Override
+    public List<DocumentMetadata> listAllDocuments() {
+        return listDocuments(0, Integer.MAX_VALUE);
+    }
+
+    @Override
+    public List<DocumentMetadata> listDocuments(int offset, int limit) {
+        try {
+            List<DocumentMetadata> documents = new ArrayList<>();
+            String prefix = "documents/";
+
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .recursive(false)
+                    .build()
+            );
+
+            int count = 0;
+            int index = 0;
+            for (Result<Item> result : results) {
+                if (index < offset) {
+                    index++;
+                    continue;
+                }
+                if (count >= limit) {
+                    break;
+                }
+
+                Item item = result.get();
+                String fileName = item.objectName().substring(prefix.length());
+
+                DocumentMetadata metadata = DocumentMetadata.builder()
+                        .documentId(fileName)
+                        .filename(fileName)
+                        .fileSize(item.size())
+                        .uploadTime(Date.from(item.lastModified().toInstant()))
+                        .storagePath(item.objectName())
+                        .build();
+
+                documents.add(metadata);
+                count++;
+                index++;
+            }
+
+            log.debug("Listed {} documents (offset={}, limit={})", documents.size(), offset, limit);
+            return documents;
+        } catch (Exception e) {
+            log.error("Failed to list documents", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<DocumentMetadata> searchDocuments(String keyword) {
+        try {
+            List<DocumentMetadata> allDocuments = listAllDocuments();
+            String lowerKeyword = keyword.toLowerCase();
+
+            return allDocuments.stream()
+                    .filter(doc -> doc.getFilename().toLowerCase().contains(lowerKeyword))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to search documents with keyword: {}", keyword, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public long getDocumentCount() {
+        try {
+            String prefix = "documents/";
+            long count = 0;
+
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .recursive(false)
+                    .build()
+            );
+
+            for (Result<Item> result : results) {
+                result.get(); // 确保没有错误
+                count++;
+            }
+
+            return count;
+        } catch (Exception e) {
+            log.error("Failed to get document count", e);
             return 0;
         }
     }

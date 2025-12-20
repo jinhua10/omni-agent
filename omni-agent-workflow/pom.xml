@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>top.yumbo.ai</groupId>
+        <groupId>top.yumbo.ai.omni</groupId>
         <artifactId>omni-agent</artifactId>
         <version>1.0.0</version>
     </parent>

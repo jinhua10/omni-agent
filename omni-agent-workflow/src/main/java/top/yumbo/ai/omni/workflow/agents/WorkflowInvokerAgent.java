@@ -2,6 +2,7 @@ package top.yumbo.ai.omni.workflow.agents;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.workflow.Agent;
 import top.yumbo.ai.omni.workflow.WorkflowContext;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 @Component("WorkflowInvoker")
 public class WorkflowInvokerAgent implements Agent {
 
+    @Lazy
     @Autowired
     private WorkflowEngine workflowEngine;
 
