@@ -71,6 +71,11 @@ public class Workflow {
     private List<String> tags;
 
     /**
+     * 工作流分类（用于市场分类）
+     */
+    private String category;
+
+    /**
      * 工作流元数据
      */
     private Map<String, Object> metadata;
