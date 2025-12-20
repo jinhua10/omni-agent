@@ -18,6 +18,7 @@ import top.yumbo.ai.rag.api.model.Document;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.core.image.ImageStorageService;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -47,7 +48,10 @@ public class DocumentManagementController {
     private final DocumentProcessorManager documentProcessorManager;
     private final ChunkingStrategyManager chunkingStrategyManager;
     private final ImageStorageService imageStorageService;
-    private final top.yumbo.ai.omni.web.config.FileWatcherConfig fileWatcherConfig;
+
+    // ⭐ 直接从配置文件读取监听目录
+    @Value("${omni-agent.file-watcher.watch-directory:./data/documents}")
+    private String watchDirectory;
 
 
     /**
@@ -77,7 +81,7 @@ public class DocumentManagementController {
             log.info("📤 上传文档（异步）: filename={}, size={} bytes", filename, file.getSize());
 
             // ⭐ 直接保存到监听目录
-            Path watchDir = Paths.get(fileWatcherConfig.getWatchDirectory());
+            Path watchDir = Paths.get(watchDirectory);
             if (!Files.exists(watchDir)) {
                 Files.createDirectories(watchDir);
             }
@@ -130,7 +134,7 @@ public class DocumentManagementController {
             log.info("📤 批量上传文档（异步）: count={}", files.length);
 
             // 确保监听目录存在
-            Path watchDir = Paths.get(fileWatcherConfig.getWatchDirectory());
+            Path watchDir = Paths.get(watchDirectory);
             if (!Files.exists(watchDir)) {
                 Files.createDirectories(watchDir);
             }

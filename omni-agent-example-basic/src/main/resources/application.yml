@@ -373,6 +373,13 @@ omni-agent:
       wait-for-tasks-to-complete-on-shutdown: true
       await-termination-seconds: 30
 
+  # ========== 文件监听器配置 ⭐ ==========
+  file-watcher:
+    enabled: true                       # 启用文件监听
+    watch-directory: ./data/documents   # 监听目录（上传文件会保存到这里）
+    auto-index: true                    # 自动索引
+    scan-interval: 30000                # 扫描间隔（毫秒）
+
 # ========== 日志配置 ==========
 logging:
   level:
