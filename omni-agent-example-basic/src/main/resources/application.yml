@@ -335,7 +335,6 @@ omni-agent:
 # ========== 日志配置 ==========
 logging:
   level:
-    root: INFO
-    top.yumbo.ai.omni: DEBUG
+    top.yumbo.ai: DEBUG  # 启用所有 debug 日志
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

@@ -63,20 +63,45 @@ public class ChunkingStrategyManager {
      * @return 分块结果
      */
     public List<Chunk> chunkWithAutoStrategy(String documentId, String content, String fileName) {
+        // ⭐ Debug 日志：分块开始
+        log.debug("📄 [Chunking] Starting auto chunking - docId: {}, fileName: {}, content length: {}",
+            documentId, fileName, content.length());
+
+        long startTime = System.currentTimeMillis();
+
         // 1. 推断文档类型
         DocumentType docType = inferDocumentType(fileName, content);
+        log.debug("📄 [Chunking] Inferred document type: {}", docType);
 
         // 2. 选择最佳策略
         String strategyName = selectBestStrategy(docType, content);
+        log.debug("📄 [Chunking] Selected strategy: {}", strategyName);
 
         // 3. 获取策略参数
         Map<String, Object> params = getStrategyParams(docType, content);
+        log.debug("📄 [Chunking] Strategy params: {}", params);
 
         log.info("Auto-selected chunking strategy: {} for document type: {}",
                 strategyName, docType);
 
         // 4. 执行分块
-        return chunkWithStrategy(documentId, content, strategyName, params);
+        List<Chunk> chunks = chunkWithStrategy(documentId, content, strategyName, params);
+
+        long duration = System.currentTimeMillis() - startTime;
+
+        // ⭐ Debug 日志：分块结果
+        log.debug("📄 [Chunking] Completed in {}ms - Generated {} chunks", duration, chunks.size());
+        for (int i = 0; i < Math.min(chunks.size(), 3); i++) {
+            Chunk chunk = chunks.get(i);
+            log.debug("📄 [Chunking] Chunk #{}: id={}, content length={}, preview: {}",
+                i + 1, chunk.getId(), chunk.getContent().length(),
+                chunk.getContent().substring(0, Math.min(100, chunk.getContent().length())) + "...");
+        }
+        if (chunks.size() > 3) {
+            log.debug("📄 [Chunking] ... and {} more chunks", chunks.size() - 3);
+        }
+
+        return chunks;
     }
 
     /**

@@ -52,12 +52,27 @@ public class QueryService {
         long startTime = System.currentTimeMillis();
         totalQueries++;
 
+        // ⭐ Debug 日志：查询开始
+        log.debug("🔎 [Query] Text search - query: '{}', limit: {}", queryText, limit);
+
         // 执行搜索 (Execute search)
         List<SearchResult> results = ragService.searchByText(queryText, limit);
 
         long duration = System.currentTimeMillis() - startTime;
         log.info("Search completed for query '{}': {} results in {}ms",
                 queryText, results.size(), duration);
+
+        // ⭐ Debug 日志：查询结果
+        log.debug("🔎 [Query] Text search results ({} found):", results.size());
+        for (int i = 0; i < Math.min(results.size(), 5); i++) {
+            SearchResult r = results.get(i);
+            log.debug("🔎 [Query] Result #{}: score={:.4f}, docId={}, content: {}",
+                i + 1, r.getScore(), r.getDocument().getId(),
+                r.getDocument().getContent().substring(0, Math.min(100, r.getDocument().getContent().length())) + "...");
+        }
+        if (results.size() > 5) {
+            log.debug("🔎 [Query] ... and {} more results", results.size() - 5);
+        }
 
         return results;
     }
@@ -72,11 +87,26 @@ public class QueryService {
     public List<SearchResult> vectorSearch(float[] embedding, int limit) {
         long startTime = System.currentTimeMillis();
 
+        // ⭐ Debug 日志：向量搜索开始
+        log.debug("🔎 [Query] Vector search - embedding dim: {}, limit: {}", embedding.length, limit);
+
         List<SearchResult> results = ragService.vectorSearch(embedding, limit);
 
         long duration = System.currentTimeMillis() - startTime;
         log.info("Vector search completed: {} results in {}ms",
                 results.size(), duration);
+
+        // ⭐ Debug 日志：向量搜索结果
+        log.debug("🔎 [Query] Vector search results ({} found):", results.size());
+        for (int i = 0; i < Math.min(results.size(), 5); i++) {
+            SearchResult r = results.get(i);
+            log.debug("🔎 [Query] Result #{}: similarity={:.4f}, docId={}, content: {}",
+                i + 1, r.getVectorScore(), r.getDocument().getId(),
+                r.getDocument().getContent().substring(0, Math.min(100, r.getDocument().getContent().length())) + "...");
+        }
+        if (results.size() > 5) {
+            log.debug("🔎 [Query] ... and {} more results", results.size() - 5);
+        }
 
         return results;
     }
@@ -91,6 +121,10 @@ public class QueryService {
      */
     public List<SearchResult> hybridSearch(String queryText, float[] embedding, int limit) {
         long startTime = System.currentTimeMillis();
+
+        // ⭐ Debug 日志：混合搜索开始
+        log.debug("🔎 [Query] Hybrid search - query: '{}', embedding dim: {}, limit: {}",
+            queryText, embedding.length, limit);
 
         Query query = Query.builder()
                 .text(queryText)

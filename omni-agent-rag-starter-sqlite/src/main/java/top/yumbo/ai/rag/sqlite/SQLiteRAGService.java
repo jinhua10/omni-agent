@@ -338,9 +338,18 @@ public class SQLiteRAGService implements RAGService {
     @Override
     public List<SearchResult> vectorSearch(float[] embedding, int topK) {
         try {
+            // ⭐ Debug 日志：搜索开始
+            log.debug("🔍 [RAG Vector Search] Starting search - Embedding dim: {}, topK: {}",
+                embedding.length, topK);
+
+            long startTime = System.currentTimeMillis();
+
             // 获取所有有向量的文档
             String sql = "SELECT * FROM rag_documents WHERE embedding IS NOT NULL AND embedding != ''";
             List<Document> allDocs = jdbcTemplate.query(sql, this::mapRowToDocument);
+
+            // ⭐ Debug 日志：候选文档数量
+            log.debug("🔍 [RAG Vector Search] Found {} candidate documents with embeddings", allDocs.size());
 
             // 计算余弦相似度
             List<SearchResult> results = new ArrayList<>();
@@ -356,15 +365,33 @@ public class SQLiteRAGService implements RAGService {
                             .build();
                     
                     results.add(result);
+
+                    // ⭐ Debug 日志：每个候选文档的相似度
+                    log.debug("🔍 [RAG Vector Search] Doc [{}]: similarity={:.4f}, title={}",
+                        doc.getId(), similarity,
+                        doc.getTitle() != null ? doc.getTitle() : doc.getContent().substring(0, Math.min(50, doc.getContent().length())));
                 }
             }
 
             // 按相似度排序并返回 topK
-            return results.stream()
+            List<SearchResult> topResults = results.stream()
                     .sorted(Comparator.comparing(SearchResult::getScore).reversed())
                     .limit(topK)
                     .peek(r -> r.setRank(results.indexOf(r) + 1))
                     .collect(Collectors.toList());
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            // ⭐ Debug 日志：搜索结果
+            log.debug("🔍 [RAG Vector Search] Completed in {}ms - Returned {} results", duration, topResults.size());
+            for (int i = 0; i < topResults.size(); i++) {
+                SearchResult r = topResults.get(i);
+                log.debug("🔍 [RAG Vector Search] Result #{}: score={:.4f}, docId={}, content preview: {}",
+                    i + 1, r.getScore(), r.getDocument().getId(),
+                    r.getDocument().getContent().substring(0, Math.min(100, r.getDocument().getContent().length())) + "...");
+            }
+
+            return topResults;
 
         } catch (Exception e) {
             log.error("向量搜索失败", e);

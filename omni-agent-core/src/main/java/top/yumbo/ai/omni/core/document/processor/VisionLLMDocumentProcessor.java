@@ -725,6 +725,11 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             totalSlides = (Integer) metadata.get("totalSlides");
         }
 
+        // ⭐ Debug 日志：元数据信息
+        log.debug("🎨 [Vision Prompt] Building prompt for page {}", page.getPageNumber());
+        log.debug("🎨 [Vision Prompt] Metadata - fileName: {}, slideText length: {}, hasContext: {}",
+            fileName, slideText != null ? slideText.length() : 0, documentContext != null);
+
         // ⭐ 2. 构建上下文感知的提示词
         prompt.append("# 任务说明\n");
         prompt.append("请将这张 PPT 幻灯片的内容转换为文字描述。\n\n");
@@ -770,7 +775,12 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
         }
         prompt.append("\n请以简洁的 Markdown 格式输出。");
 
-        return prompt.toString();
+        String finalPrompt = prompt.toString();
+
+        // ⭐ Debug 日志：完整提示词
+        log.debug("🎨 [Vision Prompt] Final prompt ({} chars):\n{}", finalPrompt.length(), finalPrompt);
+
+        return finalPrompt;
     }
 
     /**

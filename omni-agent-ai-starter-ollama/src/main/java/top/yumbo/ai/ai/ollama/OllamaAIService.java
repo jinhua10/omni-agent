@@ -161,6 +161,9 @@ public class OllamaAIService implements AIService {
                 sysMsg.put("role", "system");
                 sysMsg.put("content", systemPrompt);
                 ollamaMessages.add(sysMsg);
+
+                // ⭐ Debug 日志：系统提示
+                log.debug("📤 [LLM Request] System Prompt:\n{}", systemPrompt);
             }
 
             for (ChatMessage message : messages) {
@@ -168,20 +171,37 @@ public class OllamaAIService implements AIService {
                 msg.put("role", message.getRole());
                 msg.put("content", message.getContent());
                 ollamaMessages.add(msg);
+
+                // ⭐ Debug 日志：消息完整内容（不截断）
+                log.debug("📤 [LLM Request] Message [{}]:\n{}",
+                    message.getRole(),
+                    message.getContent()
+                );
             }
 
             requestBody.put("messages", ollamaMessages);
+
+            // ⭐ Debug 日志：完整请求元信息
+            log.debug("📤 [LLM Request] URL: {}, Model: {}, Messages Count: {}",
+                url, currentModel, ollamaMessages.size());
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
+            long startTime = System.currentTimeMillis();
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+            long duration = System.currentTimeMillis() - startTime;
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, Object> body = response.getBody();
                 Map<String, Object> message = (Map<String, Object>) body.get("message");
                 String content = (String) message.get("content");
+
+                // ⭐ Debug 日志：LLM 响应
+                log.debug("📥 [LLM Response] Duration: {}ms, Content Length: {} chars",
+                    duration, content != null ? content.length() : 0);
+                log.debug("📥 [LLM Response] Content:\n{}", content);
 
                 return AIResponse.builder()
                         .text(content)
