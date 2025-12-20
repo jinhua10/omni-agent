@@ -74,5 +74,36 @@ public class Workflow {
      * 工作流元数据
      */
     private Map<String, Object> metadata;
+
+    /**
+     * 创建时间
+     */
+    private Long createdAt;
+
+    /**
+     * 更新时间
+     */
+    private Long updatedAt;
+
+    /**
+     * 作者
+     */
+    private String author;
+
+    /**
+     * 状态（draft, active, deprecated）
+     */
+    @lombok.Builder.Default
+    private String status = "active";
+
+    /**
+     * 输入参数 Schema（JSON Schema格式）
+     */
+    private Map<String, Object> inputSchema;
+
+    /**
+     * 输出结果 Schema（JSON Schema格式）
+     */
+    private Map<String, Object> outputSchema;
 }
 

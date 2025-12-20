@@ -75,9 +75,15 @@
             <version>${project.version}</version>
         </dependency>
 
-
-
         <!-- ========== 工具库 ========== -->
+
+        <!-- Jackson YAML for Workflow Definitions -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+
+        <!-- ========== 其他工具库 ========== -->
 
         <!-- Lombok -->
         <dependency>

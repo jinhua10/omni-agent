@@ -1,0 +1,52 @@
+# ========================================
+# 工作流引擎配置
+# ========================================
+omni-agent:
+  workflow:
+    # 存储类型: file | sqlite | mongodb | elasticsearch | auto
+    # auto: 根据项目依赖自动选择（推荐）
+    storage-type: auto
+
+    # File 存储配置（YAML 文件）
+    file:
+      definitions-dir: ./data/workflows/definitions
+      versions-dir: ./data/workflows/versions
+
+    # SQLite 配置（轻量级，适合单机部署）
+    sqlite:
+      db-path: ./data/workflows/workflows.db
+      # 连接池配置（可选）
+      pool:
+        max-size: 10
+        min-idle: 2
+
+    # MongoDB 配置（分布式，适合大规模部署）
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: omniagent
+      collection: workflows
+      # 连接配置（可选）
+      connection:
+        connect-timeout: 10000
+        socket-timeout: 5000
+        max-pool-size: 100
+
+    # Elasticsearch 配置（全文搜索优化）
+    elasticsearch:
+      uris: http://localhost:9200
+      index: market-workflows
+      # 索引配置（可选）
+      settings:
+        number-of-shards: 3
+        number-of-replicas: 1
+
+    # 市场配置
+    market:
+      enabled: true
+      page-size: 20
+      max-file-size: 10485760  # 10MB
+      # 缓存配置（可选）
+      cache:
+        enabled: true
+        ttl: 300  # 5分钟
+

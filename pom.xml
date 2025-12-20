@@ -63,6 +63,10 @@
 
         <module>omni-agent-marketplace</module>
 
+        <!-- ========== 工作流引擎 (Workflow Engine) ⭐ ========== -->
+
+        <module>omni-agent-workflow</module>
+
         <!-- ========== 以下模块待创建 ========== -->
 
 
