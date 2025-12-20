@@ -1124,6 +1124,122 @@ export default {
   },
 
   // ============================================================================
+  // 工作流构建器 (Workflow Builder)
+  // ============================================================================
+  workflowBuilder: {
+    title: '工作流构建器',
+    namePlaceholder: '请输入工作流名称',
+    addStep: '添加步骤',
+    testButton: '测试',
+    exportButton: '导出',
+    importButton: '导入',
+
+    // 状态
+    status: {
+      draft: '草稿',
+      active: '活跃',
+      deprecated: '已弃用',
+    },
+
+    // 验证
+    validation: {
+      nameRequired: '请输入工作流名称',
+      stepsRequired: '至少需要一个步骤',
+    },
+
+    // 保存
+    save: {
+      created: '工作流创建成功',
+      updated: '工作流更新成功',
+      failed: '保存失败',
+    },
+
+    // 测试
+    test: {
+      title: '测试工作流',
+      input: '输入数据',
+      execute: '执行',
+      result: '执行结果',
+      success: '测试执行成功',
+      failed: '测试执行失败',
+    },
+
+    // 导出导入
+    export: {
+      success: '导出成功',
+    },
+    import: {
+      success: '导入成功',
+      failed: '导入失败，文件格式错误',
+    },
+
+    // 画布
+    canvas: {
+      emptyHint: '点击"添加步骤"开始构建工作流',
+      addFirstStep: '让我们创建第一个步骤！',
+    },
+
+    // 节点
+    node: {
+      agent: 'Agent',
+      dependencies: '依赖',
+      input: '输入',
+      output: '输出',
+      connect: '连接',
+      allowFailure: '允许失败',
+      timeout: '超时时间',
+    },
+
+    // 步骤编辑器
+    stepEditor: {
+      title: '编辑步骤',
+      name: '步骤名称',
+      nameRequired: '请输入步骤名称',
+      namePlaceholder: '例如：数据验证',
+      description: '步骤描述',
+      descriptionPlaceholder: '描述这个步骤的功能...',
+      agent: 'Agent',
+      agentRequired: '请选择一个 Agent',
+      input: '输入配置',
+      inputRequired: '请配置输入',
+      expression: '表达式',
+      invalidJson: 'JSON 格式错误',
+      dependencies: '依赖步骤',
+      dependenciesPlaceholder: '选择依赖的步骤',
+      advancedConfig: '高级配置',
+      allowFailure: '允许失败',
+      allowFailureTooltip: '如果此步骤失败，工作流仍然继续执行',
+      timeout: '超时时间（毫秒）',
+      timeoutTooltip: '步骤执行的最大时间',
+      retries: '重试次数',
+      retriesTooltip: '失败后的重试次数',
+      condition: '条件执行',
+      conditionTooltip: '使用 SpEL 表达式控制是否执行此步骤',
+    },
+
+    // Agent 选择器
+    agentSelector: {
+      title: '选择 Agent',
+      searchPlaceholder: '搜索 Agent...',
+      noAgents: '没有可用的 Agent',
+    },
+
+    // Agent
+    agents: {
+      loadFailed: '加载 Agent 列表失败',
+    },
+
+    // 步骤
+    step: {
+      added: '步骤已添加',
+      updated: '步骤已更新',
+      deleted: '步骤已删除',
+      deleteConfirm: '删除步骤',
+      deleteWarning: '确定要删除这个步骤吗？这将同时删除所有依赖此步骤的连接。',
+    },
+  },
+
+  // ============================================================================
   // 用户 (User)
   // ============================================================================
   user: {

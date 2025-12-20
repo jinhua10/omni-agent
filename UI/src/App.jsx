@@ -28,7 +28,7 @@ import { WishList } from './components/wish'
 import { ServiceMarket } from './components/service'
 import { UserProfile } from './components/profile'
 import { AdminPanel } from './components/admin'
-import { WorkflowMarket } from './components/workflow'
+import { WorkflowMarket, WorkflowBuilder } from './components/workflow'
 import './assets/css/main.css'
 import './assets/css/error-boundary.css'
 
@@ -153,6 +153,8 @@ function AppContent() {
         return <ServiceMarket />
       case 'workflowMarket':
         return <WorkflowMarket />
+      case 'workflowBuilder':
+        return <WorkflowBuilder />
       case 'profile':
         return <UserProfile />
       case 'admin':

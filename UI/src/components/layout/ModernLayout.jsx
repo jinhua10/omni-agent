@@ -175,6 +175,11 @@ function ModernLayout({ children, activeKey, onMenuChange }) {
       label: t('workflowMarket.title'),
     },
     {
+      key: 'workflowBuilder',
+      icon: <AppstoreOutlined />,
+      label: t('workflowBuilder.title'),
+    },
+    {
       key: 'profile',
       icon: <UserOutlined />,
       label: t('nav.profile'),

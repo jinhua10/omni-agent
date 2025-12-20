@@ -1,0 +1,401 @@
+/* 工作流构建器样式 (Workflow Builder Styles) */
+
+.workflow-builder {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-bg-primary, #f5f5f5);
+}
+
+/* 顶部工具栏 (Top toolbar) */
+.workflow-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid var(--color-border, #d9d9d9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 10;
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 工作流画布 (Workflow canvas) */
+.workflow-canvas {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-secondary, #fafafa) 1px,
+    transparent 1px
+  ),
+  linear-gradient(
+    var(--color-bg-secondary, #fafafa) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+  cursor: grab;
+}
+
+.workflow-canvas:active {
+  cursor: grabbing;
+}
+
+/* SVG 层 (SVG layer) */
+.canvas-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.canvas-svg line,
+.canvas-svg g {
+  pointer-events: auto;
+}
+
+.connection-delete {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.connection-delete:hover circle {
+  fill: #ff4d4f;
+}
+
+.connection-delete:hover line {
+  stroke: white;
+}
+
+/* 节点层 (Nodes layer) */
+.canvas-nodes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.canvas-nodes > * {
+  pointer-events: auto;
+}
+
+/* 工作流节点 (Workflow node) */
+.workflow-node {
+  position: absolute;
+  width: 240px;
+  background: white;
+  border: 2px solid var(--color-border, #d9d9d9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.workflow-node:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  z-index: 10;
+}
+
+.workflow-node.connecting-from {
+  border-color: #52c41a;
+  box-shadow: 0 4px 16px rgba(82, 196, 26, 0.4);
+}
+
+.workflow-node.connectable {
+  border-color: #1890ff;
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.3);
+}
+
+/* 节点头部 (Node header) */
+.node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6px 6px 0 0;
+  color: white;
+}
+
+.node-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.node-icon {
+  font-size: 18px;
+}
+
+.node-name {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.node-action-icon {
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: all 0.2s ease;
+}
+
+.node-action-icon:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.node-action-icon.delete-icon:hover {
+  color: #ff4d4f;
+}
+
+/* 节点内容 (Node content) */
+.node-content {
+  padding: 12px;
+}
+
+.node-agent,
+.node-dependencies {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.node-label {
+  color: var(--color-text-secondary, #8c8c8c);
+  font-weight: 500;
+}
+
+.node-description {
+  font-size: 12px;
+  color: var(--color-text-secondary, #8c8c8c);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.dependency-count {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #e6f7ff;
+  color: #1890ff;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 连接点 (Connection points) */
+.node-connectors {
+  position: relative;
+}
+
+.connector {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 3;
+}
+
+.connector:hover {
+  width: 16px;
+  height: 16px;
+  background: #667eea;
+  transform: translate(-2px, -2px);
+}
+
+.connector-in {
+  top: 40px;
+  left: -6px;
+}
+
+.connector-out {
+  top: 40px;
+  right: -6px;
+}
+
+/* 空状态 (Empty state) */
+.canvas-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.canvas-empty p {
+  font-size: 16px;
+  margin: 8px 0;
+}
+
+/* Agent 选择器 (Agent selector) */
+.agent-selector {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.agent-card {
+  height: 100%;
+}
+
+.agent-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.agent-card-header .agent-icon {
+  font-size: 24px;
+  color: #667eea;
+}
+
+.agent-card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.agent-description {
+  font-size: 14px;
+  color: var(--color-text-secondary, #8c8c8c);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.agent-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 步骤编辑器 (Step editor) */
+.advanced-config {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border, #d9d9d9);
+}
+
+.advanced-config h4 {
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary, #262626);
+}
+
+.input-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* 测试面板 (Test panel) */
+.test-panel {
+  padding: 16px;
+}
+
+.test-panel h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.test-result {
+  background: #f5f5f5;
+  padding: 16px;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 响应式设计 (Responsive design) */
+@media (max-width: 768px) {
+  .workflow-toolbar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .toolbar-left,
+  .toolbar-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .workflow-node {
+    width: 200px;
+  }
+
+  .agent-selector {
+    max-height: 50vh;
+  }
+}
+
+/* 暗色主题支持 (Dark theme support) */
+@media (prefers-color-scheme: dark) {
+  .workflow-builder {
+    background: #141414;
+  }
+
+  .workflow-toolbar {
+    background: #1f1f1f;
+    border-bottom-color: #303030;
+  }
+
+  .workflow-canvas {
+    background: linear-gradient(
+      90deg,
+      #303030 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      #303030 1px,
+      transparent 1px
+    );
+  }
+
+  .workflow-node {
+    background: #1f1f1f;
+    border-color: #303030;
+  }
+
+  .workflow-node:hover {
+    border-color: #667eea;
+  }
+
+  .test-result {
+    background: #262626;
+    color: #d9d9d9;
+  }
+}

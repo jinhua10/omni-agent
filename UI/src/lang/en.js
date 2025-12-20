@@ -1111,6 +1111,122 @@ export default {
   },
 
   // ============================================================================
+  // Workflow Builder
+  // ============================================================================
+  workflowBuilder: {
+    title: 'Workflow Builder',
+    namePlaceholder: 'Enter workflow name',
+    addStep: 'Add Step',
+    testButton: 'Test',
+    exportButton: 'Export',
+    importButton: 'Import',
+
+    // Status
+    status: {
+      draft: 'Draft',
+      active: 'Active',
+      deprecated: 'Deprecated',
+    },
+
+    // Validation
+    validation: {
+      nameRequired: 'Please enter workflow name',
+      stepsRequired: 'At least one step is required',
+    },
+
+    // Save
+    save: {
+      created: 'Workflow created successfully',
+      updated: 'Workflow updated successfully',
+      failed: 'Save failed',
+    },
+
+    // Test
+    test: {
+      title: 'Test Workflow',
+      input: 'Input Data',
+      execute: 'Execute',
+      result: 'Execution Result',
+      success: 'Test executed successfully',
+      failed: 'Test execution failed',
+    },
+
+    // Export & Import
+    export: {
+      success: 'Export successful',
+    },
+    import: {
+      success: 'Import successful',
+      failed: 'Import failed, invalid file format',
+    },
+
+    // Canvas
+    canvas: {
+      emptyHint: 'Click "Add Step" to start building your workflow',
+      addFirstStep: "Let's create the first step!",
+    },
+
+    // Node
+    node: {
+      agent: 'Agent',
+      dependencies: 'Dependencies',
+      input: 'Input',
+      output: 'Output',
+      connect: 'Connect',
+      allowFailure: 'Allow Failure',
+      timeout: 'Timeout',
+    },
+
+    // Step Editor
+    stepEditor: {
+      title: 'Edit Step',
+      name: 'Step Name',
+      nameRequired: 'Please enter step name',
+      namePlaceholder: 'e.g., Data Validation',
+      description: 'Step Description',
+      descriptionPlaceholder: 'Describe what this step does...',
+      agent: 'Agent',
+      agentRequired: 'Please select an agent',
+      input: 'Input Configuration',
+      inputRequired: 'Please configure input',
+      expression: 'Expression',
+      invalidJson: 'Invalid JSON format',
+      dependencies: 'Dependent Steps',
+      dependenciesPlaceholder: 'Select dependent steps',
+      advancedConfig: 'Advanced Configuration',
+      allowFailure: 'Allow Failure',
+      allowFailureTooltip: 'If this step fails, the workflow continues',
+      timeout: 'Timeout (ms)',
+      timeoutTooltip: 'Maximum execution time for this step',
+      retries: 'Retries',
+      retriesTooltip: 'Number of retries after failure',
+      condition: 'Conditional Execution',
+      conditionTooltip: 'Use SpEL expression to control whether to execute this step',
+    },
+
+    // Agent Selector
+    agentSelector: {
+      title: 'Select Agent',
+      searchPlaceholder: 'Search agents...',
+      noAgents: 'No agents available',
+    },
+
+    // Agents
+    agents: {
+      loadFailed: 'Failed to load agent list',
+    },
+
+    // Step
+    step: {
+      added: 'Step added',
+      updated: 'Step updated',
+      deleted: 'Step deleted',
+      deleteConfirm: 'Delete Step',
+      deleteWarning: 'Are you sure you want to delete this step? This will also remove all connections that depend on it.',
+    },
+  },
+
+  // ============================================================================
   // User
   // ============================================================================
   user: {

@@ -164,5 +164,71 @@ export const getWorkflowRatings = (id) => {
   return apiClient.get(`/api/workflows/market/${id}/ratings`);
 };
 
+// ========== 工作流构建器 API ==========
+
+/**
+ * 创建工作流
+ * @param {Object} workflow - 工作流定义
+ */
+export const createWorkflow = (workflow) => {
+  return apiClient.post('/api/example/workflow/create', workflow);
+};
+
+/**
+ * 更新工作流
+ * @param {string} workflowId - 工作流ID
+ * @param {Object} workflow - 工作流定义
+ */
+export const updateWorkflow = (workflowId, workflow) => {
+  return apiClient.put(`/api/example/workflow/${workflowId}`, workflow);
+};
+
+/**
+ * 获取工作流列表
+ */
+export const getWorkflowList = () => {
+  return apiClient.get('/api/example/workflow/list');
+};
+
+/**
+ * 获取工作流详情（本地）
+ * @param {string} workflowName - 工作流名称
+ */
+export const getLocalWorkflowDetail = (workflowName) => {
+  return apiClient.get(`/api/example/workflow/detail/${workflowName}`);
+};
+
+/**
+ * 执行工作流
+ * @param {string} workflowName - 工作流名称
+ * @param {Object} input - 输入数据
+ */
+export const executeWorkflow = (workflowName, input) => {
+  return apiClient.post(`/api/example/workflow/execute/${workflowName}`, input);
+};
+
+/**
+ * 异步执行工作流
+ * @param {string} workflowName - 工作流名称
+ * @param {Object} input - 输入数据
+ */
+export const executeWorkflowAsync = (workflowName, input) => {
+  return apiClient.post(`/api/example/workflow/execute-async/${workflowName}`, input);
+};
+
+/**
+ * 获取可用的 Agent 列表
+ */
+export const getAgentList = () => {
+  return apiClient.get('/api/example/workflow/agents');
+};
+
+/**
+ * 测试工作流
+ */
+export const testWorkflow = () => {
+  return apiClient.get('/api/example/workflow/test');
+};
+
 export default apiClient;
 
