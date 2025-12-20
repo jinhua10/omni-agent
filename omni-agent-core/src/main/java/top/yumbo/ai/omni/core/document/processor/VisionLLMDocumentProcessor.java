@@ -192,6 +192,13 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             return extractPptPages(context);   // 旧格式，二进制格式
         }
 
+        // Word 文档处理（提取图片）
+        if (ext.equals("docx")) {
+            return extractDocxPages(context);  // 新格式
+        } else if (ext.equals("doc")) {
+            return extractDocPages(context);   // 旧格式
+        }
+
         // PDF 文档待实现
         if (ext.equals("pdf")) {
             log.warn("⚠️ [VisionLLM] PDF 页面提取功能待实现");
@@ -416,6 +423,145 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
         } catch (Exception e) {
             log.error("❌ [VisionLLM] 旧版 PowerPoint 页面提取失败", e);
             throw new Exception("旧版 PowerPoint 页面提取失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 提取新版 Word 文档的图片 (.docx 格式)
+     * ⭐ Word 没有"页"的概念，将所有图片作为一页处理
+     *
+     * @param context 处理上下文
+     * @return 页面列表
+     */
+    private List<DocumentPage> extractDocxPages(ProcessingContext context) throws Exception {
+        try {
+            java.io.InputStream inputStream;
+            if (context.getFileBytes() != null) {
+                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
+            } else {
+                inputStream = new java.io.FileInputStream(context.getFilePath());
+            }
+
+            try (org.apache.poi.xwpf.usermodel.XWPFDocument document =
+                    new org.apache.poi.xwpf.usermodel.XWPFDocument(inputStream)) {
+
+                List<org.apache.poi.xwpf.usermodel.XWPFPictureData> pictures = document.getAllPictures();
+                log.info("🔍 [VisionLLM] Word 文档包含 {} 张图片", pictures.size());
+
+                if (pictures.isEmpty()) {
+                    log.warn("⚠️ [VisionLLM] Word 文档没有图片");
+                    throw new Exception("Word 文档没有图片");
+                }
+
+                // 提取文本内容
+                StringBuilder textContent = new StringBuilder();
+                for (org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph : document.getParagraphs()) {
+                    String text = paragraph.getText();
+                    if (text != null && !text.trim().isEmpty()) {
+                        textContent.append(text).append(" ");
+                    }
+                }
+
+                // 创建单个页面，包含所有图片
+                DocumentPage page = new DocumentPage(1);
+
+                for (int i = 0; i < pictures.size(); i++) {
+                    org.apache.poi.xwpf.usermodel.XWPFPictureData picture = pictures.get(i);
+                    byte[] imageData = picture.getData();
+
+                    // 创建 metadata
+                    Map<String, Object> imageMetadata = new HashMap<>();
+                    imageMetadata.put("documentText", textContent.toString().trim());
+                    imageMetadata.put("fileName", context.getOriginalFileName());
+                    imageMetadata.put("totalImages", pictures.size());
+                    imageMetadata.put("imageIndex", i);
+
+                    // 创建 ExtractedImage
+                    ExtractedImage image = ExtractedImage.builder()
+                            .data(imageData)
+                            .format(picture.suggestFileExtension())
+                            .pageNumber(1)
+                            .position(new ImagePosition(0, i * 100, 0, 0))
+                            .metadata(imageMetadata)
+                            .build();
+
+                    page.addImage(image);
+                }
+
+                log.info("✅ [VisionLLM] Word 文档图片提取完成: {} 张", pictures.size());
+                return List.of(page);
+            }
+        } catch (Exception e) {
+            log.error("❌ [VisionLLM] Word 文档页面提取失败", e);
+            throw new Exception("Word 文档页面提取失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 提取旧版 Word 文档的图片 (.doc 格式)
+     * ⭐ Word 没有"页"的概念，将所有图片作为一页处理
+     *
+     * @param context 处理上下文
+     * @return 页面列表
+     */
+    private List<DocumentPage> extractDocPages(ProcessingContext context) throws Exception {
+        try {
+            java.io.InputStream inputStream;
+            if (context.getFileBytes() != null) {
+                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
+            } else {
+                inputStream = new java.io.FileInputStream(context.getFilePath());
+            }
+
+            try (org.apache.poi.hwpf.HWPFDocument document =
+                    new org.apache.poi.hwpf.HWPFDocument(inputStream)) {
+
+                List<org.apache.poi.hwpf.usermodel.Picture> pictures =
+                    document.getPicturesTable().getAllPictures();
+                log.info("🔍 [VisionLLM] 旧版 Word 文档包含 {} 张图片", pictures.size());
+
+                if (pictures.isEmpty()) {
+                    log.warn("⚠️ [VisionLLM] 旧版 Word 文档没有图片");
+                    throw new Exception("旧版 Word 文档没有图片");
+                }
+
+                // 提取文本内容
+                org.apache.poi.hwpf.extractor.WordExtractor extractor =
+                    new org.apache.poi.hwpf.extractor.WordExtractor(document);
+                String textContent = extractor.getText();
+
+                // 创建单个页面，包含所有图片
+                DocumentPage page = new DocumentPage(1);
+
+                for (int i = 0; i < pictures.size(); i++) {
+                    org.apache.poi.hwpf.usermodel.Picture picture = pictures.get(i);
+                    byte[] imageData = picture.getContent();
+
+                    // 创建 metadata
+                    Map<String, Object> imageMetadata = new HashMap<>();
+                    imageMetadata.put("documentText", textContent.trim());
+                    imageMetadata.put("fileName", context.getOriginalFileName());
+                    imageMetadata.put("totalImages", pictures.size());
+                    imageMetadata.put("imageIndex", i);
+
+                    // 创建 ExtractedImage
+                    ExtractedImage image = ExtractedImage.builder()
+                            .data(imageData)
+                            .format(picture.suggestFileExtension())
+                            .pageNumber(1)
+                            .position(new ImagePosition(0, i * 100, 0, 0))
+                            .metadata(imageMetadata)
+                            .build();
+
+                    page.addImage(image);
+                }
+
+                log.info("✅ [VisionLLM] 旧版 Word 文档图片提取完成: {} 张", pictures.size());
+                return List.of(page);
+            }
+        } catch (Exception e) {
+            log.error("❌ [VisionLLM] 旧版 Word 文档页面提取失败", e);
+            throw new Exception("旧版 Word 文档页面提取失败: " + e.getMessage(), e);
         }
     }
 
@@ -715,4 +861,6 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
         }
     }
 }
+
+
 

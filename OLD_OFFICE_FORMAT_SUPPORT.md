@@ -193,15 +193,47 @@ mvn spring-boot:run
 | 功能 | .docx | .doc | .pptx | .ppt | .xlsx | .xls |
 |------|-------|------|-------|------|-------|------|
 | **文本提取** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **图片提取** | ✅ | ❌ | ✅ | ❌ | ⚠️ | ⚠️ |
-| **Vision LLM** | ⚠️ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **图片提取** | ✅ | ✅ | ✅ | ✅ | ⚠️ | ⚠️ |
+| **Vision LLM** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | **分块处理** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **RAG 索引** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 **说明**：
 - ✅ 完全支持
-- ⚠️ 部分支持
-- ❌ 不支持
+- ⚠️ 部分支持（Excel 图片提取受限）
+- ❌ 不支持（Excel 不适用 Vision LLM）
+
+### 📸 图片提取详情
+
+#### Word 文档
+- **.docx** (新版): 
+  - ✅ 通过 `XWPFDocument.getAllPictures()` 提取
+  - ✅ 支持所有嵌入图片格式
+  - ✅ Vision LLM 分析图片内容
+  
+- **.doc** (旧版):
+  - ✅ 通过 `HWPFDocument.getPicturesTable().getAllPictures()` 提取
+  - ✅ 支持所有嵌入图片格式
+  - ✅ Vision LLM 分析图片内容
+
+#### PowerPoint 文档
+- **.pptx** (新版):
+  - ✅ 逐页提取图片 (`XSLFPictureShape`)
+  - ✅ 渲染整张幻灯片为图片
+  - ✅ Vision LLM 逐页分析
+  - ✅ 提供幻灯片文字作为上下文
+  
+- **.ppt** (旧版):
+  - ✅ 逐页提取图片 (`HSLFPictureShape`)
+  - ✅ 渲染整张幻灯片为图片
+  - ✅ Vision LLM 逐页分析
+  - ✅ 提供幻灯片文字作为上下文
+
+#### Excel 文档
+- **.xlsx** / **.xls**:
+  - ⚠️ 图片提取功能有限
+  - ❌ 不适用 Vision LLM（主要是表格数据）
+  - ✅ 文本和数值提取完整
 
 ## 🎉 总结
 

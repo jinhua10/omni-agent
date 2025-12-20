@@ -275,10 +275,40 @@ public class SimpleDocumentParser implements DocumentParser {
              HWPFDocument document = new HWPFDocument(fis)) {
 
             WordExtractor extractor = new WordExtractor(document);
-            String content = extractor.getText();
+            StringBuilder content = new StringBuilder(extractor.getText());
 
-            log.debug("成功解析 DOC 文件: {} bytes", content.length());
-            return content.trim();
+            // ⭐ 提取图片（如果启用）
+            if (extractImages && imageExtractor != null) {
+                try {
+                    List<org.apache.poi.hwpf.usermodel.Picture> pictures = document.getPicturesTable().getAllPictures();
+                    log.debug("旧版 Word 文档中包含 {} 张图片", pictures.size());
+
+                    for (int i = 0; i < pictures.size(); i++) {
+                        try {
+                            org.apache.poi.hwpf.usermodel.Picture picture = pictures.get(i);
+                            byte[] imageBytes = picture.getContent();
+
+                            // 获取图片扩展名
+                            String extension = picture.suggestFileExtension();
+                            String imageName = String.format("doc_image%d.%s", i + 1, extension);
+
+                            ByteArrayInputStream imageStream = new ByteArrayInputStream(imageBytes);
+                            String imageContent = imageExtractor.extractContent(imageStream, imageName);
+                            content.append("\n").append(imageContent).append("\n");
+
+                            log.debug("提取了旧版 Word 文档中的图片: {}", imageName);
+                        } catch (Exception e) {
+                            log.warn("提取旧版 Word 文档中的第 {} 张图片失败", i + 1, e);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("获取旧版 Word 文档图片列表失败: {}", e.getMessage());
+                }
+            }
+
+            String result = content.toString().trim();
+            log.debug("成功解析 DOC 文件: {} bytes", result.length());
+            return result;
         } catch (Exception e) {
             log.error("解析 DOC 文件失败: {}", file.getName(), e);
             throw new IOException("解析 DOC 文件失败", e);
@@ -370,6 +400,40 @@ public class SimpleDocumentParser implements DocumentParser {
                         }
                     }
                 });
+
+                // ⭐ 提取图片（如果启用）
+                if (extractImages && imageExtractor != null) {
+                    int imageCount = 0;
+                    for (HSLFShape shape : slide.getShapes()) {
+                        if (shape instanceof org.apache.poi.hslf.usermodel.HSLFPictureShape) {
+                            org.apache.poi.hslf.usermodel.HSLFPictureShape picture =
+                                (org.apache.poi.hslf.usermodel.HSLFPictureShape) shape;
+                            try {
+                                org.apache.poi.hslf.usermodel.HSLFPictureData pictureData = picture.getPictureData();
+                                byte[] imageBytes = pictureData.getData();
+
+                                // 获取图片格式
+                                String extension = "png";
+                                if (pictureData.getType() == org.apache.poi.hslf.usermodel.HSLFPictureData.PictureType.JPEG) {
+                                    extension = "jpg";
+                                } else if (pictureData.getType() == org.apache.poi.hslf.usermodel.HSLFPictureData.PictureType.PNG) {
+                                    extension = "png";
+                                }
+
+                                String imageName = String.format("slide%d_image%d.%s",
+                                        i + 1, ++imageCount, extension);
+
+                                ByteArrayInputStream imageStream = new ByteArrayInputStream(imageBytes);
+                                String imageContent = imageExtractor.extractContent(imageStream, imageName);
+                                content.append(imageContent).append("\n");
+
+                                log.debug("提取了旧版幻灯片 {} 中的图片: {}", i + 1, imageName);
+                            } catch (Exception e) {
+                                log.warn("提取旧版幻灯片 {} 中的图片失败", i + 1, e);
+                            }
+                        }
+                    }
+                }
 
                 content.append("\n");
             }
