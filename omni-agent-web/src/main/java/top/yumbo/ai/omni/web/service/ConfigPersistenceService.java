@@ -3,6 +3,7 @@ package top.yumbo.ai.omni.web.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.web.config.FileWatcherConfig;
 
@@ -27,6 +28,16 @@ public class ConfigPersistenceService {
     private static final String FILE_WATCHER_CONFIG_FILE = "file-watcher-config.json";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // ⭐ 从 application.yml 读取配置
+    @Value("${omni-agent.file-watcher.enabled:true}")
+    private boolean fileWatcherEnabled;
+
+    @Value("${omni-agent.file-watcher.auto-index:true}")
+    private boolean fileWatcherAutoIndex;
+
+    @Value("${omni-agent.file-watcher.watch-directory:./data/documents}")
+    private String fileWatcherDirectory;
     /**
      * -- GETTER --
      *  获取配置目录路径
@@ -94,16 +105,19 @@ public class ConfigPersistenceService {
     }
 
     /**
-     * 创建默认配置
+     * 创建默认配置（从 application.yml 读取）⭐
      */
     private FileWatcherConfig createDefaultConfig() {
         FileWatcherConfig config = FileWatcherConfig.builder()
-                .enabled(true)
-                .autoIndex(false)  // 默认不自动索引，需要用户手动确认
-                .watchDirectory("./data/documents")
+                .enabled(fileWatcherEnabled)        // ⭐ 从 application.yml 读取
+                .autoIndex(fileWatcherAutoIndex)    // ⭐ 从 application.yml 读取
+                .watchDirectory(fileWatcherDirectory)  // ⭐ 从 application.yml 读取
                 .lastUpdated(System.currentTimeMillis())
                 .version("1.0")
                 .build();
+
+        log.info("🔧 创建默认配置: enabled={}, autoIndex={}, watchDirectory={}",
+                config.getEnabled(), config.getAutoIndex(), config.getWatchDirectory());
 
         // 保存默认配置
         saveFileWatcherConfig(config);
