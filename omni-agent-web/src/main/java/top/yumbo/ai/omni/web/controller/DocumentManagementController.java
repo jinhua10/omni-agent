@@ -1,6 +1,5 @@
 package top.yumbo.ai.omni.web.controller;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,22 +10,20 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import top.yumbo.ai.omni.web.util.DocumentParserUtil;
 import top.yumbo.ai.omni.web.util.FileStorageUtil;
 import top.yumbo.ai.rag.api.model.SearchResult;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.omni.core.document.DocumentProcessor;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.core.image.ImageStorageService;
-import top.yumbo.ai.storage.api.model.Chunk;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,11 +47,17 @@ public class DocumentManagementController {
     private final DocumentProcessorManager documentProcessorManager;
     private final ChunkingStrategyManager chunkingStrategyManager;
     private final ImageStorageService imageStorageService;
+    private final top.yumbo.ai.omni.web.config.FileWatcherConfig fileWatcherConfig;
 
 
     /**
-     * 上传文档（简化版：直接索引到RAG）
+     * 上传文档（异步处理版本）⭐
      * POST /api/documents/upload
+     *
+     * 新逻辑：
+     * 1. 直接保存文件到监听目录（data/documents）
+     * 2. 返回"索引中"状态
+     * 3. 由 FileWatcherService 自动处理和索引
      */
     @PostMapping("/upload")
     public UploadResponse uploadDocument(
@@ -71,19 +74,29 @@ public class DocumentManagementController {
             }
 
             String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
-            log.info("上传文档: filename={}, size={} bytes", filename, file.getSize());
+            log.info("📤 上传文档（异步）: filename={}, size={} bytes", filename, file.getSize());
 
-            // 调用核心处理方法
-            DocumentUploadResult uploadResult = processAndIndexDocument(file, autoIndex);
+            // ⭐ 直接保存到监听目录
+            Path watchDir = Paths.get(fileWatcherConfig.getWatchDirectory());
+            if (!Files.exists(watchDir)) {
+                Files.createDirectories(watchDir);
+            }
+
+            Path targetFile = watchDir.resolve(filename);
+            file.transferTo(targetFile);
+
+            log.info("✅ 文件已保存到监听目录: {}", targetFile);
+            log.info("⏳ 文件将由 FileWatcherService 自动处理和索引");
 
             response.setSuccess(true);
-            response.setMessage(uploadResult.getMessage());
+            response.setMessage("文件上传成功，正在索引中...");
             response.setFileName(filename);
             response.setFileSize(file.getSize());
-            response.setDocumentId(uploadResult.getDocumentId());
-            response.setAutoIndexed(autoIndex);
+            response.setDocumentId(null);  // 索引完成后才有 documentId
+            response.setAutoIndexed(true);
+            response.setIndexing(true);  // ⭐ 新增：索引中状态
 
-            log.info("文档上传成功: id={}", uploadResult.getDocumentId());
+            log.info("📤 文档上传成功（异步）: filename={}", filename);
 
         } catch (Exception e) {
             log.error("文档上传失败", e);
@@ -95,8 +108,13 @@ public class DocumentManagementController {
     }
 
     /**
-     * 批量上传文档
+     * 批量上传文档（异步处理版本）⭐
      * POST /api/documents/upload-batch
+     *
+     * 新逻辑：
+     * 1. 批量保存文件到监听目录
+     * 2. 返回"索引中"状态
+     * 3. 由 FileWatcherService 自动处理
      */
     @PostMapping("/upload-batch")
     public BatchUploadResponse uploadBatch(
@@ -109,7 +127,13 @@ public class DocumentManagementController {
         int failCount = 0;
 
         try {
-            log.info("批量上传文档: count={}", files.length);
+            log.info("📤 批量上传文档（异步）: count={}", files.length);
+
+            // 确保监听目录存在
+            Path watchDir = Paths.get(fileWatcherConfig.getWatchDirectory());
+            if (!Files.exists(watchDir)) {
+                Files.createDirectories(watchDir);
+            }
 
             for (MultipartFile file : files) {
                 UploadResult uploadResult = new UploadResult();
@@ -119,24 +143,31 @@ public class DocumentManagementController {
                     if (file.isEmpty()) {
                         uploadResult.setSuccess(false);
                         uploadResult.setMessage("文件为空");
+                        uploadResult.setIndexing(false);
                         failCount++;
                         results.add(uploadResult);
                         continue;
                     }
 
-                    // 调用核心处理方法
-                    DocumentUploadResult docResult = processAndIndexDocument(file, autoIndex);
+                    // ⭐ 直接保存到监听目录
+                    String filename = file.getOriginalFilename();
+                    Path targetFile = watchDir.resolve(filename);
+                    file.transferTo(targetFile);
 
                     uploadResult.setSuccess(true);
-                    uploadResult.setMessage(docResult.getMessage());
-                    uploadResult.setDocumentId(docResult.getDocumentId());
+                    uploadResult.setMessage("文件上传成功，正在索引中...");
+                    uploadResult.setDocumentId(null);  // 索引完成后才有
                     uploadResult.setFileSize(file.getSize());
+                    uploadResult.setIndexing(true);  // ⭐ 索引中状态
                     successCount++;
+
+                    log.info("✅ 文件已保存: {}", filename);
 
                 } catch (Exception e) {
                     log.error("上传文件失败: {}", file.getOriginalFilename(), e);
                     uploadResult.setSuccess(false);
                     uploadResult.setMessage("上传失败: " + e.getMessage());
+                    uploadResult.setIndexing(false);
                     failCount++;
                 }
 
@@ -144,12 +175,12 @@ public class DocumentManagementController {
             }
 
             response.setSuccess(true);
-            response.setMessage(String.format("批量上传完成: 成功 %d, 失败 %d", successCount, failCount));
+            response.setMessage(String.format("批量上传完成: 成功 %d, 失败 %d。文件正在后台索引中...", successCount, failCount));
             response.setSuccessCount(successCount);
             response.setFailureCount(failCount);
             response.setResults(results);
 
-            log.info("批量上传完成: success={}, fail={}", successCount, failCount);
+            log.info("📤 批量上传完成: success={}, fail={}, 文件将自动索引", successCount, failCount);
 
         } catch (Exception e) {
             log.error("批量上传失败", e);
@@ -470,242 +501,8 @@ public class DocumentManagementController {
     }
 
 
-    // ========== 辅助方法 ==========
-
-    /**
-     * 核心文档处理和索引方法（单文件上传和批量上传共用）
-     *
-     * @param file 上传的文件
-     * @param autoIndex 是否自动索引
-     * @return 文档上传结果
-     * @throws Exception 处理异常
-     */
-    private DocumentUploadResult processAndIndexDocument(MultipartFile file, boolean autoIndex) throws Exception {
-        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
-
-        // 生成文档ID
-        String documentId = "doc_" + System.currentTimeMillis() + "_" +
-                filename.replaceAll("[^a-zA-Z0-9._-]", "_");
-
-        // 1. 保存原始文件到 DocumentStorageService
-        log.info("💾 保存原始文件到存储服务: {}", filename);
-        String savedDocId = storageService.saveDocument(filename, filename, file.getBytes());
-        if (savedDocId == null) {
-            throw new Exception("保存原始文件失败");
-        }
-        log.info("✅ 原始文件已保存: {}", filename);
-
-        // 2. 使用 DocumentProcessorManager 处理文档
-        String content = processDocumentContent(file, filename);
-
-        // 3. 如果需要索引，进行分块和索引
-        String message;
-        if (autoIndex) {
-            message = chunkAndIndexDocument(documentId, filename, content);
-        } else {
-            message = "文档上传成功（未索引）";
-        }
-
-        return new DocumentUploadResult(documentId, message);
-    }
-
-    /**
-     * 处理文档内容（文本提取和图片保存）
-     *
-     * @param file 上传的文件
-     * @param filename 文件名
-     * @return 提取的文本内容
-     * @throws Exception 处理异常
-     */
-    private String processDocumentContent(MultipartFile file, String filename) throws Exception {
-        String fileExtension = getFileExtension(filename);
-        String content;
-
-        try {
-            log.info("🔄 使用 DocumentProcessorManager 处理文档: {}", filename);
-
-            // 构建处理上下文
-            DocumentProcessor.ProcessingContext context = DocumentProcessor.ProcessingContext.builder()
-                    .fileBytes(file.getBytes())
-                    .filePath(null)
-                    .fileExtension(fileExtension)
-                    .originalFileName(filename)
-                    .fileSize(file.getSize())
-                    .options(new HashMap<>())
-                    .build();
-
-            // 处理文档
-            DocumentProcessor.ProcessingResult result = documentProcessorManager.processDocument(context);
-
-            if (result.isSuccess()) {
-                content = result.getContent();
-                log.info("✅ 文档处理成功: processor={}, 内容长度={} chars, 耗时={}ms",
-                        result.getProcessorName(), content.length(), result.getProcessingTimeMs());
-
-                // 保存提取的图片
-                saveExtractedImages(filename, result.getImages());
-            } else {
-                throw new Exception("文档处理失败: " + result.getError());
-            }
-
-        } catch (Exception e) {
-            log.warn("⚠️ DocumentProcessor 处理失败，降级使用 DocumentParserUtil: {}", e.getMessage());
-            try {
-                content = DocumentParserUtil.parseDocument(file);
-            } catch (Exception ex) {
-                log.warn("⚠️ DocumentParserUtil 也失败，使用原始字节内容");
-                content = new String(file.getBytes(), StandardCharsets.UTF_8);
-            }
-        }
-
-        return content;
-    }
-
-    /**
-     * 保存提取的图片
-     * ⭐ 按页面分组，为每页的图片添加序号
-     *
-     * @param filename 文档文件名
-     * @param images 提取的图片列表
-     */
-    private void saveExtractedImages(String filename, List<DocumentProcessor.ExtractedImage> images) {
-        if (images != null && !images.isEmpty()) {
-            log.info("🖼️ 保存提取的图片: {} 张", images.size());
-
-            // ⭐ 按页码分组图片
-            Map<Integer, List<DocumentProcessor.ExtractedImage>> imagesByPage = new HashMap<>();
-            for (DocumentProcessor.ExtractedImage img : images) {
-                int pageNum = img.getPageNumber() > 0 ? img.getPageNumber() : 1;
-                imagesByPage.computeIfAbsent(pageNum, k -> new ArrayList<>()).add(img);
-            }
-
-            int savedImageCount = 0;
-            // ⭐ 遍历每一页，为该页的图片添加序号
-            for (Map.Entry<Integer, List<DocumentProcessor.ExtractedImage>> entry : imagesByPage.entrySet()) {
-                int pageNum = entry.getKey();
-                List<DocumentProcessor.ExtractedImage> pageImages = entry.getValue();
-
-                for (int imgIndex = 0; imgIndex < pageImages.size(); imgIndex++) {
-                    DocumentProcessor.ExtractedImage extractedImage = pageImages.get(imgIndex);
-
-                    try {
-                        // ⭐ 在 metadata 中添加图片序号
-                        Map<String, Object> metadata = extractedImage.getMetadata();
-                        if (metadata == null) {
-                            metadata = new HashMap<>();
-                        }
-                        metadata.put("imageIndex", imgIndex);  // 图片在该页的序号
-                        metadata.put("pageNumber", pageNum);   // 确保页码信息存在
-
-                        String imageId = imageStorageService.saveImage(
-                                filename,  // 使用文件名而不是 documentId
-                                extractedImage.getData(),
-                                extractedImage.getFormat(),
-                                metadata);  // 传递包含序号的 metadata
-                        if (imageId != null) {
-                            savedImageCount++;
-                        }
-                    } catch (Exception ex) {
-                        log.warn("⚠️ 保存图片失败 (page={}, img={}): {}", pageNum, imgIndex, ex.getMessage());
-                    }
-                }
-            }
-            log.info("✅ 图片已保存: {} 张 (共 {} 页)", savedImageCount, imagesByPage.size());
-        }
-    }
-
-    /**
-     * 分块并索引文档
-     *
-     * @param documentId 文档ID
-     * @param filename 文件名
-     * @param content 文档内容
-     * @return 结果消息
-     */
-    private String chunkAndIndexDocument(String documentId, String filename, String content) {
-        try {
-            log.info("📦 使用 ChunkingStrategyManager 进行分块: {}", filename);
-
-            // 1. 使用分块策略管理器进行分块（自动选择策略）
-            List<Chunk> chunks = chunkingStrategyManager.chunkWithAutoStrategy(
-                    documentId, content, filename);
-            log.info("✅ 分块完成: 共 {} 个块, 策略: {}",
-                    chunks.size(),
-                    chunks.isEmpty() ? "unknown" : chunks.get(0).getMetadata().get("strategy"));
-
-            // 2. 保存分块到 DocumentStorageService
-            log.info("💾 保存分块到存储服务: {}", filename);
-            List<String> savedChunkIds = storageService.saveChunks(filename, chunks);
-            log.info("✅ 分块已保存到存储: {} 个文件", savedChunkIds.size());
-
-            // 3. 为每个块创建文档并索引到 RAG
-            log.info("📇 索引分块到 RAG: {}", filename);
-            int indexed = 0;
-            for (Chunk chunk : chunks) {
-                Document document = Document.builder()
-                        .id(chunk.getId())
-                        .title(filename + " (块 " + chunk.getSequence() + ")")
-                        .content(chunk.getContent())
-                        .summary("块 " + chunk.getSequence())
-                        .source("upload")
-                        .type("chunk")
-                        .metadata(Map.of(
-                                "fileName", filename,
-                                "storagePath", filename,
-                                "documentId", documentId,
-                                "chunkIndex", chunk.getSequence()
-                        ))
-                        .build();
-
-                ragService.indexDocument(document);
-                indexed++;
-            }
-
-            log.info("✅ 索引完成: 共索引 {} 个文档块", indexed);
-            return String.format("文档上传成功，已分块并索引（%d 个块）", indexed);
-
-        } catch (Exception e) {
-            log.warn("⚠️ 分块失败，降级使用整文档索引: {}", e.getMessage());
-
-            // 降级：直接索引整个文档
-            Document document = Document.builder()
-                    .id(documentId)
-                    .title(filename)
-                    .content(content)
-                    .source("upload")
-                    .type("document")
-                    .build();
-
-            ragService.indexDocument(document);
-            return "文档上传成功（未分块）";
-        }
-    }
-
-    /**
-     * 获取文件扩展名
-     */
-    private String getFileExtension(String filename) {
-        if (filename == null || filename.isEmpty()) {
-            return "";
-        }
-        int lastDot = filename.lastIndexOf('.');
-        if (lastDot > 0 && lastDot < filename.length() - 1) {
-            return filename.substring(lastDot + 1).toLowerCase();
-        }
-        return "";
-    }
-
     // ========== DTO 类 ==========
 
-    /**
-     * 内部文档上传结果类（用于方法间传递数据）
-     */
-    @Data
-    @AllArgsConstructor
-    private static class DocumentUploadResult {
-        private String documentId;
-        private String message;
-    }
 
     @Data
     public static class UploadResponse {
@@ -715,6 +512,7 @@ public class DocumentManagementController {
         private long fileSize;
         private String documentId;
         private boolean autoIndexed;
+        private boolean indexing;  // ⭐ 是否正在索引中
     }
 
     @Data
@@ -733,6 +531,7 @@ public class DocumentManagementController {
         private String fileName;
         private String documentId;
         private long fileSize;
+        private boolean indexing;  // ⭐ 是否正在索引中
     }
 
     @Data
