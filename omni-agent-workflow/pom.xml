@@ -13,6 +13,7 @@
 
     <artifactId>omni-agent-workflow</artifactId>
     <name>OmniAgent Workflow Engine</name>
+    <version>{project.version}</version>
     <description>工作流引擎模块 - 支持工作流定义、执行、编排和MCP集成</description>
 
     <dependencies>
