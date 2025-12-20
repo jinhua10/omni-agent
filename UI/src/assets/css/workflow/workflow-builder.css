@@ -145,7 +145,7 @@
 /* 工作流节点 (Workflow node) */
 .workflow-node {
   position: absolute;
-  width: 240px;
+  width: 280px;
   background: white;
   border: 2px solid var(--color-border, #d9d9d9);
   border-radius: 8px;
@@ -224,27 +224,48 @@
 /* 节点内容 (Node content) */
 .node-content {
   padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .node-agent,
 .node-dependencies {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 6px;
   font-size: 13px;
+  flex-wrap: nowrap;
+  min-height: 22px;
 }
 
-.node-label {
-  color: var(--color-text-secondary, #8c8c8c);
-  font-weight: 500;
+.node-agent {
+  width: 100%;
+  position: relative;
+}
+
+/* 确保 Badge 不会溢出 */
+.node-agent .ant-badge {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+}
+
+.node-agent .ant-badge-status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 100%;
 }
 
 .node-description {
   font-size: 12px;
   color: var(--color-text-secondary, #8c8c8c);
-  margin-top: 8px;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 .dependency-count {

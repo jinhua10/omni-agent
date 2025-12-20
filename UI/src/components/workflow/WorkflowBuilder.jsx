@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Button, Input, Select, message, Modal, Drawer, Tabs } from 'antd';
+import { Button, Input, Select, Modal, Drawer, Tabs, App } from 'antd';
 import {
   SaveOutlined,
   PlayCircleOutlined,
@@ -43,6 +43,7 @@ const { TabPane } = Tabs;
  */
 const WorkflowBuilder = ({ workflowId, onBack }) => {
   const { t } = useLanguage();
+  const { message } = App.useApp();
   
   // 工作流基本信息 (Workflow basic info)
   const [workflow, setWorkflow] = useState({

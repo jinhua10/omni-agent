@@ -133,7 +133,6 @@ const WorkflowNode = ({
       {/* 节点内容 (Node content) */}
       <div className="node-content">
         <div className="node-agent">
-          <span className="node-label">{t('workflowBuilder.node.agent')}:</span>
           <Badge status="processing" text={step.agent} />
         </div>
         
@@ -145,8 +144,7 @@ const WorkflowNode = ({
         
         {step.dependencies && step.dependencies.length > 0 && (
           <div className="node-dependencies">
-            <span className="node-label">{t('workflowBuilder.node.dependencies')}:</span>
-            <span className="dependency-count">{step.dependencies.length}</span>
+            <span className="dependency-count">{step.dependencies.length} 依赖</span>
           </div>
         )}
       </div>
