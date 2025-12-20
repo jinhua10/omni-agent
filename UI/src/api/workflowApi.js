@@ -1,7 +1,11 @@
 import axios from 'axios';
 
 // 获取 API 基础 URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+// 如果配置了环境变量且为 /api（相对路径），直接使用
+// 否则使用完整的后端地址
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL === '/api' 
+  ? '' 
+  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080');
 
 // 创建 axios 实例
 const apiClient = axios.create({

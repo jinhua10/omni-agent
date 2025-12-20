@@ -388,7 +388,7 @@ const WorkflowBuilder = ({ workflowId, onBack }) => {
       {/* 步骤编辑器 (Step editor) */}
       <Drawer
         title={t('workflowBuilder.stepEditor.title')}
-        width={600}
+        size="large"
         open={editorVisible}
         onClose={() => setEditorVisible(false)}
         destroyOnClose
@@ -420,7 +420,7 @@ const WorkflowBuilder = ({ workflowId, onBack }) => {
       {/* 测试执行抽屉 (Test execution drawer) */}
       <Drawer
         title={t('workflowBuilder.test.title')}
-        width={600}
+        size="large"
         open={testDrawerVisible}
         onClose={() => setTestDrawerVisible(false)}
       >
