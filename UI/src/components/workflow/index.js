@@ -15,7 +15,8 @@ export { default as FilterPanel } from './FilterPanel';
 export { default as RatingStars } from './RatingStars';
 
 // 工作流构建器组件 (Workflow Builder Components)
-export { default as WorkflowBuilder } from './WorkflowBuilder';
+export { default as WorkflowBuilder } from './WorkflowBuilderNL'; // 使用新的自然语言构建器
+export { default as WorkflowBuilderOld } from './WorkflowBuilder'; // 保留旧版本
 export { default as WorkflowCanvas } from './WorkflowCanvas';
 export { default as WorkflowNode } from './WorkflowNode';
 export { default as StepEditor } from './StepEditor';

@@ -1,0 +1,349 @@
+/**
+ * 自然语言工作流构建器样式 (Natural Language Workflow Builder Styles)
+ * 
+ * @author AI Reviewer Team
+ * @since 2025-12-21
+ */
+
+.workflow-builder-nl {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-background, #f5f5f5);
+}
+
+/* ============================================================================
+ * 顶部工具栏 (Header Toolbar)
+ * ============================================================================ */
+.workflow-builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid var(--color-border, #e8e8e8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* ============================================================================
+ * 主内容区 (Main Content)
+ * ============================================================================ */
+.workflow-builder-content {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+  padding: 24px;
+  overflow: hidden;
+}
+
+/* 左侧面板 (Left Panel) */
+.workflow-left-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  min-width: 600px;
+}
+
+/* 右侧 AI 建议面板 (Right AI Suggestions Panel) */
+.workflow-right-panel {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+ * 输入标签 (Input Labels)
+ * ============================================================================ */
+.input-label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text, #262626);
+  margin-bottom: 8px;
+}
+
+/* ============================================================================
+ * 步骤卡片 (Steps Card)
+ * ============================================================================ */
+.steps-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.steps-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+/* 步骤列表 (Steps List) */
+.steps-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  padding: 8px;
+  background: var(--color-background, #fafafa);
+  border-radius: 8px;
+  min-height: 200px;
+}
+
+/* 单个步骤 (Single Step) */
+.step-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border: 2px solid var(--color-border, #e8e8e8);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.step-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.step-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 步骤序号 (Step Number) */
+.step-number {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* 步骤内容 (Step Content) */
+.step-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text, #262626);
+  word-break: break-word;
+}
+
+/* 步骤操作按钮 (Step Actions) */
+.step-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.step-item:hover .step-actions {
+  opacity: 1;
+}
+
+/* 步骤连接线 (Step Connector) */
+.step-connector {
+  position: absolute;
+  left: 31px;
+  bottom: -20px;
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(to bottom, #667eea, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-connector .anticon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  color: #667eea;
+  font-size: 12px;
+}
+
+/* 步骤编辑区 (Step Edit Area) */
+.step-edit-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ============================================================================
+ * 添加步骤区域 (Add Step Area)
+ * ============================================================================ */
+.add-step-area {
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border: 2px dashed var(--color-border, #d9d9d9);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.add-step-area:hover {
+  border-color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+.add-step-area textarea {
+  background: white;
+}
+
+/* ============================================================================
+ * AI 建议卡片 (AI Suggestions Card)
+ * ============================================================================ */
+.suggestions-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.suggestions-card .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+/* 建议列表 (Suggestions List) */
+.suggestions-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+/* 单个建议 (Single Suggestion) */
+.suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border: 1px solid var(--color-border, #e8e8e8);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.suggestion-item:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-color: #667eea;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.suggestion-item:last-child {
+  margin-bottom: 0;
+}
+
+.suggestion-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.suggestion-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text, #262626);
+}
+
+/* 建议提示 (Suggestions Tip) */
+.suggestions-tip {
+  padding: 8px 12px;
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #ad6800;
+  text-align: center;
+}
+
+/* ============================================================================
+ * 响应式设计 (Responsive Design)
+ * ============================================================================ */
+@media (max-width: 1200px) {
+  .workflow-builder-content {
+    flex-direction: column;
+  }
+
+  .workflow-left-panel {
+    min-width: auto;
+  }
+
+  .workflow-right-panel {
+    width: 100%;
+  }
+}
+
+/* ============================================================================
+ * 滚动条样式 (Scrollbar Styles)
+ * ============================================================================ */
+.steps-list::-webkit-scrollbar,
+.suggestions-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.steps-list::-webkit-scrollbar-track,
+.suggestions-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.steps-list::-webkit-scrollbar-thumb,
+.suggestions-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.steps-list::-webkit-scrollbar-thumb:hover,
+.suggestions-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================================
+ * 动画 (Animations)
+ * ============================================================================ */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-item {
+  animation: slideIn 0.3s ease;
+}
