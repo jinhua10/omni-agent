@@ -109,7 +109,6 @@ omni-agent:
       socket-timeout: 60000             # Socket超时
       index-prefix: omni-agent          # 索引前缀
 
-
   # 2. 文档存储配置 (Document Storage)
   # 支持多种后端：file, minio, s3, redis, mongodb, elasticsearch
   document-storage:
@@ -318,7 +317,7 @@ omni-agent:
     # 一次性处理多少页/幻灯片，优化上下文理解
     # 值越大，上下文越连贯，但单次API调用成本越高
     # 建议: PPT/PDF 3-5页，图片 1-3张
-    batch-size: 3
+    batch-size: 5
 
     # 系统提示词（可自定义）
     system-prompt: |
