@@ -217,10 +217,16 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             return extractDocPages(context);   // 旧格式
         }
 
-        // PDF 文档待实现
+        // Excel 文档处理（提取图片）⭐
+        if (ext.equals("xlsx")) {
+            return extractXlsxPages(context);  // 新格式
+        } else if (ext.equals("xls")) {
+            return extractXlsPages(context);   // 旧格式
+        }
+
+        // PDF 文档处理 ⭐
         if (ext.equals("pdf")) {
-            log.warn("⚠️ [VisionLLM] PDF 页面提取功能待实现");
-            throw new Exception("PDF 文档页面提取功能待实现");
+            return extractPdfPages(context);
         }
 
         // 其他 Office 文档待实现
@@ -446,7 +452,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
     /**
      * 提取新版 Word 文档的图片 (.docx 格式)
-     * ⭐ Word 没有"页"的概念，将所有图片作为一页处理
+     * ⭐ 将每张图片作为一页处理，支持批处理和并行
      *
      * @param context 处理上下文
      * @return 页面列表
@@ -480,9 +486,8 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                     }
                 }
 
-                // 创建单个页面，包含所有图片
-                DocumentPage page = new DocumentPage(1);
-
+                // ⭐ 每张图片作为一页，支持批处理和并行
+                List<DocumentPage> pages = new ArrayList<>();
                 for (int i = 0; i < pictures.size(); i++) {
                     org.apache.poi.xwpf.usermodel.XWPFPictureData picture = pictures.get(i);
                     byte[] imageData = picture.getData();
@@ -493,21 +498,25 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                     imageMetadata.put("fileName", context.getOriginalFileName());
                     imageMetadata.put("totalImages", pictures.size());
                     imageMetadata.put("imageIndex", i);
+                    imageMetadata.put("documentType", "Word");
 
                     // 创建 ExtractedImage
                     ExtractedImage image = ExtractedImage.builder()
                             .data(imageData)
                             .format(picture.suggestFileExtension())
-                            .pageNumber(1)
-                            .position(new ImagePosition(0, i * 100, 0, 0))
+                            .pageNumber(i + 1)
+                            .position(new ImagePosition(0, 0, 0, 0))
                             .metadata(imageMetadata)
                             .build();
 
+                    // ⭐ 每张图片一页
+                    DocumentPage page = new DocumentPage(i + 1);
                     page.addImage(image);
+                    pages.add(page);
                 }
 
-                log.info("✅ [VisionLLM] Word 文档图片提取完成: {} 张", pictures.size());
-                return List.of(page);
+                log.info("✅ [VisionLLM] Word 文档图片提取完成: {} 页（每页1张图片）", pages.size());
+                return pages;
             }
         } catch (Exception e) {
             log.error("❌ [VisionLLM] Word 文档页面提取失败", e);
@@ -517,7 +526,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
     /**
      * 提取旧版 Word 文档的图片 (.doc 格式)
-     * ⭐ Word 没有"页"的概念，将所有图片作为一页处理
+     * ⭐ 将每张图片作为一页处理，支持批处理和并行
      *
      * @param context 处理上下文
      * @return 页面列表
@@ -548,9 +557,8 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                     new org.apache.poi.hwpf.extractor.WordExtractor(document);
                 String textContent = extractor.getText();
 
-                // 创建单个页面，包含所有图片
-                DocumentPage page = new DocumentPage(1);
-
+                // ⭐ 每张图片作为一页，支持批处理和并行
+                List<DocumentPage> pages = new ArrayList<>();
                 for (int i = 0; i < pictures.size(); i++) {
                     org.apache.poi.hwpf.usermodel.Picture picture = pictures.get(i);
                     byte[] imageData = picture.getContent();
@@ -561,25 +569,216 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                     imageMetadata.put("fileName", context.getOriginalFileName());
                     imageMetadata.put("totalImages", pictures.size());
                     imageMetadata.put("imageIndex", i);
+                    imageMetadata.put("documentType", "Word");
 
                     // 创建 ExtractedImage
                     ExtractedImage image = ExtractedImage.builder()
                             .data(imageData)
                             .format(picture.suggestFileExtension())
-                            .pageNumber(1)
-                            .position(new ImagePosition(0, i * 100, 0, 0))
+                            .pageNumber(i + 1)
+                            .position(new ImagePosition(0, 0, 0, 0))
                             .metadata(imageMetadata)
                             .build();
 
+                    // ⭐ 每张图片一页
+                    DocumentPage page = new DocumentPage(i + 1);
                     page.addImage(image);
+                    pages.add(page);
                 }
 
-                log.info("✅ [VisionLLM] 旧版 Word 文档图片提取完成: {} 张", pictures.size());
-                return List.of(page);
+                log.info("✅ [VisionLLM] 旧版 Word 文档图片提取完成: {} 页（每页1张图片）", pages.size());
+                return pages;
             }
         } catch (Exception e) {
             log.error("❌ [VisionLLM] 旧版 Word 文档页面提取失败", e);
             throw new Exception("旧版 Word 文档页面提取失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 提取新版 Excel 文档的图片 (.xlsx 格式)
+     * ⭐ 每个工作表的每张图片作为一页，支持批处理和并行
+     *
+     * @param context 处理上下文
+     * @return 页面列表
+     */
+    private List<DocumentPage> extractXlsxPages(ProcessingContext context) throws Exception {
+        try {
+            java.io.InputStream inputStream;
+            if (context.getFileBytes() != null) {
+                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
+            } else {
+                inputStream = new java.io.FileInputStream(context.getFilePath());
+            }
+
+            try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook =
+                    new org.apache.poi.xssf.usermodel.XSSFWorkbook(inputStream)) {
+
+                List<DocumentPage> pages = new ArrayList<>();
+                int pageNumber = 1;
+
+                for (int sheetIdx = 0; sheetIdx < workbook.getNumberOfSheets(); sheetIdx++) {
+                    org.apache.poi.xssf.usermodel.XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
+                    org.apache.poi.xssf.usermodel.XSSFDrawing drawing = sheet.getDrawingPatriarch();
+
+                    if (drawing != null) {
+                        for (org.apache.poi.xssf.usermodel.XSSFShape shape : drawing.getShapes()) {
+                            if (shape instanceof org.apache.poi.xssf.usermodel.XSSFPicture) {
+                                org.apache.poi.xssf.usermodel.XSSFPicture picture =
+                                        (org.apache.poi.xssf.usermodel.XSSFPicture) shape;
+
+                                try {
+                                    org.apache.poi.xssf.usermodel.XSSFPictureData pictureData = picture.getPictureData();
+                                    byte[] imageData = pictureData.getData();
+
+                                    // 获取图片位置
+                                    org.apache.poi.xssf.usermodel.XSSFClientAnchor anchor = picture.getClientAnchor();
+                                    String location = String.format("工作表[%s] 第%d行, 第%d列",
+                                            sheet.getSheetName(), anchor.getRow1() + 1, anchor.getCol1() + 1);
+
+                                    // 创建 metadata
+                                    Map<String, Object> imageMetadata = new HashMap<>();
+                                    imageMetadata.put("fileName", context.getOriginalFileName());
+                                    imageMetadata.put("sheetName", sheet.getSheetName());
+                                    imageMetadata.put("sheetIndex", sheetIdx);
+                                    imageMetadata.put("location", location);
+                                    imageMetadata.put("documentType", "Excel");
+
+                                    // 创建 ExtractedImage
+                                    ExtractedImage image = ExtractedImage.builder()
+                                            .data(imageData)
+                                            .format(pictureData.suggestFileExtension())
+                                            .pageNumber(pageNumber)
+                                            .position(new ImagePosition(anchor.getCol1(), anchor.getRow1(), 0, 0))
+                                            .metadata(imageMetadata)
+                                            .build();
+
+                                    // ⭐ 每张图片一页
+                                    DocumentPage page = new DocumentPage(pageNumber);
+                                    page.addImage(image);
+                                    pages.add(page);
+                                    pageNumber++;
+
+                                } catch (Exception e) {
+                                    log.warn("提取 Excel 工作表 {} 中的图片失败", sheet.getSheetName(), e);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                log.info("✅ [VisionLLM] Excel 文档图片提取完成: {} 页（每页1张图片）", pages.size());
+                return pages.isEmpty() ? List.of() : pages;
+            }
+        } catch (Exception e) {
+            log.error("❌ [VisionLLM] Excel 文档页面提取失败", e);
+            throw new Exception("Excel 文档页面提取失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 提取旧版 Excel 文档的图片 (.xls 格式)
+     * ⭐ 每个工作表的每张图片作为一页，支持批处理和并行
+     *
+     * @param context 处理上下文
+     * @return 页面列表
+     */
+    private List<DocumentPage> extractXlsPages(ProcessingContext context) throws Exception {
+        try {
+            java.io.InputStream inputStream;
+            if (context.getFileBytes() != null) {
+                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
+            } else {
+                inputStream = new java.io.FileInputStream(context.getFilePath());
+            }
+
+            try (org.apache.poi.hssf.usermodel.HSSFWorkbook workbook =
+                    new org.apache.poi.hssf.usermodel.HSSFWorkbook(inputStream)) {
+
+                List<DocumentPage> pages = new ArrayList<>();
+                int pageNumber = 1;
+
+                for (int sheetIdx = 0; sheetIdx < workbook.getNumberOfSheets(); sheetIdx++) {
+                    org.apache.poi.hssf.usermodel.HSSFSheet sheet = workbook.getSheetAt(sheetIdx);
+                    org.apache.poi.hssf.usermodel.HSSFPatriarch patriarch = sheet.getDrawingPatriarch();
+
+                    if (patriarch != null) {
+                        for (org.apache.poi.hssf.usermodel.HSSFShape shape : patriarch.getChildren()) {
+                            if (shape instanceof org.apache.poi.hssf.usermodel.HSSFPicture) {
+                                org.apache.poi.hssf.usermodel.HSSFPicture picture =
+                                        (org.apache.poi.hssf.usermodel.HSSFPicture) shape;
+
+                                try {
+                                    org.apache.poi.hssf.usermodel.HSSFPictureData pictureData = picture.getPictureData();
+                                    byte[] imageData = pictureData.getData();
+
+                                    // 获取图片位置
+                                    org.apache.poi.hssf.usermodel.HSSFClientAnchor anchor = picture.getClientAnchor();
+                                    String location = String.format("工作表[%s] 第%d行, 第%d列",
+                                            sheet.getSheetName(), anchor.getRow1() + 1, anchor.getCol1() + 1);
+
+                                    // 创建 metadata
+                                    Map<String, Object> imageMetadata = new HashMap<>();
+                                    imageMetadata.put("fileName", context.getOriginalFileName());
+                                    imageMetadata.put("sheetName", sheet.getSheetName());
+                                    imageMetadata.put("sheetIndex", sheetIdx);
+                                    imageMetadata.put("location", location);
+                                    imageMetadata.put("documentType", "Excel");
+
+                                    // 创建 ExtractedImage
+                                    ExtractedImage image = ExtractedImage.builder()
+                                            .data(imageData)
+                                            .format(pictureData.suggestFileExtension())
+                                            .pageNumber(pageNumber)
+                                            .position(new ImagePosition(anchor.getCol1(), anchor.getRow1(), 0, 0))
+                                            .metadata(imageMetadata)
+                                            .build();
+
+                                    // ⭐ 每张图片一页
+                                    DocumentPage page = new DocumentPage(pageNumber);
+                                    page.addImage(image);
+                                    pages.add(page);
+                                    pageNumber++;
+
+                                } catch (Exception e) {
+                                    log.warn("提取旧版 Excel 工作表 {} 中的图片失败", sheet.getSheetName(), e);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                log.info("✅ [VisionLLM] 旧版 Excel 文档图片提取完成: {} 页（每页1张图片）", pages.size());
+                return pages.isEmpty() ? List.of() : pages;
+            }
+        } catch (Exception e) {
+            log.error("❌ [VisionLLM] 旧版 Excel 文档页面提取失败", e);
+            throw new Exception("旧版 Excel 文档页面提取失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 提取 PDF 文档的页面
+     * ⭐ 每页作为一个图片，支持批处理和并行
+     *
+     * @param context 处理上下文
+     * @return 页面列表
+     */
+    private List<DocumentPage> extractPdfPages(ProcessingContext context) throws Exception {
+        try {
+            // TODO: 实现 PDF 页面提取（使用 Apache PDFBox）
+            // 1. 加载 PDF 文档
+            // 2. 遍历每一页
+            // 3. 将每页渲染为图片
+            // 4. 提取页面中的文本
+            // 5. 创建 DocumentPage
+
+            log.warn("⚠️ [VisionLLM] PDF 页面提取功能待实现");
+            log.info("💡 提示：需要添加 Apache PDFBox 依赖来支持 PDF");
+            throw new Exception("PDF 文档页面提取功能待实现 - 需要 Apache PDFBox");
+        } catch (Exception e) {
+            log.error("❌ [VisionLLM] PDF 页面提取失败", e);
+            throw e;
         }
     }
 
