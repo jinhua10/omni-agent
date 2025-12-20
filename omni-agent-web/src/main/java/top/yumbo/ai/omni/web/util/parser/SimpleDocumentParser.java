@@ -477,6 +477,7 @@ public class SimpleDocumentParser implements DocumentParser {
 
     /**
      * 解析 Excel Workbook（通用方法，支持新旧版本）
+     * ⭐ 支持图片提取，将图片描述添加到表格末尾
      */
     private String parseExcelWorkbook(Workbook workbook, String filename) {
         StringBuilder content = new StringBuilder();
@@ -486,6 +487,7 @@ public class SimpleDocumentParser implements DocumentParser {
             Sheet sheet = workbook.getSheetAt(i);
             content.append("=== 工作表: ").append(sheet.getSheetName()).append(" ===\n");
 
+            // 提取表格数据
             for (Row row : sheet) {
                 boolean hasContent = false;
                 StringBuilder rowContent = new StringBuilder();
@@ -506,12 +508,126 @@ public class SimpleDocumentParser implements DocumentParser {
                 }
             }
 
+            // ⭐ 提取图片（如果启用）
+            if (extractImages && imageExtractor != null) {
+                List<String> imageDescriptions = extractExcelImages(workbook, sheet, i);
+                if (!imageDescriptions.isEmpty()) {
+                    content.append("\n--- 图片内容 ---\n");
+                    for (String desc : imageDescriptions) {
+                        content.append(desc).append("\n");
+                    }
+                }
+            }
+
             content.append("\n");
         }
 
         String result = content.toString().trim();
         log.debug("成功解析 Excel 文件 {}: {} sheets, {} bytes", filename, sheetCount, result.length());
         return result;
+    }
+
+    /**
+     * 提取 Excel 工作表中的图片
+     * ⭐ 支持新旧版本 Excel
+     *
+     * @param workbook Excel workbook
+     * @param sheet 当前工作表
+     * @param sheetIndex 工作表索引
+     * @return 图片描述列表
+     */
+    private List<String> extractExcelImages(Workbook workbook, Sheet sheet, int sheetIndex) {
+        List<String> imageDescriptions = new ArrayList<>();
+        int imageCount = 0;
+
+        try {
+            // 新版 Excel (.xlsx)
+            if (workbook instanceof XSSFWorkbook) {
+                org.apache.poi.xssf.usermodel.XSSFDrawing drawing =
+                    ((org.apache.poi.xssf.usermodel.XSSFSheet) sheet).getDrawingPatriarch();
+                if (drawing != null) {
+                    for (org.apache.poi.xssf.usermodel.XSSFShape shape : drawing.getShapes()) {
+                        if (shape instanceof org.apache.poi.xssf.usermodel.XSSFPicture) {
+                            org.apache.poi.xssf.usermodel.XSSFPicture picture =
+                                (org.apache.poi.xssf.usermodel.XSSFPicture) shape;
+
+                            try {
+                                org.apache.poi.xssf.usermodel.XSSFPictureData pictureData = picture.getPictureData();
+                                byte[] imageBytes = pictureData.getData();
+
+                                String extension = pictureData.suggestFileExtension();
+                                String imageName = String.format("sheet%d_image%d.%s",
+                                        sheetIndex + 1, ++imageCount, extension);
+
+                                ByteArrayInputStream imageStream = new ByteArrayInputStream(imageBytes);
+                                String imageContent = imageExtractor.extractContent(imageStream, imageName);
+
+                                // 获取图片所在位置（锚点）
+                                org.apache.poi.xssf.usermodel.XSSFClientAnchor anchor = picture.getClientAnchor();
+                                String location = String.format("位置: 第%d行, 第%d列",
+                                        anchor.getRow1() + 1, anchor.getCol1() + 1);
+
+                                imageDescriptions.add(String.format("[图片 %d] %s\n%s",
+                                        imageCount, location, imageContent));
+
+                                log.debug("提取了 Excel 工作表 {} 中的图片: {} ({})",
+                                        sheet.getSheetName(), imageName, location);
+                            } catch (Exception e) {
+                                log.warn("提取 Excel 工作表 {} 中的图片 {} 失败",
+                                        sheet.getSheetName(), imageCount, e);
+                            }
+                        }
+                    }
+                }
+            }
+            // 旧版 Excel (.xls)
+            else if (workbook instanceof HSSFWorkbook) {
+                org.apache.poi.hssf.usermodel.HSSFPatriarch patriarch =
+                    ((org.apache.poi.hssf.usermodel.HSSFSheet) sheet).getDrawingPatriarch();
+                if (patriarch != null) {
+                    for (org.apache.poi.hssf.usermodel.HSSFShape shape : patriarch.getChildren()) {
+                        if (shape instanceof org.apache.poi.hssf.usermodel.HSSFPicture) {
+                            org.apache.poi.hssf.usermodel.HSSFPicture picture =
+                                (org.apache.poi.hssf.usermodel.HSSFPicture) shape;
+
+                            try {
+                                org.apache.poi.hssf.usermodel.HSSFPictureData pictureData = picture.getPictureData();
+                                byte[] imageBytes = pictureData.getData();
+
+                                String extension = pictureData.suggestFileExtension();
+                                String imageName = String.format("sheet%d_image%d.%s",
+                                        sheetIndex + 1, ++imageCount, extension);
+
+                                ByteArrayInputStream imageStream = new ByteArrayInputStream(imageBytes);
+                                String imageContent = imageExtractor.extractContent(imageStream, imageName);
+
+                                // 获取图片所在位置（锚点）
+                                org.apache.poi.hssf.usermodel.HSSFClientAnchor anchor = picture.getClientAnchor();
+                                String location = String.format("位置: 第%d行, 第%d列",
+                                        anchor.getRow1() + 1, anchor.getCol1() + 1);
+
+                                imageDescriptions.add(String.format("[图片 %d] %s\n%s",
+                                        imageCount, location, imageContent));
+
+                                log.debug("提取了旧版 Excel 工作表 {} 中的图片: {} ({})",
+                                        sheet.getSheetName(), imageName, location);
+                            } catch (Exception e) {
+                                log.warn("提取旧版 Excel 工作表 {} 中的图片 {} 失败",
+                                        sheet.getSheetName(), imageCount, e);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (imageCount > 0) {
+                log.info("从 Excel 工作表 {} 提取了 {} 张图片", sheet.getSheetName(), imageCount);
+            }
+        } catch (Exception e) {
+            log.error("提取 Excel 工作表 {} 图片失败: {}", sheet.getSheetName(), e.getMessage());
+        }
+
+        return imageDescriptions;
     }
 
     /**

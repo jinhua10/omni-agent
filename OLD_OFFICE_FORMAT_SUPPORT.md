@@ -193,15 +193,14 @@ mvn spring-boot:run
 | 功能 | .docx | .doc | .pptx | .ppt | .xlsx | .xls |
 |------|-------|------|-------|------|-------|------|
 | **文本提取** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **图片提取** | ✅ | ✅ | ✅ | ✅ | ⚠️ | ⚠️ |
-| **Vision LLM** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **图片提取** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Vision LLM** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **分块处理** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **RAG 索引** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 **说明**：
 - ✅ 完全支持
-- ⚠️ 部分支持（Excel 图片提取受限）
-- ❌ 不支持（Excel 不适用 Vision LLM）
+- Excel 图片描述会插入到表格末尾
 
 ### 📸 图片提取详情
 
@@ -231,17 +230,26 @@ mvn spring-boot:run
 
 #### Excel 文档
 - **.xlsx** / **.xls**:
-  - ⚠️ 图片提取功能有限
-  - ❌ 不适用 Vision LLM（主要是表格数据）
-  - ✅ 文本和数值提取完整
+  - ✅ 图片提取（通过 `Drawing` / `Patriarch`）
+  - ✅ 获取图片所在单元格位置
+  - ✅ Vision LLM 分析图片内容
+  - ✅ 将图片描述插入表格末尾
 
 ## 🎉 总结
 
 **现在系统全面支持旧版 Office 格式！**
 
-- ✅ **Word**: `.docx` + `.doc`
-- ✅ **PowerPoint**: `.pptx` + `.ppt`  
-- ✅ **Excel**: `.xlsx` + `.xls`
+- ✅ **Word**: `.docx` + `.doc`（图片提取 + Vision LLM）
+- ✅ **PowerPoint**: `.pptx` + `.ppt`（图片提取 + Vision LLM）
+- ✅ **Excel**: `.xlsx` + `.xls`（文本提取）
 
 无论上传新版还是旧版文档，都能正确提取内容并进行分块、索引！🚀
+
+## 📚 相关文档
+
+- **Excel 图片提取和 Vision LLM 详细说明**: `EXCEL_IMAGE_VISION_SUPPORT.md` ⭐
+- **图片提取和 Vision LLM 详细说明**: `OLD_OFFICE_IMAGE_VISION_SUPPORT.md`
+- **PPT 处理优化**: `PPT_PROCESSING_OPTIMIZATION.md`
+- **图片命名优化**: `IMAGE_NAMING_OPTIMIZATION.md`
+- **编译错误修复**: `COMPILE_ERROR_FIX.md`
 
