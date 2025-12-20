@@ -563,6 +563,7 @@ public class DocumentManagementController {
 
     /**
      * 保存提取的图片
+     * ⭐ 按页面分组，为每页的图片添加序号
      *
      * @param filename 文档文件名
      * @param images 提取的图片列表
@@ -570,22 +571,46 @@ public class DocumentManagementController {
     private void saveExtractedImages(String filename, List<DocumentProcessor.ExtractedImage> images) {
         if (images != null && !images.isEmpty()) {
             log.info("🖼️ 保存提取的图片: {} 张", images.size());
+
+            // ⭐ 按页码分组图片
+            Map<Integer, List<DocumentProcessor.ExtractedImage>> imagesByPage = new HashMap<>();
+            for (DocumentProcessor.ExtractedImage img : images) {
+                int pageNum = img.getPageNumber() > 0 ? img.getPageNumber() : 1;
+                imagesByPage.computeIfAbsent(pageNum, k -> new ArrayList<>()).add(img);
+            }
+
             int savedImageCount = 0;
-            for (DocumentProcessor.ExtractedImage extractedImage : images) {
-                try {
-                    String imageId = imageStorageService.saveImage(
-                            filename,  // 使用文件名而不是 documentId
-                            extractedImage.getData(),
-                            extractedImage.getFormat(),
-                            extractedImage.getMetadata());  // 传递 metadata（包含 Vision LLM 分析结果）
-                    if (imageId != null) {
-                        savedImageCount++;
+            // ⭐ 遍历每一页，为该页的图片添加序号
+            for (Map.Entry<Integer, List<DocumentProcessor.ExtractedImage>> entry : imagesByPage.entrySet()) {
+                int pageNum = entry.getKey();
+                List<DocumentProcessor.ExtractedImage> pageImages = entry.getValue();
+
+                for (int imgIndex = 0; imgIndex < pageImages.size(); imgIndex++) {
+                    DocumentProcessor.ExtractedImage extractedImage = pageImages.get(imgIndex);
+
+                    try {
+                        // ⭐ 在 metadata 中添加图片序号
+                        Map<String, Object> metadata = extractedImage.getMetadata();
+                        if (metadata == null) {
+                            metadata = new HashMap<>();
+                        }
+                        metadata.put("imageIndex", imgIndex);  // 图片在该页的序号
+                        metadata.put("pageNumber", pageNum);   // 确保页码信息存在
+
+                        String imageId = imageStorageService.saveImage(
+                                filename,  // 使用文件名而不是 documentId
+                                extractedImage.getData(),
+                                extractedImage.getFormat(),
+                                metadata);  // 传递包含序号的 metadata
+                        if (imageId != null) {
+                            savedImageCount++;
+                        }
+                    } catch (Exception ex) {
+                        log.warn("⚠️ 保存图片失败 (page={}, img={}): {}", pageNum, imgIndex, ex.getMessage());
                     }
-                } catch (Exception ex) {
-                    log.warn("⚠️ 保存图片失败: {}", ex.getMessage());
                 }
             }
-            log.info("✅ 图片已保存: {} 张", savedImageCount);
+            log.info("✅ 图片已保存: {} 张 (共 {} 页)", savedImageCount, imagesByPage.size());
         }
     }
 

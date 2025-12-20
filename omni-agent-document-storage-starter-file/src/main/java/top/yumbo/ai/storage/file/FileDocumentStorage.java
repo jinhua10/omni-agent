@@ -413,19 +413,29 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docImageDir = imagesPath.resolve(documentId);
             Files.createDirectories(docImageDir);
 
-            // 使用有意义的文件名：page_页码_img ⭐
+            // ⭐ 使用有意义的文件名：page_001_img_000.png
             String imageId = image.getId() != null ? image.getId() : UUID.randomUUID().toString();
 
             // 构建文件名
             String imageFilename;
-            if (image.getPageNumber() != null && image.getPageNumber() > 0) {
-                // 如果有页码信息，使用 page_001_img.png 格式
-                int pageNum = image.getPageNumber();
-                String format = image.getFormat() != null ? image.getFormat() : "png";
+
+            // 从 metadata 中获取页码和图片序号
+            Integer pageNum = image.getPageNumber();
+            Integer imageIndex = null;
+            if (image.getMetadata() != null && image.getMetadata().containsKey("imageIndex")) {
+                imageIndex = ((Number) image.getMetadata().get("imageIndex")).intValue();
+            }
+
+            String format = image.getFormat() != null ? image.getFormat() : "png";
+
+            if (pageNum != null && pageNum > 0 && imageIndex != null) {
+                // ⭐ 格式：page_001_img_000.png（页码3位，图片序号3位）
+                imageFilename = String.format("page_%03d_img_%03d.%s", pageNum, imageIndex, format);
+            } else if (pageNum != null && pageNum > 0) {
+                // 如果只有页码，没有图片序号：page_001_img.png
                 imageFilename = String.format("page_%03d_img.%s", pageNum, format);
             } else {
-                // 如果没有页码，使用 image_xxx.png 格式
-                String format = image.getFormat() != null ? image.getFormat() : "png";
+                // 如果没有页码信息，使用 image_xxx.png 格式
                 imageFilename = String.format("image_%s.%s", imageId.substring(0, Math.min(8, imageId.length())), format);
             }
 
