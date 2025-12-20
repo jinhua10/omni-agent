@@ -156,7 +156,7 @@
 
 /* 内容区样式 / Content area styles */
 .modern-layout__content {
-  padding: 24px;
+  padding: 16px;
   min-height: calc(100vh - 64px);
   transition: background-color 0.3s ease;
 }

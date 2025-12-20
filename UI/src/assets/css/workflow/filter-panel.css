@@ -1,10 +1,10 @@
 /* 筛选面板样式 (Filter Panel Styles) */
 
 .filter-panel {
-  width: 260px;
+  width: 240px;
   background: var(--color-bg-secondary);
   border-radius: var(--border-radius-lg);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
   box-shadow: var(--shadow-sm);
   position: sticky;
   top: var(--spacing-md);
@@ -12,7 +12,7 @@
 }
 
 .filter-section {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .filter-section:last-of-type {
@@ -23,7 +23,7 @@
   font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-md) 0;
+  margin: 0 0 var(--spacing-sm) 0;
 }
 
 .category-list,

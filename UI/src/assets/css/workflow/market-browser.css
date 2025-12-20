@@ -1,42 +1,41 @@
 /* 工作流市场 - 浏览器样式 (Workflow Market - Browser Styles) */
 
 .market-browser {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--spacing-lg);
+  width: 100%;
+  padding: 0;
 }
 
 .market-header {
   text-align: center;
-  margin-bottom: var(--spacing-xxl);
-  padding: var(--spacing-xxl) var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-md);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: var(--border-radius-lg);
+  border-radius: 8px;
   color: white;
 }
 
 .market-header h1 {
-  font-size: var(--font-size-xxxl);
-  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-xxl);
+  margin: 0 0 var(--spacing-xs) 0;
   font-weight: 700;
 }
 
 .market-header p {
-  font-size: var(--font-size-lg);
-  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--font-size-md);
+  margin: 0;
   opacity: 0.9;
 }
 
 .market-content {
   display: flex;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
+  padding: 0 var(--spacing-md) 0 0;
 }
 
 .workflows-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-md);
   align-content: start;
 }
 

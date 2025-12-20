@@ -20,6 +20,7 @@ import {
   ShareAltOutlined,
   StarOutlined,
   RocketOutlined,
+  ShopOutlined,
   UserOutlined,
   SettingOutlined,
   BulbOutlined,
@@ -167,6 +168,11 @@ function ModernLayout({ children, activeKey, onMenuChange }) {
       key: 'aiService',
       icon: <RocketOutlined />,
       label: t('nav.aiService'),
+    },
+    {
+      key: 'workflowMarket',
+      icon: <ShopOutlined />,
+      label: t('workflowMarket.title'),
     },
     {
       key: 'profile',
