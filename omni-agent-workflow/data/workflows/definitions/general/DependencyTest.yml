@@ -1,0 +1,47 @@
+---
+name: "DependencyTest"
+description: null
+steps:
+- id: "stepA"
+  name: null
+  agent: "EchoAgent"
+  input: "A"
+  config: null
+  dependencies: null
+  allowFailure: false
+  timeout: 60000
+  retries: 0
+  condition: null
+- id: "stepB"
+  name: null
+  agent: "EchoAgent"
+  input: "B"
+  config: null
+  dependencies:
+  - "stepA"
+  allowFailure: false
+  timeout: 60000
+  retries: 0
+  condition: null
+- id: "stepC"
+  name: null
+  agent: "EchoAgent"
+  input: "C"
+  config: null
+  dependencies:
+  - "stepA"
+  - "stepB"
+  allowFailure: false
+  timeout: 60000
+  retries: 0
+  condition: null
+config: null
+version: "1.0.0"
+tags: null
+metadata: null
+createdAt: 1766234133635
+updatedAt: 1766234133635
+author: null
+status: "active"
+inputSchema: null
+outputSchema: null

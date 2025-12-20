@@ -1,0 +1,35 @@
+---
+name: "TestWorkflow"
+description: "测试工作流"
+steps:
+- id: "step1"
+  name: "第一步"
+  agent: "EchoAgent"
+  input: "${workflow.input}"
+  config: null
+  dependencies: null
+  allowFailure: false
+  timeout: 60000
+  retries: 0
+  condition: null
+- id: "step2"
+  name: "第二步"
+  agent: "EchoAgent"
+  input: "${step1.output}"
+  config: null
+  dependencies:
+  - "step1"
+  allowFailure: false
+  timeout: 60000
+  retries: 0
+  condition: null
+config: null
+version: "1.0.0"
+tags: null
+metadata: null
+createdAt: 1766234133631
+updatedAt: 1766234133631
+author: null
+status: "active"
+inputSchema: null
+outputSchema: null
