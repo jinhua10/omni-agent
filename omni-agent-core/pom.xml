@@ -102,6 +102,12 @@
             <artifactId>poi-ooxml</artifactId>
         </dependency>
 
+        <!-- Apache POI Scratchpad (for legacy Office formats: .ppt, .doc, .xls) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-scratchpad</artifactId>
+        </dependency>
+
         <!-- Apache Tika (for document parsing) -->
         <dependency>
             <groupId>org.apache.tika</groupId>

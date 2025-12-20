@@ -186,8 +186,10 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
         }
 
         // PowerPoint 文档处理
-        if (ext.equals("pptx") || ext.equals("ppt")) {
-            return extractPptxPages(context);
+        if (ext.equals("pptx")) {
+            return extractPptxPages(context);  // 新格式，基于 XML
+        } else if (ext.equals("ppt")) {
+            return extractPptPages(context);   // 旧格式，二进制格式
         }
 
         // PDF 文档待实现
@@ -307,6 +309,113 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
         } catch (Exception e) {
             log.error("❌ [VisionLLM] PowerPoint 页面提取失败", e);
             throw new Exception("PowerPoint 页面提取失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 提取旧版 PowerPoint 文档的页面 (.ppt 格式)
+     * ⭐ 使用 HSLFSlideShow 处理二进制格式的 PPT
+     *
+     * @param context 处理上下文
+     * @return 页面列表
+     */
+    private List<DocumentPage> extractPptPages(ProcessingContext context) throws Exception {
+        try {
+            java.io.InputStream inputStream;
+            if (context.getFileBytes() != null) {
+                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
+            } else {
+                inputStream = new java.io.FileInputStream(context.getFilePath());
+            }
+
+            try (org.apache.poi.hslf.usermodel.HSLFSlideShow ppt =
+                    new org.apache.poi.hslf.usermodel.HSLFSlideShow(inputStream)) {
+
+                List<DocumentPage> pages = new ArrayList<>();
+                java.util.List<org.apache.poi.hslf.usermodel.HSLFSlide> slides = ppt.getSlides();
+
+                log.info("🔍 [VisionLLM] 旧版 PowerPoint 包含 {} 张幻灯片", slides.size());
+
+                // ⭐ 先提取所有幻灯片的文字，用于构建上下文
+                List<String> slideTexts = new ArrayList<>();
+                for (org.apache.poi.hslf.usermodel.HSLFSlide slide : slides) {
+                    StringBuilder slideText = new StringBuilder();
+                    slide.getShapes().forEach(shape -> {
+                        if (shape instanceof org.apache.poi.hslf.usermodel.HSLFTextShape) {
+                            String text = ((org.apache.poi.hslf.usermodel.HSLFTextShape) shape).getText();
+                            if (text != null && !text.trim().isEmpty()) {
+                                slideText.append(text).append(" ");
+                            }
+                        }
+                    });
+                    slideTexts.add(slideText.toString().trim());
+                }
+
+                // 获取幻灯片尺寸
+                java.awt.Dimension pageSize = ppt.getPageSize();
+                int width = (int) pageSize.getWidth();
+                int height = (int) pageSize.getHeight();
+
+                // 转换每张幻灯片为图片
+                for (int i = 0; i < slides.size(); i++) {
+                    org.apache.poi.hslf.usermodel.HSLFSlide slide = slides.get(i);
+
+                    // 将幻灯片渲染为 BufferedImage
+                    java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
+                            width, height, java.awt.image.BufferedImage.TYPE_INT_RGB);
+                    java.awt.Graphics2D graphics = img.createGraphics();
+
+                    // 设置白色背景
+                    graphics.setPaint(java.awt.Color.WHITE);
+                    graphics.fillRect(0, 0, width, height);
+
+                    // 渲染幻灯片
+                    slide.draw(graphics);
+                    graphics.dispose();
+
+                    // 将 BufferedImage 转换为 PNG 字节数组
+                    java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                    javax.imageio.ImageIO.write(img, "png", baos);
+                    byte[] imageData = baos.toByteArray();
+
+                    // ⭐ 创建 metadata，包含文字内容和文档信息
+                    Map<String, Object> imageMetadata = new HashMap<>();
+                    imageMetadata.put("slideText", slideTexts.get(i));
+                    imageMetadata.put("fileName", context.getOriginalFileName());
+                    imageMetadata.put("totalSlides", slides.size());
+
+                    // ⭐ 添加前几张幻灯片的文字作为上下文
+                    if (i < 3) {
+                        List<String> contextTexts = new ArrayList<>();
+                        for (int j = 0; j < Math.min(3, slideTexts.size()); j++) {
+                            if (!slideTexts.get(j).isEmpty()) {
+                                contextTexts.add(slideTexts.get(j));
+                            }
+                        }
+                        imageMetadata.put("documentContext", String.join(" | ", contextTexts));
+                    }
+
+                    // 创建 ExtractedImage
+                    ExtractedImage image = ExtractedImage.builder()
+                            .data(imageData)
+                            .format("png")
+                            .pageNumber(i + 1)
+                            .position(new ImagePosition(0, 0, width, height))
+                            .metadata(imageMetadata)
+                            .build();
+
+                    DocumentPage page = new DocumentPage(i + 1);
+                    page.addImage(image);
+                    pages.add(page);
+
+                    log.debug("✅ [VisionLLM] 成功渲染旧版幻灯片 {} / {}", i + 1, slides.size());
+                }
+
+                return pages;
+            }
+        } catch (Exception e) {
+            log.error("❌ [VisionLLM] 旧版 PowerPoint 页面提取失败", e);
+            throw new Exception("旧版 PowerPoint 页面提取失败: " + e.getMessage(), e);
         }
     }
 

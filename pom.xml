@@ -222,6 +222,13 @@
                 <version>${poi.version}</version>
             </dependency>
 
+            <!-- Apache POI Scratchpad (for legacy Office formats) -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-scratchpad</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+
             <!-- Apache Tika -->
             <dependency>
                 <groupId>org.apache.tika</groupId>
