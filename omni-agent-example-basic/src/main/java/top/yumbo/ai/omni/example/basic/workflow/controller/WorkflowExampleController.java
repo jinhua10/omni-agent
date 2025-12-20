@@ -265,5 +265,77 @@ public class WorkflowExampleController {
             ));
         }
     }
+
+    /**
+     * AI 生成工作流
+     */
+    @PostMapping("/generate")
+    public ResponseEntity<Map<String, Object>> generateWorkflow(@RequestBody Map<String, String> request) {
+        String description = request.get("description");
+        log.info("🤖 AI 生成工作流，描述：{}", description);
+
+        try {
+            // TODO: 集成 AI 服务生成工作流
+            // 这里先返回一个示例工作流作为演示
+            Map<String, Object> workflow = Map.of(
+                    "name", "AI_Generated_Workflow_" + System.currentTimeMillis(),
+                    "version", "1.0.0",
+                    "description", "根据描述生成：" + description,
+                    "author", "AI Assistant",
+                    "category", "ai-generated",
+                    "status", "draft",
+                    "steps", List.of(
+                            Map.of(
+                                    "id", "step_1",
+                                    "name", "数据验证",
+                                    "description", "验证输入数据格式",
+                                    "agent", "DataValidator",
+                                    "input", "${workflow.input}",
+                                    "config", Map.of(),
+                                    "dependencies", List.of(),
+                                    "allowFailure", false,
+                                    "timeout", 60000,
+                                    "retries", 0
+                            ),
+                            Map.of(
+                                    "id", "step_2",
+                                    "name", "数据转换",
+                                    "description", "转换数据格式",
+                                    "agent", "DataTransformer",
+                                    "input", "${step_1.output}",
+                                    "config", Map.of(),
+                                    "dependencies", List.of("step_1"),
+                                    "allowFailure", false,
+                                    "timeout", 60000,
+                                    "retries", 0
+                            ),
+                            Map.of(
+                                    "id", "step_3",
+                                    "name", "数据过滤",
+                                    "description", "过滤无效数据",
+                                    "agent", "DataFilter",
+                                    "input", "${step_2.output}",
+                                    "config", Map.of(),
+                                    "dependencies", List.of("step_2"),
+                                    "allowFailure", false,
+                                    "timeout", 60000,
+                                    "retries", 0
+                            )
+                    )
+            );
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "工作流生成成功",
+                    "workflow", workflow
+            ));
+        } catch (Exception e) {
+            log.error("❌ AI 生成工作流失败", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "生成失败：" + e.getMessage()
+            ));
+        }
+    }
 }
 

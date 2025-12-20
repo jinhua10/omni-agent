@@ -19,6 +19,8 @@ import {
   ArrowLeftOutlined,
   ExportOutlined,
   ImportOutlined,
+  RobotOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useLanguage } from '../../contexts/LanguageContext';
 import WorkflowCanvas from './WorkflowCanvas';
@@ -73,6 +75,10 @@ const WorkflowBuilder = ({ workflowId, onBack }) => {
   const [testDrawerVisible, setTestDrawerVisible] = useState(false);
   const [testInput, setTestInput] = useState('{}');
   const [testResult, setTestResult] = useState(null);
+  
+  // AI 生成工作流 (AI workflow generation)
+  const [aiDescription, setAiDescription] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   /**
    * 加载可用的 Agents (Load available agents)
@@ -291,8 +297,73 @@ const WorkflowBuilder = ({ workflowId, onBack }) => {
     reader.readAsText(file);
   }, [t]);
 
+  /**
+   * AI 生成工作流 (AI generate workflow)
+   */
+  const handleAiGenerate = useCallback(async () => {
+    if (!aiDescription.trim()) {
+      message.warning(t('workflowBuilder.ai.descriptionRequired'));
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      const result = await workflowApi.generateWorkflowFromDescription(aiDescription);
+      
+      if (result.success && result.workflow) {
+        // 为每个步骤添加位置信息
+        const workflowWithPositions = {
+          ...result.workflow,
+          steps: result.workflow.steps.map((step, index) => ({
+            ...step,
+            id: step.id || `step_${Date.now()}_${index}`,
+            position: {
+              x: 100,
+              y: 100 + index * 150,
+            },
+          })),
+        };
+        
+        setWorkflow(workflowWithPositions);
+        message.success(t('workflowBuilder.ai.generateSuccess'));
+        setAiDescription(''); // 清空描述
+      } else {
+        message.error(result.message || t('workflowBuilder.ai.generateFailed'));
+      }
+    } catch (error) {
+      console.error('AI generation failed:', error);
+      message.error(t('workflowBuilder.ai.generateFailed') + ': ' + error.message);
+    } finally {
+      setAiGenerating(false);
+    }
+  }, [aiDescription, t]);
+
   return (
     <div className="workflow-builder">
+      {/* AI 生成区域 (AI Generation Area) */}
+      <div className="workflow-ai-generator">
+        <div className="ai-generator-icon">
+          <RobotOutlined style={{ fontSize: 24 }} />
+        </div>
+        <Input.TextArea
+          placeholder={t('workflowBuilder.ai.placeholder')}
+          value={aiDescription}
+          onChange={(e) => setAiDescription(e.target.value)}
+          autoSize={{ minRows: 2, maxRows: 4 }}
+          style={{ flex: 1, marginLeft: 12, marginRight: 12 }}
+        />
+        <Button
+          type="primary"
+          size="large"
+          icon={<ThunderboltOutlined />}
+          onClick={handleAiGenerate}
+          loading={aiGenerating}
+          disabled={!aiDescription.trim()}
+        >
+          {aiGenerating ? t('workflowBuilder.ai.generating') : t('workflowBuilder.ai.generate')}
+        </Button>
+      </div>
+
       {/* 顶部工具栏 (Top toolbar) */}
       <div className="workflow-toolbar">
         <div className="toolbar-left">

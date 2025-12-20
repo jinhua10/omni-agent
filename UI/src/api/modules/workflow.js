@@ -94,22 +94,19 @@ const workflowApi = {
   /**
    * 安装工作流 (Install workflow)
    * @param {string} id - 工作流ID (Workflow ID)
-   * @param {string} userId - 用户ID (User ID)
    * @returns {Promise} 安装结果
    */
-  installWorkflow(id, userId) {
-    return request.post(`/workflows/market/${id}/install`, null, {
-      headers: { 'X-User-Id': userId },
-    })
+  installWorkflow(id) {
+    return request.post(`/workflows/market/${id}/install`, null)
   },
 
   /**
    * 发布工作流 (Publish workflow)
    * @param {Object} workflow - 工作流数据 (Workflow data)
    * @param {string} workflow.name - 工作流名称
+   * @param {string} workflow.version - 版本
    * @param {string} workflow.description - 描述
-   * @param {string} workflow.category - 分类
-   * @param {Array} workflow.steps - 步骤列表
+   * @param {Array} workflow.tags - 标签
    * @returns {Promise} 发布结果
    */
   publishWorkflow(workflow) {
@@ -120,14 +117,12 @@ const workflowApi = {
    * 评分工作流 (Rate workflow)
    * @param {string} id - 工作流ID (Workflow ID)
    * @param {number} rating - 评分 (1-5) (Rating 1-5)
-   * @param {string} userId - 用户ID (User ID)
    * @param {string} comment - 评论（可选）(Comment, optional)
    * @returns {Promise} 评分结果
    */
-  rateWorkflow(id, rating, userId, comment = '') {
+  rateWorkflow(id, rating, comment = '') {
     return request.post(`/workflows/market/${id}/rate`, {
       rating,
-      userId,
       comment,
     })
   },
@@ -135,10 +130,12 @@ const workflowApi = {
   /**
    * 获取工作流评分 (Get workflow ratings)
    * @param {string} id - 工作流ID (Workflow ID)
+   * @param {number} page - 页码 (Page number)
+   * @param {number} size - 每页数量 (Page size)
    * @returns {Promise} 评分列表
    */
-  getWorkflowRatings(id) {
-    return request.get(`/workflows/market/${id}/ratings`)
+  getWorkflowRatings(id, page = 0, size = 20) {
+    return request.get(`/workflows/market/${id}/ratings`, { page, size })
   },
 
   // ========== 工作流构建器 API (Workflow Builder API) ==========
@@ -257,6 +254,15 @@ const workflowApi = {
    */
   testWorkflow() {
     return request.get('/example/workflow/test')
+  },
+
+  /**
+   * 根据描述生成工作流 (Generate workflow from description)
+   * @param {string} description - 工作流描述 (Workflow description)
+   * @returns {Promise} 生成的工作流
+   */
+  generateWorkflowFromDescription(description) {
+    return request.post('/example/workflow/generate', { description })
   },
 }
 

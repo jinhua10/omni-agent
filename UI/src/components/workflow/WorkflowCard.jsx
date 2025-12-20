@@ -1,8 +1,10 @@
 import React from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import RatingStars from './RatingStars';
 import '../../assets/css/workflow/workflow-card.css';
 
 const WorkflowCard = ({ workflow, onViewDetail }) => {
+  const { t } = useLanguage();
   const handleClick = () => {
     if (onViewDetail) {
       onViewDetail(workflow.id);
@@ -30,7 +32,7 @@ const WorkflowCard = ({ workflow, onViewDetail }) => {
           <span className="category-name">{workflow.category || 'General'}</span>
         </div>
         {workflow.status === 'featured' && (
-          <div className="featured-badge">⭐ 推荐</div>
+          <div className="featured-badge">⭐ {t('workflowMarket.card.featured')}</div>
         )}
       </div>
 
@@ -38,7 +40,7 @@ const WorkflowCard = ({ workflow, onViewDetail }) => {
       <div className="card-body">
         <h3 className="workflow-name">{workflow.name}</h3>
         <p className="workflow-description">
-          {workflow.description || '暂无描述'}
+          {workflow.description || t('workflowMarket.detail.noDescription')}
         </p>
 
         {/* 标签 */}

@@ -112,7 +112,7 @@ const StepEditor = ({ step, allSteps, onUpdate, onCancel }) => {
 
       {/* 输入配置 (Input configuration) */}
       <Form.Item label={t('workflowBuilder.stepEditor.input')}>
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space orientation="vertical" style={{ width: '100%' }}>
           <Select
             value={inputMode}
             onChange={setInputMode}
@@ -180,13 +180,15 @@ const StepEditor = ({ step, allSteps, onUpdate, onCancel }) => {
           name="timeout"
           tooltip={t('workflowBuilder.stepEditor.timeoutTooltip')}
         >
-          <InputNumber
-            min={1000}
-            max={600000}
-            step={1000}
-            addonAfter="ms"
-            style={{ width: '100%' }}
-          />
+          <Space.Compact style={{ width: '100%' }}>
+            <InputNumber
+              min={1000}
+              max={600000}
+              step={1000}
+              style={{ width: '100%' }}
+            />
+            <Input disabled value="ms" style={{ width: 50, textAlign: 'center' }} />
+          </Space.Compact>
         </Form.Item>
 
         {/* 重试次数 (Retries) */}

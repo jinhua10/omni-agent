@@ -1224,6 +1224,16 @@ export default {
       deleteConfirm: 'Delete Step',
       deleteWarning: 'Are you sure you want to delete this step? This will also remove all connections that depend on it.',
     },
+
+    // AI Generation
+    ai: {
+      placeholder: 'Describe the workflow you want, e.g.: I need a data processing pipeline that validates data format, transforms data, and filters invalid data...',
+      generate: 'AI Generate Workflow',
+      generating: 'Generating...',
+      generateSuccess: 'Workflow generated successfully!',
+      generateFailed: 'AI generation failed',
+      descriptionRequired: 'Please enter workflow description',
+    },
   },
 
   // ============================================================================

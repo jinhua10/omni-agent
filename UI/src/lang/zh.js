@@ -1237,6 +1237,16 @@ export default {
       deleteConfirm: '删除步骤',
       deleteWarning: '确定要删除这个步骤吗？这将同时删除所有依赖此步骤的连接。',
     },
+
+    // AI 生成
+    ai: {
+      placeholder: '描述你想要的工作流，例如：我需要一个数据处理流程，先验证数据格式，然后转换数据，最后过滤无效数据...',
+      generate: 'AI 生成工作流',
+      generating: '正在生成...',
+      generateSuccess: '工作流生成成功！',
+      generateFailed: 'AI 生成失败',
+      descriptionRequired: '请输入工作流描述',
+    },
   },
 
   // ============================================================================

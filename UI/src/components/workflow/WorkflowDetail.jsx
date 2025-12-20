@@ -64,36 +64,34 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to download workflow:', error);
-      alert('下载失败：' + error.message);
+      alert(t('workflowMarket.detail.downloadFailed') + ': ' + error.message);
     }
   };
 
   const handleInstall = async () => {
     try {
-      const userId = 'user-001'; // TODO: 从认证系统获取
-      await installWorkflow(workflowId, userId);
-      alert('工作流安装成功！');
+      await installWorkflow(workflowId);
+      alert(t('workflowMarket.detail.installSuccess'));
     } catch (error) {
       console.error('Failed to install workflow:', error);
-      alert('安装失败：' + error.message);
+      alert(t('workflowMarket.detail.installFailed') + ': ' + error.message);
     }
   };
 
   const handleRate = async () => {
     if (userRating === 0) {
-      alert('请选择评分');
+      alert(t('workflowMarket.rating.pleaseRate'));
       return;
     }
     try {
-      const userId = 'user-001'; // TODO: 从认证系统获取
-      await rateWorkflow(workflowId, userRating, userId, userComment);
-      alert('评分成功！');
+      await rateWorkflow(workflowId, userRating, userComment);
+      alert(t('workflowMarket.rating.rateSuccess'));
       setUserRating(0);
       setUserComment('');
       loadRatings();
     } catch (error) {
       console.error('Failed to rate workflow:', error);
-      alert('评分失败：' + error.message);
+      alert(t('workflowMarket.rating.rateFailed') + ': ' + error.message);
     }
   };
 
@@ -101,7 +99,7 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
     return (
       <div className="workflow-detail loading">
         <div className="spinner"></div>
-        <p>加载中...</p>
+        <p>{t('workflowMarket.loading')}</p>
       </div>
     );
   }
@@ -109,8 +107,8 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
   if (!workflow) {
     return (
       <div className="workflow-detail error">
-        <h2>😔 工作流不存在</h2>
-        <button onClick={onBack}>返回市场</button>
+        <h2>😔 {t('workflowMarket.detail.notFound')}</h2>
+        <button onClick={onBack}>{t('workflowMarket.detail.backToMarket')}</button>
       </div>
     );
   }
@@ -119,7 +117,7 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
     <div className="workflow-detail">
       {/* 返回按钮 */}
       <button className="back-btn" onClick={onBack}>
-        ← 返回市场
+        ← {t('workflowMarket.detail.backToMarket')}
       </button>
 
       {/* 头部信息 */}
@@ -139,7 +137,7 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
               📁 {workflow.category || 'General'}
             </span>
             <span className="meta-item">
-              ⬇️ {workflow.downloadCount || 0} 次下载
+              ⬇️ {workflow.downloadCount || 0} {t('workflowMarket.card.downloads')}
             </span>
           </div>
 
@@ -155,15 +153,15 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
         <div className="header-right">
           <div className="rating-box">
             <RatingStars rating={workflow.averageRating || 0} size="large" />
-            <p className="rating-count">({ratings.length} 个评分)</p>
+            <p className="rating-count">({ratings.length} {t('workflowMarket.rating.ratingsCount')})</p>
           </div>
 
           <div className="action-buttons">
             <button className="btn-primary" onClick={handleDownload}>
-              ⬇️ 下载
+              ⬇️ {t('workflowMarket.detail.download')}
             </button>
             <button className="btn-secondary" onClick={handleInstall}>
-              ⚙️ 安装
+              ⚙️ {t('workflowMarket.detail.install')}
             </button>
           </div>
         </div>
@@ -175,19 +173,19 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
           className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
-          概览
+          {t('workflowMarket.detail.overview')}
         </button>
         <button
           className={`tab ${activeTab === 'steps' ? 'active' : ''}`}
           onClick={() => setActiveTab('steps')}
         >
-          步骤
+          {t('workflowMarket.detail.steps')}
         </button>
         <button
           className={`tab ${activeTab === 'ratings' ? 'active' : ''}`}
           onClick={() => setActiveTab('ratings')}
         >
-          评分 ({ratings.length})
+          {t('workflowMarket.detail.ratings')} ({ratings.length})
         </button>
       </div>
 
@@ -195,13 +193,13 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
       <div className="detail-content">
         {activeTab === 'overview' && (
           <div className="tab-content">
-            <h2>📝 描述</h2>
-            <p>{workflow.description || '暂无详细描述'}</p>
+            <h2>📝 {t('workflowMarket.detail.description')}</h2>
+            <p>{workflow.description || t('workflowMarket.detail.noDescription')}</p>
 
             {workflow.steps && (
               <>
-                <h2>🔢 步骤数量</h2>
-                <p>{workflow.steps.length} 个步骤</p>
+                <h2>🔢 {t('workflowMarket.detail.stepsCount')}</h2>
+                <p>{workflow.steps.length} {t('workflowMarket.detail.stepUnit')}</p>
               </>
             )}
           </div>
@@ -209,7 +207,7 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
 
         {activeTab === 'steps' && (
           <div className="tab-content">
-            <h2>📋 工作流步骤</h2>
+            <h2>📋 {t('workflowMarket.detail.steps')}</h2>
             {workflow.steps && workflow.steps.length > 0 ? (
               <div className="steps-list">
                 {workflow.steps.map((step, index) => (
@@ -217,13 +215,13 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
                     <div className="step-number">{index + 1}</div>
                     <div className="step-info">
                       <h3>{step.name || step.id}</h3>
-                      <p className="step-agent">Agent: {step.agent}</p>
+                      <p className="step-agent">{t('workflowMarket.detail.agent')}: {step.agent}</p>
                       {step.description && (
                         <p className="step-description">{step.description}</p>
                       )}
                       {step.dependencies && step.dependencies.length > 0 && (
                         <p className="step-dependencies">
-                          依赖: {step.dependencies.join(', ')}
+                          {t('workflowMarket.detail.dependencies')}: {step.dependencies.join(', ')}
                         </p>
                       )}
                     </div>
@@ -231,18 +229,18 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
                 ))}
               </div>
             ) : (
-              <p>暂无步骤信息</p>
+              <p>{t('workflowMarket.detail.noSteps')}</p>
             )}
           </div>
         )}
 
         {activeTab === 'ratings' && (
           <div className="tab-content">
-            <h2>⭐ 评分和评论</h2>
+            <h2>⭐ {t('workflowMarket.rating.title')}</h2>
 
             {/* 评分表单 */}
             <div className="rating-form">
-              <h3>给这个工作流评分</h3>
+              <h3>{t('workflowMarket.rating.giveRating')}</h3>
               <RatingStars
                 rating={userRating}
                 size="large"
@@ -251,13 +249,13 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
               />
               <textarea
                 className="comment-input"
-                placeholder="写下你的评论（可选）..."
+                placeholder={t('workflowMarket.rating.commentPlaceholder')}
                 value={userComment}
                 onChange={(e) => setUserComment(e.target.value)}
                 rows={4}
               />
               <button className="btn-primary" onClick={handleRate}>
-                提交评分
+                {t('workflowMarket.rating.submit')}
               </button>
             </div>
 
@@ -279,7 +277,7 @@ const WorkflowDetail = ({ workflowId, onBack }) => {
                   </div>
                 ))
               ) : (
-                <p>还没有评分，成为第一个评分的人吧！</p>
+                <p>{t('workflowMarket.rating.noRatings')}</p>
               )}
             </div>
           </div>
