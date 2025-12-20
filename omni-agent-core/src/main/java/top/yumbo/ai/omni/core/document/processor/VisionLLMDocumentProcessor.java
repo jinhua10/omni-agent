@@ -3,40 +3,44 @@ package top.yumbo.ai.omni.core.document.processor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.ai.api.AIService;
+import top.yumbo.ai.omni.core.config.VisionLLMBatchProcessingProperties;
 import top.yumbo.ai.omni.core.document.DocumentProcessor;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * Vision LLM 文档处理器
  * (Vision LLM Document Processor)
  *
  * <p>
- * 处理策略（基于原 old 项目经验）：
+ * 处理策略（优化版）：
  * </p>
  *
  * <h3>PPT/PDF 处理</h3>
  * <p>
- * <b>以页面/幻灯片为单位</b>进行处理：
+ * <b>智能批处理 + 并行处理</b>：
  * </p>
  * <ul>
  *   <li>1. 提取每页的所有图片（包括位置信息）</li>
- *   <li>2. 按位置排列图片（从上到下，从左到右）</li>
- *   <li>3. 将同一页的多张图片一起发给 Vision LLM</li>
+ *   <li>2. 根据上下文大小预判断，智能分批（尽可能多页一起处理）</li>
+ *   <li>3. 多个批次并行处理，提高速度</li>
  *   <li>4. Vision LLM 理解整页内容（流程图、架构图、部署图等）</li>
- *   <li>5. 如果上下文允许，可以多页一起处理</li>
  * </ul>
  *
  * <h3>优势</h3>
  * <ul>
+ *   <li>智能批处理：根据上下文大小动态决定批次大小</li>
+ *   <li>并行处理：多个批次并行，大幅提升处理速度</li>
  *   <li>保持页面完整性：流程图、架构图等跨多张图片的内容能被正确理解</li>
  *   <li>位置信息：图片按空间位置排列，帮助 LLM 理解布局</li>
- *   <li>上下文优化：多页一起处理可以理解连贯性内容</li>
- *   <li>批量处理：减少 API 调用次数，提高效率</li>
+ *   <li>减少API调用：智能合并请求，降低成本</li>
  * </ul>
  *
  * <p>
@@ -65,8 +69,14 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
     @Value("${omni-agent.vision-llm.system-prompt:请分析这张图片并提取其中的关键信息。}")
     private String systemPrompt;
 
-    @Value("${omni-agent.vision-llm.batch-size:3}")
-    private int batchSize;  // 一次处理多少页/幻灯片
+    // ⭐ 批处理配置
+    @Autowired
+    private VisionLLMBatchProcessingProperties batchProcessingConfig;
+
+    // ⭐ Vision LLM 线程池
+    @Autowired(required = false)
+    @Qualifier("visionLlmExecutor")
+    private Executor visionLlmExecutor;
 
     /**
      * 支持的文件扩展名
@@ -104,39 +114,47 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             List<DocumentPage> pages = extractPages(context);
             log.info("📄 [VisionLLM] 提取了 {} 个页面/幻灯片", pages.size());
 
-            // 2. 批量处理页面（多页一起处理以优化上下文）
+            // ⭐ 2. 智能分批：根据上下文大小预判断
+            List<List<DocumentPage>> batches = smartBatching(pages);
+            log.info("📦 [VisionLLM] 智能分批完成: {} 个批次", batches.size());
+            for (int i = 0; i < batches.size(); i++) {
+                log.debug("📦 [VisionLLM] 批次 #{}: {} 个页面", i + 1, batches.get(i).size());
+            }
+
+            // ⭐ 3. 并行处理所有批次
+            List<BatchProcessingResult> batchResults;
+            if (visionLlmExecutor != null && batches.size() > 1) {
+                // 使用线程池并行处理
+                batchResults = processPageBatchesInParallel(batches);
+            } else {
+                // 串行处理（无线程池或只有一个批次）
+                batchResults = processPageBatchesSequentially(batches);
+            }
+
+            // 4. 合并结果
             StringBuilder allContent = new StringBuilder();
             List<ExtractedImage> allImages = new ArrayList<>();
 
-            for (int i = 0; i < pages.size(); i += batchSize) {
-                int endIdx = Math.min(i + batchSize, pages.size());
-                List<DocumentPage> batch = pages.subList(i, endIdx);
-
-                log.info("🔍 [VisionLLM] 处理页面批次 {}-{}/{}", i + 1, endIdx, pages.size());
-
-                // 处理这一批页面
-                String batchContent = processPageBatch(batch);
-                allContent.append(batchContent).append("\n\n");
-
-                // 收集所有图片
-                for (DocumentPage page : batch) {
-                    allImages.addAll(page.getImages());
-                }
+            // 按批次顺序合并（保持页面顺序）
+            for (BatchProcessingResult batchResult : batchResults) {
+                allContent.append(batchResult.getContent()).append("\n\n");
+                allImages.addAll(batchResult.getImages());
             }
 
-            // 3. 构建元数据
+            // 5. 构建元数据
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("pageCount", pages.size());
             metadata.put("totalImages", allImages.size());
             metadata.put("processor", "VisionLLM");
             metadata.put("model", visionModel);
-            metadata.put("batchSize", batchSize);
+            metadata.put("batchCount", batches.size());
+            metadata.put("parallelProcessing", visionLlmExecutor != null && batches.size() > 1);
             metadata.put("originalExtension", context.getFileExtension());
 
             long processingTime = System.currentTimeMillis() - startTime;
 
-            log.info("✅ [VisionLLM] 处理完成: 耗时={}ms, 内容长度={}, 图片数={}",
-                    processingTime, allContent.length(), allImages.size());
+            log.info("✅ [VisionLLM] 处理完成: 耗时={}ms, 批次数={}, 内容长度={}, 图片数={}",
+                    processingTime, batches.size(), allContent.length(), allImages.size());
 
             return ProcessingResult.builder()
                     .success(true)
@@ -870,7 +888,165 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             this.height = height;
         }
     }
+
+    /**
+     * 批处理结果
+     */
+    @Data
+    private static class BatchProcessingResult {
+        private final int batchIndex;
+        private final String content;
+        private final List<ExtractedImage> images;
+    }
+
+    /**
+     * 智能分批：根据上下文大小预判断，尽可能多页一起处理
+     * ⭐ 核心优化：减少 API 调用次数
+     *
+     * @param pages 所有页面
+     * @return 分批后的页面列表
+     */
+    private List<List<DocumentPage>> smartBatching(List<DocumentPage> pages) {
+        if (!batchProcessingConfig.isEnabled()) {
+            // 如果未启用智能批处理，按旧逻辑处理（固定批次大小）
+            int batchSize = batchProcessingConfig.getMaxBatchSize();
+            List<List<DocumentPage>> batches = new ArrayList<>();
+            for (int i = 0; i < pages.size(); i += batchSize) {
+                int endIdx = Math.min(i + batchSize, pages.size());
+                batches.add(new ArrayList<>(pages.subList(i, endIdx)));
+            }
+            log.debug("📦 [Smart Batching] 使用固定批次大小: {}, 批次数: {}", batchSize, batches.size());
+            return batches;
+        }
+
+        // 智能分批
+        List<List<DocumentPage>> batches = new ArrayList<>();
+        List<DocumentPage> currentBatch = new ArrayList<>();
+
+        for (DocumentPage page : pages) {
+            // 检查是否可以添加到当前批次
+            if (batchProcessingConfig.canAddMoreSlides(currentBatch.size())) {
+                currentBatch.add(page);
+            } else {
+                // 当前批次已满，开始新批次
+                if (!currentBatch.isEmpty()) {
+                    batches.add(new ArrayList<>(currentBatch));
+                    currentBatch.clear();
+                }
+                currentBatch.add(page);
+            }
+        }
+
+        // 添加最后一个批次
+        if (!currentBatch.isEmpty()) {
+            batches.add(currentBatch);
+        }
+
+        log.debug("📦 [Smart Batching] 智能分批完成 - 总页面: {}, 批次数: {}, 平均每批: {:.1f} 页",
+                pages.size(), batches.size(), (double) pages.size() / batches.size());
+
+        return batches;
+    }
+
+    /**
+     * 并行处理多个批次
+     * ⭐ 核心优化：并行处理，大幅提升速度
+     *
+     * @param batches 所有批次
+     * @return 批处理结果列表
+     */
+    private List<BatchProcessingResult> processPageBatchesInParallel(List<List<DocumentPage>> batches) {
+        log.info("🚀 [Parallel Processing] 开始并行处理 {} 个批次", batches.size());
+        long startTime = System.currentTimeMillis();
+
+        List<CompletableFuture<BatchProcessingResult>> futures = new ArrayList<>();
+
+        for (int i = 0; i < batches.size(); i++) {
+            final int batchIndex = i;
+            final List<DocumentPage> batch = batches.get(i);
+
+            CompletableFuture<BatchProcessingResult> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    log.debug("⚙️ [Thread: {}] 开始处理批次 #{}",
+                        Thread.currentThread().getName(), batchIndex + 1);
+
+                    String content = processPageBatch(batch);
+                    List<ExtractedImage> images = batch.stream()
+                            .flatMap(page -> page.getImages().stream())
+                            .collect(Collectors.toList());
+
+                    log.debug("✅ [Thread: {}] 批次 #{} 处理完成",
+                        Thread.currentThread().getName(), batchIndex + 1);
+
+                    return new BatchProcessingResult(batchIndex, content, images);
+                } catch (Exception e) {
+                    log.error("❌ [Thread: {}] 批次 #{} 处理失败: {}",
+                        Thread.currentThread().getName(), batchIndex + 1, e.getMessage());
+                    return new BatchProcessingResult(batchIndex, "", Collections.emptyList());
+                }
+            }, visionLlmExecutor);
+
+            futures.add(future);
+        }
+
+        // 等待所有批次完成
+        try {
+            CompletableFuture<Void> allOf = CompletableFuture.allOf(
+                    futures.toArray(new CompletableFuture[0]));
+            allOf.get(5, TimeUnit.MINUTES);  // 5分钟超时
+
+            // 收集结果（按批次索引排序，保持顺序）
+            List<BatchProcessingResult> results = futures.stream()
+                    .map(CompletableFuture::join)
+                    .sorted(Comparator.comparingInt(BatchProcessingResult::getBatchIndex))
+                    .collect(Collectors.toList());
+
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("✅ [Parallel Processing] 并行处理完成 - 耗时: {}ms, 平均每批: {}ms",
+                    duration, duration / batches.size());
+
+            return results;
+        } catch (TimeoutException e) {
+            log.error("❌ [Parallel Processing] 处理超时");
+            throw new RuntimeException("Vision LLM 处理超时", e);
+        } catch (Exception e) {
+            log.error("❌ [Parallel Processing] 处理失败: {}", e.getMessage());
+            throw new RuntimeException("Vision LLM 并行处理失败", e);
+        }
+    }
+
+    /**
+     * 串行处理多个批次
+     *
+     * @param batches 所有批次
+     * @return 批处理结果列表
+     */
+    private List<BatchProcessingResult> processPageBatchesSequentially(List<List<DocumentPage>> batches) {
+        log.info("🔄 [Sequential Processing] 开始串行处理 {} 个批次", batches.size());
+        long startTime = System.currentTimeMillis();
+
+        List<BatchProcessingResult> results = new ArrayList<>();
+
+        for (int i = 0; i < batches.size(); i++) {
+            List<DocumentPage> batch = batches.get(i);
+            log.debug("⚙️ 处理批次 {}/{}", i + 1, batches.size());
+
+            try {
+                String content = processPageBatch(batch);
+                List<ExtractedImage> images = batch.stream()
+                        .flatMap(page -> page.getImages().stream())
+                        .collect(Collectors.toList());
+
+                results.add(new BatchProcessingResult(i, content, images));
+            } catch (Exception e) {
+                log.error("❌ 批次 {} 处理失败: {}", i + 1, e.getMessage());
+                results.add(new BatchProcessingResult(i, "", Collections.emptyList()));
+            }
+        }
+
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("✅ [Sequential Processing] 串行处理完成 - 耗时: {}ms", duration);
+
+        return results;
+    }
 }
-
-
-

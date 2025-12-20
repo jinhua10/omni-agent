@@ -313,11 +313,28 @@ omni-agent:
     # OpenAI: https://api.openai.com/v1/chat/completions
     endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
 
-    # 批量处理配置（基于 old 项目经验）⭐
-    # 一次性处理多少页/幻灯片，优化上下文理解
-    # 值越大，上下文越连贯，但单次API调用成本越高
-    # 建议: PPT/PDF 3-5页，图片 1-3张
-    batch-size: 5
+    # ========== 智能批处理配置 ⭐ ==========
+    # 根据上下文大小动态决定每批处理多少张幻灯片
+    batch-processing:
+      # 是否启用智能批处理（根据上下文大小动态分批）
+      enabled: true
+
+      # 最大上下文token数（根据模型限制调整）
+      # qwen-vl-plus: 8000, qwen-vl-max: 32000, gpt-4o: 128000
+      max-context-tokens: 8000
+
+      # 单张幻灯片预估token数（用于预判断）
+      # 包括：图片token + 文字token + 提示词token
+      estimated-tokens-per-slide: 1500
+
+      # 预留token数（用于系统提示词和响应）
+      reserved-tokens: 2000
+
+      # 最小批次大小（至少处理多少张）
+      min-batch-size: 1
+
+      # 最大批次大小（最多处理多少张）
+      max-batch-size: 5
 
     # 系统提示词（可自定义）
     system-prompt: |
@@ -331,6 +348,30 @@ omni-agent:
       - 图片按空间位置排列（从上到下，从左到右）
       
       保持输出简洁，只提取核心信息。
+
+  # ========== 线程池配置（统一管理）⭐ ==========
+  thread-pool:
+    # Vision LLM 处理线程池
+    vision-llm:
+      core-pool-size: 2           # 核心线程数
+      max-pool-size: 4            # 最大线程数
+      queue-capacity: 100         # 队列容量
+      keep-alive-seconds: 60      # 空闲线程存活时间
+      thread-name-prefix: "vision-llm-"
+      allow-core-thread-timeout: true
+      wait-for-tasks-to-complete-on-shutdown: true
+      await-termination-seconds: 60
+
+    # 文件监听器线程池
+    file-watcher:
+      core-pool-size: 1           # 核心线程数
+      max-pool-size: 2            # 最大线程数
+      queue-capacity: 50          # 队列容量
+      keep-alive-seconds: 300     # 空闲线程存活时间（5分钟）
+      thread-name-prefix: "file-watcher-"
+      allow-core-thread-timeout: true
+      wait-for-tasks-to-complete-on-shutdown: true
+      await-termination-seconds: 30
 
 # ========== 日志配置 ==========
 logging:
