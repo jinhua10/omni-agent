@@ -25,7 +25,7 @@ import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 public class H2PersistenceAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(QuestionClassifierPersistence.class)
     public QuestionClassifierPersistence questionClassifierPersistence(H2PersistenceProperties properties) {
         log.info("Auto-configuring H2Persistence: {}", properties.getUrl());
         return new H2Persistence(properties);

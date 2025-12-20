@@ -26,7 +26,7 @@ import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 public class MongoDBPersistenceAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(QuestionClassifierPersistence.class)
     public QuestionClassifierPersistence questionClassifierPersistence(
             MongoTemplate mongoTemplate,
             MongoDBPersistenceProperties properties) {

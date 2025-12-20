@@ -25,7 +25,7 @@ import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 public class SQLitePersistenceAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(QuestionClassifierPersistence.class)
     public QuestionClassifierPersistence questionClassifierPersistence(SQLitePersistenceProperties properties) {
         log.info("Auto-configuring SQLitePersistence: {}", properties.getDbPath());
         return new SQLitePersistence(properties);

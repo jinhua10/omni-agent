@@ -68,7 +68,7 @@ public class ElasticsearchPersistenceAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(QuestionClassifierPersistence.class)
     public QuestionClassifierPersistence questionClassifierPersistence(
             ElasticsearchClient persistenceElasticsearchClient,
             ElasticsearchPersistenceProperties properties) {

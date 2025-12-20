@@ -30,7 +30,7 @@ import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
 public class MemoryPersistenceAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(QuestionClassifierPersistence.class)
     public QuestionClassifierPersistence questionClassifierPersistence() {
         log.info("Auto-configuring MemoryPersistence");
         log.warn("Using in-memory storage - data will not persist across restarts");

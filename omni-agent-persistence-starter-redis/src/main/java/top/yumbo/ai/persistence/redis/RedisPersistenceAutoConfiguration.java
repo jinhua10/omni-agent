@@ -49,7 +49,7 @@ public class RedisPersistenceAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(QuestionClassifierPersistence.class)
     public QuestionClassifierPersistence questionClassifierPersistence(
             RedisTemplate<String, Object> persistenceRedisTemplate,
             RedisPersistenceProperties properties) {
