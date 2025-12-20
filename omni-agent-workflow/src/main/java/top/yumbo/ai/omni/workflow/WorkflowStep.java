@@ -30,6 +30,11 @@ public class WorkflowStep {
     private String name;
 
     /**
+     * 步骤描述
+     */
+    private String description;
+
+    /**
      * 执行此步骤的 Agent 名称
      */
     private String agent;
