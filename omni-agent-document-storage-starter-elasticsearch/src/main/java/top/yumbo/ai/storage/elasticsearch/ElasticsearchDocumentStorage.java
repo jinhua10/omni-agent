@@ -16,6 +16,7 @@ import top.yumbo.ai.storage.api.model.StorageStatistics;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Base64;
 
 /**
  * Elasticsearch 文档存储实现 - 生产级全文检索和文档索引
@@ -558,6 +559,181 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
         } catch (Exception e) {
             log.error("Failed to calculate document size for: {}", documentId, e);
             return 0;
+        }
+    }
+
+    // ========== Document Management ==========
+
+    @Override
+    public String saveDocument(String documentId, String filename, byte[] fileData) {
+        try {
+            Map<String, Object> docData = new HashMap<>();
+            docData.put("documentId", documentId);
+            docData.put("filename", filename);
+            docData.put("data", Base64.getEncoder().encodeToString(fileData));
+            docData.put("createdAt", System.currentTimeMillis());
+
+            IndexRequest<Map<String, Object>> request = IndexRequest.of(i -> i
+                .index(properties.getIndexPrefix() + "-documents")
+                .id(documentId)
+                .document(docData)
+            );
+
+            client.index(request);
+            log.debug("Saved document: {}", documentId);
+            return documentId;
+        } catch (Exception e) {
+            log.error("Failed to save document: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<byte[]> getDocument(String documentId) {
+        try {
+            GetRequest request = GetRequest.of(g -> g
+                .index(properties.getIndexPrefix() + "-documents")
+                .id(documentId)
+            );
+
+            GetResponse<Map> response = client.get(request, Map.class);
+
+            if (response.found() && response.source() != null) {
+                String encodedData = (String) response.source().get("data");
+                if (encodedData != null) {
+                    return Optional.of(Base64.getDecoder().decode(encodedData));
+                }
+            }
+
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get document: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteDocument(String documentId) {
+        try {
+            DeleteRequest request = DeleteRequest.of(d -> d
+                .index(properties.getIndexPrefix() + "-documents")
+                .id(documentId)
+            );
+
+            client.delete(request);
+            log.debug("Deleted document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete document: {}", documentId, e);
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> listAllDocuments() {
+        try {
+            SearchRequest request = SearchRequest.of(s -> s
+                .index(properties.getIndexPrefix() + "-documents")
+                .size(10000)
+            );
+
+            SearchResponse<Map> response = client.search(request, Map.class);
+
+            return response.hits().hits().stream()
+                    .map(this::convertToDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to list all documents", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> listDocuments(int offset, int limit) {
+        try {
+            SearchRequest request = SearchRequest.of(s -> s
+                .index(properties.getIndexPrefix() + "-documents")
+                .from(offset)
+                .size(limit)
+            );
+
+            SearchResponse<Map> response = client.search(request, Map.class);
+
+            return response.hits().hits().stream()
+                    .map(this::convertToDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to list documents with pagination", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> searchDocuments(String keyword) {
+        try {
+            SearchRequest request = SearchRequest.of(s -> s
+                .index(properties.getIndexPrefix() + "-documents")
+                .query(q -> q
+                    .match(m -> m
+                        .field("filename")
+                        .query(keyword)
+                    )
+                )
+            );
+
+            SearchResponse<Map> response = client.search(request, Map.class);
+
+            return response.hits().hits().stream()
+                    .map(this::convertToDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to search documents with keyword: {}", keyword, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public long getDocumentCount() {
+        try {
+            CountRequest request = CountRequest.of(c -> c
+                .index(properties.getIndexPrefix() + "-documents")
+            );
+
+            CountResponse response = client.count(request);
+            return response.count();
+        } catch (Exception e) {
+            log.error("Failed to get document count", e);
+            return 0;
+        }
+    }
+
+    private top.yumbo.ai.storage.api.model.DocumentMetadata convertToDocumentMetadata(Hit<Map> hit) {
+        try {
+            Map<String, Object> source = hit.source();
+            if (source == null) {
+                return null;
+            }
+
+            String documentId = (String) source.get("documentId");
+            String filename = (String) source.get("filename");
+            Object createdAtObj = source.get("createdAt");
+            long createdAt = createdAtObj instanceof Number ?
+                    ((Number) createdAtObj).longValue() : System.currentTimeMillis();
+
+            String encodedData = (String) source.get("data");
+            long fileSize = encodedData != null ? encodedData.length() : 0;
+
+            return top.yumbo.ai.storage.api.model.DocumentMetadata.builder()
+                    .documentId(documentId)
+                    .filename(filename)
+                    .fileSize(fileSize)
+                    .uploadTime(new java.util.Date(createdAt))
+                    .lastModified(new java.util.Date(createdAt))
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to convert hit to DocumentMetadata", e);
+            return null;
         }
     }
 

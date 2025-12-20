@@ -4,12 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.workflow.WorkflowEngine;
-import top.yumbo.ai.omni.workflow.WorkflowResult;
-import top.yumbo.ai.omni.workflow.WorkflowRegistry;
 import top.yumbo.ai.omni.workflow.Workflow;
+import top.yumbo.ai.omni.workflow.WorkflowEngine;
+import top.yumbo.ai.omni.workflow.WorkflowRegistry;
+import top.yumbo.ai.omni.workflow.WorkflowResult;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -197,13 +196,12 @@ public class WorkflowExampleController {
     public ResponseEntity<Map<String, Object>> getWorkflowDetail(@PathVariable String workflowName) {
         log.info("📄 获取工作流详情: {}", workflowName);
 
-        var workflowOpt = workflowRegistry.getWorkflow(workflowName);
+        Workflow workflow = workflowRegistry.getLatestWorkflow(workflowName);
 
-        if (workflowOpt.isEmpty()) {
+        if (workflow == null) {
             return ResponseEntity.notFound().build();
         }
 
-        Workflow workflow = workflowOpt.get();
 
         return ResponseEntity.ok(Map.of(
                 "success", true,

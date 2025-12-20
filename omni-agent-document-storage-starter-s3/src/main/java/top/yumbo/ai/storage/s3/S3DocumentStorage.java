@@ -12,6 +12,7 @@ import top.yumbo.ai.storage.api.model.PPLData;
 import top.yumbo.ai.storage.api.model.StorageStatistics;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * AWS S3 对象存储实现 - 公有云对象存储方案
@@ -487,10 +488,164 @@ public class S3DocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Raw Document Storage ==========
+
+    private String getDocumentKey(String documentId) {
+        return "documents/" + documentId + "/document.bin";
+    }
+
+    @Override
+    public String saveDocument(String documentId, String filename, byte[] fileData) {
+        try {
+            String key = getDocumentKey(documentId);
+
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .metadata(Map.of(
+                            "documentId", documentId,
+                            "filename", filename,
+                            "uploadTime", String.valueOf(System.currentTimeMillis())
+                    ))
+                    .build();
+
+            s3Client.putObject(putRequest, RequestBody.fromBytes(fileData));
+            log.debug("Saved document: {}", documentId);
+            return documentId;
+        } catch (Exception e) {
+            log.error("Failed to save document: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<byte[]> getDocument(String documentId) {
+        try {
+            String key = getDocumentKey(documentId);
+
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+            return Optional.of(data);
+        } catch (NoSuchKeyException e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get document: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteDocument(String documentId) {
+        try {
+            String key = getDocumentKey(documentId);
+
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+            log.debug("Deleted document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete document: {}", documentId, e);
+        }
+    }
+
     // ========== Document Management ==========
 
     @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> listAllDocuments() {
+        try {
+            String prefix = "documents/";
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            return listResponse.contents().stream()
+                    .map(this::convertToDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to list all documents", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> listDocuments(int offset, int limit) {
+        try {
+            return listAllDocuments().stream()
+                    .skip(offset)
+                    .limit(limit)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to list documents with pagination", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> searchDocuments(String keyword) {
+        try {
+            return listAllDocuments().stream()
+                    .filter(doc -> doc.getFilename() != null && doc.getFilename().contains(keyword))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to search documents with keyword: {}", keyword, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public long getDocumentCount() {
+        try {
+            return listAllDocuments().size();
+        } catch (Exception e) {
+            log.error("Failed to get document count", e);
+            return 0;
+        }
+    }
+
+    private top.yumbo.ai.storage.api.model.DocumentMetadata convertToDocumentMetadata(S3Object s3Object) {
+        try {
+            String key = s3Object.key();
+            String documentId = key.split("/")[1];
+
+            HeadObjectRequest headRequest = HeadObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            HeadObjectResponse headResponse = s3Client.headObject(headRequest);
+            Map<String, String> metadata = headResponse.metadata();
+
+            String filename = metadata.getOrDefault("filename", documentId);
+            long uploadTime = metadata.containsKey("uploadtime") ?
+                    Long.parseLong(metadata.get("uploadtime")) : s3Object.lastModified().toEpochMilli();
+
+            return top.yumbo.ai.storage.api.model.DocumentMetadata.builder()
+                    .documentId(documentId)
+                    .filename(filename)
+                    .fileSize(s3Object.size())
+                    .uploadTime(new java.util.Date(uploadTime))
+                    .lastModified(java.util.Date.from(s3Object.lastModified()))
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to convert S3Object to DocumentMetadata: {}", s3Object.key(), e);
+            return null;
+        }
+    }
+
+    @Override
     public void cleanupDocument(String documentId) {
+        deleteDocument(documentId);
         deleteChunksByDocument(documentId);
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);

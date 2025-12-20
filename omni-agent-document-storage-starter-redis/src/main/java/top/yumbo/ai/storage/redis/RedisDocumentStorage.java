@@ -493,6 +493,143 @@ public class RedisDocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Document Management ==========
+
+    @Override
+    public String saveDocument(String documentId, String filename, byte[] fileData) {
+        try {
+            String documentKey = getDocumentKey(documentId);
+
+            Map<String, Object> docData = new HashMap<>();
+            docData.put("documentId", documentId);
+            docData.put("filename", filename);
+            docData.put("data", fileData);
+            docData.put("createdAt", System.currentTimeMillis());
+
+            redisTemplate.opsForHash().putAll(documentKey, docData);
+
+            if (properties.getTtl() > 0) {
+                redisTemplate.expire(documentKey, properties.getTtl(), TimeUnit.SECONDS);
+            }
+
+            log.debug("Saved document: {}", documentId);
+            return documentId;
+        } catch (Exception e) {
+            log.error("Failed to save document: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<byte[]> getDocument(String documentId) {
+        try {
+            String documentKey = getDocumentKey(documentId);
+            Object data = redisTemplate.opsForHash().get(documentKey, "data");
+
+            if (data instanceof byte[]) {
+                return Optional.of((byte[]) data);
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get document: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteDocument(String documentId) {
+        try {
+            String documentKey = getDocumentKey(documentId);
+            redisTemplate.delete(documentKey);
+            log.debug("Deleted document: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete document: {}", documentId, e);
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> listAllDocuments() {
+        try {
+            Set<String> keys = redisTemplate.keys(properties.getKeyPrefix() + "doc:*");
+            if (keys == null || keys.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            return keys.stream()
+                    .filter(key -> !key.contains(":chunks") && !key.contains(":images") && !key.contains(":optimizations"))
+                    .map(this::convertToDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to list all documents", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> listDocuments(int offset, int limit) {
+        try {
+            List<top.yumbo.ai.storage.api.model.DocumentMetadata> allDocs = listAllDocuments();
+            return allDocs.stream()
+                    .skip(offset)
+                    .limit(limit)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to list documents with pagination", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> searchDocuments(String keyword) {
+        try {
+            return listAllDocuments().stream()
+                    .filter(doc -> doc.getFilename() != null && doc.getFilename().contains(keyword))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to search documents with keyword: {}", keyword, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public long getDocumentCount() {
+        try {
+            return listAllDocuments().size();
+        } catch (Exception e) {
+            log.error("Failed to get document count", e);
+            return 0;
+        }
+    }
+
+    private top.yumbo.ai.storage.api.model.DocumentMetadata convertToDocumentMetadata(String key) {
+        try {
+            Map<Object, Object> data = redisTemplate.opsForHash().entries(key);
+            if (data == null || data.isEmpty()) {
+                return null;
+            }
+
+            String documentId = (String) data.get("documentId");
+            String filename = (String) data.get("filename");
+            Long createdAt = data.get("createdAt") instanceof Long ?
+                    (Long) data.get("createdAt") : System.currentTimeMillis();
+
+            byte[] fileData = data.get("data") instanceof byte[] ? (byte[]) data.get("data") : null;
+            long fileSize = fileData != null ? fileData.length : 0;
+
+            return top.yumbo.ai.storage.api.model.DocumentMetadata.builder()
+                    .documentId(documentId)
+                    .filename(filename)
+                    .fileSize(fileSize)
+                    .uploadTime(new java.util.Date(createdAt))
+                    .lastModified(new java.util.Date(createdAt))
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to convert key to DocumentMetadata: {}", key, e);
+            return null;
+        }
+    }
+
     // ========== Statistics ==========
 
     @Override

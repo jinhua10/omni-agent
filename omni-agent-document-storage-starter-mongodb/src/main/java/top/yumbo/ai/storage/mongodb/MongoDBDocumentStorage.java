@@ -50,6 +50,63 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
         log.info("MongoDBDocumentStorage initialized with bucket: {}", bucketName);
     }
 
+    // ========== Raw Document Storage ==========
+
+    @Override
+    public String saveDocument(String documentId, String filename, byte[] fileData) {
+        try {
+            Document metadata = new Document()
+                    .append("documentId", documentId)
+                    .append("filename", filename)
+                    .append("type", "document");
+
+            GridFSUploadOptions options = new GridFSUploadOptions()
+                    .metadata(metadata);
+
+            ObjectId fileId = gridFSBucket.uploadFromStream(
+                    documentId,
+                    new ByteArrayInputStream(fileData),
+                    options
+            );
+
+            log.debug("Saved document: {} with GridFS ID: {}", documentId, fileId);
+            return documentId;
+        } catch (Exception e) {
+            log.error("Failed to save document: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<byte[]> getDocument(String documentId) {
+        try {
+            GridFSFile file = gridFSBucket.find(new Document("filename", documentId)).first();
+            if (file == null) {
+                return Optional.empty();
+            }
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            gridFSBucket.downloadToStream(file.getObjectId(), outputStream);
+            return Optional.of(outputStream.toByteArray());
+        } catch (Exception e) {
+            log.error("Failed to get document: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteDocument(String documentId) {
+        try {
+            GridFSFile file = gridFSBucket.find(new Document("filename", documentId)).first();
+            if (file != null) {
+                gridFSBucket.delete(file.getObjectId());
+                log.debug("Deleted document: {}", documentId);
+            }
+        } catch (Exception e) {
+            log.error("Failed to delete document: {}", documentId, e);
+        }
+    }
+
     // ========== Chunk Storage ==========
 
     @Override
@@ -462,7 +519,96 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
     // ========== Document Management ==========
 
     @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> listAllDocuments() {
+        try {
+            List<GridFSFile> files = gridFSBucket.find(
+                    new Document("metadata.type", "document")
+            ).into(new ArrayList<>());
+
+            return files.stream()
+                    .map(this::convertToDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to list all documents", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> listDocuments(int offset, int limit) {
+        try {
+            List<GridFSFile> files = gridFSBucket.find(
+                    new Document("metadata.type", "document")
+            ).skip(offset).limit(limit).into(new ArrayList<>());
+
+            return files.stream()
+                    .map(this::convertToDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to list documents with pagination", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<top.yumbo.ai.storage.api.model.DocumentMetadata> searchDocuments(String keyword) {
+        try {
+            List<GridFSFile> files = gridFSBucket.find(
+                    new Document("metadata.type", "document")
+            ).into(new ArrayList<>());
+
+            return files.stream()
+                    .filter(file -> {
+                        String filename = file.getMetadata() != null ?
+                                file.getMetadata().getString("filename") : "";
+                        return filename != null && filename.contains(keyword);
+                    })
+                    .map(this::convertToDocumentMetadata)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to search documents with keyword: {}", keyword, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public long getDocumentCount() {
+        try {
+            return gridFSBucket.find(
+                    new Document("metadata.type", "document")
+            ).into(new ArrayList<>()).size();
+        } catch (Exception e) {
+            log.error("Failed to get document count", e);
+            return 0;
+        }
+    }
+
+    private top.yumbo.ai.storage.api.model.DocumentMetadata convertToDocumentMetadata(GridFSFile file) {
+        try {
+            Document metadata = file.getMetadata();
+            if (metadata == null) {
+                return null;
+            }
+
+            return top.yumbo.ai.storage.api.model.DocumentMetadata.builder()
+                    .documentId(metadata.getString("documentId"))
+                    .filename(metadata.getString("filename"))
+                    .fileSize(file.getLength())
+                    .uploadTime(file.getUploadDate())
+                    .lastModified(file.getUploadDate())
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to convert GridFSFile to DocumentMetadata", e);
+            return null;
+        }
+    }
+
+    @Override
     public void cleanupDocument(String documentId) {
+        deleteDocument(documentId);
         deleteChunksByDocument(documentId);
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
@@ -525,6 +671,7 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
 
             // 统计文档数（通过 documentId 去重）
             Set<String> documentIds = allFiles.stream()
+                    .filter(file -> file.getMetadata() != null)
                     .map(file -> file.getMetadata().getString("documentId"))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import top.yumbo.ai.omni.core.optimization.RAGOptimizationService;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.storage.api.model.PPLData;
 
@@ -24,12 +25,14 @@ import static org.mockito.Mockito.*;
 class PPLStorageServiceTest {
 
     private DocumentStorageService mockStorage;
+    private RAGOptimizationService mockOptimizationService;
     private PPLStorageService pplService;
 
     @BeforeEach
     void setUp() {
         mockStorage = mock(DocumentStorageService.class);
-        pplService = new PPLStorageService(mockStorage);
+        mockOptimizationService = mock(RAGOptimizationService.class);
+        pplService = new PPLStorageService(mockStorage, mockOptimizationService);
     }
 
     @Test

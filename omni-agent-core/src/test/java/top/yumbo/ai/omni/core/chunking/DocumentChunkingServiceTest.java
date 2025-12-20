@@ -5,9 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.storage.api.model.Chunk;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,12 +29,50 @@ class DocumentChunkingServiceTest {
     @Mock
     private DocumentStorageService storageService;
 
+    @Mock
+    private ChunkingStrategyManager strategyManager;
+
     private DocumentChunkingService chunkingService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        chunkingService = new DocumentChunkingService(storageService);
+        chunkingService = new DocumentChunkingService(storageService, strategyManager);
+
+        // Mock strategyManager 的默认行为：使用简单的固定大小分块
+        when(strategyManager.chunkWithAutoStrategy(anyString(), anyString(), anyString()))
+            .thenAnswer(invocation -> {
+                String docId = invocation.getArgument(0);
+                String content = invocation.getArgument(1);
+
+                if (content == null || content.isEmpty()) {
+                    return List.of();
+                }
+
+                // 简单分块逻辑：每500个字符一块
+                List<Chunk> chunks = new ArrayList<>();
+                int chunkSize = 500;
+                int pos = 0;
+                int sequence = 0;
+
+                while (pos < content.length()) {
+                    int end = Math.min(pos + chunkSize, content.length());
+                    String chunkContent = content.substring(pos, end);
+
+                    chunks.add(Chunk.builder()
+                        .documentId(docId)
+                        .content(chunkContent)
+                        .sequence(sequence++)
+                        .startPosition(pos)
+                        .endPosition(end)
+                        .createdAt(System.currentTimeMillis())
+                        .build());
+
+                    pos = end;
+                }
+
+                return chunks;
+            });
     }
 
     @Test
