@@ -355,13 +355,47 @@ public class FileWatcherService {
             // ========== 步骤4: 保存提取的图片 ==========
             if (images != null && !images.isEmpty()) {
                 log.info("🖼️ 保存提取的图片: {} 张", images.size());
-                for (var image : images) {
-                    try {
-                        imageStorageService.saveImage(documentId, image.getData(), image.getFormat());
-                    } catch (Exception ex) {
-                        log.warn("⚠️ 保存图片失败: {}", ex.getMessage());
+
+                // ⭐ 按页码分组图片
+                Map<Integer, List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage>> imagesByPage = new HashMap<>();
+                for (var img : images) {
+                    int pageNum = img.getPageNumber() > 0 ? img.getPageNumber() : 1;
+                    imagesByPage.computeIfAbsent(pageNum, k -> new ArrayList<>()).add(img);
+                }
+
+                int savedImageCount = 0;
+                // ⭐ 遍历每一页，为该页的图片添加序号
+                for (Map.Entry<Integer, List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage>> entry : imagesByPage.entrySet()) {
+                    int pageNum = entry.getKey();
+                    List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> pageImages = entry.getValue();
+
+                    for (int imgIndex = 0; imgIndex < pageImages.size(); imgIndex++) {
+                        var extractedImage = pageImages.get(imgIndex);
+
+                        try {
+                            // ⭐ 在 metadata 中添加图片序号
+                            Map<String, Object> metadata = extractedImage.getMetadata();
+                            if (metadata == null) {
+                                metadata = new HashMap<>();
+                            }
+                            metadata.put("imageIndex", imgIndex);  // 图片在该页的序号
+                            metadata.put("pageNumber", pageNum);   // 确保页码信息存在
+
+                            // ⭐ 使用文件名而不是 documentId
+                            String imageId = imageStorageService.saveImage(
+                                    filename,  // ⭐ 使用文件名
+                                    extractedImage.getData(),
+                                    extractedImage.getFormat(),
+                                    metadata);  // 传递包含序号的 metadata
+                            if (imageId != null) {
+                                savedImageCount++;
+                            }
+                        } catch (Exception ex) {
+                            log.warn("⚠️ 保存图片失败 (page={}, img={}): {}", pageNum, imgIndex, ex.getMessage());
+                        }
                     }
                 }
+                log.info("✅ 图片已保存: {} 张 (共 {} 页)", savedImageCount, imagesByPage.size());
             }
 
             // ========== 步骤5: 智能分块 ==========
