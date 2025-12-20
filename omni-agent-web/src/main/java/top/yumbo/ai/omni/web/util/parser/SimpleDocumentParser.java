@@ -1,7 +1,13 @@
 package top.yumbo.ai.omni.web.util.parser;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.hslf.usermodel.*;
+import org.apache.poi.hwpf.HWPFDocument;
+import org.apache.poi.hwpf.extractor.WordExtractor;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xslf.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.*;
 import top.yumbo.ai.omni.web.util.DocumentParser;
 import top.yumbo.ai.omni.web.util.parser.image.SmartImageExtractor;
@@ -45,7 +51,9 @@ public class SimpleDocumentParser implements DocumentParser {
     // 支持的文件扩展名
     private static final Set<String> SUPPORTED_EXTENSIONS = new HashSet<>(Arrays.asList(
             ".txt", ".md", ".markdown", ".html", ".xml", ".json", ".csv", ".log",
-            ".docx", ".pptx"
+            ".docx", ".doc",   // Word: 新版 + 旧版
+            ".pptx", ".ppt",   // PowerPoint: 新版 + 旧版
+            ".xlsx", ".xls"    // Excel: 新版 + 旧版
     ));
 
     /**
@@ -93,12 +101,29 @@ public class SimpleDocumentParser implements DocumentParser {
 
             log.debug("开始解析文件: {}, 扩展名: {}", filename, extension);
 
+            // Word 文档
             if (extension.equals(".docx")) {
                 return parseDocx(file);
-            } else if (extension.equals(".pptx")) {
+            } else if (extension.equals(".doc")) {
+                return parseDoc(file);  // 旧版 Word
+            }
+
+            // PowerPoint 文档
+            else if (extension.equals(".pptx")) {
                 return parsePptx(file);
-            } else {
-                // 默认作为文本文件处理
+            } else if (extension.equals(".ppt")) {
+                return parsePpt(file);  // 旧版 PowerPoint
+            }
+
+            // Excel 文档
+            else if (extension.equals(".xlsx")) {
+                return parseXlsx(file);
+            } else if (extension.equals(".xls")) {
+                return parseXls(file);  // 旧版 Excel
+            }
+
+            // 默认作为文本文件处理
+            else {
                 return parseTextFile(file);
             }
         } catch (Exception e) {
@@ -243,23 +268,20 @@ public class SimpleDocumentParser implements DocumentParser {
     }
 
     /**
-     * 解析 Word 字节数组
+     * 解析旧版 Word 文档 (.doc)
      */
-    private String parseDocxBytes(byte[] bytes) throws IOException {
-        try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-             XWPFDocument document = new XWPFDocument(bis)) {
+    private String parseDoc(File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file);
+             HWPFDocument document = new HWPFDocument(fis)) {
 
-            StringBuilder content = new StringBuilder();
-            List<XWPFParagraph> paragraphs = document.getParagraphs();
+            WordExtractor extractor = new WordExtractor(document);
+            String content = extractor.getText();
 
-            for (XWPFParagraph paragraph : paragraphs) {
-                String text = paragraph.getText();
-                if (text != null && !text.trim().isEmpty()) {
-                    content.append(text).append("\n");
-                }
-            }
-
-            return content.toString().trim();
+            log.debug("成功解析 DOC 文件: {} bytes", content.length());
+            return content.trim();
+        } catch (Exception e) {
+            log.error("解析 DOC 文件失败: {}", file.getName(), e);
+            throw new IOException("解析 DOC 文件失败", e);
         }
     }
 
@@ -321,6 +343,159 @@ public class SimpleDocumentParser implements DocumentParser {
         } catch (Exception e) {
             log.error("解析 PPTX 文件失败: {}", file.getName(), e);
             throw new IOException("解析 PPTX 文件失败", e);
+        }
+    }
+
+    /**
+     * 解析旧版 PowerPoint 文档 (.ppt)
+     */
+    private String parsePpt(File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file);
+             HSLFSlideShow ppt = new HSLFSlideShow(fis)) {
+
+            StringBuilder content = new StringBuilder();
+            List<HSLFSlide> slides = ppt.getSlides();
+
+            for (int i = 0; i < slides.size(); i++) {
+                HSLFSlide slide = slides.get(i);
+                content.append("=== 幻灯片 ").append(i + 1).append(" ===\n");
+
+                // 提取文本
+                slide.getShapes().forEach(shape -> {
+                    if (shape instanceof HSLFTextShape) {
+                        HSLFTextShape textShape = (HSLFTextShape) shape;
+                        String text = textShape.getText();
+                        if (text != null && !text.trim().isEmpty()) {
+                            content.append(text).append("\n");
+                        }
+                    }
+                });
+
+                content.append("\n");
+            }
+
+            String result = content.toString().trim();
+            log.debug("成功解析 PPT 文件: {} slides, {} bytes", slides.size(), result.length());
+            return result;
+        } catch (Exception e) {
+            log.error("解析 PPT 文件失败: {}", file.getName(), e);
+            throw new IOException("解析 PPT 文件失败", e);
+        }
+    }
+
+    /**
+     * 解析新版 Excel 文档 (.xlsx)
+     */
+    private String parseXlsx(File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file);
+             Workbook workbook = new XSSFWorkbook(fis)) {
+
+            return parseExcelWorkbook(workbook, file.getName());
+        } catch (Exception e) {
+            log.error("解析 XLSX 文件失败: {}", file.getName(), e);
+            throw new IOException("解析 XLSX 文件失败", e);
+        }
+    }
+
+    /**
+     * 解析旧版 Excel 文档 (.xls)
+     */
+    private String parseXls(File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file);
+             Workbook workbook = new HSSFWorkbook(fis)) {
+
+            return parseExcelWorkbook(workbook, file.getName());
+        } catch (Exception e) {
+            log.error("解析 XLS 文件失败: {}", file.getName(), e);
+            throw new IOException("解析 XLS 文件失败", e);
+        }
+    }
+
+    /**
+     * 解析 Excel Workbook（通用方法，支持新旧版本）
+     */
+    private String parseExcelWorkbook(Workbook workbook, String filename) {
+        StringBuilder content = new StringBuilder();
+        int sheetCount = workbook.getNumberOfSheets();
+
+        for (int i = 0; i < sheetCount; i++) {
+            Sheet sheet = workbook.getSheetAt(i);
+            content.append("=== 工作表: ").append(sheet.getSheetName()).append(" ===\n");
+
+            for (Row row : sheet) {
+                boolean hasContent = false;
+                StringBuilder rowContent = new StringBuilder();
+
+                for (Cell cell : row) {
+                    String cellValue = getCellValueAsString(cell);
+                    if (cellValue != null && !cellValue.trim().isEmpty()) {
+                        if (hasContent) {
+                            rowContent.append("\t");
+                        }
+                        rowContent.append(cellValue);
+                        hasContent = true;
+                    }
+                }
+
+                if (hasContent) {
+                    content.append(rowContent).append("\n");
+                }
+            }
+
+            content.append("\n");
+        }
+
+        String result = content.toString().trim();
+        log.debug("成功解析 Excel 文件 {}: {} sheets, {} bytes", filename, sheetCount, result.length());
+        return result;
+    }
+
+    /**
+     * 获取单元格值作为字符串
+     */
+    private String getCellValueAsString(Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                if (org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                } else {
+                    return String.valueOf(cell.getNumericCellValue());
+                }
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
+            case BLANK:
+                return "";
+            default:
+                return "";
+        }
+    }
+
+    /**
+     * 解析 Word 字节数组
+     */
+    private String parseDocxBytes(byte[] bytes) throws IOException {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+             XWPFDocument document = new XWPFDocument(bis)) {
+
+            StringBuilder content = new StringBuilder();
+            List<XWPFParagraph> paragraphs = document.getParagraphs();
+
+            for (XWPFParagraph paragraph : paragraphs) {
+                String text = paragraph.getText();
+                if (text != null && !text.trim().isEmpty()) {
+                    content.append(text).append("\n");
+                }
+            }
+
+            return content.toString().trim();
         }
     }
 
