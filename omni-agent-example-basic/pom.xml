@@ -97,6 +97,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- ========== 工作流引擎 ⭐ NEW ========== -->
+        <dependency>
+            <groupId>top.yumbo.ai</groupId>
+            <artifactId>omni-agent-workflow</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- PPL ONNX - 用于高精度困惑度分块（可选） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
