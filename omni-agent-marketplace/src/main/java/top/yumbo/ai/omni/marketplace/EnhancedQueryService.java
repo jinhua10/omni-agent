@@ -176,17 +176,27 @@ public class EnhancedQueryService {
                 return results;
             }
 
-            // 准备重排序输入
-            List<String> documents = results.stream()
-                    .map(r -> r.getDocument().getContent())
+            // ⭐ 准备重排序输入：将 SearchResult 转换为 Map 列表
+            List<Map<String, Object>> searchResults = results.stream()
+                    .map(r -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("content", r.getDocument().getContent());
+                        map.put("score", r.getScore());
+                        map.put("documentId", r.getDocument().getId());
+                        if (r.getDocument().getTitle() != null) {
+                            map.put("title", r.getDocument().getTitle());
+                        }
+                        return map;
+                    })
                     .collect(Collectors.toList());
 
-            Map<String, Object> input = new HashMap<>();
-            input.put("query", question);
-            input.put("documents", documents);
-
+            // ⭐ 参数中传递查询文本
             Map<String, Object> params = new HashMap<>();
+            params.put("query", question);
             params.put("topK", results.size());
+
+            // ⭐ Debug 日志
+            log.debug("🔄 [Rerank] Input: {} results, query: '{}'", searchResults.size(), question);
 
             // 调用重排序组件
             var component = algorithmMarketService.getComponent("rerank");
@@ -195,10 +205,17 @@ public class EnhancedQueryService {
                 return results;
             }
 
-            Object result = component.execute(input, params);
+            // ⭐ 直接传入 searchResults 列表作为 input
+            Object result = component.execute(searchResults, params);
+
+            // ⭐ Debug 日志
+            log.debug("🔄 [Rerank] Result type: {}", result != null ? result.getClass().getSimpleName() : "null");
+
             if (result instanceof Map) {
                 Map<String, Object> resultMap = (Map<String, Object>) result;
-                List<Integer> rankedIndices = (List<Integer>) resultMap.get("rankedIndices");
+
+                // 尝试获取 rerankedIndices（新返回格式）
+                List<Integer> rankedIndices = (List<Integer>) resultMap.get("rerankedIndices");
 
                 if (rankedIndices != null && !rankedIndices.isEmpty()) {
                     // 根据排序后的索引重新排列结果
@@ -208,6 +225,7 @@ public class EnhancedQueryService {
                             rerankedResults.add(results.get(index));
                         }
                     }
+                    log.debug("🔄 [Rerank] Reordered {} results using rerankedIndices", rerankedResults.size());
                     return rerankedResults;
                 }
             }
@@ -215,7 +233,7 @@ public class EnhancedQueryService {
             return results;
 
         } catch (Exception e) {
-            log.error("❌ 重排序失败: {}", e.getMessage());
+            log.error("❌ 重排序失败: {}", e.getMessage(), e);
             return results;
         }
     }
