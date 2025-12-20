@@ -413,14 +413,16 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path docImageDir = imagesPath.resolve(documentId);
             Files.createDirectories(docImageDir);
 
-            // ⭐ 使用有意义的文件名：page_001_img_000.png
-            String imageId = image.getId() != null ? image.getId() : UUID.randomUUID().toString();
-
-            // 构建文件名
-            String imageFilename;
-
-            // 从 metadata 中获取页码和图片序号
+            // ⭐ 强制要求页码信息
             Integer pageNum = image.getPageNumber();
+            if (pageNum == null || pageNum <= 0) {
+                throw new IllegalArgumentException(
+                    String.format("Image must have valid pageNumber (got: %s, documentId: %s). " +
+                                "All images must be assigned a page number.",
+                                pageNum, documentId));
+            }
+
+            // 从 metadata 中获取图片序号
             Integer imageIndex = null;
             if (image.getMetadata() != null && image.getMetadata().containsKey("imageIndex")) {
                 imageIndex = ((Number) image.getMetadata().get("imageIndex")).intValue();
@@ -428,27 +430,28 @@ public class FileDocumentStorage implements DocumentStorageService {
 
             String format = image.getFormat() != null ? image.getFormat() : "png";
 
-            if (pageNum != null && pageNum > 0 && imageIndex != null) {
-                // ⭐ 格式：page_001_img_000.png（页码3位，图片序号3位）
+            // ⭐ 构建有意义的文件名：page_001_img_000.png（页码3位，图片序号3位）
+            String imageFilename;
+            if (imageIndex != null && imageIndex >= 0) {
                 imageFilename = String.format("page_%03d_img_%03d.%s", pageNum, imageIndex, format);
-            } else if (pageNum != null && pageNum > 0) {
-                // 如果只有页码，没有图片序号：page_001_img.png
-                imageFilename = String.format("page_%03d_img.%s", pageNum, format);
             } else {
-                // 如果没有页码信息，使用 image_xxx.png 格式
-                imageFilename = String.format("image_%s.%s", imageId.substring(0, Math.min(8, imageId.length())), format);
+                // 如果没有图片序号，只有页码：page_001_img.png
+                imageFilename = String.format("page_%03d_img.%s", pageNum, format);
             }
 
             Path imageFile = docImageDir.resolve(imageFilename);
 
-            // 直接保存图片的二进制数据，而不是序列化对象 ⭐
+            // 保存图片的二进制数据
             Files.write(imageFile, image.getData());
 
-            // 同时保存元数据到 JSON 文件，方便查询
+            // 保存元数据到 JSON 文件
             String metadataFilename = imageFilename + ".meta";
             Path metadataFile = docImageDir.resolve(metadataFilename);
             String metadataJson = buildImageMetadataJson(image, imageFilename);
             Files.write(metadataFile, metadataJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+            // ⭐ 使用有意义的 imageId：page_页码_img_序号
+            String imageId = String.format("page_%03d_img_%03d", pageNum, imageIndex != null ? imageIndex : 0);
 
             log.debug("Saved image: {} -> {}/{}", imageId, documentId, imageFilename);
             return imageId;

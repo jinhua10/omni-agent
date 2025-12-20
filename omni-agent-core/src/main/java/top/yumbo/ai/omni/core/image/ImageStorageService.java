@@ -46,6 +46,7 @@ public class ImageStorageService {
 
     /**
      * 保存图像（带元数据）⭐
+     * ⚠️ 强制要求页码信息，如果没有则自动分配
      */
     public String saveImage(String documentId, byte[] imageData, String format, java.util.Map<String, Object> metadata) {
         if (imageData == null || imageData.length == 0) {
@@ -54,16 +55,49 @@ public class ImageStorageService {
         }
 
         try {
+            // ⭐ 确保有页码信息，如果没有则自动分配
+            Integer pageNumber = null;
+            Integer imageIndex = null;
+
+            if (metadata != null) {
+                if (metadata.containsKey("pageNumber")) {
+                    pageNumber = ((Number) metadata.get("pageNumber")).intValue();
+                }
+                if (metadata.containsKey("imageIndex")) {
+                    imageIndex = ((Number) metadata.get("imageIndex")).intValue();
+                }
+            }
+
+            // ⭐ 如果没有页码，自动分配：查询当前文档已有多少张图片，顺序编号
+            if (pageNumber == null || pageNumber <= 0) {
+                List<Image> existingImages = storageService.getImagesByDocument(documentId);
+                pageNumber = existingImages.size() + 1;  // 按顺序编号：1, 2, 3...
+                imageIndex = 0;  // 第一张图片
+
+                log.info("⚠️ Image missing pageNumber, auto-assigned: page={}, documentId={}",
+                        pageNumber, documentId);
+
+                // 更新 metadata
+                if (metadata == null) {
+                    metadata = new java.util.HashMap<>();
+                }
+                metadata.put("pageNumber", pageNumber);
+                metadata.put("imageIndex", imageIndex);
+                metadata.put("autoAssigned", true);  // 标记为自动分配
+            }
+
             Image image = Image.builder()
                 .documentId(documentId)
                 .data(imageData)
                 .format(format)
-                .metadata(metadata)  // 添加 metadata ⭐
+                .pageNumber(pageNumber)  // ⭐ 确保设置页码
+                .metadata(metadata)
                 .createdAt(System.currentTimeMillis())
                 .build();
 
             String imageId = storageService.saveImage(documentId, image);
-            log.info("Saved image for document {}: {} bytes", documentId, imageData.length);
+            log.info("Saved image for document {}: page={}, index={}, size={} bytes",
+                    documentId, pageNumber, imageIndex, imageData.length);
             return imageId;
         } catch (Exception e) {
             log.error("Failed to save image for document: {}", documentId, e);
