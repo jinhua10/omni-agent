@@ -1,0 +1,14 @@
+/* 工作流市场 - 主容器样式 (Workflow Market - Main Container Styles) */
+.workflow-market {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background: var(--color-bg-primary);
+}
+
+/* 确保在组件模式下正确显示 */
+.workflow-market .market-browser,
+.workflow-market .workflow-detail {
+  height: 100%;
+}
+

@@ -1024,6 +1024,93 @@ export default {
   },
 
   // ============================================================================
+  // Workflow Market
+  // ============================================================================
+  workflowMarket: {
+    title: 'Workflow Market',
+    subtitle: 'Discover and share powerful workflows',
+
+    // Search and filter
+    search: {
+      placeholder: 'Search workflows...',
+      button: 'Search',
+      noResults: 'No workflows found',
+      tryOtherKeywords: 'Try other keywords or categories',
+    },
+
+    // Categories
+    category: {
+      title: 'Category',
+      all: 'All',
+      dataProcessing: 'Data Processing',
+      apiIntegration: 'API Integration',
+      automation: 'Automation',
+      transformation: 'Transformation',
+      analysis: 'Analysis',
+      example: 'Example',
+    },
+
+    // Sort
+    sort: {
+      title: 'Sort By',
+      popular: 'Popular',
+      recent: 'Recent',
+      topRated: 'Top Rated',
+      name: 'Name',
+    },
+
+    // Workflow card
+    card: {
+      featured: 'Featured',
+      downloads: 'downloads',
+      author: 'Author',
+      version: 'Version',
+      category: 'Category',
+    },
+
+    // Detail page
+    detail: {
+      backToMarket: 'Back to Market',
+      download: 'Download',
+      install: 'Install',
+      overview: 'Overview',
+      steps: 'Steps',
+      ratings: 'Ratings',
+      description: 'Description',
+      noDescription: 'No description available',
+      stepsCount: 'Steps Count',
+      stepUnit: 'steps',
+      noSteps: 'No steps information',
+      agent: 'Agent',
+      dependencies: 'Dependencies',
+      downloadSuccess: 'Download successful',
+      downloadFailed: 'Download failed',
+      installSuccess: 'Workflow installed successfully!',
+      installFailed: 'Installation failed',
+      notFound: 'Workflow not found',
+    },
+
+    // Rating
+    rating: {
+      title: 'Ratings & Reviews',
+      giveRating: 'Rate this workflow',
+      submit: 'Submit Rating',
+      commentPlaceholder: 'Write your review (optional)...',
+      pleaseRate: 'Please select a rating',
+      rateSuccess: 'Rating submitted!',
+      rateFailed: 'Failed to submit rating',
+      noRatings: 'No ratings yet. Be the first to rate!',
+      ratingsCount: 'ratings',
+    },
+
+    // Common
+    loading: 'Loading...',
+    loadMore: 'Load More',
+    reset: 'Reset Filters',
+    noWorkflows: 'No workflows',
+  },
+
+  // ============================================================================
   // User
   // ============================================================================
   user: {

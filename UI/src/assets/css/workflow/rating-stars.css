@@ -1,0 +1,66 @@
+/* 评分星星样式 (Rating Stars Styles) */
+
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  display: inline-block;
+  transition: all var(--transition-fast);
+}
+
+.star.interactive {
+  cursor: pointer;
+}
+
+.star.interactive:hover {
+  transform: scale(1.2);
+}
+
+.star.full {
+  color: #faad14;
+}
+
+.star.half {
+  color: #faad14;
+  opacity: 0.5;
+}
+
+.star.empty {
+  color: var(--color-border);
+}
+
+.rating-value {
+  margin-left: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* 尺寸变体 */
+.rating-stars-small .star {
+  font-size: var(--font-size-md);
+}
+
+.rating-stars-small .rating-value {
+  font-size: var(--font-size-xs);
+}
+
+.rating-stars-medium .star {
+  font-size: var(--font-size-lg);
+}
+
+.rating-stars-medium .rating-value {
+  font-size: var(--font-size-sm);
+}
+
+.rating-stars-large .star {
+  font-size: var(--font-size-xxl);
+}
+
+.rating-stars-large .rating-value {
+  font-size: var(--font-size-md);
+}
+

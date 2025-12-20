@@ -1037,6 +1037,93 @@ export default {
   },
 
   // ============================================================================
+  // 工作流市场 (Workflow Market)
+  // ============================================================================
+  workflowMarket: {
+    title: '工作流市场',
+    subtitle: '发现和分享强大的工作流',
+
+    // 搜索和筛选
+    search: {
+      placeholder: '搜索工作流...',
+      button: '搜索',
+      noResults: '没有找到工作流',
+      tryOtherKeywords: '试试其他关键词或分类',
+    },
+
+    // 分类
+    category: {
+      title: '分类',
+      all: '全部',
+      dataProcessing: '数据处理',
+      apiIntegration: 'API集成',
+      automation: '自动化',
+      transformation: '数据转换',
+      analysis: '数据分析',
+      example: '示例',
+    },
+
+    // 排序
+    sort: {
+      title: '排序方式',
+      popular: '最热门',
+      recent: '最新',
+      topRated: '高评分',
+      name: '名称',
+    },
+
+    // 工作流卡片
+    card: {
+      featured: '推荐',
+      downloads: '次下载',
+      author: '作者',
+      version: '版本',
+      category: '分类',
+    },
+
+    // 详情页
+    detail: {
+      backToMarket: '返回市场',
+      download: '下载',
+      install: '安装',
+      overview: '概览',
+      steps: '步骤',
+      ratings: '评分',
+      description: '描述',
+      noDescription: '暂无详细描述',
+      stepsCount: '步骤数量',
+      stepUnit: '个步骤',
+      noSteps: '暂无步骤信息',
+      agent: 'Agent',
+      dependencies: '依赖',
+      downloadSuccess: '下载成功',
+      downloadFailed: '下载失败',
+      installSuccess: '工作流安装成功！',
+      installFailed: '安装失败',
+      notFound: '工作流不存在',
+    },
+
+    // 评分
+    rating: {
+      title: '评分和评论',
+      giveRating: '给这个工作流评分',
+      submit: '提交评分',
+      commentPlaceholder: '写下你的评论（可选）...',
+      pleaseRate: '请选择评分',
+      rateSuccess: '评分成功！',
+      rateFailed: '评分失败',
+      noRatings: '还没有评分，成为第一个评分的人吧！',
+      ratingsCount: '个评分',
+    },
+
+    // 通用
+    loading: '加载中...',
+    loadMore: '加载更多',
+    reset: '重置筛选',
+    noWorkflows: '暂无工作流',
+  },
+
+  // ============================================================================
   // 用户 (User)
   // ============================================================================
   user: {
