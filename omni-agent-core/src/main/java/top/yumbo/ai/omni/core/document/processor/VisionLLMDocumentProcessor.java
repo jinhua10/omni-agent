@@ -766,19 +766,96 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      */
     private List<DocumentPage> extractPdfPages(ProcessingContext context) throws Exception {
         try {
-            // TODO: 实现 PDF 页面提取（使用 Apache PDFBox）
-            // 1. 加载 PDF 文档
-            // 2. 遍历每一页
-            // 3. 将每页渲染为图片
-            // 4. 提取页面中的文本
-            // 5. 创建 DocumentPage
+            java.io.InputStream inputStream;
+            if (context.getFileBytes() != null) {
+                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
+            } else {
+                inputStream = new java.io.FileInputStream(context.getFilePath());
+            }
 
-            log.warn("⚠️ [VisionLLM] PDF 页面提取功能待实现");
-            log.info("💡 提示：需要添加 Apache PDFBox 依赖来支持 PDF");
-            throw new Exception("PDF 文档页面提取功能待实现 - 需要 Apache PDFBox");
+            try (org.apache.pdfbox.pdmodel.PDDocument document =
+                    org.apache.pdfbox.pdmodel.PDDocument.load(inputStream)) {
+
+                int pageCount = document.getNumberOfPages();
+                log.info("🔍 [VisionLLM] PDF 文档包含 {} 页", pageCount);
+
+                List<DocumentPage> pages = new ArrayList<>();
+                org.apache.pdfbox.rendering.PDFRenderer pdfRenderer =
+                    new org.apache.pdfbox.rendering.PDFRenderer(document);
+
+                for (int i = 0; i < pageCount; i++) {
+                    try {
+                        // 1. 提取页面文本
+                        org.apache.pdfbox.text.PDFTextStripper textStripper =
+                            new org.apache.pdfbox.text.PDFTextStripper();
+                        textStripper.setStartPage(i + 1);
+                        textStripper.setEndPage(i + 1);
+                        String pageText = textStripper.getText(document);
+
+                        // 2. 将页面渲染为图片（300 DPI，高质量）
+                        java.awt.image.BufferedImage bufferedImage =
+                            pdfRenderer.renderImageWithDPI(i, 300,
+                                org.apache.pdfbox.rendering.ImageType.RGB);
+
+                        // 3. 将 BufferedImage 转换为 PNG 字节数组
+                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                        javax.imageio.ImageIO.write(bufferedImage, "png", baos);
+                        byte[] imageData = baos.toByteArray();
+
+                        // 4. 创建 metadata
+                        Map<String, Object> imageMetadata = new HashMap<>();
+                        imageMetadata.put("fileName", context.getOriginalFileName());
+                        imageMetadata.put("pageText", pageText.trim());
+                        imageMetadata.put("totalPages", pageCount);
+                        imageMetadata.put("pageIndex", i);
+                        imageMetadata.put("documentType", "PDF");
+
+                        // ⭐ 添加前几页的文字作为上下文（帮助理解主题）
+                        if (i < 3) {
+                            List<String> contextTexts = new ArrayList<>();
+                            for (int j = 0; j < Math.min(3, pageCount); j++) {
+                                org.apache.pdfbox.text.PDFTextStripper contextStripper =
+                                    new org.apache.pdfbox.text.PDFTextStripper();
+                                contextStripper.setStartPage(j + 1);
+                                contextStripper.setEndPage(j + 1);
+                                String contextText = contextStripper.getText(document);
+                                if (!contextText.trim().isEmpty()) {
+                                    contextTexts.add(contextText.trim());
+                                }
+                            }
+                            imageMetadata.put("documentContext", String.join(" | ", contextTexts));
+                        }
+
+                        // 5. 创建 ExtractedImage
+                        ExtractedImage image = ExtractedImage.builder()
+                                .data(imageData)
+                                .format("png")
+                                .pageNumber(i + 1)
+                                .position(new ImagePosition(0, 0,
+                                    bufferedImage.getWidth(), bufferedImage.getHeight()))
+                                .metadata(imageMetadata)
+                                .build();
+
+                        // 6. 创建 DocumentPage
+                        DocumentPage page = new DocumentPage(i + 1);
+                        page.addImage(image);
+                        pages.add(page);
+
+                        log.debug("✅ [VisionLLM] 成功渲染 PDF 页面 {} / {}", i + 1, pageCount);
+
+                    } catch (Exception e) {
+                        log.warn("⚠️ [VisionLLM] PDF 页面 {} 处理失败", i + 1, e);
+                        // 继续处理下一页
+                    }
+                }
+
+                log.info("✅ [VisionLLM] PDF 文档页面提取完成: {} 页", pages.size());
+                return pages;
+
+            }
         } catch (Exception e) {
             log.error("❌ [VisionLLM] PDF 页面提取失败", e);
-            throw e;
+            throw new Exception("PDF 页面提取失败: " + e.getMessage(), e);
         }
     }
 

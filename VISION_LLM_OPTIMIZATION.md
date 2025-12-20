@@ -370,7 +370,7 @@ mvn spring-boot:run
 - ✅ **PowerPoint**：.ppt, .pptx（每页幻灯片）
 - ✅ **Word**：.doc, .docx（每张图片作为一页）⭐ 新增
 - ✅ **Excel**：.xls, .xlsx（每张图片作为一页）⭐ 新增
-- 🚧 **PDF**：待实现（需要 Apache PDFBox）
+- ✅ **PDF**：.pdf（每页渲染为图片，300 DPI）⭐ 新增
 
-现在所有 Office 文档（包括旧版本）都支持智能批处理和并行处理，且所有配置都可以通过 YML 轻松调整！🚀
+现在所有 Office 文档和 PDF（包括旧版本）都支持智能批处理和并行处理，且所有配置都可以通过 YML 轻松调整！🚀
 
