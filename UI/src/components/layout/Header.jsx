@@ -22,7 +22,8 @@ import {
   RocketOutlined,
   UserOutlined,
   SettingOutlined,
-  BulbOutlined
+  BulbOutlined,
+  ShopOutlined
 } from '@ant-design/icons'
 import { useLanguage } from '@contexts/LanguageContext'
 import { useTheme } from '@contexts/ThemeContext'
@@ -92,6 +93,11 @@ function Header({
       key: 'aiService',
       icon: <RocketOutlined />,
       label: t('nav.aiService'),
+    },
+    {
+      key: 'workflowMarket',
+      icon: <ShopOutlined />,
+      label: t('workflowMarket.title'),
     },
     {
       key: 'profile',

@@ -18,6 +18,7 @@ import {
   SettingOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  ShopOutlined,
 } from '@ant-design/icons'
 import { useLanguage } from '@contexts/LanguageContext'
 import PropTypes from 'prop-types'
@@ -67,6 +68,11 @@ function Sidebar({
       key: 'roles',
       icon: <TeamOutlined />,
       label: t('nav.roles'),
+    },
+    {
+      key: 'workflowMarket',
+      icon: <ShopOutlined />,
+      label: t('workflowMarket.title'),
     },
     {
       type: 'divider',
