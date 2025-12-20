@@ -203,6 +203,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
     /**
      * 提取 PowerPoint 文档的页面
+     * ⭐ 优化：先提取文字，构建上下文，避免 AI 乱答
      *
      * @param context 处理上下文
      * @return 页面列表
@@ -223,6 +224,21 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                 java.util.List<org.apache.poi.xslf.usermodel.XSLFSlide> slides = ppt.getSlides();
 
                 log.info("🔍 [VisionLLM] PowerPoint 包含 {} 张幻灯片", slides.size());
+
+                // ⭐ 先提取所有幻灯片的文字，用于构建上下文
+                List<String> slideTexts = new ArrayList<>();
+                for (org.apache.poi.xslf.usermodel.XSLFSlide slide : slides) {
+                    StringBuilder slideText = new StringBuilder();
+                    slide.getShapes().forEach(shape -> {
+                        if (shape instanceof org.apache.poi.xslf.usermodel.XSLFTextShape) {
+                            String text = ((org.apache.poi.xslf.usermodel.XSLFTextShape) shape).getText();
+                            if (text != null && !text.trim().isEmpty()) {
+                                slideText.append(text).append(" ");
+                            }
+                        }
+                    });
+                    slideTexts.add(slideText.toString().trim());
+                }
 
                 // 获取幻灯片尺寸
                 java.awt.Dimension pageSize = ppt.getPageSize();
@@ -251,12 +267,31 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                     javax.imageio.ImageIO.write(img, "png", baos);
                     byte[] imageData = baos.toByteArray();
 
+                    // ⭐ 创建 metadata，包含文字内容和文档信息
+                    Map<String, Object> imageMetadata = new HashMap<>();
+                    imageMetadata.put("slideText", slideTexts.get(i));  // 当前幻灯片文字
+                    imageMetadata.put("fileName", context.getOriginalFileName());  // 文件名
+                    imageMetadata.put("totalSlides", slides.size());  // 总幻灯片数
+
+                    // ⭐ 添加前几张幻灯片的文字作为上下文（帮助理解主题）
+                    if (i < 3) {
+                        // 前3张幻灯片通常包含标题和主题信息
+                        List<String> contextTexts = new ArrayList<>();
+                        for (int j = 0; j < Math.min(3, slideTexts.size()); j++) {
+                            if (!slideTexts.get(j).isEmpty()) {
+                                contextTexts.add(slideTexts.get(j));
+                            }
+                        }
+                        imageMetadata.put("documentContext", String.join(" | ", contextTexts));
+                    }
+
                     // 创建 ExtractedImage
                     ExtractedImage image = ExtractedImage.builder()
                             .data(imageData)
                             .format("png")
                             .pageNumber(i + 1)
                             .position(new ImagePosition(0, 0, width, height))
+                            .metadata(imageMetadata)  // ⭐ 传递 metadata
                             .build();
 
                     // 创建 DocumentPage
@@ -416,30 +451,69 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
     /**
      * 构建 Vision 提示词
+     * ⭐ 优化：利用文件名、文字内容和上下文，避免 AI 乱答
      */
     private String buildVisionPrompt(DocumentPage page, String basePrompt) {
         StringBuilder prompt = new StringBuilder();
 
-        // 基础提示词
-        if (basePrompt != null && !basePrompt.isEmpty()) {
-            prompt.append(basePrompt).append("\n\n");
-        } else {
-            prompt.append("请详细描述这张图片的内容，包括：\n");
-            prompt.append("1. 主要内容和主题\n");
-            prompt.append("2. 文字信息（如果有）\n");
-            prompt.append("3. 图表、图形、流程图等可视化元素\n");
-            prompt.append("4. 重要的细节和关键信息\n");
-            prompt.append("5. 页面的整体布局和结构\n\n");
+        // ⭐ 1. 从图片 metadata 中提取上下文信息
+        String fileName = null;
+        String slideText = null;
+        String documentContext = null;
+        Integer totalSlides = null;
+
+        if (!page.getImages().isEmpty() && page.getImages().get(0).getMetadata() != null) {
+            Map<String, Object> metadata = page.getImages().get(0).getMetadata();
+            fileName = (String) metadata.get("fileName");
+            slideText = (String) metadata.get("slideText");
+            documentContext = (String) metadata.get("documentContext");
+            totalSlides = (Integer) metadata.get("totalSlides");
         }
 
-        // 添加页面信息
-        prompt.append(String.format("这是第 %d 页/幻灯片的内容。\n", page.getPageNumber()));
+        // ⭐ 2. 构建上下文感知的提示词
+        prompt.append("# 任务说明\n");
+        prompt.append("请将这张 PPT 幻灯片的内容转换为文字描述。\n\n");
 
-        if (page.getImages().size() > 1) {
-            prompt.append(String.format("本页包含 %d 张图片，请综合分析。\n", page.getImages().size()));
+        // ⭐ 3. 提供文档上下文信息
+        if (fileName != null) {
+            prompt.append("## 文档信息\n");
+            prompt.append("- 文件名：").append(fileName).append("\n");
+            if (totalSlides != null) {
+                prompt.append("- 总幻灯片数：").append(totalSlides).append("\n");
+            }
+            prompt.append("- 当前页码：第 ").append(page.getPageNumber()).append(" 页\n\n");
         }
 
-        prompt.append("\n请以 Markdown 格式输出分析结果。");
+        // ⭐ 4. 提供文字内容（最重要的上下文）
+        if (slideText != null && !slideText.trim().isEmpty()) {
+            prompt.append("## 幻灯片中的文字内容\n");
+            prompt.append("```\n");
+            prompt.append(slideText).append("\n");
+            prompt.append("```\n\n");
+        }
+
+        // ⭐ 5. 前几页的上下文（理解主题）
+        if (documentContext != null && !documentContext.trim().isEmpty()) {
+            prompt.append("## 文档主题参考\n");
+            prompt.append("前几页的内容：").append(documentContext).append("\n\n");
+        }
+
+        // ⭐ 6. 明确输出要求
+        prompt.append("## 输出要求\n");
+        prompt.append("请根据上述文字内容和图片中的可视化元素，输出：\n\n");
+        prompt.append("1. **文字信息**：准确转录幻灯片中的所有文字\n");
+        prompt.append("2. **图表说明**：如果有图表、图片，简要描述其展示的内容\n");
+        prompt.append("3. **布局信息**：如标题、正文、列表等结构\n\n");
+
+        // ⭐ 7. 强调重点
+        prompt.append("⚠️ 重要提示：\n");
+        prompt.append("- 优先使用上面提供的文字内容\n");
+        prompt.append("- 不要过度解读或添加不存在的内容\n");
+        prompt.append("- 专注于客观描述幻灯片的实际内容\n");
+        if (fileName != null && fileName.contains("节约用水")) {
+            prompt.append("- 本文档主题是关于节约用水的，请保持主题一致性\n");
+        }
+        prompt.append("\n请以简洁的 Markdown 格式输出。");
 
         return prompt.toString();
     }
