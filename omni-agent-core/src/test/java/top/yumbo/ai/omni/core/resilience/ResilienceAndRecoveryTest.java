@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import top.yumbo.ai.omni.core.chunking.DocumentChunkingService;
+import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.core.evolution.EvolutionService;
 import top.yumbo.ai.omni.core.evolution.ConceptVersion;
 import top.yumbo.ai.omni.core.feedback.FeedbackService;
@@ -15,6 +16,7 @@ import top.yumbo.ai.storage.api.DocumentStorageService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,6 +49,9 @@ public class ResilienceAndRecoveryTest {
     @Mock
     private DocumentStorageService storageService;
 
+    @Mock
+    private ChunkingStrategyManager strategyManager;
+
     private DocumentChunkingService chunkingService;
     private EvolutionService evolutionService;
     private FeedbackService feedbackService;
@@ -55,7 +60,7 @@ public class ResilienceAndRecoveryTest {
 
     @BeforeEach
     void setUp() {
-        chunkingService = new DocumentChunkingService(storageService);
+        chunkingService = new DocumentChunkingService(storageService, strategyManager);
         evolutionService = new EvolutionService();
         feedbackService = new FeedbackService();
         knowledgeLoader = new KnowledgeLoader();
@@ -113,7 +118,7 @@ public class ResilienceAndRecoveryTest {
         when(storageService.saveChunks(anyString(), anyList())).thenAnswer(invocation -> {
             int count = callCount.incrementAndGet();
             if (count % 2 == 0) {
-                return Arrays.asList("chunk-" + count);
+                return Collections.singletonList("chunk-" + count);
             } else {
                 throw new RuntimeException("Simulated failure " + count);
             }
@@ -279,7 +284,7 @@ public class ResilienceAndRecoveryTest {
     void testServiceInitialization() {
         // 使用mock存储服务创建 - 应该成功
         assertThatCode(() -> {
-            DocumentChunkingService service = new DocumentChunkingService(storageService);
+            DocumentChunkingService service = new DocumentChunkingService(storageService, strategyManager);
             assertThat(service).isNotNull();
         }).doesNotThrowAnyException();
     }
@@ -295,7 +300,7 @@ public class ResilienceAndRecoveryTest {
             .thenThrow(new RuntimeException("Failure 1"))
             .thenThrow(new RuntimeException("Failure 2"))
             .thenThrow(new RuntimeException("Failure 3"))
-            .thenReturn(Arrays.asList("chunk1"));
+            .thenReturn(Collections.singletonList("chunk1"));
 
         // 执行4次操作
         assertThat(chunkingService.chunkAndStore("doc1", "Content")).isEmpty();
@@ -334,7 +339,7 @@ public class ResilienceAndRecoveryTest {
         
         when(storageService.saveChunks(anyString(), anyList())).thenAnswer(invocation -> {
             successCount.incrementAndGet();
-            return Arrays.asList("chunk-" + successCount.get());
+            return Collections.singletonList("chunk-" + successCount.get());
         });
 
         // 并发写入20个文档
