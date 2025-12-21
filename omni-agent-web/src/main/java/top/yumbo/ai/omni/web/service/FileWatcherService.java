@@ -46,6 +46,7 @@ public class FileWatcherService {
     private final top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager chunkingStrategyManager;
     private final top.yumbo.ai.omni.core.image.ImageStorageService imageStorageService;
     private final top.yumbo.ai.omni.web.service.rag.ProcessingProgressService progressService;  // ⭐ 新增
+    private final SystemRAGConfigService ragConfigService;  // ⭐ 新增：系统RAG配置服务
 
     private WatchService watchService;
     private ExecutorService executorService;
@@ -182,16 +183,17 @@ public class FileWatcherService {
     }
 
     /**
-     * 扫描并处理未索引的文件（定期任务）⭐ 核心方法
+     * 扫描并注册未索引的文件（定期任务）⭐ 核心方法
+     *
+     * 新逻辑：
+     * 1. 扫描文件并生成documentId
+     * 2. 注册到SystemRAGConfigService（状态：PENDING）
+     * 3. 不自动处理，由用户在UI中决定何时处理
      */
     private void scanAndProcessUnindexedFiles() {
-        if (!Boolean.TRUE.equals(currentConfig.getAutoIndex())) {
-            return;
-        }
-
         try {
             Path watchPath = Paths.get(currentConfig.getWatchDirectory());
-            log.info("🔍 扫描未索引文件: {}", watchPath);
+            log.info("🔍 扫描未注册文件: {}", watchPath);
 
             // 递归扫描所有文件（包括子目录）
             Files.walk(watchPath)
@@ -205,31 +207,42 @@ public class FileWatcherService {
                         try {
                             // 获取相对路径（用于判断是否已处理）
                             Path relativePath = watchPath.relativize(filePath);
-                            String relativePathStr = relativePath.toString();
+                            String relativePathStr = relativePath.toString().replace('\\', '/');
 
-                            // 检查是否已归档
-                            if (archivedFiles.containsKey(relativePathStr)) {
-                                log.debug("⏭️ 已归档，跳过: {}", relativePathStr);
+                            // ⭐ 使用相对路径作为documentId（见名知意）
+                            String documentId = relativePathStr;
+
+                            // 检查是否已注册到RAG配置服务
+                            SystemRAGConfigService.DocumentRAGConfig existingConfig =
+                                ragConfigService.getDocumentConfig(documentId);
+
+                            // 如果已经注册且不是PENDING状态，跳过
+                            if (existingConfig.getCreatedAt() > 0 &&
+                                !"PENDING".equals(existingConfig.getStatus())) {
+                                log.debug("⏭️ 文档已处理或正在处理，跳过: {}", documentId);
                                 return;
                             }
 
-                            // 检查是否正在处理
-                            if (processingRecords.containsKey(relativePathStr)) {
-                                FileChangeRecord record = processingRecords.get(relativePathStr);
-                                if (record.getProcessed() != null && record.getProcessed()) {
-                                    log.debug("⏭️ 已处理，跳过: {}", relativePathStr);
-                                    return;
-                                }
+                            // 注册新文档（状态：PENDING，等待用户决定如何处理）
+                            if (existingConfig.getCreatedAt() == 0) {
+                                log.info("📝 注册新文档: {} (等待用户配置)", documentId);
+                                SystemRAGConfigService.DocumentRAGConfig newConfig =
+                                    new SystemRAGConfigService.DocumentRAGConfig();
+                                newConfig.setDocumentId(documentId);
+                                newConfig.setStatus("PENDING");
+                                newConfig.setTextExtractionModel(ragConfigService.getDefaultTextExtractionModel());
+                                newConfig.setChunkingStrategy(ragConfigService.getDefaultChunkingStrategy());
+                                newConfig.setCreatedAt(System.currentTimeMillis());
+                                newConfig.setUpdatedAt(System.currentTimeMillis());
+                                ragConfigService.setDocumentConfig(documentId, newConfig);
                             }
 
-                            // 处理文件
-                            log.info("📄 发现未索引文件: {}", relativePathStr);
-                            processNewFile(filePath, relativePath);
-
                         } catch (Exception e) {
-                            log.error("❌ 处理文件失败: {}", filePath, e);
+                            log.error("❌ 注册文件失败: {}", filePath, e);
                         }
                     });
+
+            log.info("✅ 文件扫描完成");
 
         } catch (IOException e) {
             log.error("❌ 扫描文件失败", e);
