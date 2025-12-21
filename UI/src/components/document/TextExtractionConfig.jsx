@@ -175,17 +175,17 @@ function TextExtractionConfig({ documentId }) {
         {/* 左侧：配置面板 */}
         <div className="config-panel">
           <Card title={documentId ? `${t('textExtractionConfig.documentTitle')} - ${documentId}` : t('textExtractionConfig.title')}>
-            <Space direction="vertical" style={{ width: '100%' }} size="large">
+            <Space vertical style={{ width: '100%' }} size="large">
               {documentId ? (
                 <Alert
-                  message={t('textExtractionConfig.alerts.documentConfigTitle')}
+                  title={t('textExtractionConfig.alerts.documentConfigTitle')}
                   description={t('textExtractionConfig.alerts.documentConfigDesc').replace('{docId}', documentId)}
                   type="warning"
                   showIcon
                 />
               ) : (
                 <Alert
-                  message={t('textExtractionConfig.alerts.systemConfigTitle')}
+                  title={t('textExtractionConfig.alerts.systemConfigTitle')}
                   description={t('textExtractionConfig.alerts.systemConfigDesc')}
                   type="info"
                   showIcon
@@ -215,7 +215,7 @@ function TextExtractionConfig({ documentId }) {
               {systemConfig && (
                 <div className="system-config">
                   <Divider />
-                  <Space direction="vertical" style={{ width: '100%' }}>
+                  <Space vertical style={{ width: '100%' }}>
                     <div className="config-item">
                       <Space>
                         <CheckCircleOutlined style={{ color: '#52c41a' }} />
@@ -266,13 +266,13 @@ function TextExtractionConfig({ documentId }) {
                 <span>{language === 'zh' ? currentModel.name : currentModel.nameEn}</span>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             className="model-info-card"
             style={{
               borderLeft: `4px solid ${currentModel.color}`,
             }}
           >
-            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Space vertical size="large" style={{ width: '100%' }}>
               {/* 模型描述 */}
               <div className="model-description">
                 <h4>{t('textExtractionConfig.labels.modelDescription')}</h4>
@@ -347,7 +347,7 @@ function TextExtractionConfig({ documentId }) {
 
               {/* 提示信息 */}
               <Alert
-                message={t('textExtractionConfig.alerts.finalTipTitle')}
+                title={t('textExtractionConfig.alerts.finalTipTitle')}
                 description={t('textExtractionConfig.alerts.finalTipDesc')}
                 type="warning"
                 showIcon

@@ -84,8 +84,6 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
 
     // 加载文档列表
     const loadDocumentsList = useCallback(async () => {
-        if (demoMode) return; // 演示模式不加载
-
         setLoading(true);
         try {
             const response = await fetch('/api/system/rag-config/documents-status');
@@ -93,21 +91,21 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             if (result.success) {
                 const docs = Object.values(result.data);
                 setDocumentsList(docs);
-                console.log('📋 加载文档列表:', docs.length, '个');
+                console.log('📋 加载文档列表:', docs.length, '个', docs);
+            } else {
+                console.error('加载文档列表失败:', result.message);
             }
         } catch (error) {
             console.error('加载文档列表失败:', error);
         } finally {
             setLoading(false);
         }
-    }, [demoMode]);
+    }, []);
 
     // 初始加载
     useEffect(() => {
-        if (!demoMode) {
-            loadDocumentsList();
-        }
-    }, [demoMode, loadDocumentsList]);
+        loadDocumentsList();
+    }, [loadDocumentsList]);
 
     // 演示模式：模拟处理流程 (Demo mode: simulate processing flow)
     useEffect(() => {
@@ -273,17 +271,6 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         );
     }, [progress, t]);
 
-    // 如果没有 documentId 且不是演示模式，显示提示 (Show message if no documentId and not demo mode)
-    if (!documentId && !demoMode) {
-        return (
-            <Alert
-                title={t('ragFlow.messages.noDocument')}
-                description={t('ragFlow.messages.uploadTip')}
-                type="info"
-                showIcon
-            />
-        );
-    }
 
     // 如果有错误，显示错误信息 (Show error if exists)
     if (error) {
@@ -300,25 +287,22 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     }
 
     return (
-        <Card
-            title={
+        <div className="document-processing-flow-container">
+            {/* 顶部操作栏 - 始终可见 */}
+            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Space>
                     <LoadingOutlined spin={progress && (progress.status === 'RUNNING' || progress.status === 'PROCESSING')} />
-                    {t('ragFlow.component.title')}
+                    <span style={{ fontSize: 16, fontWeight: 500 }}>{t('ragFlow.component.title')}</span>
                     {demoMode && <Tag color="blue">{t('ragFlow.component.demoMode')}</Tag>}
                 </Space>
-            }
-            extra={
                 <Space>
-                    {!demoMode && (
-                        <Button
-                            icon={<SyncOutlined spin={loading} />}
-                            onClick={loadDocumentsList}
-                            loading={loading}
-                        >
-                            {t('ragFlow.component.refresh')}
-                        </Button>
-                    )}
+                    <Button
+                        icon={<SyncOutlined spin={loading} />}
+                        onClick={loadDocumentsList}
+                        loading={loading}
+                    >
+                        {t('ragFlow.component.refresh')}
+                    </Button>
                     {demoMode && !demoExpanded && (
                         <Button
                             type="primary"
@@ -329,74 +313,76 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         </Button>
                     )}
                 </Space>
-            }
-            className="document-processing-flow"
-        >
-            {/* 文档列表（非演示模式） */}
-            {!demoMode && (
-                <>
-                    {documentsList.length > 0 ? (
-                        <Card
-                            title={t('ragFlow.component.pendingDocuments')}
-                            size="small"
-                            style={{ marginBottom: 16 }}
-                        >
-                            <List
-                                dataSource={documentsList}
-                                renderItem={(doc) => (
-                                    <List.Item
-                                        key={doc.documentId}
-                                        onClick={() => {
-                                            setSelectedDocId(doc.documentId);
-                                            // 订阅该文档的进度
-                                            if (wsClient) {
-                                                wsClient.subscribe(doc.documentId);
-                                            }
-                                        }}
-                                        style={{
-                                            cursor: 'pointer',
-                                            background: selectedDocId === doc.documentId ? '#e6f7ff' : 'transparent'
-                                        }}
-                                    >
-                                        <List.Item.Meta
-                                            title={
-                                                <Space>
-                                                    <FileTextOutlined />
-                                                    {doc.documentId}
-                                                    <Tag color={
-                                                        doc.status === 'PENDING' ? 'orange' :
-                                                        doc.status === 'COMPLETED' ? 'green' :
-                                                        doc.status === 'FAILED' ? 'red' :
-                                                        'blue'
-                                                    }>
-                                                        {doc.status}
-                                                    </Tag>
-                                                </Space>
-                                            }
-                                            description={`${t('ragFlow.component.createdAt')}: ${new Date(doc.createdAt).toLocaleString()}`}
-                                        />
-                                    </List.Item>
-                                )}
-                            />
-                        </Card>
-                    ) : (
-                        <Alert
-                            message={t('ragFlow.component.noDocuments')}
-                            description={t('ragFlow.component.noDocumentsDesc')}
-                            type="info"
-                            showIcon
-                            style={{ marginBottom: 16 }}
-                            action={
-                                <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => {
-                                    setDemoMode(true);
-                                    setDemoExpanded(true);
-                                }}>
-                                    {t('ragFlow.component.viewDemo')}
-                                </Button>
-                            }
-                        />
-                    )}
-                </>
+            </div>
+
+            {/* 文档列表 - 独立显示，不在Card里 */}
+            {documentsList && documentsList.length > 0 ? (
+                <Card
+                    title={t('ragFlow.component.pendingDocuments')}
+                    size="small"
+                    style={{ marginBottom: 16 }}
+                >
+                    <List
+                        dataSource={documentsList}
+                        renderItem={(doc) => (
+                            <List.Item
+                                key={doc.documentId}
+                                onClick={() => {
+                                    setSelectedDocId(doc.documentId);
+                                    // 订阅该文档的进度
+                                    if (wsClient) {
+                                        wsClient.subscribe(doc.documentId);
+                                    }
+                                }}
+                                style={{
+                                    cursor: 'pointer',
+                                    background: selectedDocId === doc.documentId ? '#e6f7ff' : 'transparent',
+                                    border: selectedDocId === doc.documentId ? '2px solid #1890ff' : '1px solid #f0f0f0'
+                                }}
+                            >
+                                <List.Item.Meta
+                                    title={
+                                        <Space>
+                                            <FileTextOutlined />
+                                            {doc.documentId}
+                                            <Tag color={
+                                                doc.status === 'PENDING' ? 'orange' :
+                                                doc.status === 'COMPLETED' ? 'green' :
+                                                doc.status === 'FAILED' ? 'red' :
+                                                'blue'
+                                            }>
+                                                {doc.status}
+                                            </Tag>
+                                            {selectedDocId === doc.documentId && (
+                                                <Tag color="blue" icon={<CheckCircleOutlined />}>已选中</Tag>
+                                            )}
+                                        </Space>
+                                    }
+                                    description={`${t('ragFlow.component.createdAt')}: ${new Date(doc.createdAt).toLocaleString()}`}
+                                />
+                            </List.Item>
+                        )}
+                    />
+                </Card>
+            ) : null}
+
+            {/* 无文档提示 */}
+            {!loading && documentsList.length === 0 && (
+                <Alert
+                    message={t('ragFlow.component.noDocuments')}
+                    description={t('ragFlow.component.noDocumentsDesc')}
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                    action={
+                        <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => {
+                            setDemoMode(true);
+                            setDemoExpanded(true);
+                        }}>
+                            {t('ragFlow.component.viewDemo')}
+                        </Button>
+                    }
+                />
             )}
 
             {/* 演示模式提示 */}
@@ -421,19 +407,34 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 />
             )}
 
-            {/* 只在非演示模式或演示已展开时显示流程 */}
-            {(!demoMode || demoExpanded) && (
-                <>
-            {/* 步骤展示 (Steps display) - 可点击跳转到对应配置 */}
-            <Steps
-                current={getCurrentStep()}
-                status={progress?.status === 'FAILED' ? 'error' : progress?.status === 'COMPLETED' ? 'finish' : 'process'}
-                items={[
+            {/* 处理流程Card - 只在有选中文档或进度时显示 */}
+            {(selectedDocId || progress || (demoMode && demoExpanded)) && (
+            <Card
+                className="document-processing-flow"
+                title={
+                    selectedDocId ? (
+                        <Space>
+                            <FileTextOutlined />
+                            <span>文档处理流程：{selectedDocId}</span>
+                        </Space>
+                    ) : demoMode ? (
+                        <Space>
+                            <PlayCircleOutlined />
+                            <span>演示模式</span>
+                        </Space>
+                    ) : null
+                }
+            >
+                {/* 步骤展示 (Steps display) - 可点击跳转到对应配置 */}
+                <Steps
+                    current={getCurrentStep()}
+                    status={progress?.status === 'FAILED' ? 'error' : progress?.status === 'COMPLETED' ? 'finish' : 'process'}
+                    items={[
                     {
                         title: STAGE_CONFIG.UPLOAD.title[language],
                         icon: STAGE_CONFIG.UPLOAD.icon,
                         status: getStepStatus(0),
-                        description: renderStepDescription('UPLOAD')
+                        content: renderStepDescription('UPLOAD')
                     },
                     {
                         title: (
@@ -447,7 +448,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         ),
                         icon: STAGE_CONFIG.EXTRACT.icon,
                         status: getStepStatus(1),
-                        description: (
+                        content: (
                             <div>
                                 {renderStepDescription('EXTRACT')}
                                 {selectedDocId && (
@@ -470,7 +471,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         ),
                         icon: STAGE_CONFIG.CHUNK.icon,
                         status: getStepStatus(2),
-                        description: (
+                        content: (
                             <div>
                                 {renderStepDescription('CHUNK')}
                                 {selectedDocId && (
@@ -485,13 +486,13 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         title: STAGE_CONFIG.VECTORIZE.title[language],
                         icon: STAGE_CONFIG.VECTORIZE.icon,
                         status: getStepStatus(3),
-                        description: renderStepDescription('VECTORIZE')
+                        content: renderStepDescription('VECTORIZE')
                     },
                     {
                         title: STAGE_CONFIG.INDEX.title[language],
                         icon: STAGE_CONFIG.INDEX.icon,
                         status: getStepStatus(4),
-                        description: renderStepDescription('INDEX')
+                        content: renderStepDescription('INDEX')
                     }
                 ]}
             />
@@ -639,9 +640,9 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                     </Button>
                 )}
             </div>
-            </>
+            </Card>
             )}
-        </Card>
+        </div>
     );
 }
 
