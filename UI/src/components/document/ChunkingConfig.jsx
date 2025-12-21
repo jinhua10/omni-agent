@@ -26,7 +26,7 @@ import {
   Statistic,
   Tag,
   Tooltip,
-  message,
+  App,
   Spin,
   Alert,
 } from 'antd'
@@ -47,6 +47,7 @@ const { TextArea } = Input
 function ChunkingConfig() {
   const { t } = useLanguage()
   const [form] = Form.useForm()
+  const { message } = App.useApp() // ⭐ 使用App钩子获取message API
 
   // 状态管理
   const [loading, setLoading] = useState(false)
