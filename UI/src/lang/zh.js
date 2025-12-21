@@ -153,6 +153,7 @@ export default {
       card: '卡片视图',
       flow: '流程视图',  // ⭐ RAG流程可视化
       chunking: '分块配置',  // ⭐ 分块策略配置
+      queryExpansion: '查询扩展',  // ⭐ 查询扩展配置
     },
 
     upload: '上传文档',
@@ -1486,6 +1487,151 @@ export default {
       export: '导出配置',
       import: '导入配置',
       save: '保存为默认',
+    },
+  },
+
+  // ============================================================================
+  // 查询扩展配置 (Query Expansion Configuration)
+  // ============================================================================
+  queryExpansionConfig: {
+    // 页面标题
+    title: '查询扩展配置',
+    subtitle: '配置和优化查询扩展策略，提升检索召回率',
+
+    // 基础配置
+    basicConfig: {
+      title: '基础配置',
+      llmExpansion: 'LLM查询扩展',
+      llmExpansionHelp: '使用大语言模型生成查询变体',
+      maxQueries: '最大扩展查询数',
+      maxQueriesHelp: '每个原始查询最多生成多少个扩展查询',
+      enableCache: '启用缓存',
+      enableCacheHelp: '缓存查询扩展结果，提升性能',
+      parallelExecution: '并行执行',
+      parallelExecutionHelp: '并行执行多个查询，提升响应速度',
+    },
+
+    // 策略权重
+    strategyWeights: {
+      title: '策略权重',
+      synonym: '同义词权重',
+      synonymHelp: '基于同义词的查询扩展权重',
+      llm: 'LLM权重',
+      llmHelp: '基于LLM的查询扩展权重',
+      domain: '领域词权重',
+      domainHelp: '基于领域词典的查询扩展权重',
+      weightTip: '权重范围: 0.0 - 1.0，总和建议为 1.0',
+    },
+
+    // 缓存配置
+    cacheConfig: {
+      title: '缓存配置',
+      cacheSize: '缓存大小',
+      cacheSizeHelp: '最多缓存多少个查询结果',
+      cacheTtl: '缓存过期时间',
+      cacheTtlHelp: '缓存条目的有效时间（分钟）',
+      clearCache: '清除缓存',
+      clearCacheConfirm: '确定要清除所有缓存吗？',
+    },
+
+    // 并行配置
+    parallelConfig: {
+      title: '并行配置',
+      threads: '线程池大小',
+      threadsHelp: '并行执行时使用的线程数量',
+      timeout: '超时时间',
+      timeoutHelp: '单个查询的最大执行时间（秒）',
+    },
+
+    // 领域词典
+    dictionary: {
+      title: '领域词典',
+      addDomain: '添加领域',
+      domainName: '领域名称',
+      domainTerms: '领域词汇',
+      addTerm: '添加词汇',
+      removeTerm: '删除词汇',
+      totalDomains: '共 {count} 个领域',
+      totalTerms: '共 {count} 个词汇',
+      editDomain: '编辑领域',
+      deleteDomain: '删除领域',
+      exportDictionary: '导出词典',
+      importDictionary: '导入词典',
+    },
+
+    // 预览
+    preview: {
+      title: '查询扩展预览',
+      originalQuery: '原始查询',
+      inputPlaceholder: '输入要扩展的查询...',
+      expandedQueries: '扩展查询',
+      enableStrategies: '启用策略',
+      synonymExpansion: '同义词扩展',
+      llmExpansion: 'LLM扩展',
+      domainExpansion: '领域词扩展',
+      previewButton: '预览扩展',
+      clearButton: '清除',
+      noResults: '暂无扩展结果',
+      queryCount: '共生成 {count} 个查询',
+
+      // 统计信息
+      stats: {
+        title: '统计信息',
+        originalLength: '原始长度',
+        avgLength: '平均长度',
+        expansionRate: '扩展倍率',
+        estimatedRecall: '预计召回率提升',
+      },
+    },
+
+    // 缓存统计
+    cacheStats: {
+      title: '缓存统计',
+      hitRate: '命中率',
+      cacheSize: '当前大小',
+      maxSize: '最大容量',
+      hitCount: '命中次数',
+      missCount: '未命中次数',
+      totalRequests: '总请求数',
+      refreshStats: '刷新统计',
+    },
+
+    // 性能监控
+    performance: {
+      title: '性能监控',
+      avgResponseTime: '平均响应时间',
+      p95ResponseTime: 'P95响应时间',
+      p99ResponseTime: 'P99响应时间',
+      throughput: '吞吐量',
+      errorRate: '错误率',
+    },
+
+    // 消息提示
+    message: {
+      configLoadSuccess: '配置加载成功',
+      configLoadFailed: '配置加载失败',
+      configSaveSuccess: '配置保存成功',
+      configSaveFailed: '配置保存失败',
+      previewSuccess: '预览生成成功',
+      previewFailed: '预览生成失败',
+      cacheCleared: '缓存已清除',
+      cacheClearFailed: '清除缓存失败',
+      dictionaryUpdateSuccess: '词典更新成功',
+      dictionaryUpdateFailed: '词典更新失败',
+      inputRequired: '请输入查询内容',
+      invalidWeight: '权重值无效，应在 0.0 - 1.0 之间',
+    },
+
+    // 操作按钮
+    actions: {
+      save: '保存配置',
+      reset: '重置',
+      preview: '预览',
+      apply: '应用',
+      export: '导出',
+      import: '导入',
+      clear: '清除',
+      refresh: '刷新',
     },
   },
 }

@@ -17,12 +17,14 @@ import {
   FolderOpenOutlined,
   AppstoreOutlined,
   SyncOutlined,  // ⭐ 流程图标
-  SettingOutlined  // ⭐ 配置图标
+  SettingOutlined,  // ⭐ 配置图标
+  ThunderboltOutlined  // ⭐ 查询扩展图标
 } from '@ant-design/icons'
 import DocumentList from './DocumentList'
 import DocumentBrowser from './DocumentBrowser'
 import DocumentProcessingFlow from '../rag-flow/DocumentProcessingFlow'  // ⭐ 导入流程组件
 import ChunkingConfig from './ChunkingConfig'  // ⭐ 分块配置组件
+import QueryExpansionConfig from './QueryExpansionConfig'  // ⭐ 查询扩展配置组件
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/document-management.css'
 
@@ -113,6 +115,15 @@ function DocumentManagement() {
                 ),
                 value: 'chunking',
               },
+              {
+                label: (
+                  <Space>
+                    <ThunderboltOutlined />
+                    <span>{t('document.viewMode.queryExpansion')}</span>
+                  </Space>
+                ),
+                value: 'queryExpansion',
+              },
             ]}
             size="large"
           />
@@ -138,12 +149,17 @@ function DocumentManagement() {
               }}
             />
           </div>
-        ) : (
+        ) : viewMode === 'chunking' ? (
           // ⭐ 分块配置视图：交互式配置分块策略
           <div className="document-chunking-view">
             <ChunkingConfig />
           </div>
-        )}
+        ) : viewMode === 'queryExpansion' ? (
+          // ⭐ 查询扩展配置视图：交互式配置查询扩展策略
+          <div className="document-query-expansion-view">
+            <QueryExpansionConfig />
+          </div>
+        ) : null}
       </div>
     </div>
   )

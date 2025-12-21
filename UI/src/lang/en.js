@@ -153,6 +153,7 @@ export default {
       card: 'Card View',
       flow: 'Flow View',  // ⭐ RAG Flow Visualization
       chunking: 'Chunking Config',  // ⭐ Chunking Strategy Configuration
+      queryExpansion: 'Query Expansion',  // ⭐ Query Expansion Configuration
     },
 
     upload: 'Upload Document',
@@ -1474,6 +1475,151 @@ export default {
       export: 'Export Config',
       import: 'Import Config',
       save: 'Save as Default',
+    },
+  },
+
+  // ============================================================================
+  // Query Expansion Configuration
+  // ============================================================================
+  queryExpansionConfig: {
+    // Page Titles
+    title: 'Query Expansion Configuration',
+    subtitle: 'Configure and optimize query expansion strategies to improve retrieval recall',
+
+    // Basic Config
+    basicConfig: {
+      title: 'Basic Configuration',
+      llmExpansion: 'LLM Query Expansion',
+      llmExpansionHelp: 'Use large language models to generate query variants',
+      maxQueries: 'Max Expanded Queries',
+      maxQueriesHelp: 'Maximum number of expanded queries per original query',
+      enableCache: 'Enable Cache',
+      enableCacheHelp: 'Cache query expansion results for better performance',
+      parallelExecution: 'Parallel Execution',
+      parallelExecutionHelp: 'Execute multiple queries in parallel for faster response',
+    },
+
+    // Strategy Weights
+    strategyWeights: {
+      title: 'Strategy Weights',
+      synonym: 'Synonym Weight',
+      synonymHelp: 'Weight for synonym-based query expansion',
+      llm: 'LLM Weight',
+      llmHelp: 'Weight for LLM-based query expansion',
+      domain: 'Domain Weight',
+      domainHelp: 'Weight for domain dictionary-based expansion',
+      weightTip: 'Weight range: 0.0 - 1.0, sum should be 1.0',
+    },
+
+    // Cache Config
+    cacheConfig: {
+      title: 'Cache Configuration',
+      cacheSize: 'Cache Size',
+      cacheSizeHelp: 'Maximum number of cached query results',
+      cacheTtl: 'Cache TTL',
+      cacheTtlHelp: 'Time to live for cached entries (minutes)',
+      clearCache: 'Clear Cache',
+      clearCacheConfirm: 'Are you sure to clear all cache?',
+    },
+
+    // Parallel Config
+    parallelConfig: {
+      title: 'Parallel Configuration',
+      threads: 'Thread Pool Size',
+      threadsHelp: 'Number of threads for parallel execution',
+      timeout: 'Timeout',
+      timeoutHelp: 'Maximum execution time per query (seconds)',
+    },
+
+    // Dictionary
+    dictionary: {
+      title: 'Domain Dictionary',
+      addDomain: 'Add Domain',
+      domainName: 'Domain Name',
+      domainTerms: 'Domain Terms',
+      addTerm: 'Add Term',
+      removeTerm: 'Remove Term',
+      totalDomains: '{count} domains',
+      totalTerms: '{count} terms',
+      editDomain: 'Edit Domain',
+      deleteDomain: 'Delete Domain',
+      exportDictionary: 'Export Dictionary',
+      importDictionary: 'Import Dictionary',
+    },
+
+    // Preview
+    preview: {
+      title: 'Query Expansion Preview',
+      originalQuery: 'Original Query',
+      inputPlaceholder: 'Enter query to expand...',
+      expandedQueries: 'Expanded Queries',
+      enableStrategies: 'Enable Strategies',
+      synonymExpansion: 'Synonym Expansion',
+      llmExpansion: 'LLM Expansion',
+      domainExpansion: 'Domain Expansion',
+      previewButton: 'Preview Expansion',
+      clearButton: 'Clear',
+      noResults: 'No expansion results',
+      queryCount: '{count} queries generated',
+
+      // Statistics
+      stats: {
+        title: 'Statistics',
+        originalLength: 'Original Length',
+        avgLength: 'Average Length',
+        expansionRate: 'Expansion Rate',
+        estimatedRecall: 'Estimated Recall Improvement',
+      },
+    },
+
+    // Cache Stats
+    cacheStats: {
+      title: 'Cache Statistics',
+      hitRate: 'Hit Rate',
+      cacheSize: 'Current Size',
+      maxSize: 'Max Capacity',
+      hitCount: 'Hit Count',
+      missCount: 'Miss Count',
+      totalRequests: 'Total Requests',
+      refreshStats: 'Refresh Stats',
+    },
+
+    // Performance
+    performance: {
+      title: 'Performance Monitoring',
+      avgResponseTime: 'Avg Response Time',
+      p95ResponseTime: 'P95 Response Time',
+      p99ResponseTime: 'P99 Response Time',
+      throughput: 'Throughput',
+      errorRate: 'Error Rate',
+    },
+
+    // Messages
+    message: {
+      configLoadSuccess: 'Configuration loaded successfully',
+      configLoadFailed: 'Failed to load configuration',
+      configSaveSuccess: 'Configuration saved successfully',
+      configSaveFailed: 'Failed to save configuration',
+      previewSuccess: 'Preview generated successfully',
+      previewFailed: 'Failed to generate preview',
+      cacheCleared: 'Cache cleared',
+      cacheClearFailed: 'Failed to clear cache',
+      dictionaryUpdateSuccess: 'Dictionary updated successfully',
+      dictionaryUpdateFailed: 'Failed to update dictionary',
+      inputRequired: 'Please input query content',
+      invalidWeight: 'Invalid weight value, should be between 0.0 - 1.0',
+    },
+
+    // Actions
+    actions: {
+      save: 'Save Config',
+      reset: 'Reset',
+      preview: 'Preview',
+      apply: 'Apply',
+      export: 'Export',
+      import: 'Import',
+      clear: 'Clear',
+      refresh: 'Refresh',
     },
   },
 }
