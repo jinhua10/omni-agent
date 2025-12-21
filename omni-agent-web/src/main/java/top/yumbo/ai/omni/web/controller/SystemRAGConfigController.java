@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import top.yumbo.ai.omni.web.model.RAGStrategyTemplate;
 import top.yumbo.ai.omni.web.service.SystemRAGConfigService;
 
 import java.util.ArrayList;
@@ -237,6 +238,92 @@ public class SystemRAGConfigController {
         }
     }
 
+    // ========== 策略模板管理 API ==========
+
+    /**
+     * 获取所有策略模板
+     * GET /api/system/rag-config/templates
+     */
+    @GetMapping("/templates")
+    public ApiResponse<List<RAGStrategyTemplate>> getAllTemplates() {
+        try {
+            List<RAGStrategyTemplate> templates = configService.getAllStrategyTemplates();
+            log.info("📋 获取所有策略模板: {} 个", templates.size());
+            return ApiResponse.success(templates);
+        } catch (Exception e) {
+            log.error("❌ 获取策略模板失败", e);
+            return ApiResponse.error("获取失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取指定策略模板
+     * GET /api/system/rag-config/templates/{templateId}
+     */
+    @GetMapping("/templates/{templateId}")
+    public ApiResponse<RAGStrategyTemplate> getTemplate(@PathVariable String templateId) {
+        try {
+            RAGStrategyTemplate template = configService.getStrategyTemplate(templateId);
+            if (template == null) {
+                return ApiResponse.error("模板不存在");
+            }
+            return ApiResponse.success(template);
+        } catch (Exception e) {
+            log.error("❌ 获取策略模板失败: {}", templateId, e);
+            return ApiResponse.error("获取失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 保存策略模板
+     * POST /api/system/rag-config/templates
+     */
+    @PostMapping("/templates")
+    public ApiResponse<RAGStrategyTemplate> saveTemplate(@RequestBody RAGStrategyTemplate template) {
+        try {
+            RAGStrategyTemplate saved = configService.saveStrategyTemplate(template);
+            log.info("💾 保存策略模板: {}", template.getTemplateName());
+            return ApiResponse.success(saved, "模板保存成功");
+        } catch (Exception e) {
+            log.error("❌ 保存策略模板失败", e);
+            return ApiResponse.error("保存失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 删除策略模板
+     * DELETE /api/system/rag-config/templates/{templateId}
+     */
+    @DeleteMapping("/templates/{templateId}")
+    public ApiResponse<Void> deleteTemplate(@PathVariable String templateId) {
+        try {
+            configService.deleteStrategyTemplate(templateId);
+            log.info("🗑️ 删除策略模板: {}", templateId);
+            return ApiResponse.success(null, "模板删除成功");
+        } catch (Exception e) {
+            log.error("❌ 删除策略模板失败: {}", templateId, e);
+            return ApiResponse.error("删除失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 应用策略模板到文档
+     * POST /api/system/rag-config/document/{documentId}/apply-template
+     */
+    @PostMapping("/document/{documentId}/apply-template")
+    public ApiResponse<Void> applyTemplate(
+            @PathVariable String documentId,
+            @RequestBody ApplyTemplateRequest request) {
+        try {
+            configService.applyTemplateToDocument(documentId, request.getTemplateId());
+            log.info("📋 应用策略模板到文档: doc={}, template={}", documentId, request.getTemplateId());
+            return ApiResponse.success(null, "策略模板应用成功");
+        } catch (Exception e) {
+            log.error("❌ 应用策略模板失败: doc={}, template={}", documentId, request.getTemplateId(), e);
+            return ApiResponse.error("应用失败: " + e.getMessage());
+        }
+    }
+
     // ==================== DTO 类 ====================
 
     @Data
@@ -293,6 +380,14 @@ public class SystemRAGConfigController {
             response.setMessage(message);
             return response;
         }
+    }
+
+    /**
+     * 应用模板请求
+     */
+    @Data
+    public static class ApplyTemplateRequest {
+        private String templateId;
     }
 }
 

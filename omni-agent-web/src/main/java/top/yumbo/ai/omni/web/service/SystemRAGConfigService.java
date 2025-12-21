@@ -3,9 +3,9 @@ package top.yumbo.ai.omni.web.service;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.web.model.RAGStrategyTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,6 +29,9 @@ public class SystemRAGConfigService {
 
     // 文档级别的配置覆盖
     private final Map<String, DocumentRAGConfig> documentConfigs = new ConcurrentHashMap<>();
+
+    // ⭐ 策略模板存储
+    private final Map<String, RAGStrategyTemplate> strategyTemplates = new ConcurrentHashMap<>();
 
     /**
      * 获取系统RAG配置
@@ -142,6 +145,66 @@ public class SystemRAGConfigService {
      */
     public Map<String, DocumentRAGConfig> getAllDocumentsStatus() {
         return new HashMap<>(documentConfigs);
+    }
+
+    /**
+     * 保存策略模板
+     */
+    public RAGStrategyTemplate saveStrategyTemplate(RAGStrategyTemplate template) {
+        if (template.getTemplateId() == null || template.getTemplateId().isEmpty()) {
+            template.setTemplateId("template_" + System.currentTimeMillis());
+        }
+        template.setUpdatedAt(System.currentTimeMillis());
+        if (template.getCreatedAt() == 0) {
+            template.setCreatedAt(System.currentTimeMillis());
+        }
+
+        strategyTemplates.put(template.getTemplateId(), template);
+        log.info("💾 保存策略模板: {} - {}", template.getTemplateId(), template.getTemplateName());
+        return template;
+    }
+
+    /**
+     * 获取所有策略模板
+     */
+    public List<RAGStrategyTemplate> getAllStrategyTemplates() {
+        return new ArrayList<>(strategyTemplates.values());
+    }
+
+    /**
+     * 获取指定策略模板
+     */
+    public RAGStrategyTemplate getStrategyTemplate(String templateId) {
+        return strategyTemplates.get(templateId);
+    }
+
+    /**
+     * 删除策略模板
+     */
+    public void deleteStrategyTemplate(String templateId) {
+        strategyTemplates.remove(templateId);
+        log.info("🗑️ 删除策略模板: {}", templateId);
+    }
+
+    /**
+     * 应用策略模板到文档
+     */
+    public void applyTemplateToDocument(String documentId, String templateId) {
+        RAGStrategyTemplate template = strategyTemplates.get(templateId);
+        if (template == null) {
+            throw new IllegalArgumentException("策略模板不存在: " + templateId);
+        }
+
+        DocumentRAGConfig docConfig = getDocumentConfig(documentId);
+        docConfig.setTextExtractionModel(template.getTextExtractionModel());
+        docConfig.setChunkingStrategy(template.getChunkingStrategy());
+        docConfig.setChunkingParams(template.getChunkingParams());
+        docConfig.setUpdatedAt(System.currentTimeMillis());
+
+        // 增加模板使用次数
+        template.setUseCount(template.getUseCount() + 1);
+
+        log.info("📋 应用策略模板 {} 到文档 {}", template.getTemplateName(), documentId);
     }
 
     /**

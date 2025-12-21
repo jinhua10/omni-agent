@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Steps, Card, Progress, Alert, Button, Tag, Space, Divider, Dropdown, Spin } from 'antd';
+import { Steps, Card, Progress, Alert, Button, Tag, Space, Divider, Dropdown, Spin, Select, App } from 'antd';
 import {
     FileAddOutlined,
     FileTextOutlined,
@@ -24,11 +24,16 @@ import {
     PlayCircleOutlined,
     SettingOutlined,
     DownOutlined,
-    SyncOutlined
+    SyncOutlined,
+    LeftOutlined,
+    RightOutlined,
+    ThunderboltOutlined
 } from '@ant-design/icons';
 import WebSocketClient from '../../utils/WebSocketClient';
 import { useLanguage } from '../../contexts/LanguageContext';  // ⭐ 导入国际化Hook
 import './DocumentProcessingFlow.css';
+
+const { Option } = Select;
 
 /**
  * 处理阶段配置
@@ -70,6 +75,7 @@ const STAGE_CONFIG = {
 function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = false, showDemo = false }) {
     // 国际化 (Internationalization)
     const { t, language } = useLanguage();
+    const { message } = App.useApp();
 
     // 状态管理 (State management)
     const [progress, setProgress] = useState(null);
@@ -331,15 +337,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         {documentsList.map((doc) => (
                             <div
                                 key={doc.documentId}
-                                onClick={() => {
-                                    setSelectedDocId(doc.documentId);
-                                    // WebSocket功能暂时禁用
-                                    // if (wsClient) {
-                                    //     wsClient.subscribe(doc.documentId);
-                                    // }
-                                }}
                                 style={{
-                                    cursor: 'pointer',
                                     background: selectedDocId === doc.documentId ? '#e6f7ff' : 'transparent',
                                     border: selectedDocId === doc.documentId ? '2px solid #1890ff' : '1px solid #f0f0f0',
                                     padding: '16px',
@@ -347,7 +345,15 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                     transition: 'all 0.3s ease'
                                 }}
                             >
-                                <div style={{ marginBottom: '8px' }}>
+                                <div
+                                    onClick={() => {
+                                        setSelectedDocId(doc.documentId);
+                                    }}
+                                    style={{
+                                        cursor: 'pointer',
+                                        marginBottom: '12px'
+                                    }}
+                                >
                                     <Space>
                                         <FileTextOutlined />
                                         <span style={{ fontWeight: 500, color: '#262626' }}>{doc.documentId}</span>
@@ -363,10 +369,45 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                             <Tag color="blue" icon={<CheckCircleOutlined />}>已选中</Tag>
                                         )}
                                     </Space>
+                                    <div style={{ color: '#8c8c8c', fontSize: '12px', marginTop: '4px' }}>
+                                        {t('ragFlow.component.createdAt')}: {new Date(doc.createdAt).toLocaleString()}
+                                    </div>
                                 </div>
-                                <div style={{ color: '#8c8c8c', fontSize: '14px' }}>
-                                    {t('ragFlow.component.createdAt')}: {new Date(doc.createdAt).toLocaleString()}
-                                </div>
+
+                                {/* 快速处理操作栏 */}
+                                {doc.status === 'PENDING' && (
+                                    <div style={{
+                                        borderTop: '1px solid #f0f0f0',
+                                        paddingTop: '12px',
+                                        display: 'flex',
+                                        gap: '8px',
+                                        alignItems: 'center'
+                                    }}>
+                                        <Select
+                                            placeholder="选择策略模板"
+                                            style={{ flex: 1 }}
+                                            size="small"
+                                            onChange={(templateId) => {
+                                                // TODO: 应用策略模板
+                                                console.log('应用模板:', templateId, '到文档:', doc.documentId);
+                                            }}
+                                        >
+                                            <Option value="default">默认策略</Option>
+                                            <Option value="pdf-standard">PDF标准处理</Option>
+                                            <Option value="ppt-vision">PPT视觉处理</Option>
+                                        </Select>
+                                        <Button
+                                            type="primary"
+                                            size="small"
+                                            onClick={() => {
+                                                // TODO: 开始处理
+                                                console.log('开始处理文档:', doc.documentId);
+                                            }}
+                                        >
+                                            开始处理
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -504,6 +545,69 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 ]}
             />
 
+            {/* 流程控制按钮 */}
+            {selectedDocId && (
+                <div style={{
+                    marginTop: '24px',
+                    padding: '16px',
+                    background: '#f5f5f5',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <Space>
+                        <Button
+                            icon={<LeftOutlined />}
+                            onClick={() => {
+                                const currentStep = getCurrentStep();
+                                if (currentStep === 1) {
+                                    // 从文本提取回到上传
+                                    window.location.hash = '#/documents?view=flow';
+                                } else if (currentStep === 2) {
+                                    // 从分块回到文本提取
+                                    window.location.hash = `#/documents?view=textExtraction&docId=${selectedDocId}`;
+                                }
+                            }}
+                            disabled={getCurrentStep() === 0}
+                        >
+                            上一步
+                        </Button>
+                        <Button
+                            icon={<RightOutlined />}
+                            onClick={() => {
+                                const currentStep = getCurrentStep();
+                                if (currentStep === 0) {
+                                    // 从上传到文本提取
+                                    window.location.hash = `#/documents?view=textExtraction&docId=${selectedDocId}`;
+                                } else if (currentStep === 1) {
+                                    // 从文本提取到分块
+                                    window.location.hash = `#/documents?view=chunking&docId=${selectedDocId}`;
+                                }
+                            }}
+                            disabled={getCurrentStep() >= 2}
+                        >
+                            下一步
+                        </Button>
+                    </Space>
+
+                    <Button
+                        type="primary"
+                        size="large"
+                        icon={<ThunderboltOutlined />}
+                        onClick={async () => {
+                            try {
+                                // TODO: 触发完整的处理流程
+                                message.success('开始处理文档：' + selectedDocId);
+                            } catch (error) {
+                                message.error('处理失败：' + error.message);
+                            }
+                        }}
+                    >
+                        开始完整处理
+                    </Button>
+                </div>
+            )}
             <Divider />
 
             {/* 进度条 (Progress bar) */}
