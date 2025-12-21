@@ -369,7 +369,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             {/* 无文档提示 */}
             {!loading && documentsList.length === 0 && (
                 <Alert
-                    message={t('ragFlow.component.noDocuments')}
+                    title={t('ragFlow.component.noDocuments')}
                     description={t('ragFlow.component.noDocumentsDesc')}
                     type="info"
                     showIcon
@@ -388,9 +388,9 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             {/* 演示模式提示 */}
             {demoMode && !demoExpanded && (
                 <Alert
-                    message={t('ragFlow.component.demoMode')}
+                    title={t('ragFlow.component.demoMode')}
                     description={
-                        <Space direction="vertical" style={{ width: '100%' }}>
+                        <Space vertical style={{ width: '100%' }}>
                             <span>{t('ragFlow.component.demoModeDesc')}</span>
                             <Button
                                 type="primary"
