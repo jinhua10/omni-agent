@@ -22,6 +22,7 @@ import {
     LoadingOutlined
 } from '@ant-design/icons';
 import WebSocketClient from '../../utils/WebSocketClient';
+import { useLanguage } from '../../contexts/LanguageContext';  // ⭐ 导入国际化Hook
 import './DocumentProcessingFlow.css';
 
 /**
@@ -62,11 +63,13 @@ const STAGE_CONFIG = {
 };
 
 function DocumentProcessingFlow({ documentId, onComplete, onError }) {
+    // 国际化 (Internationalization)
+    const { t, language } = useLanguage();
+
     // 状态管理 (State management)
     const [progress, setProgress] = useState(null);
     const [wsClient, setWsClient] = useState(null);
     const [error, setError] = useState(null);
-    const [language, setLanguage] = useState('zh');
 
     // 初始化 WebSocket 连接 (Initialize WebSocket connection)
     useEffect(() => {
@@ -87,7 +90,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
         // 监听错误 (Listen for errors)
         client.on('error', (error) => {
             console.error('WebSocket error:', error);
-            setError('WebSocket连接错误');
+            setError(t('ragFlow.messages.wsError'));
             if (onError) onError(error);
         });
 
@@ -120,7 +123,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
 
             // 如果失败，通知父组件 (Notify parent if failed)
             if (message.data.status === 'FAILED') {
-                setError(message.data.errorMessage || '处理失败');
+                setError(message.data.errorMessage || t('ragFlow.messages.processingFailed'));
                 if (onError) onError(message.data);
             }
         } else if (message.type === 'error') {
@@ -176,24 +179,27 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
                 )}
                 {details.totalSteps > 0 && (
                     <div className="step-counter">
-                        步骤 {details.currentStepIndex + 1} / {details.totalSteps}
+                        {t('ragFlow.component.stepCounter')
+                            .replace('{current}', details.currentStepIndex + 1)
+                            .replace('{total}', details.totalSteps)}
                     </div>
                 )}
                 {details.elapsedTimeMs > 0 && (
                     <div className="elapsed-time">
-                        已耗时: {(details.elapsedTimeMs / 1000).toFixed(1)}s
+                        {t('ragFlow.component.elapsedTimeLabel')
+                            .replace('{time}', (details.elapsedTimeMs / 1000).toFixed(1))}
                     </div>
                 )}
             </div>
         );
-    }, [progress]);
+    }, [progress, t]);
 
     // 如果没有 documentId，显示提示 (Show message if no documentId)
     if (!documentId) {
         return (
             <Alert
-                message="请选择要处理的文档"
-                description="上传文档后将自动开始处理流程"
+                title={t('ragFlow.messages.noDocument')}
+                description={t('ragFlow.messages.uploadTip')}
                 type="info"
                 showIcon
             />
@@ -204,7 +210,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
     if (error) {
         return (
             <Alert
-                message="处理失败"
+                title={t('ragFlow.messages.processingFailed')}
                 description={error}
                 type="error"
                 showIcon
@@ -219,7 +225,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
             title={
                 <Space>
                     <LoadingOutlined spin={progress && progress.status === 'RUNNING'} />
-                    文档处理流程
+                    {t('ragFlow.component.title')}
                 </Space>
             }
             className="document-processing-flow"
@@ -269,7 +275,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
                 <div className="progress-section">
                     <div className="progress-header">
                         <span className="progress-label">
-                            当前进度: {STAGE_CONFIG[progress.stage]?.title[language]}
+                            {t('ragFlow.component.currentProgressLabel')}: {STAGE_CONFIG[progress.stage]?.title[language]}
                         </span>
                         <span className="progress-percent">{progress.progress}%</span>
                     </div>
@@ -289,19 +295,19 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
                 <div className="document-info">
                     <Space size="large">
                         <div>
-                            <strong>文档名称:</strong> {progress.documentName}
+                            <strong>{t('ragFlow.info.documentName')}:</strong> {progress.documentName}
                         </div>
                         <div>
-                            <strong>文档ID:</strong> {progress.documentId}
+                            <strong>{t('ragFlow.info.documentId')}:</strong> {progress.documentId}
                         </div>
                         <div>
-                            <strong>状态:</strong>{' '}
+                            <strong>{t('ragFlow.info.status')}:</strong>{' '}
                             <Tag color={
                                 progress.status === 'RUNNING' ? 'processing' :
                                 progress.status === 'COMPLETED' ? 'success' :
                                 'error'
                             }>
-                                {progress.status}
+                                {t(`ragFlow.status.${progress.status.toLowerCase()}`)}
                             </Tag>
                         </div>
                     </Space>
@@ -311,7 +317,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
             {/* 预览内容 (Preview content) */}
             {progress && progress.preview && (
                 <div className="preview-section">
-                    <h4>预览</h4>
+                    <h4>{t('ragFlow.info.preview')}</h4>
                     <pre className="preview-content">{progress.preview}</pre>
                 </div>
             )}
@@ -320,7 +326,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
             {progress && progress.status === 'COMPLETED' && (
                 <div className="action-buttons">
                     <Button type="primary" icon={<CheckCircleOutlined />}>
-                        查看结果
+                        {t('ragFlow.actions.viewResult')}
                     </Button>
                 </div>
             )}

@@ -1344,6 +1344,14 @@ export default {
       elapsedTime: 'Elapsed Time',
       preview: 'Preview',
     },
+
+    // Component Internal Text
+    component: {
+      title: 'Document Processing Flow',
+      currentProgressLabel: 'Current Progress',
+      stepCounter: 'Step {current} / {total}',
+      elapsedTimeLabel: 'Elapsed: {time}s',
+    },
   },
 }
 

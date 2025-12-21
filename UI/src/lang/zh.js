@@ -1356,6 +1356,14 @@ export default {
       elapsedTime: '已耗时',
       preview: '预览',
     },
+
+    // 组件内部文本 (Component Internal Text)
+    component: {
+      title: '文档处理流程',
+      currentProgressLabel: '当前进度',
+      stepCounter: '步骤 {current} / {total}',
+      elapsedTimeLabel: '已耗时: {time}s',
+    },
   },
 }
 
