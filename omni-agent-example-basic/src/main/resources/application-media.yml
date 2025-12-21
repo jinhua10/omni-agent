@@ -1,0 +1,139 @@
+# ===============================================
+# 媒体文件处理配置 (Phase 3 预留)
+# Media File Processing Configuration (Phase 3 Reserved)
+# ===============================================
+
+omni-agent:
+  media:
+    # 是否启用媒体文件处理（默认禁用，等待LLM成熟）
+    # Enable media file processing (disabled by default, waiting for LLM maturity)
+    enabled: false
+
+    # 视频处理配置
+    # Video processing configuration
+    video:
+      # 最大文件大小（MB）
+      max-size: 100
+
+      # 支持的视频格式
+      supported-formats:
+        - mp4
+        - avi
+        - mov
+        - mkv
+        - flv
+        - wmv
+
+      # 关键帧提取配置
+      frame-extraction:
+        # 是否启用
+        enabled: true
+        # 最大提取帧数
+        max-frames: 10
+        # 帧间隔（秒）
+        frame-interval: 5
+
+      # 字幕提取配置
+      subtitle-extraction:
+        # 是否启用
+        enabled: true
+        # 支持的字幕格式
+        supported-formats:
+          - srt
+          - ass
+          - vtt
+
+    # 音频处理配置
+    # Audio processing configuration
+    audio:
+      # 最大文件大小（MB）
+      max-size: 50
+
+      # 支持的音频格式
+      supported-formats:
+        - mp3
+        - wav
+        - m4a
+        - flac
+        - ogg
+        - aac
+
+      # 语音识别（ASR）配置
+      transcription:
+        # 是否启用
+        enabled: true
+        # 默认语言
+        language: zh
+        # 使用的模型
+        model: whisper-large-v3
+        # 是否启用说话人分离
+        speaker-diarization: false
+        # 是否包含时间戳
+        timestamp: false
+
+    # 多模态LLM配置
+    # Multi-modal LLM configuration
+    multi-modal:
+      # 是否启用多模态能力
+      enabled: false
+
+      # 视频理解模型
+      video-model: gpt-4-vision
+
+      # 音频转文本模型
+      audio-model: whisper-1
+
+      # 超时时间（秒）
+      timeout: 60
+
+      # 最大重试次数
+      max-retries: 3
+
+    # 存储配置
+    # Storage configuration
+    storage:
+      # 临时文件存储路径
+      temp-dir: ./data/temp/media
+
+      # 处理后的文件存储路径
+      processed-dir: ./data/storage/media
+
+      # 是否保留原始文件
+      keep-original: true
+
+      # 临时文件保留时间（小时）
+      temp-retention-hours: 24
+
+    # 性能配置
+    # Performance configuration
+    performance:
+      # 并行处理任务数
+      parallel-tasks: 2
+
+      # 单个任务超时时间（分钟）
+      task-timeout-minutes: 30
+
+      # 内存限制（MB）
+      memory-limit: 2048
+
+# ===============================================
+# 使用示例 (Examples)
+# ===============================================
+
+# 启用媒体文件处理（当LLM支持成熟后）
+# Enable media processing (when LLM support is mature)
+#
+# omni-agent:
+#   media:
+#     enabled: true
+#     video:
+#       max-size: 200
+#       frame-extraction:
+#         max-frames: 20
+#     audio:
+#       transcription:
+#         speaker-diarization: true
+#         timestamp: true
+#     multi-modal:
+#       enabled: true
+

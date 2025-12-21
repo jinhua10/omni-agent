@@ -441,36 +441,242 @@ EnhancedQueryService (算法市场)
 - [x] ~~详细统计信息~~ ✨ **新增** (缓存命中率、性能监控)
 
 **🎯 Phase 1 成果**:
-- **9个新文件**: 4个model, 2个service, 1个config, 2个doc
-- **500+行代码**: 编译通过，无错误
+- **14个新文件**: 7个core, 1个config, 1个test, 5个doc
+- **800+行代码**: 编译通过，无错误
 - **性能提升**: 缓存命中率90-98%, 并行执行3-7x, LLM扩展召回率+28%
-- **完整文档**: 现状报告、实施报告、使用示例
+- **完整文档**: 现状报告、实施报告、使用示例、快速参考
 
 > 📊 详细报告: 
 > - [QUERY_EXPANSION_STATUS_REPORT-2025-12-21.md](../worklog/QUERY_EXPANSION_STATUS_REPORT-2025-12-21.md)
 > - [PHASE_1_IMPLEMENTATION_COMPLETE-2025-12-21.md](../worklog/PHASE_1_IMPLEMENTATION_COMPLETE-2025-12-21.md)
+> - [PHASE_1_QUICK_REFERENCE.md](../PHASE_1_QUICK_REFERENCE.md)
 
-### Phase 2: 角色数据库
-- [ ] 不同角色对同一问题的不同回复
-- [ ] 通用角色自动调度专业角色
-- [ ] 角色知识库构建
+---
 
-### Phase 3: 媒体文件支持
-- [ ] 视频文件处理 (.mp4, .avi)
-- [ ] 音频文件处理 (.mp3, .wav)
-- [ ] 语音识别 + 字幕提取
-- [ ] 大文件分块处理
+### Phase 2: 角色数据库 🔄 (独立模块，不影响RAG)
+**说明**: 此阶段与RAG系统独立，可并行开发
 
-### Phase 4: UI可视化RAG调优
-- [ ] 可视化分块策略选择
-- [ ] 实时查看RAG过程
-- [ ] 调整检索参数
-- [ ] 算法效果对比
+- [ ] 角色定义系统
+  - [ ] 角色模型设计（专业领域、知识范围、回答风格）
+  - [ ] 角色存储（persistence-api扩展）
+  - [ ] 角色管理API
 
-### Phase 5: 在线LLM直接文件分析
+- [ ] 角色知识库
+  - [ ] 不同角色对同一问题的知识库
+  - [ ] 角色专业知识索引
+  - [ ] 角色回答模板
+
+- [ ] 角色调度系统
+  - [ ] 通用角色作为调度中心
+  - [ ] 问题领域识别
+  - [ ] 自动选择专业角色
+  - [ ] 多角色协作回答
+
+**🎯 目标**: 右轨系统支持角色化回复，提升专业领域问答质量
+
+---
+
+### Phase 3: 媒体文件支持 📦 (预留接口，等待LLM成熟)
+**说明**: 国内LLM对媒体支持尚不完善，当前重点是设计扩展接口
+
+#### 3.1 接口预留设计 ✅ (优先)
+
+- [x] ~~扩展 DocumentProcessor 接口~~ ✅
+  ```java
+  // 已完成：MediaDocumentProcessor.java
+  public interface MediaDocumentProcessor extends DocumentProcessor {
+      ProcessingResult processVideo(VideoContext context);
+      ProcessingResult processAudio(AudioContext context);
+      String extractSubtitles(MediaFile file);
+      List<VideoFrame> extractKeyFrames(String videoPath, int maxFrames);
+      String generateVideoSummary(VideoContext context);
+  }
+  ```
+
+- [x] ~~扩展 AIService 接口~~ ✅
+  ```java
+  // 已完成：MultiModalAIService.java
+  public interface MultiModalAIService extends AIService {
+      String analyzeVideo(byte[] videoData, String prompt);
+      String analyzeVideoFrames(List<VideoFrame> frames, String prompt);
+      String transcribeAudio(byte[] audioData);
+      TranscriptionResult transcribeAudioWithOptions(byte[] audioData, TranscriptionOptions options);
+      String analyzeAudio(byte[] audioData, String prompt);
+      String analyzeMultiModal(MultiModalInput input);
+  }
+  ```
+
+- [x] ~~配置化支持~~ ✅
+  ```yaml
+  # 已完成：application-media.yml + MediaProcessingConfig.java
+  omni-agent:
+    media:
+      enabled: false  # 默认禁用，等待LLM成熟
+      video:
+        max-size: 100
+        supported-formats: [mp4, avi, mov, mkv, flv, wmv]
+        frame-extraction:
+          enabled: true
+          max-frames: 10
+        subtitle-extraction:
+          enabled: true
+      audio:
+        max-size: 50
+        supported-formats: [mp3, wav, m4a, flac, ogg, aac]
+        transcription:
+          enabled: true
+          language: zh
+          model: whisper-large-v3
+      multi-modal:
+        enabled: false
+        video-model: gpt-4-vision
+        audio-model: whisper-1
+  ```
+
+**🎯 Phase 3.1 成果**:
+- **4个新文件**: 2个接口, 1个配置类, 1个YAML配置
+- **700+行代码**: 编译通过，接口完整
+- **完整设计**: 视频、音频、多模态全覆盖
+- **详细文档**: 接口注释、配置说明、实施路径
+
+> 📊 详细报告: [PHASE_3_INTERFACE_RESERVATION-2025-12-21.md](../worklog/PHASE_3_INTERFACE_RESERVATION-2025-12-21.md)
+
+#### 3.2 未来实现 (待LLM成熟)
+
+- [ ] 视频文件处理
+  - [ ] 视频帧提取
+  - [ ] 关键帧识别
+  - [ ] 字幕提取与理解
+  - [ ] 视频内容摘要
+
+- [ ] 音频文件处理
+  - [ ] 语音识别（ASR）
+  - [ ] 说话人分离
+  - [ ] 音频内容理解
+  - [ ] 音频转文本索引
+
+**🎯 目标**: 当LLM支持成熟时，可快速集成，无需重构核心架构
+
+---
+
+### Phase 4: UI可视化RAG调优 🎨 (当前重点 - 最有价值)
+**说明**: 让用户通过UI深入了解系统功能，实现高度可控
+
+#### 4.1 RAG流程可视化 (高优先级)
+
+- [ ] 文档处理流程可视化
+  - [ ] 展示文档上传 → 文本化 → 分块 → 索引的完整流程
+  - [ ] 实时显示每个阶段的状态和进度
+  - [ ] 可视化展示分块结果（预览分块内容）
+  - [ ] 展示向量化过程和向量维度
+
+- [ ] 查询过程可视化
+  - [ ] 展示原始查询 → 查询扩展 → 多查询检索 → 融合 → 重排序的流程
+  - [ ] 实时显示每个查询的检索结果
+  - [ ] 可视化RRF融合过程（分数计算）
+  - [ ] 展示重排序前后的对比
+
+- [ ] 检索结果可视化
+  - [ ] 高亮显示匹配的关键词
+  - [ ] 展示相关性分数和排名
+  - [ ] 显示文档来源和分块信息
+  - [ ] 提供"为什么推荐"的解释
+
+#### 4.2 交互式参数调整 (高优先级)
+
+- [ ] 分块策略配置界面
+  - [ ] 图形化选择分块策略（固定大小/语义/PPL/段落）
+  - [ ] 实时预览不同策略的分块效果
+  - [ ] 调整分块参数（块大小、重叠度、阈值）
+  - [ ] 对比不同策略的效果
+
+- [ ] 查询扩展配置界面
+  - [ ] 启用/禁用LLM查询扩展
+  - [ ] 调整扩展查询数量
+  - [ ] 配置策略权重（同义词/LLM/领域词）
+  - [ ] 自定义领域词典
+
+- [ ] 检索参数配置界面
+  - [ ] 调整Top-K结果数量
+  - [ ] 设置相似度阈值
+  - [ ] 启用/禁用重排序
+  - [ ] 配置并行执行参数
+
+- [ ] 缓存管理界面
+  - [ ] 查看缓存统计（命中率、大小）
+  - [ ] 清除缓存（全部/部分）
+  - [ ] 配置缓存参数（大小、过期时间）
+
+#### 4.3 性能监控面板 (中优先级)
+
+- [ ] 实时性能指标
+  - [ ] 查询响应时间趋势图
+  - [ ] 缓存命中率趋势图
+  - [ ] 并行执行效率统计
+  - [ ] LLM调用次数和耗时
+
+- [ ] 系统资源监控
+  - [ ] 内存使用情况
+  - [ ] 线程池状态
+  - [ ] 磁盘空间使用
+  - [ ] 索引大小统计
+
+- [ ] 业务指标监控
+  - [ ] 查询量统计（按时间/类型）
+  - [ ] 召回率和精度趋势
+  - [ ] 用户满意度统计
+  - [ ] 热门查询Top 10
+
+#### 4.4 算法效果对比 (中优先级)
+
+- [ ] A/B测试功能
+  - [ ] 对比不同分块策略的效果
+  - [ ] 对比不同查询扩展方法
+  - [ ] 对比不同检索算法
+  - [ ] 生成对比报告
+
+- [ ] 效果评估工具
+  - [ ] 准确率/召回率/F1评分
+  - [ ] 用户点击率统计
+  - [ ] 平均响应时间
+  - [ ] 用户反馈收集
+
+#### 4.5 调试和故障排查 (中优先级)
+
+- [ ] 调试模式
+  - [ ] 详细日志展示
+  - [ ] 逐步执行RAG流程
+  - [ ] 查看中间结果
+  - [ ] 错误堆栈追踪
+
+- [ ] 问题诊断工具
+  - [ ] 检测索引健康度
+  - [ ] 识别性能瓶颈
+  - [ ] 分析查询失败原因
+  - [ ] 提供优化建议
+
+**🎯 Phase 4 目标**:
+- 让用户完全掌控RAG系统
+- 可视化所有关键流程
+- 实时调整优化参数
+- 深入理解系统工作原理
+- 快速定位和解决问题
+
+**📅 实施计划**:
+1. **Week 1-2**: RAG流程可视化（文档处理、查询过程）
+2. **Week 3-4**: 交互式参数调整（分块、查询扩展、检索）
+3. **Week 5**: 性能监控面板
+4. **Week 6**: 算法效果对比和调试工具
+
+---
+
+### Phase 5: 在线LLM直接文件分析 (低优先级)
+**说明**: 依赖在线LLM提供商的文件分析能力
+
 - [ ] 支持直接传文件给在线LLM
 - [ ] Claude/GPT-4V 直接分析文档
 - [ ] 减少中间转换步骤
+- [ ] 对比传统RAG和直接分析的效果
 
 ---
 
