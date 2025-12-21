@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Steps, Card, Progress, Alert, Button, Tag, Space, Divider, Dropdown, List, Spin } from 'antd';
+import { Steps, Card, Progress, Alert, Button, Tag, Space, Divider, Dropdown, Spin } from 'antd';
 import {
     FileAddOutlined,
     FileTextOutlined,
@@ -152,6 +152,11 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     useEffect(() => {
         if (!documentId || demoMode) return;
 
+        // 暂时禁用WebSocket，因为后端还未实现
+        // TODO: 当后端WebSocket服务实现后再启用
+        console.log('📡 WebSocket功能暂时禁用，等待后端实现');
+        return;
+
         // 创建 WebSocket 客户端 (Create WebSocket client)
         const client = new WebSocketClient('ws://localhost:8080/ws/progress');
 
@@ -183,7 +188,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 client.close();
             }
         };
-    }, [documentId]);
+    }, [documentId, demoMode]);
 
     /**
      * 处理 WebSocket 消息
@@ -322,47 +327,49 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                     size="small"
                     style={{ marginBottom: 16 }}
                 >
-                    <List
-                        dataSource={documentsList}
-                        renderItem={(doc) => (
-                            <List.Item
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {documentsList.map((doc) => (
+                            <div
                                 key={doc.documentId}
                                 onClick={() => {
                                     setSelectedDocId(doc.documentId);
-                                    // 订阅该文档的进度
-                                    if (wsClient) {
-                                        wsClient.subscribe(doc.documentId);
-                                    }
+                                    // WebSocket功能暂时禁用
+                                    // if (wsClient) {
+                                    //     wsClient.subscribe(doc.documentId);
+                                    // }
                                 }}
                                 style={{
                                     cursor: 'pointer',
                                     background: selectedDocId === doc.documentId ? '#e6f7ff' : 'transparent',
-                                    border: selectedDocId === doc.documentId ? '2px solid #1890ff' : '1px solid #f0f0f0'
+                                    border: selectedDocId === doc.documentId ? '2px solid #1890ff' : '1px solid #f0f0f0',
+                                    padding: '16px',
+                                    borderRadius: '6px',
+                                    transition: 'all 0.3s ease'
                                 }}
                             >
-                                <List.Item.Meta
-                                    title={
-                                        <Space>
-                                            <FileTextOutlined />
-                                            {doc.documentId}
-                                            <Tag color={
-                                                doc.status === 'PENDING' ? 'orange' :
-                                                doc.status === 'COMPLETED' ? 'green' :
-                                                doc.status === 'FAILED' ? 'red' :
-                                                'blue'
-                                            }>
-                                                {doc.status}
-                                            </Tag>
-                                            {selectedDocId === doc.documentId && (
-                                                <Tag color="blue" icon={<CheckCircleOutlined />}>已选中</Tag>
-                                            )}
-                                        </Space>
-                                    }
-                                    description={`${t('ragFlow.component.createdAt')}: ${new Date(doc.createdAt).toLocaleString()}`}
-                                />
-                            </List.Item>
-                        )}
-                    />
+                                <div style={{ marginBottom: '8px' }}>
+                                    <Space>
+                                        <FileTextOutlined />
+                                        <span style={{ fontWeight: 500, color: '#262626' }}>{doc.documentId}</span>
+                                        <Tag color={
+                                            doc.status === 'PENDING' ? 'orange' :
+                                            doc.status === 'COMPLETED' ? 'green' :
+                                            doc.status === 'FAILED' ? 'red' :
+                                            'blue'
+                                        }>
+                                            {doc.status}
+                                        </Tag>
+                                        {selectedDocId === doc.documentId && (
+                                            <Tag color="blue" icon={<CheckCircleOutlined />}>已选中</Tag>
+                                        )}
+                                    </Space>
+                                </div>
+                                <div style={{ color: '#8c8c8c', fontSize: '14px' }}>
+                                    {t('ragFlow.component.createdAt')}: {new Date(doc.createdAt).toLocaleString()}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </Card>
             ) : null}
 
