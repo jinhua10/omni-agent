@@ -152,6 +152,7 @@ export default {
       list: 'List View',
       card: 'Card View',
       flow: 'Flow View',  // ⭐ RAG Flow Visualization
+      chunking: 'Chunking Config',  // ⭐ Chunking Strategy Configuration
     },
 
     upload: 'Upload Document',
@@ -1351,6 +1352,128 @@ export default {
       currentProgressLabel: 'Current Progress',
       stepCounter: 'Step {current} / {total}',
       elapsedTimeLabel: 'Elapsed: {time}s',
+    },
+  },
+
+  // ============================================================================
+  // Chunking Strategy Configuration
+  // ============================================================================
+  chunkingConfig: {
+    // Page Titles
+    title: 'Chunking Strategy Configuration',
+    subtitle: 'Interactive configuration and real-time preview of document chunking strategies',
+
+    // Strategy List
+    strategyList: {
+      title: 'Available Strategies',
+      selectStrategy: 'Select Strategy',
+      currentStrategy: 'Current Strategy',
+      noStrategies: 'No strategies available',
+    },
+
+    // Strategy Info
+    strategy: {
+      fixedSize: 'Fixed Size',
+      semantic: 'Semantic',
+      ppl: 'PPL Perplexity',
+      paragraph: 'Paragraph',
+      description: {
+        fixedSize: 'Split document by fixed character count, suitable for general scenarios',
+        semantic: 'Intelligent splitting based on semantic similarity, maintains semantic integrity',
+        ppl: 'Smart splitting using perplexity algorithm, suitable for technical documents',
+        paragraph: 'Split by paragraph boundaries, maintains paragraph integrity',
+      },
+    },
+
+    // Parameters
+    params: {
+      title: 'Parameter Settings',
+      chunkSize: 'Chunk Size',
+      chunkOverlap: 'Chunk Overlap',
+      minChunkSize: 'Min Chunk Size',
+      maxChunkSize: 'Max Chunk Size',
+      similarityThreshold: 'Similarity Threshold',
+      perplexityThreshold: 'Perplexity Threshold',
+      respectParagraph: 'Respect Paragraph Boundary',
+
+      // Parameter Help
+      help: {
+        chunkSize: 'Target character count for each chunk',
+        chunkOverlap: 'Number of overlapping characters between adjacent chunks',
+        minChunkSize: 'Minimum character count for a chunk',
+        maxChunkSize: 'Maximum character count for a chunk',
+        similarityThreshold: 'Semantic similarity threshold (0-1), higher value means finer chunks',
+        perplexityThreshold: 'Perplexity threshold, higher value means finer splitting',
+        respectParagraph: 'Whether to split at paragraph boundaries',
+      },
+    },
+
+    // Live Preview
+    preview: {
+      title: 'Live Preview',
+      inputText: 'Input Text',
+      inputPlaceholder: 'Type or paste text to chunk here...',
+      chunkResult: 'Chunk Results',
+      noChunks: 'No chunks yet',
+      chunkCount: '{count} chunks total',
+      chunkIndex: 'Chunk {index}',
+      chunkLength: '{length} characters',
+      previewButton: 'Preview Chunks',
+      clearButton: 'Clear',
+
+      // Statistics
+      stats: {
+        title: 'Statistics',
+        totalChunks: 'Total Chunks',
+        avgLength: 'Average Length',
+        minLength: 'Min Length',
+        maxLength: 'Max Length',
+        totalChars: 'Total Characters',
+      },
+    },
+
+    // Strategy Comparison
+    comparison: {
+      title: 'Strategy Comparison',
+      addStrategy: 'Add Strategy',
+      removeStrategy: 'Remove Strategy',
+      compareButton: 'Start Comparison',
+      clearButton: 'Clear Comparison',
+      selectStrategies: 'Select strategies to compare',
+      noComparison: 'Select at least 2 strategies to compare',
+
+      // Comparison Results
+      result: {
+        strategy: 'Strategy',
+        chunks: 'Chunks',
+        avgLength: 'Avg Length',
+        quality: 'Quality Score',
+        speed: 'Processing Speed',
+      },
+    },
+
+    // Messages
+    message: {
+      loadSuccess: 'Strategies loaded successfully',
+      loadFailed: 'Failed to load strategies',
+      previewSuccess: 'Preview generated successfully',
+      previewFailed: 'Failed to generate preview',
+      comparisonSuccess: 'Comparison completed',
+      comparisonFailed: 'Comparison failed',
+      inputRequired: 'Please input text to chunk',
+      selectStrategyRequired: 'Please select a chunking strategy',
+      parameterInvalid: 'Invalid parameter value',
+    },
+
+    // Action Buttons
+    actions: {
+      preview: 'Preview',
+      apply: 'Apply',
+      reset: 'Reset',
+      compare: 'Compare',
+      export: 'Export Config',
+      import: 'Import Config',
+      save: 'Save as Default',
     },
   },
 }

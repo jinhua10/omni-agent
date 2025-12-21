@@ -152,6 +152,7 @@ export default {
       list: '列表视图',
       card: '卡片视图',
       flow: '流程视图',  // ⭐ RAG流程可视化
+      chunking: '分块配置',  // ⭐ 分块策略配置
     },
 
     upload: '上传文档',
@@ -1363,6 +1364,128 @@ export default {
       currentProgressLabel: '当前进度',
       stepCounter: '步骤 {current} / {total}',
       elapsedTimeLabel: '已耗时: {time}s',
+    },
+  },
+
+  // ============================================================================
+  // 分块策略配置 (Chunking Strategy Configuration)
+  // ============================================================================
+  chunkingConfig: {
+    // 页面标题 (Page Titles)
+    title: '分块策略配置',
+    subtitle: '交互式配置和实时预览文档分块策略',
+
+    // 策略列表 (Strategy List)
+    strategyList: {
+      title: '可用策略',
+      selectStrategy: '选择策略',
+      currentStrategy: '当前策略',
+      noStrategies: '暂无可用策略',
+    },
+
+    // 策略信息 (Strategy Info)
+    strategy: {
+      fixedSize: '固定大小',
+      semantic: '语义分块',
+      ppl: 'PPL困惑度',
+      paragraph: '段落分块',
+      description: {
+        fixedSize: '按固定字符数量切分文档，适合通用场景',
+        semantic: '基于语义相似度智能切分，保持语义完整性',
+        ppl: '使用困惑度算法智能判断最佳切分点，适合技术文档',
+        paragraph: '按段落边界切分，保持段落完整性',
+      },
+    },
+
+    // 参数配置 (Parameters)
+    params: {
+      title: '参数设置',
+      chunkSize: '分块大小',
+      chunkOverlap: '重叠大小',
+      minChunkSize: '最小分块',
+      maxChunkSize: '最大分块',
+      similarityThreshold: '相似度阈值',
+      perplexityThreshold: '困惑度阈值',
+      respectParagraph: '尊重段落边界',
+
+      // 参数说明
+      help: {
+        chunkSize: '每个分块的目标字符数量',
+        chunkOverlap: '相邻分块之间重叠的字符数量',
+        minChunkSize: '分块的最小字符数量',
+        maxChunkSize: '分块的最大字符数量',
+        similarityThreshold: '语义相似度阈值 (0-1)，值越大分块越细',
+        perplexityThreshold: '困惑度阈值，值越高切分越细',
+        respectParagraph: '是否在段落边界处切分',
+      },
+    },
+
+    // 实时预览 (Live Preview)
+    preview: {
+      title: '实时预览',
+      inputText: '输入文本',
+      inputPlaceholder: '在此输入或粘贴要分块的文本...',
+      chunkResult: '分块结果',
+      noChunks: '暂无分块结果',
+      chunkCount: '共 {count} 个分块',
+      chunkIndex: '分块 {index}',
+      chunkLength: '{length} 字符',
+      previewButton: '预览分块',
+      clearButton: '清除',
+
+      // 统计信息
+      stats: {
+        title: '统计信息',
+        totalChunks: '分块数量',
+        avgLength: '平均长度',
+        minLength: '最小长度',
+        maxLength: '最大长度',
+        totalChars: '总字符数',
+      },
+    },
+
+    // 策略对比 (Strategy Comparison)
+    comparison: {
+      title: '策略对比',
+      addStrategy: '添加对比策略',
+      removeStrategy: '移除策略',
+      compareButton: '开始对比',
+      clearButton: '清除对比',
+      selectStrategies: '选择要对比的策略',
+      noComparison: '至少选择2个策略进行对比',
+
+      // 对比结果
+      result: {
+        strategy: '策略',
+        chunks: '分块数',
+        avgLength: '平均长度',
+        quality: '质量评分',
+        speed: '处理速度',
+      },
+    },
+
+    // 消息提示 (Messages)
+    message: {
+      loadSuccess: '策略加载成功',
+      loadFailed: '策略加载失败',
+      previewSuccess: '预览生成成功',
+      previewFailed: '预览生成失败',
+      comparisonSuccess: '对比完成',
+      comparisonFailed: '对比失败',
+      inputRequired: '请输入要分块的文本',
+      selectStrategyRequired: '请选择分块策略',
+      parameterInvalid: '参数值无效',
+    },
+
+    // 操作按钮 (Action Buttons)
+    actions: {
+      preview: '预览',
+      apply: '应用',
+      reset: '重置',
+      compare: '对比',
+      export: '导出配置',
+      import: '导入配置',
+      save: '保存为默认',
     },
   },
 }

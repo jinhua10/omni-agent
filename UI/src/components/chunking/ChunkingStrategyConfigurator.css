@@ -1,0 +1,196 @@
+/**
+ * 分块策略配置器样式
+ * (Chunking Strategy Configurator Styles)
+ */
+
+.chunking-strategy-configurator {
+  padding: 20px;
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+/* 策略选择器卡片 */
+.strategy-selector-card {
+  height: 100%;
+}
+
+.strategy-selector-card .ant-card-body {
+  padding: 20px;
+}
+
+/* 内容输入区域 */
+.content-input {
+  font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+}
+
+.content-input:focus {
+  outline: none;
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* 分块预览列表 */
+.chunk-preview-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.chunk-preview-card {
+  margin-bottom: 12px;
+  border-left: 3px solid #1890ff;
+}
+
+.chunk-preview-card:hover {
+  border-left-color: #40a9ff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chunk-preview-card .ant-card-head {
+  min-height: 40px;
+  padding: 8px 12px;
+  background: #fafafa;
+}
+
+.chunk-preview-card .ant-card-body {
+  padding: 12px;
+}
+
+/* 策略对比图表 */
+.strategy-comparison-chart {
+  padding: 10px;
+}
+
+.strategy-comparison-chart .ant-statistic {
+  text-align: center;
+}
+
+.strategy-comparison-chart .ant-table {
+  font-size: 13px;
+}
+
+.strategy-comparison-chart .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+/* 统计卡片 */
+.ant-statistic-title {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.ant-statistic-content {
+  font-size: 20px;
+  color: #262626;
+  font-weight: 500;
+}
+
+/* 标签样式 */
+.ant-tag {
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+/* 折叠面板 */
+.ant-collapse-ghost > .ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box {
+  padding: 8px 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .chunking-strategy-configurator .ant-col-10 {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .chunking-strategy-configurator .ant-col-14 {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 20px;
+  }
+}
+
+/* 加载状态 */
+.ant-spin-nested-loading {
+  min-height: 200px;
+}
+
+/* Empty 状态 */
+.ant-empty {
+  padding: 60px 0;
+}
+
+.ant-empty-description {
+  color: #999;
+  font-size: 14px;
+}
+
+/* 按钮组 */
+.ant-space-horizontal {
+  gap: 12px !important;
+}
+
+/* 滚动条样式 */
+.chunk-preview-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chunk-preview-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.chunk-preview-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.chunk-preview-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 表格行悬停效果 */
+.ant-table-tbody > tr:hover {
+  background: #fafafa;
+  cursor: pointer;
+}
+
+/* 卡片标题图标 */
+.ant-card-head-title .anticon {
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+/* 参数配置表单 */
+.ant-form-item {
+  margin-bottom: 16px;
+}
+
+.ant-form-item-label > label {
+  font-weight: 500;
+  color: #262626;
+}
+
+/* 提示信息 */
+.ant-alert {
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.ant-alert-info {
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+}
+
+/* Divider */
+.ant-divider {
+  margin: 16px 0;
+}
+
+/* 成功状态卡片 */
+.ant-card[style*="background: #f6ffed"] {
+  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.1);
+}
+

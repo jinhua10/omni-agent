@@ -1,0 +1,238 @@
+/**
+ * 分块策略配置样式 (Chunking Strategy Configuration Styles)
+ *
+ * @author OmniAgent Team
+ * @since 2.0.0 (Phase 4)
+ */
+
+.chunking-config-container {
+  padding: 24px;
+  background-color: var(--bg-color, #f5f5f5);
+  min-height: 100vh;
+}
+
+/* 页面标题 */
+.chunking-config-container .page-header {
+  margin-bottom: 24px;
+}
+
+.chunking-config-container .page-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, #1f1f1f);
+}
+
+.chunking-config-container .page-header .subtitle {
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  margin: 8px 0 0 0;
+}
+
+/* 策略卡片 */
+.chunking-config-container .strategy-card {
+  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chunking-config-container .strategy-selector {
+  margin-bottom: 16px;
+}
+
+.chunking-config-container .params-config h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary, #1f1f1f);
+}
+
+/* 对比模式 */
+.chunking-config-container .comparison-mode {
+  padding: 16px;
+  background-color: var(--bg-secondary, #fafafa);
+  border-radius: 8px;
+}
+
+/* 预览卡片 */
+.chunking-config-container .preview-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chunking-config-container .preview-input h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary, #1f1f1f);
+}
+
+/* 统计卡片 */
+.chunking-config-container .statistics-card {
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.chunking-config-container .statistics-card .ant-card-head {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.chunking-config-container .statistics-card .ant-card-head-title {
+  color: white;
+}
+
+.chunking-config-container .statistics-card .ant-statistic-title {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+}
+
+.chunking-config-container .statistics-card .ant-statistic-content {
+  color: white;
+  font-weight: 600;
+}
+
+.chunking-config-container .statistics-card .ant-divider {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 分块结果 */
+.chunking-config-container .chunk-results {
+  margin-top: 16px;
+}
+
+.chunking-config-container .chunk-results-header {
+  margin-bottom: 16px;
+}
+
+.chunking-config-container .chunk-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.chunking-config-container .chunk-card {
+  margin-bottom: 12px;
+  transition: all 0.3s;
+}
+
+.chunking-config-container .chunk-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.chunking-config-container .chunk-content {
+  margin: 0;
+  padding: 12px;
+  background-color: var(--code-bg, #f6f8fa);
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* 对比结果 */
+.chunking-config-container .comparison-card {
+  margin-bottom: 16px;
+}
+
+.chunking-config-container .comparison-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.chunking-config-container .comparison-item {
+  border: 2px solid var(--border-color, #e8e8e8);
+  transition: all 0.3s;
+}
+
+.chunking-config-container .comparison-item:hover {
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .chunking-config-container {
+    padding: 16px;
+  }
+
+  .chunking-config-container .page-header h1 {
+    font-size: 22px;
+  }
+
+  .chunking-config-container .comparison-results {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 暗色模式 */
+.dark-mode .chunking-config-container {
+  background-color: #1f1f1f;
+}
+
+.dark-mode .chunking-config-container .page-header h1 {
+  color: #ffffff;
+}
+
+.dark-mode .chunking-config-container .page-header .subtitle {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.dark-mode .chunking-config-container .params-config h3,
+.dark-mode .chunking-config-container .preview-input h3 {
+  color: #ffffff;
+}
+
+.dark-mode .chunking-config-container .comparison-mode {
+  background-color: #2a2a2a;
+}
+
+.dark-mode .chunking-config-container .chunk-content {
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+.dark-mode .chunking-config-container .comparison-item {
+  border-color: #3a3a3a;
+}
+
+.dark-mode .chunking-config-container .comparison-item:hover {
+  border-color: #1890ff;
+}
+
+/* 滚动条样式 */
+.chunking-config-container .chunk-list::-webkit-scrollbar,
+.chunking-config-container .chunk-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chunking-config-container .chunk-list::-webkit-scrollbar-thumb,
+.chunking-config-container .chunk-content::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.chunking-config-container .chunk-list::-webkit-scrollbar-thumb:hover,
+.chunking-config-container .chunk-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* 动画效果 */
+.chunking-config-container .chunk-card {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

@@ -16,11 +16,13 @@ import {
   UnorderedListOutlined,
   FolderOpenOutlined,
   AppstoreOutlined,
-  SyncOutlined  // ⭐ 流程图标
+  SyncOutlined,  // ⭐ 流程图标
+  SettingOutlined  // ⭐ 配置图标
 } from '@ant-design/icons'
 import DocumentList from './DocumentList'
 import DocumentBrowser from './DocumentBrowser'
 import DocumentProcessingFlow from '../rag-flow/DocumentProcessingFlow'  // ⭐ 导入流程组件
+import ChunkingConfig from './ChunkingConfig'  // ⭐ 分块配置组件
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/document-management.css'
 
@@ -102,6 +104,15 @@ function DocumentManagement() {
                 ),
                 value: 'flow',
               },
+              {
+                label: (
+                  <Space>
+                    <SettingOutlined />
+                    <span>{t('document.viewMode.chunking')}</span>
+                  </Space>
+                ),
+                value: 'chunking',
+              },
             ]}
             size="large"
           />
@@ -114,8 +125,8 @@ function DocumentManagement() {
           <DocumentBrowser />
         ) : viewMode === 'list' ? (
           <DocumentList />
-        ) : (
-          // ⭐ 流程视图：显示文档处理进度
+        ) : viewMode === 'flow' ? (
+          // 流程视图：显示文档处理进度
           <div className="document-flow-view">
             <DocumentProcessingFlow
               documentId={processingDocumentId}
@@ -126,6 +137,11 @@ function DocumentManagement() {
                 console.error('❌ 文档处理失败:', error)
               }}
             />
+          </div>
+        ) : (
+          // ⭐ 分块配置视图：交互式配置分块策略
+          <div className="document-chunking-view">
+            <ChunkingConfig />
           </div>
         )}
       </div>
