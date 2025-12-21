@@ -412,7 +412,7 @@ function ChunkingConfig() {
     if (!previewResult || !previewResult.chunks || previewResult.chunks.length === 0) {
       return (
         <Alert
-          message={t('chunkingConfig.preview.noChunks')}
+          title={t('chunkingConfig.preview.noChunks')}
           type="info"
           showIcon
         />
@@ -538,7 +538,7 @@ function ChunkingConfig() {
 
                 {currentStrategy && (
                   <Alert
-                    message={getStrategyDescription(currentStrategy.name)}
+                    title={getStrategyDescription(currentStrategy.name)}
                     type="info"
                     showIcon
                     style={{ marginTop: 16 }}
@@ -558,7 +558,7 @@ function ChunkingConfig() {
 
               {/* 对比模式 */}
               <div className="comparison-mode">
-                <Space direction="vertical" style={{ width: '100%' }}>
+                <Space vertical style={{ width: '100%' }}>
                   <Space>
                     <SwapOutlined />
                     <span>{t('chunkingConfig.comparison.title')}</span>
