@@ -50,6 +50,7 @@ public class DocumentManagementController {
     private final ChunkingStrategyManager chunkingStrategyManager;
     private final ImageStorageService imageStorageService;
     private final FileWatcherService fileWatcherService;
+    private final top.yumbo.ai.omni.web.service.DocumentProcessingService documentProcessingService;
 
     // ⭐ 直接从配置文件读取监听目录
     @Value("${omni-agent.file-watcher.watch-directory:./data/documents}")
@@ -92,17 +93,27 @@ public class DocumentManagementController {
             file.transferTo(targetFile);
 
             log.info("✅ 文件已保存到监听目录: {}", targetFile);
-            log.info("⏳ 文件将由 FileWatcherService 自动处理和索引");
+
+            // ⭐ 生成文档ID
+            String documentId = "doc_" + System.currentTimeMillis() + "_" +
+                filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+
+            // ⭐ 触发异步处理流程（推送WebSocket进度）
+            documentProcessingService.processDocument(documentId, filename, file.getBytes())
+                .exceptionally(throwable -> {
+                    log.error("❌ 文档处理异常: documentId={}", documentId, throwable);
+                    return null;
+                });
 
             response.setSuccess(true);
-            response.setMessage("文件上传成功，正在索引中...");
+            response.setMessage("文件上传成功，正在处理中...");
             response.setFileName(filename);
             response.setFileSize(file.getSize());
-            response.setDocumentId(null);  // 索引完成后才有 documentId
+            response.setDocumentId(documentId);  // ⭐ 返回documentId供前端订阅进度
             response.setAutoIndexed(true);
             response.setIndexing(true);  // ⭐ 新增：索引中状态
 
-            log.info("📤 文档上传成功（异步）: filename={}", filename);
+            log.info("📤 文档上传成功（异步）: filename={}, documentId={}", filename, documentId);
 
         } catch (Exception e) {
             log.error("文档上传失败", e);

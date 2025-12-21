@@ -1328,6 +1328,7 @@ export default {
     // 状态 (Status)
     status: {
       running: '处理中',
+      processing: '处理中',
       completed: '已完成',
       failed: '处理失败',
       waiting: '等待中',
@@ -1391,11 +1392,13 @@ export default {
       semantic: '语义分块',
       ppl: 'PPL困惑度',
       paragraph: '段落分块',
+      sentence_boundary: '句子边界分块',
       description: {
         fixedSize: '按固定字符数量切分文档，适合通用场景',
         semantic: '基于语义相似度智能切分，保持语义完整性',
         ppl: '使用困惑度算法智能判断最佳切分点，适合技术文档',
         paragraph: '按段落边界切分，保持段落完整性',
+        sentence_boundary: '按句子边界切分，适合对话类文本',
       },
     },
 

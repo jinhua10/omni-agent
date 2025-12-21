@@ -49,6 +49,16 @@ function DocumentManagement() {
   // ⭐ 当前正在处理的文档ID（用于流程视图）
   const [processingDocumentId, setProcessingDocumentId] = useState(null)
 
+  // ⭐ 处理文档上传成功
+  const handleDocumentUploaded = (documentId) => {
+    console.log('📄 文档上传成功，documentId:', documentId)
+    setProcessingDocumentId(documentId)
+    // 自动切换到流程视图
+    setViewMode('flow')
+    // 更新localStorage
+    localStorage.setItem('documentViewMode', 'flow')
+  }
+
   // ============================================================================
   // Functions / 函数
   // ============================================================================

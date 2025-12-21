@@ -50,7 +50,22 @@ const simulateProcessing = () => {
 - ✅ 统一进度显示（percentage 和 progress）
 - ✅ 添加演示模式标签
 
-### 3. 增强UI展示
+### 3. 修复国际化翻译键 ⭐ **重要修复**
+
+**问题**: 缺少 `ragFlow.status.processing` 翻译键
+
+**修改文件**: 
+- `UI/src/lang/zh.js` - 添加 `processing: '处理中'`
+- `UI/src/lang/en.js` - 添加 `processing: 'Processing'`
+
+**修复前错误**:
+```
+Translation key not found: ragFlow.status.processing
+```
+
+**修复后**: ✅ 翻译键完整，状态正确显示
+
+### 4. 增强UI展示
 
 **修改**:
 - ✅ 添加进度消息显示
@@ -141,6 +156,8 @@ const [progress, setProgress] = useState(null);
 
 ## 📝 修改的文件
 
+### 前端文件
+
 1. ✅ `UI/src/components/rag-flow/DocumentProcessingFlow.jsx`
    - 添加演示模式逻辑
    - 修复状态判断
@@ -149,9 +166,38 @@ const [progress, setProgress] = useState(null);
 2. ✅ `UI/src/components/document/DocumentManagement.jsx`
    - 传递演示模式参数
    - 自动启动流程
+   - 添加上传成功回调
 
 3. ✅ `UI/src/components/rag-flow/DocumentProcessingFlow.css`
    - 添加进度消息样式
+
+4. ✅ `UI/src/lang/zh.js` ⭐ **国际化修复**
+   - 添加 `ragFlow.status.processing` 翻译
+
+5. ✅ `UI/src/lang/en.js` ⭐ **国际化修复**
+   - 添加 `ragFlow.status.processing` 翻译
+
+### 后端文件 ⭐ **系统集成**
+
+6. ✅ `DocumentProcessingWebSocketHandler.java` (150行)
+   - WebSocket处理器
+   - 实时推送进度
+
+7. ✅ `WebSocketConfig.java` (30行)
+   - WebSocket配置
+   - 注册端点
+
+8. ✅ `DocumentProcessingService.java` (120行)
+   - 文档处理服务
+   - 5步处理流程
+   - 异步执行
+
+9. ✅ `DocumentManagementController.java`
+   - 集成DocumentProcessingService
+   - 触发处理流程
+   - 返回documentId
+
+**总计**: 9个文件修改，4个新增
 
 ---
 
@@ -183,11 +229,70 @@ const [progress, setProgress] = useState(null);
 
 ## 🚀 后续增强建议
 
-1. **连接真实数据**
-   - 当用户上传文档时，自动切换到真实处理
-   - WebSocket实时更新
+### ✅ 已实现 - 连接真实数据
 
-2. **更多交互**
+**实施时间**: 2025-12-21 15:30
+
+#### 后端实现
+
+1. **WebSocket支持** ✅
+   - `DocumentProcessingWebSocketHandler.java` (150行)
+   - 实时推送文档处理进度
+   - 支持订阅/取消订阅
+   - 会话管理和消息广播
+
+2. **WebSocket配置** ✅
+   - `WebSocketConfig.java`
+   - 端点: `/ws/progress`
+   - 跨域支持
+
+3. **文档处理服务** ✅
+   - `DocumentProcessingService.java` (120行)
+   - 完整的5步处理流程
+   - 异步执行
+   - 实时进度推送
+
+4. **上传API集成** ✅
+   - 修改 `DocumentManagementController.java`
+   - 上传时触发处理流程
+   - 生成documentId
+   - 返回documentId供前端订阅
+
+#### 前端集成
+
+1. **DocumentManagement增强** ✅
+   - 添加 `handleDocumentUploaded` 回调
+   - 上传成功自动切换到流程视图
+   - 订阅WebSocket进度更新
+
+2. **真实流程展示** ✅
+   - 当有真实文档时，显示实际处理进度
+   - 没有文档时，显示演示模式
+   - 无缝切换
+
+#### 处理流程
+
+```
+用户上传文档
+    ↓
+后端接收并保存
+    ↓
+生成documentId
+    ↓
+触发DocumentProcessingService
+    ↓
+通过WebSocket推送进度
+    ↓
+前端订阅并显示
+    ↓
+实时更新流程视图
+```
+
+### ⏳ 待实现 - 更多交互
+
+以下功能可作为后续增强：
+
+1. **更多交互**
    - 点击步骤查看详情
    - 暂停/继续播放
    - 调整播放速度

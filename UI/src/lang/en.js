@@ -1316,6 +1316,7 @@ export default {
     // Status
     status: {
       running: 'Processing',
+      processing: 'Processing',
       completed: 'Completed',
       failed: 'Failed',
       waiting: 'Waiting',
@@ -1379,11 +1380,13 @@ export default {
       semantic: 'Semantic',
       ppl: 'PPL Perplexity',
       paragraph: 'Paragraph',
+      sentence_boundary: 'Sentence Boundary',
       description: {
         fixedSize: 'Split document by fixed character count, suitable for general scenarios',
         semantic: 'Intelligent splitting based on semantic similarity, maintains semantic integrity',
         ppl: 'Smart splitting using perplexity algorithm, suitable for technical documents',
         paragraph: 'Split by paragraph boundaries, maintains paragraph integrity',
+        sentence_boundary: 'Split by sentence boundaries, maintains sentence integrity',
       },
     },
 

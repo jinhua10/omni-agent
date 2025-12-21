@@ -1,0 +1,147 @@
+package top.yumbo.ai.omni.web.websocket;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * 文档处理进度 WebSocket 处理器
+ * (Document Processing Progress WebSocket Handler)
+ *
+ * 实时推送文档处理进度到前端
+ * (Real-time push document processing progress to frontend)
+ *
+ * @author OmniAgent Team
+ * @since 2.0.0 (Phase 4)
+ */
+@Slf4j
+@Component
+public class DocumentProcessingWebSocketHandler extends TextWebSocketHandler {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // 存储所有活跃的WebSocket会话
+    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+
+    // 存储会话订阅的文档ID
+    private final Map<String, String> sessionSubscriptions = new ConcurrentHashMap<>();
+
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        String sessionId = session.getId();
+        sessions.put(sessionId, session);
+        log.info("📡 WebSocket连接建立: sessionId={}", sessionId);
+
+        // 发送欢迎消息
+        sendMessage(session, Map.of(
+            "type", "connected",
+            "message", "WebSocket连接成功"
+        ));
+    }
+
+    @Override
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        String sessionId = session.getId();
+        String payload = message.getPayload();
+
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = objectMapper.readValue(payload, Map.class);
+            String action = (String) data.get("action");
+
+            if ("subscribe".equals(action)) {
+                // 订阅文档进度
+                String documentId = (String) data.get("documentId");
+                sessionSubscriptions.put(sessionId, documentId);
+                log.info("📝 订阅文档进度: sessionId={}, documentId={}", sessionId, documentId);
+
+                // 发送订阅确认
+                sendMessage(session, Map.of(
+                    "type", "subscribed",
+                    "documentId", documentId
+                ));
+            } else if ("unsubscribe".equals(action)) {
+                // 取消订阅
+                sessionSubscriptions.remove(sessionId);
+                log.info("🚫 取消订阅: sessionId={}", sessionId);
+            }
+        } catch (Exception e) {
+            log.error("❌ 处理WebSocket消息失败: sessionId={}", sessionId, e);
+            sendMessage(session, Map.of(
+                "type", "error",
+                "message", "消息处理失败: " + e.getMessage()
+            ));
+        }
+    }
+
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        String sessionId = session.getId();
+        sessions.remove(sessionId);
+        sessionSubscriptions.remove(sessionId);
+        log.info("🔌 WebSocket连接关闭: sessionId={}, status={}", sessionId, status);
+    }
+
+    @Override
+    public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+        String sessionId = session.getId();
+        log.error("❌ WebSocket传输错误: sessionId={}", sessionId, exception);
+        session.close();
+    }
+
+    /**
+     * 向指定会话发送消息
+     */
+    private void sendMessage(WebSocketSession session, Object message) {
+        try {
+            if (session.isOpen()) {
+                String json = objectMapper.writeValueAsString(message);
+                session.sendMessage(new TextMessage(json));
+            }
+        } catch (IOException e) {
+            log.error("❌ 发送WebSocket消息失败", e);
+        }
+    }
+
+    /**
+     * 广播文档处理进度到订阅该文档的所有会话
+     */
+    public void broadcastProgress(String documentId, Map<String, Object> progress) {
+        log.debug("📢 广播进度: documentId={}", documentId);
+
+        sessionSubscriptions.forEach((sessionId, subscribedDocId) -> {
+            if (documentId.equals(subscribedDocId)) {
+                WebSocketSession session = sessions.get(sessionId);
+                if (session != null && session.isOpen()) {
+                    sendMessage(session, Map.of(
+                        "type", "progress",
+                        "data", progress
+                    ));
+                }
+            }
+        });
+    }
+
+    /**
+     * 获取活跃会话数量
+     */
+    public int getActiveSessionCount() {
+        return sessions.size();
+    }
+
+    /**
+     * 获取订阅数量
+     */
+    public int getSubscriptionCount() {
+        return sessionSubscriptions.size();
+    }
+}
+

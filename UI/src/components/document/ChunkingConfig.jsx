@@ -104,6 +104,7 @@ function ChunkingConfig() {
       semantic: t('chunkingConfig.strategy.semantic'),
       ppl: t('chunkingConfig.strategy.ppl'),
       paragraph: t('chunkingConfig.strategy.paragraph'),
+      sentence_boundary: t('chunkingConfig.strategy.sentence_boundary'),
     }
     return nameMap[strategyName] || strategyName
   }
