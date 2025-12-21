@@ -181,19 +181,19 @@ steps:
 ## 📚 文档
 
 ### 完成报告
-- [Phase 1 完成报告](PHASE1_COMPLETION_REPORT.md)
-- [Phase 2 完成报告](PHASE2_COMPLETION_REPORT.md)
-- [Phase 3 完成报告](PHASE3_REST_API_COMPLETION.md)
-- [Phase 4 完成报告](PHASE4_WORKFLOW_INVOKER_COMPLETION.md)
+- [Phase 1 完成报告](../worklog/PHASE1_COMPLETION_REPORT.md)
+- [Phase 2 完成报告](../worklog/PHASE2_COMPLETION_REPORT.md)
+- [Phase 3 完成报告](../worklog/PHASE3_REST_API_COMPLETION.md)
+- [Phase 4 完成报告](../worklog/PHASE4_WORKFLOW_INVOKER_COMPLETION.md)
 
 ### 设计文档
 - [工作流市场设计](WORKFLOW_MARKET_DESIGN.md)
-- [存储配置指南](omni-agent-workflow/STORAGE_CONFIGURATION.md)
+- [存储配置指南](../../omni-agent-workflow/STORAGE_CONFIGURATION.md)
 - [自动检测功能](WORKFLOW_AUTO_DETECTION.md)
 
 ### 使用指南
 - [快速开始](WORKFLOW_QUICK_START.md)
-- [工作流编排示例](omni-agent-workflow/WORKFLOW_INVOKER_EXAMPLES.md)
+- [工作流编排示例](../../omni-agent-workflow/WORKFLOW_INVOKER_EXAMPLES.md)
 - [实施状态](WORKFLOW_IMPLEMENTATION_STATUS.md)
 
 ---

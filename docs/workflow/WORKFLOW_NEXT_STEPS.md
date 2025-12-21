@@ -219,19 +219,19 @@ curl -X POST "http://localhost:8080/api/workflows/market/{id}/install" \
 3. [实施状态](WORKFLOW_IMPLEMENTATION_STATUS.md) - 当前状态
 
 ### Phase 报告
-4. [Phase 1 报告](PHASE1_COMPLETION_REPORT.md) - 核心引擎
-5. [Phase 2 报告](PHASE2_COMPLETION_REPORT.md) - 市场持久化
-6. [Phase 3 报告](PHASE3_REST_API_COMPLETION.md) - REST API
-7. [Phase 4 报告](PHASE4_WORKFLOW_INVOKER_COMPLETION.md) - 工作流编排
+4. [Phase 1 报告](../worklog/PHASE1_COMPLETION_REPORT.md) - 核心引擎
+5. [Phase 2 报告](../worklog/PHASE2_COMPLETION_REPORT.md) - 市场持久化
+6. [Phase 3 报告](../worklog/PHASE3_REST_API_COMPLETION.md) - REST API
+7. [Phase 4 报告](../worklog/PHASE4_WORKFLOW_INVOKER_COMPLETION.md) - 工作流编排
 
 ### 设计文档
 8. [市场设计](WORKFLOW_MARKET_DESIGN.md) - 完整设计
-9. [存储配置](omni-agent-workflow/STORAGE_CONFIGURATION.md) - 配置指南
+9. [存储配置](../../omni-agent-workflow/STORAGE_CONFIGURATION.md) - 配置指南
 10. [自动检测](WORKFLOW_AUTO_DETECTION.md) - 自动检测功能
 
 ### 使用指南
 11. [快速开始](WORKFLOW_QUICK_START.md) - 入门指南
-12. [编排示例](omni-agent-workflow/WORKFLOW_INVOKER_EXAMPLES.md) - 实战示例
+12. [编排示例](../../omni-agent-workflow/WORKFLOW_INVOKER_EXAMPLES.md) - 实战示例
 13. [实施计划](WORKFLOW_IMPLEMENTATION_PLAN.md) - 完整计划
 
 ### 验证报告

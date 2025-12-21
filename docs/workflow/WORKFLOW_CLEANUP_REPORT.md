@@ -232,7 +232,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 
 ## 🚀 下一步
 
-按照 [WORKFLOW_FINAL_GUIDE.md](./WORKFLOW_FINAL_GUIDE.md) 的 3 步集成到 App.jsx：
+按照 [WORKFLOW_FINAL_GUIDE.md](WORKFLOW_FINAL_GUIDE.md) 的 3 步集成到 App.jsx：
 
 1. 导入组件：`import { WorkflowMarket } from './components/workflow'`
 2. 添加路由：`case 'workflowMarket': return <WorkflowMarket />`

@@ -10,24 +10,24 @@
 ### 🔥 最常用文档
 | 文档 | 用途 | 优先级 | 状态 |
 |------|------|--------|------|
-| [**重构看板**](./refactor/REFACTORING_KANBAN.md) | 实时进度追踪和任务管理 | ⭐⭐⭐⭐⭐ | 🚀 实时更新 (v2.25) |
-| [**Phase 2 完成报告**](./refactor/phase-2/PHASE2_COMPLETE_REPORT.md) | Core层解耦完成报告 | ⭐⭐⭐⭐⭐ | ✅ 最新 |
-| [**最终架构方案**](./refactor/FINAL-ARCHITECTURE-V3.md) | 四维可插拔架构设计 | ⭐⭐⭐⭐⭐ | ✅ 最新 |
-| [**模块依赖结构**](./refactor/CORE_MODULE_DEPENDENCY.md) | 可视化依赖关系 | ⭐⭐⭐⭐ | ✅ 完成 |
+| [**重构看板**](../refactor/REFACTORING_KANBAN.md) | 实时进度追踪和任务管理 | ⭐⭐⭐⭐⭐ | 🚀 实时更新 (v2.25) |
+| [**Phase 2 完成报告**](../refactor/phase-2/PHASE2_COMPLETE_REPORT.md) | Core层解耦完成报告 | ⭐⭐⭐⭐⭐ | ✅ 最新 |
+| [**最终架构方案**](../refactor/FINAL-ARCHITECTURE-V3.md) | 四维可插拔架构设计 | ⭐⭐⭐⭐⭐ | ✅ 最新 |
+| [**模块依赖结构**](../refactor/CORE_MODULE_DEPENDENCY.md) | 可视化依赖关系 | ⭐⭐⭐⭐ | ✅ 完成 |
 
 ### 📖 项目文档
 | 文档 | 描述 |
 |------|------|
-| [README.md](../README.md) | 项目主文档 |
+| [README.md](../../README.md) | 项目主文档 |
 
 ### 🔧 重构文档
 | 文档 | 描述 | 状态 |
 |------|------|------|
-| [**重构看板**](./refactor/REFACTORING_KANBAN.md) | 任务跟踪与管理 ⭐ 日常使用 | 🚀 85% (v2.25) |
-| [**Phase 2 完成报告**](./refactor/phase-2/PHASE2_COMPLETE_REPORT.md) | Core层解耦完成报告 | ✅ 完成 |
-| [**最终架构方案 V3**](./refactor/FINAL-ARCHITECTURE-V3.md) | 四维可插拔架构设计 | ✅ 完成 |
-| [**模块依赖结构**](./refactor/CORE_MODULE_DEPENDENCY.md) | 可视化依赖关系 | ✅ 完成 |
-| [代码规范](./refactor/20251209-23-00-00-CODE_STANDARDS.md) | 代码标准 | ✅ 完成 |
+| [**重构看板**](../refactor/REFACTORING_KANBAN.md) | 任务跟踪与管理 ⭐ 日常使用 | 🚀 85% (v2.25) |
+| [**Phase 2 完成报告**](../refactor/phase-2/PHASE2_COMPLETE_REPORT.md) | Core层解耦完成报告 | ✅ 完成 |
+| [**最终架构方案 V3**](../refactor/FINAL-ARCHITECTURE-V3.md) | 四维可插拔架构设计 | ✅ 完成 |
+| [**模块依赖结构**](../refactor/CORE_MODULE_DEPENDENCY.md) | 可视化依赖关系 | ✅ 完成 |
+| [代码规范](../refactor/20251209-23-00-00-CODE_STANDARDS.md) | 代码标准 | ✅ 完成 |
 
 ---
 
@@ -212,28 +212,28 @@
 ## 🚀 快速开始指南
 
 ### 如果你是新开发人员
-1. 📖 阅读 [README.md](../README.md) - 了解项目背景和最新进度
-2. 📋 阅读 [重构看板](./refactor/REFACTORING_KANBAN.md) - 查看当前任务状态
-3. 🏗️ 阅读 [最终架构方案](./refactor/FINAL-ARCHITECTURE-V3.md) - 理解四维可插拔架构
-4. 💡 查看 [应用示例](../omni-agent-example-basic/README.md) - 快速上手
+1. 📖 阅读 [README.md](../../README.md) - 了解项目背景和最新进度
+2. 📋 阅读 [重构看板](../refactor/REFACTORING_KANBAN.md) - 查看当前任务状态
+3. 🏗️ 阅读 [最终架构方案](../refactor/FINAL-ARCHITECTURE-V3.md) - 理解四维可插拔架构
+4. 💡 查看 [应用示例](../../omni-agent-example-basic/README.md) - 快速上手
 
 ### 如果你需要实现新 Starter
-1. 📋 查看 [重构看板](./refactor/REFACTORING_KANBAN.md) - 确认待实现的 Starter
-2. 🏗️ 阅读 [最终架构方案](./refactor/FINAL-ARCHITECTURE-V3.md) - 了解 Starter 规范
+1. 📋 查看 [重构看板](../refactor/REFACTORING_KANBAN.md) - 确认待实现的 Starter
+2. 🏗️ 阅读 [最终架构方案](../refactor/FINAL-ARCHITECTURE-V3.md) - 了解 Starter 规范
 3. 📂 参考已完成的 Starter（如 memory、h2、file）
 4. 💻 创建新模块并实现 AutoConfiguration
 
 ### 如果你需要改造 Core 层
-1. 📋 查看 [重构看板](./refactor/REFACTORING_KANBAN.md) - 确认待改造的模块
-2. 🗺️ 阅读 [模块依赖结构](./refactor/CORE_MODULE_DEPENDENCY.md) - 分析依赖关系
+1. 📋 查看 [重构看板](../refactor/REFACTORING_KANBAN.md) - 确认待改造的模块
+2. 🗺️ 阅读 [模块依赖结构](../refactor/CORE_MODULE_DEPENDENCY.md) - 分析依赖关系
 3. 🔍 查看代码定位相关模块
 4. 💻 修改为只依赖接口，注入服务
 
 ### 如果你是架构师
-1. 🎯 阅读 [最终架构方案 V3](./refactor/FINAL-ARCHITECTURE-V3.md) - 整体评估
-2. 📊 阅读 [重构看板](./refactor/REFACTORING_KANBAN.md) - 了解完成情况
-3. 🌳 阅读 [模块依赖结构](./refactor/CORE_MODULE_DEPENDENCY.md) - 架构分析
-4. 📋 更新 [重构看板](./refactor/REFACTORING_KANBAN.md) - 调整计划
+1. 🎯 阅读 [最终架构方案 V3](../refactor/FINAL-ARCHITECTURE-V3.md) - 整体评估
+2. 📊 阅读 [重构看板](../refactor/REFACTORING_KANBAN.md) - 了解完成情况
+3. 🌳 阅读 [模块依赖结构](../refactor/CORE_MODULE_DEPENDENCY.md) - 架构分析
+4. 📋 更新 [重构看板](../refactor/REFACTORING_KANBAN.md) - 调整计划
 
 ### 如果你需要运行示例
 1. 📂 进入 [example-basic](../omni-agent-example-basic/) - 基础示例
@@ -273,7 +273,7 @@
 ## 🎯 当前工作重点
 
 ### 🔴 P0 - 正在进行（本周）🎉
-1. **✅ Phase 2: Core 层解耦已完成！** → [Phase 2 完成报告](./refactor/phase-2/PHASE2_COMPLETE_REPORT.md)
+1. **✅ Phase 2: Core 层解耦已完成！** → [Phase 2 完成报告](../refactor/phase-2/PHASE2_COMPLETE_REPORT.md)
    - ✅ query 模块（QueryService ~130行）
    - ✅ role 模块（RoleService ~200行）
    - ✅ feedback 模块（FeedbackService ~220行）
@@ -281,14 +281,14 @@
    - **总计**: 16个Java文件，~2600行代码
 
 ### 🟡 P1 - 即将开始（下一阶段）
-1. **Phase 4: 集成测试** → 参考 [重构看板](./refactor/REFACTORING_KANBAN.md)
+1. **Phase 4: 集成测试** → 参考 [重构看板](../refactor/REFACTORING_KANBAN.md)
    - 单元测试（API、Core、Starter）
    - 集成测试（多种Starter组合测试）
    - 切换测试（验证可插拔性）
    - 性能对比测试
 
 ### 🟢 P2 - 后续优化（本月）
-1. **Phase 5: 文档完善** → 参考 [重构看板](./refactor/REFACTORING_KANBAN.md)
+1. **Phase 5: 文档完善** → 参考 [重构看板](../refactor/REFACTORING_KANBAN.md)
    - API 文档完善
    - Starter 使用指南
    - 快速开始指南
@@ -376,7 +376,7 @@ Ctrl+Shift+F → 全局搜索
 ---
 
 > 💡 **提示**: 建议将本文档加入书签，方便随时查阅！  
-> 📌 **推荐**: 先阅读 [重构看板](./refactor/REFACTORING_KANBAN.md) 了解当前进度！  
-> 🎉 **重大更新**: 查看 [Phase 2 完成报告](./refactor/phase-2/PHASE2_COMPLETE_REPORT.md) 了解Core层改造成果！  
-> 🎯 **重点**: 查看 [最终架构方案](./refactor/FINAL-ARCHITECTURE-V3.md) 理解四维可插拔架构！
+> 📌 **推荐**: 先阅读 [重构看板](../refactor/REFACTORING_KANBAN.md) 了解当前进度！  
+> 🎉 **重大更新**: 查看 [Phase 2 完成报告](../refactor/phase-2/PHASE2_COMPLETE_REPORT.md) 了解Core层改造成果！  
+> 🎯 **重点**: 查看 [最终架构方案](../refactor/FINAL-ARCHITECTURE-V3.md) 理解四维可插拔架构！
 

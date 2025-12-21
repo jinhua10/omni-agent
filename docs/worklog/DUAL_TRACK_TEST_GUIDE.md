@@ -278,9 +278,9 @@ curl -N "http://localhost:8080/api/qa/stream/dual-track?question=量子计算机
 
 ## 📚 相关文档
 
-- [双轨架构设计](./DUAL_TRACK_ARCHITECTURE.md)
-- [HOPE知识系统](./refactor/phase-2/PHASE2_HOPE_COMPLETE_MILESTONE.md)
-- [算法市场指南](./ALGORITHM_MARKET_GUIDE.md)
+- [双轨架构设计](DUAL_TRACK_ARCHITECTURE.md)
+- [HOPE知识系统](../refactor/phase-2/PHASE2_HOPE_COMPLETE_MILESTONE.md)
+- [算法市场指南](ALGORITHM_MARKET_GUIDE.md)
 - [角色系统指南](./ROLE_SYSTEM_GUIDE.md)（如果存在）
 
 ---

@@ -368,13 +368,13 @@ Phase 4: ████████████████████ 100% ✅ (
 
 ## 🔗 快速链接
 
-- [Phase 1 报告](PHASE1_COMPLETION_REPORT.md)
-- [Phase 2 报告](PHASE2_COMPLETION_REPORT.md)
-- [Phase 3 报告](PHASE3_REST_API_COMPLETION.md)
-- [Phase 4 报告](PHASE4_WORKFLOW_INVOKER_COMPLETION.md)
+- [Phase 1 报告](../worklog/PHASE1_COMPLETION_REPORT.md)
+- [Phase 2 报告](../worklog/PHASE2_COMPLETION_REPORT.md)
+- [Phase 3 报告](../worklog/PHASE3_REST_API_COMPLETION.md)
+- [Phase 4 报告](../worklog/PHASE4_WORKFLOW_INVOKER_COMPLETION.md)
 - [市场设计](WORKFLOW_MARKET_DESIGN.md)
-- [存储配置](omni-agent-workflow/STORAGE_CONFIGURATION.md)
-- [编排示例](omni-agent-workflow/WORKFLOW_INVOKER_EXAMPLES.md)
+- [存储配置](../../omni-agent-workflow/STORAGE_CONFIGURATION.md)
+- [编排示例](../../omni-agent-workflow/WORKFLOW_INVOKER_EXAMPLES.md)
 
 ---
 

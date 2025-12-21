@@ -1302,7 +1302,7 @@ FileWatcherService 监听到新文件
 
 ## 🔗 相关文档
 
-- **[工作流框架设计](./WORKFLOW_FRAMEWORK_DESIGN.md)** - 详细的工作流设计和场景分析
-- **[工作流 MCP 集成](./WORKFLOW_MCP_INTEGRATION.md)** ⭐ - MCP 集成方案和工作流持久化
-- **[RAG 算法决策树](./docs/RAG_ALGORITHM_DECISION_TREE.md)** - RAG 优化算法选择指南
+- **[工作流框架设计](WORKFLOW_FRAMEWORK_DESIGN.md)** - 详细的工作流设计和场景分析
+- **[工作流 MCP 集成](WORKFLOW_MCP_INTEGRATION.md)** ⭐ - MCP 集成方案和工作流持久化
+- **[RAG 算法决策树](../worklog/RAG_ALGORITHM_DECISION_TREE.md)** - RAG 优化算法选择指南
 

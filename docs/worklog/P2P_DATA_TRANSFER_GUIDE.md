@@ -574,7 +574,7 @@ public class MyCustomStorageService implements P2PDataTransferService {
 
 ## 许可证 (License)
 
-Apache License 2.0 - 详见 [LICENSE.txt](../LICENSE.txt)
+Apache License 2.0 - 详见 [LICENSE.txt](../../LICENSE.txt)
 
 ---
 

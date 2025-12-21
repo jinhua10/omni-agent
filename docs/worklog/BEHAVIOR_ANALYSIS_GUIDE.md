@@ -616,8 +616,8 @@ Starter实现: ~900行 (3个实现)
 
 ## 📚 相关文档
 
-- [架构依赖文档](./refactor/CORE_MODULE_DEPENDENCY.md) - 七维可插拔架构说明
-- [框架状态报告](./FRAMEWORK_STATUS_REPORT_20251215.md) - 整体进展
+- [架构依赖文档](../refactor/CORE_MODULE_DEPENDENCY.md) - 七维可插拔架构说明
+- [框架状态报告](FRAMEWORK_STATUS_REPORT_20251215.md) - 整体进展
 - [单元测试报告](./UNIT_TEST_REPORT.md) - 测试覆盖情况
 - [P2P协作指南](./P2P_SECURITY_GUIDE.md) - P2P安全连接
 

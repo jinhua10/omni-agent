@@ -750,18 +750,18 @@ Behavior: 1种
 
 ### 核心文档
 - [七维架构依赖图](./docs/refactor/CORE_MODULE_DEPENDENCY.md) - v3.0 ⭐
-- [行为分析指南](./docs/BEHAVIOR_ANALYSIS_GUIDE.md) - v1.0 ⭐
+- [行为分析指南](docs/worklog/BEHAVIOR_ANALYSIS_GUIDE.md) - v1.0 ⭐
 - [P2P安全连接指南](./docs/P2P_SECURITY_GUIDE.md) - v1.0 ⭐
-- [框架状态报告](./docs/FRAMEWORK_STATUS_REPORT_20251215.md) - v1.0.1
+- [框架状态报告](docs/worklog/FRAMEWORK_STATUS_REPORT_20251215.md) - v1.0.1
 
 ### 技术文档
 - [单元测试报告](./docs/UNIT_TEST_REPORT.md) - v1.0
 - [遗漏模块分析](./docs/refactor/MISSING_MODULES_ANALYSIS.md) - v1.0
 - [任务完成报告](./docs/TASK_COMPLETION_REPORT_20251215.md) - v1.0
-- [文档更新总结](./docs/DOCUMENTATION_UPDATE_SUMMARY.md) - v1.0
+- [文档更新总结](docs/worklog/DOCUMENTATION_UPDATE_SUMMARY.md) - v1.0
 
 ### 导航文档
-- [文档中心](./docs/README.md)
+- [文档中心](docs/worklog/README.md)
 - [重构看板](./docs/refactor/REFACTORING_KANBAN2.md)
 
 ---
