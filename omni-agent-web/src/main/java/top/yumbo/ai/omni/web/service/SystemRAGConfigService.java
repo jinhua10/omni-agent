@@ -138,6 +138,13 @@ public class SystemRAGConfigService {
     }
 
     /**
+     * 获取所有文档的配置状态
+     */
+    public Map<String, DocumentRAGConfig> getAllDocumentsStatus() {
+        return new HashMap<>(documentConfigs);
+    }
+
+    /**
      * 系统RAG配置
      */
     @Data
@@ -199,4 +206,3 @@ public class SystemRAGConfigService {
         private long updatedAt = System.currentTimeMillis();
     }
 }
-

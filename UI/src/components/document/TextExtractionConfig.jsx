@@ -72,16 +72,34 @@ const EXTRACTION_MODELS = {
   },
 }
 
-function TextExtractionConfig() {
+function TextExtractionConfig({ documentId }) {
   const { t, language } = useLanguage()
   const [selectedModel, setSelectedModel] = useState('standard')
   const [loading, setLoading] = useState(false)
   const [systemConfig, setSystemConfig] = useState(null)
+  const [documentConfig, setDocumentConfig] = useState(null)
 
   // 加载系统配置
   useEffect(() => {
     loadSystemConfig()
-  }, [])
+    if (documentId) {
+      loadDocumentConfig()
+    }
+  }, [documentId])
+
+  const loadDocumentConfig = async () => {
+    if (!documentId) return
+    try {
+      const response = await fetch(`/api/system/rag-config/document/${documentId}`)
+      const result = await response.json()
+      if (result.success) {
+        setDocumentConfig(result.data)
+        setSelectedModel(result.data.textExtractionModel || 'standard')
+      }
+    } catch (error) {
+      console.error('加载文档配置失败:', error)
+    }
+  }
 
   const loadSystemConfig = async () => {
     try {
@@ -89,7 +107,9 @@ function TextExtractionConfig() {
       const result = await response.json()
       if (result.success) {
         setSystemConfig(result.data)
-        setSelectedModel(result.data.defaultTextExtractionModel || 'standard')
+        if (!documentId) {
+          setSelectedModel(result.data.defaultTextExtractionModel || 'standard')
+        }
       }
     } catch (error) {
       console.error('加载系统配置失败:', error)
@@ -103,25 +123,45 @@ function TextExtractionConfig() {
   const handleApply = async () => {
     setLoading(true)
     try {
-      // 更新系统配置
-      const response = await fetch('/api/system/rag-config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          defaultTextExtractionModel: selectedModel,
-        }),
-      })
+      if (documentId) {
+        // 为特定文档触发文本提取
+        const response = await fetch(`/api/system/rag-config/document/${documentId}/extract`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: selectedModel,
+          }),
+        })
 
-      const result = await response.json()
-      if (result.success) {
-        message.success('配置已保存')
-        loadSystemConfig()
+        const result = await response.json()
+        if (result.success) {
+          message.success(t('textExtractionConfig.tips.extractionStarted'))
+          // 跳转回流程视图查看进度
+          window.location.hash = '#/documents?view=flow'
+        } else {
+          message.error(result.message || t('textExtractionConfig.tips.operationFailed'))
+        }
       } else {
-        message.error(result.message || '保存失败')
+        // 更新系统配置
+        const response = await fetch('/api/system/rag-config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            defaultTextExtractionModel: selectedModel,
+          }),
+        })
+
+        const result = await response.json()
+        if (result.success) {
+          message.success(t('textExtractionConfig.tips.saveSuccess'))
+          loadSystemConfig()
+        } else {
+          message.error(result.message || t('textExtractionConfig.tips.saveFailed'))
+        }
       }
     } catch (error) {
-      console.error('保存配置失败:', error)
-      message.error('保存失败')
+      console.error('操作失败:', error)
+      message.error(t('textExtractionConfig.tips.operationFailed'))
     } finally {
       setLoading(false)
     }
@@ -134,17 +174,26 @@ function TextExtractionConfig() {
       <div className="config-layout">
         {/* 左侧：配置面板 */}
         <div className="config-panel">
-          <Card title="文本提取模型选择">
+          <Card title={documentId ? `${t('textExtractionConfig.documentTitle')} - ${documentId}` : t('textExtractionConfig.title')}>
             <Space direction="vertical" style={{ width: '100%' }} size="large">
-              <Alert
-                message="提示"
-                description="文本提取是RAG流程的第一步，选择合适的提取模型可以提高后续处理的准确度。"
-                type="info"
-                showIcon
-              />
+              {documentId ? (
+                <Alert
+                  message={t('textExtractionConfig.alerts.documentConfigTitle')}
+                  description={t('textExtractionConfig.alerts.documentConfigDesc').replace('{docId}', documentId)}
+                  type="warning"
+                  showIcon
+                />
+              ) : (
+                <Alert
+                  message={t('textExtractionConfig.alerts.systemConfigTitle')}
+                  description={t('textExtractionConfig.alerts.systemConfigDesc')}
+                  type="info"
+                  showIcon
+                />
+              )}
 
               <div className="model-selector">
-                <label className="config-label">选择提取模型:</label>
+                <label className="config-label">{t('textExtractionConfig.labels.selectModel')}:</label>
                 <Select
                   value={selectedModel}
                   onChange={handleModelChange}
@@ -170,7 +219,7 @@ function TextExtractionConfig() {
                     <div className="config-item">
                       <Space>
                         <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                        <span>默认文本提取模型:</span>
+                        <span>{t('textExtractionConfig.labels.defaultModel')}:</span>
                         <Tag color={currentModel.color}>
                           {language === 'zh' ? currentModel.name : currentModel.nameEn}
                         </Tag>
@@ -189,11 +238,19 @@ function TextExtractionConfig() {
                     loading={loading}
                     size="large"
                   >
-                    应用配置
+                    {documentId ? t('textExtractionConfig.buttons.startExtraction') : t('textExtractionConfig.buttons.applyConfig')}
                   </Button>
                   <Button onClick={loadSystemConfig} size="large">
-                    重置
+                    {t('textExtractionConfig.buttons.reset')}
                   </Button>
+                  {documentId && (
+                    <Button
+                      onClick={() => window.location.hash = '#/documents?view=flow'}
+                      size="large"
+                    >
+                      {t('textExtractionConfig.buttons.backToFlow')}
+                    </Button>
+                  )}
                 </Space>
               </div>
             </Space>
@@ -218,13 +275,13 @@ function TextExtractionConfig() {
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
               {/* 模型描述 */}
               <div className="model-description">
-                <h4>模型说明</h4>
+                <h4>{t('textExtractionConfig.labels.modelDescription')}</h4>
                 <p>{language === 'zh' ? currentModel.description : currentModel.descriptionEn}</p>
               </div>
 
               {/* 特性列表 */}
               <div className="model-features">
-                <h4>主要特性</h4>
+                <h4>{t('textExtractionConfig.labels.mainFeatures')}</h4>
                 <Space wrap>
                   {(language === 'zh' ? currentModel.features : currentModel.featuresEn).map(
                     (feature, index) => (
@@ -238,50 +295,50 @@ function TextExtractionConfig() {
 
               {/* 使用场景 */}
               <div className="model-scenarios">
-                <h4>适用场景</h4>
+                <h4>{t('textExtractionConfig.labels.applicableScenarios')}</h4>
                 <Descriptions column={1} size="small">
                   {selectedModel === 'standard' && (
                     <>
-                      <Descriptions.Item label="适用文件">
-                        TXT, MD, 纯文本文档
+                      <Descriptions.Item label={t('textExtractionConfig.labels.applicableFiles')}>
+                        {t('textExtractionConfig.scenarios.standard.files')}
                       </Descriptions.Item>
-                      <Descriptions.Item label="处理速度">
-                        ⚡ 非常快
+                      <Descriptions.Item label={t('textExtractionConfig.labels.processingSpeed')}>
+                        {t('textExtractionConfig.scenarios.standard.speed')}
                       </Descriptions.Item>
-                      <Descriptions.Item label="资源消耗">
-                        💾 低
+                      <Descriptions.Item label={t('textExtractionConfig.labels.resourceConsumption')}>
+                        {t('textExtractionConfig.scenarios.standard.resource')}
                       </Descriptions.Item>
                     </>
                   )}
                   {selectedModel === 'vision-llm' && (
                     <>
-                      <Descriptions.Item label="适用文件">
-                        PPT, PPTX, PDF(图表), 图片
+                      <Descriptions.Item label={t('textExtractionConfig.labels.applicableFiles')}>
+                        {t('textExtractionConfig.scenarios.visionLlm.files')}
                       </Descriptions.Item>
-                      <Descriptions.Item label="处理速度">
-                        🐢 较慢（需要LLM推理）
+                      <Descriptions.Item label={t('textExtractionConfig.labels.processingSpeed')}>
+                        {t('textExtractionConfig.scenarios.visionLlm.speed')}
                       </Descriptions.Item>
-                      <Descriptions.Item label="资源消耗">
-                        💾 高（需要GPU）
+                      <Descriptions.Item label={t('textExtractionConfig.labels.resourceConsumption')}>
+                        {t('textExtractionConfig.scenarios.visionLlm.resource')}
                       </Descriptions.Item>
-                      <Descriptions.Item label="特殊能力">
-                        🎯 可以理解图表、流程图、架构图
+                      <Descriptions.Item label={t('textExtractionConfig.labels.specialAbility')}>
+                        {t('textExtractionConfig.scenarios.visionLlm.ability')}
                       </Descriptions.Item>
                     </>
                   )}
                   {selectedModel === 'ocr' && (
                     <>
-                      <Descriptions.Item label="适用文件">
-                        扫描件PDF, 图片
+                      <Descriptions.Item label={t('textExtractionConfig.labels.applicableFiles')}>
+                        {t('textExtractionConfig.scenarios.ocr.files')}
                       </Descriptions.Item>
-                      <Descriptions.Item label="处理速度">
-                        🚀 快
+                      <Descriptions.Item label={t('textExtractionConfig.labels.processingSpeed')}>
+                        {t('textExtractionConfig.scenarios.ocr.speed')}
                       </Descriptions.Item>
-                      <Descriptions.Item label="资源消耗">
-                        💾 中等
+                      <Descriptions.Item label={t('textExtractionConfig.labels.resourceConsumption')}>
+                        {t('textExtractionConfig.scenarios.ocr.resource')}
                       </Descriptions.Item>
-                      <Descriptions.Item label="语言支持">
-                        🌍 多语言（中英日韩等）
+                      <Descriptions.Item label={t('textExtractionConfig.labels.languageSupport')}>
+                        {t('textExtractionConfig.scenarios.ocr.language')}
                       </Descriptions.Item>
                     </>
                   )}
@@ -290,8 +347,8 @@ function TextExtractionConfig() {
 
               {/* 提示信息 */}
               <Alert
-                message="提示"
-                description="保存配置后，新上传的文档将使用选择的模型进行文本提取。已处理的文档可以在文档管理中重新提取。"
+                message={t('textExtractionConfig.alerts.finalTipTitle')}
+                description={t('textExtractionConfig.alerts.finalTipDesc')}
                 type="warning"
                 showIcon
               />

@@ -1349,6 +1349,14 @@ export default {
       retry: '重新处理',
       delete: '删除记录',
       refresh: '刷新',
+      processingOptions: '处理选项',
+      configureExtraction: '配置文本提取',
+      configureChunking: '配置分块策略',
+      rebuildDocument: '重新处理文档',
+      viewChunks: '查看分块结果',
+      confirmRebuild: '确定要重新处理这个文档吗？',
+      collapseDemo: '收起演示',
+      startDemo: '开始演示',
     },
 
     // 信息显示 (Info Display)
@@ -1368,6 +1376,19 @@ export default {
       currentProgressLabel: '当前进度',
       stepCounter: '步骤 {current} / {total}',
       elapsedTimeLabel: '已耗时: {time}s',
+      clickToConfigExtract: '点击配置文本提取',
+      clickToConfigChunk: '点击配置分块策略',
+      pendingDocuments: '待处理文档',
+      noDocuments: '暂无文档',
+      noDocumentsDesc: '请上传文档后点击刷新按钮查看，或者点击右上角的"查看演示"按钮查看演示流程。',
+      demoMode: '演示模式',
+      demoModeDesc: '这是一个演示流程，展示文档处理的完整步骤。',
+      viewDemoFlow: '查看演示流程',
+      viewDemo: '查看演示',
+      refresh: '刷新',
+      createdAt: '创建时间',
+      chunkCount: '分块数量',
+      vectorCount: '向量数量',
     },
   },
 
@@ -1492,6 +1513,75 @@ export default {
       export: '导出配置',
       import: '导入配置',
       save: '保存为默认',
+    },
+  },
+
+  // ============================================================================
+  // 文本提取配置 (Text Extraction Configuration)
+  // ============================================================================
+  textExtractionConfig: {
+    title: '文本提取模型选择',
+    documentTitle: '文档文本提取配置',
+
+    // 提示信息
+    alerts: {
+      documentConfigTitle: '文档配置',
+      documentConfigDesc: '正在为文档 {docId} 配置文本提取模型。选择后将立即触发文本提取处理。',
+      systemConfigTitle: '系统默认配置',
+      systemConfigDesc: '文本提取是RAG流程的第一步，选择合适的提取模型可以提高后续处理的准确度。此配置将作为新文档的默认选项。',
+      finalTipTitle: '提示',
+      finalTipDesc: '保存配置后，新上传的文档将使用选择的模型进行文本提取。已处理的文档可以在文档管理中重新提取。',
+    },
+
+    // 标签
+    labels: {
+      selectModel: '选择提取模型',
+      defaultModel: '默认文本提取模型',
+      modelDescription: '模型说明',
+      mainFeatures: '主要特性',
+      applicableScenarios: '适用场景',
+      applicableFiles: '适用文件',
+      processingSpeed: '处理速度',
+      resourceConsumption: '资源消耗',
+      specialAbility: '特殊能力',
+      languageSupport: '语言支持',
+    },
+
+    // 按钮
+    buttons: {
+      startExtraction: '开始提取',
+      applyConfig: '应用配置',
+      reset: '重置',
+      backToFlow: '返回流程视图',
+    },
+
+    // 提示
+    tips: {
+      saveSuccess: '配置已保存',
+      saveFailed: '保存失败',
+      extractionStarted: '文本提取已启动',
+      operationFailed: '操作失败',
+    },
+
+    // 场景描述值
+    scenarios: {
+      standard: {
+        files: 'TXT, MD, 纯文本文档',
+        speed: '⚡ 非常快',
+        resource: '💾 低',
+      },
+      visionLlm: {
+        files: 'PPT, PPTX, PDF(图表), 图片',
+        speed: '🐢 较慢（需要LLM推理）',
+        resource: '💾 高（需要GPU）',
+        ability: '🎯 可以理解图表、流程图、架构图',
+      },
+      ocr: {
+        files: '扫描件PDF, 图片',
+        speed: '🚀 快',
+        resource: '💾 中等',
+        language: '🌍 多语言（中英日韩等）',
+      },
     },
   },
 

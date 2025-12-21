@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Steps, Card, Progress, Alert, Button, Tag, Space, Divider } from 'antd';
+import { Steps, Card, Progress, Alert, Button, Tag, Space, Divider, Dropdown, List, Spin } from 'antd';
 import {
     FileAddOutlined,
     FileTextOutlined,
@@ -21,7 +21,10 @@ import {
     CloseCircleOutlined,
     LoadingOutlined,
     ReloadOutlined,
-    PlayCircleOutlined
+    PlayCircleOutlined,
+    SettingOutlined,
+    DownOutlined,
+    SyncOutlined
 } from '@ant-design/icons';
 import WebSocketClient from '../../utils/WebSocketClient';
 import { useLanguage } from '../../contexts/LanguageContext';  // ⭐ 导入国际化Hook
@@ -74,13 +77,44 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     const [error, setError] = useState(null);
     const [demoMode, setDemoMode] = useState(showDemo);
     const [demoStep, setDemoStep] = useState(0);
+    const [demoExpanded, setDemoExpanded] = useState(false); // 演示模式是否展开
+    const [documentsList, setDocumentsList] = useState([]); // 文档列表
+    const [loading, setLoading] = useState(false); // 加载状态
+    const [selectedDocId, setSelectedDocId] = useState(documentId); // 当前选中的文档ID
+
+    // 加载文档列表
+    const loadDocumentsList = useCallback(async () => {
+        if (demoMode) return; // 演示模式不加载
+
+        setLoading(true);
+        try {
+            const response = await fetch('/api/system/rag-config/documents-status');
+            const result = await response.json();
+            if (result.success) {
+                const docs = Object.values(result.data);
+                setDocumentsList(docs);
+                console.log('📋 加载文档列表:', docs.length, '个');
+            }
+        } catch (error) {
+            console.error('加载文档列表失败:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [demoMode]);
+
+    // 初始加载
+    useEffect(() => {
+        if (!demoMode) {
+            loadDocumentsList();
+        }
+    }, [demoMode, loadDocumentsList]);
 
     // 演示模式：模拟处理流程 (Demo mode: simulate processing flow)
     useEffect(() => {
-        if (demoMode && autoStart) {
+        if (demoMode && autoStart && demoExpanded) {
             simulateProcessing();
         }
-    }, [demoMode, autoStart]);
+    }, [demoMode, autoStart, demoExpanded]);
 
     const simulateProcessing = () => {
         const stages = [
@@ -271,12 +305,126 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 <Space>
                     <LoadingOutlined spin={progress && (progress.status === 'RUNNING' || progress.status === 'PROCESSING')} />
                     {t('ragFlow.component.title')}
-                    {demoMode && <Tag color="blue">演示模式</Tag>}
+                    {demoMode && <Tag color="blue">{t('ragFlow.component.demoMode')}</Tag>}
+                </Space>
+            }
+            extra={
+                <Space>
+                    {!demoMode && (
+                        <Button
+                            icon={<SyncOutlined spin={loading} />}
+                            onClick={loadDocumentsList}
+                            loading={loading}
+                        >
+                            {t('ragFlow.component.refresh')}
+                        </Button>
+                    )}
+                    {demoMode && !demoExpanded && (
+                        <Button
+                            type="primary"
+                            icon={<PlayCircleOutlined />}
+                            onClick={() => setDemoExpanded(true)}
+                        >
+                            {t('ragFlow.component.viewDemo')}
+                        </Button>
+                    )}
                 </Space>
             }
             className="document-processing-flow"
         >
-            {/* 步骤展示 (Steps display) */}
+            {/* 文档列表（非演示模式） */}
+            {!demoMode && (
+                <>
+                    {documentsList.length > 0 ? (
+                        <Card
+                            title={t('ragFlow.component.pendingDocuments')}
+                            size="small"
+                            style={{ marginBottom: 16 }}
+                        >
+                            <List
+                                dataSource={documentsList}
+                                renderItem={(doc) => (
+                                    <List.Item
+                                        key={doc.documentId}
+                                        onClick={() => {
+                                            setSelectedDocId(doc.documentId);
+                                            // 订阅该文档的进度
+                                            if (wsClient) {
+                                                wsClient.subscribe(doc.documentId);
+                                            }
+                                        }}
+                                        style={{
+                                            cursor: 'pointer',
+                                            background: selectedDocId === doc.documentId ? '#e6f7ff' : 'transparent'
+                                        }}
+                                    >
+                                        <List.Item.Meta
+                                            title={
+                                                <Space>
+                                                    <FileTextOutlined />
+                                                    {doc.documentId}
+                                                    <Tag color={
+                                                        doc.status === 'PENDING' ? 'orange' :
+                                                        doc.status === 'COMPLETED' ? 'green' :
+                                                        doc.status === 'FAILED' ? 'red' :
+                                                        'blue'
+                                                    }>
+                                                        {doc.status}
+                                                    </Tag>
+                                                </Space>
+                                            }
+                                            description={`${t('ragFlow.component.createdAt')}: ${new Date(doc.createdAt).toLocaleString()}`}
+                                        />
+                                    </List.Item>
+                                )}
+                            />
+                        </Card>
+                    ) : (
+                        <Alert
+                            message={t('ragFlow.component.noDocuments')}
+                            description={t('ragFlow.component.noDocumentsDesc')}
+                            type="info"
+                            showIcon
+                            style={{ marginBottom: 16 }}
+                            action={
+                                <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => {
+                                    setDemoMode(true);
+                                    setDemoExpanded(true);
+                                }}>
+                                    {t('ragFlow.component.viewDemo')}
+                                </Button>
+                            }
+                        />
+                    )}
+                </>
+            )}
+
+            {/* 演示模式提示 */}
+            {demoMode && !demoExpanded && (
+                <Alert
+                    message={t('ragFlow.component.demoMode')}
+                    description={
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                            <span>{t('ragFlow.component.demoModeDesc')}</span>
+                            <Button
+                                type="primary"
+                                icon={<PlayCircleOutlined />}
+                                onClick={() => setDemoExpanded(true)}
+                            >
+                                {t('ragFlow.component.viewDemoFlow')}
+                            </Button>
+                        </Space>
+                    }
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                />
+            )}
+
+            {/* 只在非演示模式或演示已展开时显示流程 */}
+            {(!demoMode || demoExpanded) && (
+                <>
+            {/* 步骤展示 (Steps display) - 可点击跳转到对应配置 */}
             <Steps
                 current={getCurrentStep()}
                 status={progress?.status === 'FAILED' ? 'error' : progress?.status === 'COMPLETED' ? 'finish' : 'process'}
@@ -288,16 +436,50 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         description: renderStepDescription('UPLOAD')
                     },
                     {
-                        title: STAGE_CONFIG.EXTRACT.title[language],
+                        title: (
+                            <a onClick={() => {
+                                if (selectedDocId) {
+                                    window.location.hash = `#/documents?view=textExtraction&docId=${selectedDocId}`;
+                                }
+                            }} style={{ cursor: selectedDocId ? 'pointer' : 'default' }}>
+                                {STAGE_CONFIG.EXTRACT.title[language]}
+                            </a>
+                        ),
                         icon: STAGE_CONFIG.EXTRACT.icon,
                         status: getStepStatus(1),
-                        description: renderStepDescription('EXTRACT')
+                        description: (
+                            <div>
+                                {renderStepDescription('EXTRACT')}
+                                {selectedDocId && (
+                                    <div style={{ marginTop: 4, fontSize: 12, color: '#1890ff' }}>
+                                        <SettingOutlined /> {t('ragFlow.component.clickToConfigExtract')}
+                                    </div>
+                                )}
+                            </div>
+                        )
                     },
                     {
-                        title: STAGE_CONFIG.CHUNK.title[language],
+                        title: (
+                            <a onClick={() => {
+                                if (selectedDocId) {
+                                    window.location.hash = `#/documents?view=chunking&docId=${selectedDocId}`;
+                                }
+                            }} style={{ cursor: selectedDocId ? 'pointer' : 'default' }}>
+                                {STAGE_CONFIG.CHUNK.title[language]}
+                            </a>
+                        ),
                         icon: STAGE_CONFIG.CHUNK.icon,
                         status: getStepStatus(2),
-                        description: renderStepDescription('CHUNK')
+                        description: (
+                            <div>
+                                {renderStepDescription('CHUNK')}
+                                {selectedDocId && (
+                                    <div style={{ marginTop: 4, fontSize: 12, color: '#1890ff' }}>
+                                        <SettingOutlined /> {t('ragFlow.component.clickToConfigChunk')}
+                                    </div>
+                                )}
+                            </div>
+                        )
                     },
                     {
                         title: STAGE_CONFIG.VECTORIZE.title[language],
@@ -363,12 +545,12 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         </div>
                         {progress.chunks > 0 && (
                             <div>
-                                <strong>分块数量:</strong> {progress.chunks}
+                                <strong>{t('ragFlow.component.chunkCount')}:</strong> {progress.chunks}
                             </div>
                         )}
                         {progress.vectors > 0 && (
                             <div>
-                                <strong>向量数量:</strong> {progress.vectors}
+                                <strong>{t('ragFlow.component.vectorCount')}:</strong> {progress.vectors}
                             </div>
                         )}
                     </Space>
@@ -387,26 +569,78 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             <div className="action-buttons">
                 {progress && progress.status === 'COMPLETED' && (
                     <Space>
-                        <Button type="primary" icon={<CheckCircleOutlined />}>
-                            {t('ragFlow.actions.viewResult')}
-                        </Button>
+                        <Dropdown
+                            menu={{
+                                items: [
+                                    {
+                                        key: 'textExtraction',
+                                        icon: <FileTextOutlined />,
+                                        label: t('ragFlow.actions.configureExtraction'),
+                                        onClick: () => {
+                                            // 跳转到文本提取配置
+                                            window.location.hash = '#/documents?view=textExtraction&docId=' + progress.documentId;
+                                        }
+                                    },
+                                    {
+                                        key: 'chunking',
+                                        icon: <ScissorOutlined />,
+                                        label: t('ragFlow.actions.configureChunking'),
+                                        onClick: () => {
+                                            // 跳转到分块配置
+                                            window.location.hash = '#/documents?view=chunking&docId=' + progress.documentId;
+                                        }
+                                    },
+                                    {
+                                        key: 'rebuild',
+                                        icon: <ReloadOutlined />,
+                                        label: t('ragFlow.actions.rebuildDocument'),
+                                        onClick: () => {
+                                            // 触发重建
+                                            if (confirm(t('ragFlow.actions.confirmRebuild'))) {
+                                                // TODO: 调用重建API
+                                                console.log('重建文档:', progress.documentId);
+                                            }
+                                        }
+                                    },
+                                    {
+                                        type: 'divider'
+                                    },
+                                    {
+                                        key: 'viewChunks',
+                                        icon: <DatabaseOutlined />,
+                                        label: t('ragFlow.actions.viewChunks'),
+                                        onClick: () => {
+                                            // 跳转到浏览器视图查看分块
+                                            window.location.hash = '#/documents?view=browser&docId=' + progress.documentId;
+                                        }
+                                    }
+                                ]
+                            }}
+                            placement="bottomLeft"
+                        >
+                            <Button type="primary" icon={<SettingOutlined />}>
+                                {t('ragFlow.actions.processingOptions')} <DownOutlined />
+                            </Button>
+                        </Dropdown>
                         {demoMode && (
                             <Button icon={<ReloadOutlined />} onClick={() => {
                                 setProgress(null);
                                 setDemoStep(0);
-                                setTimeout(() => simulateProcessing(), 100);
+                                setDemoExpanded(false);
                             }}>
-                                重新播放
+                                {t('ragFlow.actions.collapseDemo')}
                             </Button>
                         )}
                     </Space>
                 )}
-                {demoMode && !progress && (
+                {demoMode && !progress && demoExpanded && (
                     <Button type="primary" icon={<PlayCircleOutlined />} onClick={simulateProcessing}>
-                        开始演示
+                        {t('ragFlow.actions.startDemo')}
                     </Button>
                 )}
             </div>
+            </>
+            )}
         </Card>
     );
 }

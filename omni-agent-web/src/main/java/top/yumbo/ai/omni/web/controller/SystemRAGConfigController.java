@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.web.service.SystemRAGConfigService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -116,9 +118,12 @@ public class SystemRAGConfigController {
             SystemRAGConfigService.DocumentRAGConfig config = configService.getDocumentConfig(documentId);
             config.setTextExtractionModel(request.getModel());
             config.setStatus("EXTRACTING");
+            config.setUpdatedAt(System.currentTimeMillis());
             configService.setDocumentConfig(documentId, config);
 
             // TODO: 触发实际的文本提取流程
+            // 这里应该调用DocumentProcessingService来执行真实的文本提取
+            // documentProcessingService.extractText(documentId, request.getModel());
 
             log.info("🔍 触发文本提取: documentId={}, model={}", documentId, request.getModel());
             return ApiResponse.success(null, "文本提取已启动");
@@ -141,9 +146,12 @@ public class SystemRAGConfigController {
             config.setChunkingStrategy(request.getStrategy());
             config.setChunkingParams(request.getParams());
             config.setStatus("CHUNKING");
+            config.setUpdatedAt(System.currentTimeMillis());
             configService.setDocumentConfig(documentId, config);
 
             // TODO: 触发实际的分块处理流程
+            // 这里应该调用DocumentProcessingService来执行真实的分块
+            // documentProcessingService.chunkDocument(documentId, request.getStrategy(), request.getParams());
 
             log.info("✂️ 触发分块处理: documentId={}, strategy={}", documentId, request.getStrategy());
             return ApiResponse.success(null, "分块处理已启动");
@@ -191,6 +199,41 @@ public class SystemRAGConfigController {
         } catch (Exception e) {
             log.error("❌ 触发文档重建失败: documentId={}", documentId, e);
             return ApiResponse.error("启动失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取待处理文档列表
+     * GET /api/system/rag-config/pending-documents
+     */
+    @GetMapping("/pending-documents")
+    public ApiResponse<List<SystemRAGConfigService.DocumentRAGConfig>> getPendingDocuments() {
+        try {
+            // TODO: 从实际的存储中获取待处理文档列表
+            // 这里暂时返回空列表，需要集成文件监听服务
+            List<SystemRAGConfigService.DocumentRAGConfig> pendingDocs = new ArrayList<>();
+            log.info("📋 获取待处理文档列表: {} 个", pendingDocs.size());
+            return ApiResponse.success(pendingDocs);
+        } catch (Exception e) {
+            log.error("❌ 获取待处理文档列表失败", e);
+            return ApiResponse.error("获取失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取所有文档的处理状态
+     * GET /api/system/rag-config/documents-status
+     */
+    @GetMapping("/documents-status")
+    public ApiResponse<Map<String, SystemRAGConfigService.DocumentRAGConfig>> getDocumentsStatus() {
+        try {
+            Map<String, SystemRAGConfigService.DocumentRAGConfig> allStatus = configService.getAllDocumentsStatus();
+            // TODO: 实际实现应该从持久化存储中获取
+            log.info("📊 获取所有文档状态");
+            return ApiResponse.success(allStatus);
+        } catch (Exception e) {
+            log.error("❌ 获取文档状态失败", e);
+            return ApiResponse.error("获取失败: " + e.getMessage());
         }
     }
 

@@ -1337,6 +1337,14 @@ export default {
       retry: 'Retry',
       delete: 'Delete Record',
       refresh: 'Refresh',
+      processingOptions: 'Processing Options',
+      configureExtraction: 'Configure Text Extraction',
+      configureChunking: 'Configure Chunking Strategy',
+      rebuildDocument: 'Rebuild Document',
+      viewChunks: 'View Chunks',
+      confirmRebuild: 'Are you sure you want to rebuild this document?',
+      collapseDemo: 'Collapse Demo',
+      startDemo: 'Start Demo',
     },
 
     // Information Display
@@ -1356,6 +1364,19 @@ export default {
       currentProgressLabel: 'Current Progress',
       stepCounter: 'Step {current} / {total}',
       elapsedTimeLabel: 'Elapsed: {time}s',
+      clickToConfigExtract: 'Click to configure text extraction',
+      clickToConfigChunk: 'Click to configure chunking strategy',
+      pendingDocuments: 'Pending Documents',
+      noDocuments: 'No Documents',
+      noDocumentsDesc: 'Please upload documents and click refresh button, or click "View Demo" button to see the demo flow.',
+      demoMode: 'Demo Mode',
+      demoModeDesc: 'This is a demo flow showing the complete document processing steps.',
+      viewDemoFlow: 'View Demo Flow',
+      viewDemo: 'View Demo',
+      refresh: 'Refresh',
+      createdAt: 'Created At',
+      chunkCount: 'Chunk Count',
+      vectorCount: 'Vector Count',
     },
   },
 
@@ -1480,6 +1501,75 @@ export default {
       export: 'Export Config',
       import: 'Import Config',
       save: 'Save as Default',
+    },
+  },
+
+  // ============================================================================
+  // Text Extraction Configuration
+  // ============================================================================
+  textExtractionConfig: {
+    title: 'Text Extraction Model Selection',
+    documentTitle: 'Document Text Extraction Configuration',
+
+    // Alerts
+    alerts: {
+      documentConfigTitle: 'Document Configuration',
+      documentConfigDesc: 'Configuring text extraction model for document {docId}. Extraction will start immediately after selection.',
+      systemConfigTitle: 'System Default Configuration',
+      systemConfigDesc: 'Text extraction is the first step of RAG process. Choosing the right extraction model can improve subsequent processing accuracy. This configuration will be used as default for new documents.',
+      finalTipTitle: 'Tip',
+      finalTipDesc: 'After saving the configuration, newly uploaded documents will use the selected model for text extraction. Processed documents can be re-extracted in document management.',
+    },
+
+    // Labels
+    labels: {
+      selectModel: 'Select Extraction Model',
+      defaultModel: 'Default Text Extraction Model',
+      modelDescription: 'Model Description',
+      mainFeatures: 'Main Features',
+      applicableScenarios: 'Applicable Scenarios',
+      applicableFiles: 'Applicable Files',
+      processingSpeed: 'Processing Speed',
+      resourceConsumption: 'Resource Consumption',
+      specialAbility: 'Special Ability',
+      languageSupport: 'Language Support',
+    },
+
+    // Buttons
+    buttons: {
+      startExtraction: 'Start Extraction',
+      applyConfig: 'Apply Configuration',
+      reset: 'Reset',
+      backToFlow: 'Back to Flow View',
+    },
+
+    // Tips
+    tips: {
+      saveSuccess: 'Configuration saved',
+      saveFailed: 'Save failed',
+      extractionStarted: 'Text extraction started',
+      operationFailed: 'Operation failed',
+    },
+
+    // Scenario Description Values
+    scenarios: {
+      standard: {
+        files: 'TXT, MD, Plain text documents',
+        speed: '⚡ Very fast',
+        resource: '💾 Low',
+      },
+      visionLlm: {
+        files: 'PPT, PPTX, PDF (with charts), Images',
+        speed: '🐢 Slower (requires LLM inference)',
+        resource: '💾 High (requires GPU)',
+        ability: '🎯 Can understand charts, flowcharts, architecture diagrams',
+      },
+      ocr: {
+        files: 'Scanned PDFs, Images',
+        speed: '🚀 Fast',
+        resource: '💾 Medium',
+        language: '🌍 Multilingual (Chinese, English, Japanese, Korean, etc.)',
+      },
     },
   },
 

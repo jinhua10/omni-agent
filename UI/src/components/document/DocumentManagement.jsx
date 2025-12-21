@@ -10,7 +10,7 @@
  * @since 2025-12-19
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button, Space, Segmented } from 'antd'
 import {
   UnorderedListOutlined,
@@ -42,14 +42,43 @@ function DocumentManagement() {
   // State / 状态管理
   // ============================================================================
 
+  // 从URL获取参数
+  const getUrlParams = () => {
+    const hash = window.location.hash
+    const params = new URLSearchParams(hash.split('?')[1] || '')
+    return {
+      view: params.get('view'),
+      docId: params.get('docId')
+    }
+  }
+
+  // 初始化视图模式和文档ID
+  const urlParams = getUrlParams()
+
   // 视图模式: 'list' | 'browser' | 'flow'
   const [viewMode, setViewMode] = useState(() => {
-    // 从 localStorage 读取用户偏好 / Read user preference from localStorage
-    return localStorage.getItem('documentViewMode') || 'browser'
+    // 优先使用URL参数，否则从localStorage读取
+    return urlParams.view || localStorage.getItem('documentViewMode') || 'browser'
   })
 
   // ⭐ 当前正在处理的文档ID（用于流程视图）
-  const [processingDocumentId, setProcessingDocumentId] = useState(null)
+  const [processingDocumentId, setProcessingDocumentId] = useState(urlParams.docId || null)
+
+  // 监听URL变化
+  useEffect(() => {
+    const handleHashChange = () => {
+      const params = getUrlParams()
+      if (params.view) {
+        setViewMode(params.view)
+      }
+      if (params.docId) {
+        setProcessingDocumentId(params.docId)
+      }
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
 
   // ⭐ 处理文档上传成功
   const handleDocumentUploaded = (documentId) => {
@@ -172,9 +201,9 @@ function DocumentManagement() {
           // 流程视图：显示文档处理进度
           <div className="document-flow-view">
             <DocumentProcessingFlow
-              documentId={processingDocumentId || 'demo'}
-              autoStart={true}
-              showDemo={!processingDocumentId}
+              documentId={processingDocumentId}
+              autoStart={false}
+              showDemo={false}
               onComplete={(progress) => {
                 console.log('✅ 文档处理完成:', progress)
               }}
@@ -186,12 +215,12 @@ function DocumentManagement() {
         ) : viewMode === 'textExtraction' ? (
           // ⭐ 文本提取配置视图：交互式配置文本提取模型
           <div className="document-text-extraction-view">
-            <TextExtractionConfig />
+            <TextExtractionConfig documentId={processingDocumentId} />
           </div>
         ) : viewMode === 'chunking' ? (
           // ⭐ 分块配置视图：交互式配置分块策略
           <div className="document-chunking-view">
-            <ChunkingConfig />
+            <ChunkingConfig documentId={processingDocumentId} />
           </div>
         ) : viewMode === 'queryExpansion' ? (
           // ⭐ 查询扩展配置视图：交互式配置查询扩展策略
