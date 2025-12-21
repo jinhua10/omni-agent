@@ -57,6 +57,13 @@
     color: #1890ff;
 }
 
+.progress-message {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #666;
+    font-style: italic;
+}
+
 /* 文档信息 (Document info) */
 .document-info {
     margin: 20px 0;
@@ -117,4 +124,3 @@
         align-items: flex-start;
     }
 }
-

@@ -19,7 +19,9 @@ import {
     DatabaseOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
-    LoadingOutlined
+    LoadingOutlined,
+    ReloadOutlined,
+    PlayCircleOutlined
 } from '@ant-design/icons';
 import WebSocketClient from '../../utils/WebSocketClient';
 import { useLanguage } from '../../contexts/LanguageContext';  // ⭐ 导入国际化Hook
@@ -62,7 +64,7 @@ const STAGE_CONFIG = {
     }
 };
 
-function DocumentProcessingFlow({ documentId, onComplete, onError }) {
+function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = false, showDemo = false }) {
     // 国际化 (Internationalization)
     const { t, language } = useLanguage();
 
@@ -70,10 +72,53 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
     const [progress, setProgress] = useState(null);
     const [wsClient, setWsClient] = useState(null);
     const [error, setError] = useState(null);
+    const [demoMode, setDemoMode] = useState(showDemo);
+    const [demoStep, setDemoStep] = useState(0);
+
+    // 演示模式：模拟处理流程 (Demo mode: simulate processing flow)
+    useEffect(() => {
+        if (demoMode && autoStart) {
+            simulateProcessing();
+        }
+    }, [demoMode, autoStart]);
+
+    const simulateProcessing = () => {
+        const stages = [
+            { stage: 'UPLOAD', percentage: 0, message: '正在上传文档...', chunks: 0 },
+            { stage: 'EXTRACT', percentage: 20, message: '正在提取文本...', chunks: 0 },
+            { stage: 'CHUNK', percentage: 40, message: '正在智能分块...', chunks: 15 },
+            { stage: 'VECTORIZE', percentage: 60, message: '正在向量化...', chunks: 15 },
+            { stage: 'INDEX', percentage: 80, message: '正在建立索引...', chunks: 15 },
+            { stage: 'COMPLETED', percentage: 100, message: '处理完成！', chunks: 15 }
+        ];
+
+        let currentStep = 0;
+        const interval = setInterval(() => {
+            if (currentStep < stages.length) {
+                setProgress({
+                    ...stages[currentStep],
+                    documentId: documentId || 'demo',
+                    documentName: '示例文档.pdf',
+                    status: currentStep === stages.length - 1 ? 'COMPLETED' : 'PROCESSING',
+                    startTime: Date.now() - currentStep * 2000,
+                    vectors: currentStep * 15
+                });
+                setDemoStep(currentStep);
+                currentStep++;
+            } else {
+                clearInterval(interval);
+                if (onComplete) {
+                    onComplete(progress);
+                }
+            }
+        }, 2000); // 每2秒更新一次
+
+        return () => clearInterval(interval);
+    };
 
     // 初始化 WebSocket 连接 (Initialize WebSocket connection)
     useEffect(() => {
-        if (!documentId) return;
+        if (!documentId || demoMode) return;
 
         // 创建 WebSocket 客户端 (Create WebSocket client)
         const client = new WebSocketClient('ws://localhost:8080/ws/progress');
@@ -194,8 +239,8 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
         );
     }, [progress, t]);
 
-    // 如果没有 documentId，显示提示 (Show message if no documentId)
-    if (!documentId) {
+    // 如果没有 documentId 且不是演示模式，显示提示 (Show message if no documentId and not demo mode)
+    if (!documentId && !demoMode) {
         return (
             <Alert
                 title={t('ragFlow.messages.noDocument')}
@@ -224,8 +269,9 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
         <Card
             title={
                 <Space>
-                    <LoadingOutlined spin={progress && progress.status === 'RUNNING'} />
+                    <LoadingOutlined spin={progress && (progress.status === 'RUNNING' || progress.status === 'PROCESSING')} />
                     {t('ragFlow.component.title')}
+                    {demoMode && <Tag color="blue">演示模式</Tag>}
                 </Space>
             }
             className="document-processing-flow"
@@ -233,7 +279,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
             {/* 步骤展示 (Steps display) */}
             <Steps
                 current={getCurrentStep()}
-                status={progress?.status === 'FAILED' ? 'error' : 'process'}
+                status={progress?.status === 'FAILED' ? 'error' : progress?.status === 'COMPLETED' ? 'finish' : 'process'}
                 items={[
                     {
                         title: STAGE_CONFIG.UPLOAD.title[language],
@@ -271,45 +317,60 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
             <Divider />
 
             {/* 进度条 (Progress bar) */}
-            {progress && progress.status === 'RUNNING' && (
+            {progress && (progress.status === 'RUNNING' || progress.status === 'PROCESSING') && (
                 <div className="progress-section">
                     <div className="progress-header">
                         <span className="progress-label">
                             {t('ragFlow.component.currentProgressLabel')}: {STAGE_CONFIG[progress.stage]?.title[language]}
                         </span>
-                        <span className="progress-percent">{progress.progress}%</span>
+                        <span className="progress-percent">{progress.percentage || progress.progress || 0}%</span>
                     </div>
                     <Progress
-                        percent={progress.progress}
+                        percent={progress.percentage || progress.progress || 0}
                         status="active"
                         strokeColor={{
                             '0%': STAGE_CONFIG[progress.stage]?.color || '#1890ff',
                             '100%': '#52c41a',
                         }}
                     />
+                    {progress.message && (
+                        <div className="progress-message">{progress.message}</div>
+                    )}
                 </div>
             )}
 
             {/* 文档信息 (Document info) */}
             {progress && (
                 <div className="document-info">
-                    <Space size="large">
+                    <Space size="large" wrap>
                         <div>
-                            <strong>{t('ragFlow.info.documentName')}:</strong> {progress.documentName}
+                            <strong>{t('ragFlow.info.documentName')}:</strong> {progress.documentName || '示例文档.pdf'}
                         </div>
-                        <div>
-                            <strong>{t('ragFlow.info.documentId')}:</strong> {progress.documentId}
-                        </div>
+                        {progress.documentId && (
+                            <div>
+                                <strong>{t('ragFlow.info.documentId')}:</strong> {progress.documentId}
+                            </div>
+                        )}
                         <div>
                             <strong>{t('ragFlow.info.status')}:</strong>{' '}
                             <Tag color={
-                                progress.status === 'RUNNING' ? 'processing' :
+                                (progress.status === 'RUNNING' || progress.status === 'PROCESSING') ? 'processing' :
                                 progress.status === 'COMPLETED' ? 'success' :
                                 'error'
                             }>
-                                {t(`ragFlow.status.${progress.status.toLowerCase()}`)}
+                                {t(`ragFlow.status.${(progress.status || 'processing').toLowerCase()}`)}
                             </Tag>
                         </div>
+                        {progress.chunks > 0 && (
+                            <div>
+                                <strong>分块数量:</strong> {progress.chunks}
+                            </div>
+                        )}
+                        {progress.vectors > 0 && (
+                            <div>
+                                <strong>向量数量:</strong> {progress.vectors}
+                            </div>
+                        )}
                     </Space>
                 </div>
             )}
@@ -323,13 +384,29 @@ function DocumentProcessingFlow({ documentId, onComplete, onError }) {
             )}
 
             {/* 操作按钮 (Action buttons) */}
-            {progress && progress.status === 'COMPLETED' && (
-                <div className="action-buttons">
-                    <Button type="primary" icon={<CheckCircleOutlined />}>
-                        {t('ragFlow.actions.viewResult')}
+            <div className="action-buttons">
+                {progress && progress.status === 'COMPLETED' && (
+                    <Space>
+                        <Button type="primary" icon={<CheckCircleOutlined />}>
+                            {t('ragFlow.actions.viewResult')}
+                        </Button>
+                        {demoMode && (
+                            <Button icon={<ReloadOutlined />} onClick={() => {
+                                setProgress(null);
+                                setDemoStep(0);
+                                setTimeout(() => simulateProcessing(), 100);
+                            }}>
+                                重新播放
+                            </Button>
+                        )}
+                    </Space>
+                )}
+                {demoMode && !progress && (
+                    <Button type="primary" icon={<PlayCircleOutlined />} onClick={simulateProcessing}>
+                        开始演示
                     </Button>
-                </div>
-            )}
+                )}
+            </div>
         </Card>
     );
 }

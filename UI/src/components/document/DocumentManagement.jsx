@@ -151,7 +151,9 @@ function DocumentManagement() {
           // 流程视图：显示文档处理进度
           <div className="document-flow-view">
             <DocumentProcessingFlow
-              documentId={processingDocumentId}
+              documentId={processingDocumentId || 'demo'}
+              autoStart={true}
+              showDemo={!processingDocumentId}
               onComplete={(progress) => {
                 console.log('✅ 文档处理完成:', progress)
               }}
