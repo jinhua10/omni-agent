@@ -45,6 +45,7 @@ public class FileWatcherService {
     private final top.yumbo.ai.omni.core.document.DocumentProcessorManager documentProcessorManager;
     private final top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager chunkingStrategyManager;
     private final top.yumbo.ai.omni.core.image.ImageStorageService imageStorageService;
+    private final top.yumbo.ai.omni.web.service.rag.ProcessingProgressService progressService;  // ⭐ 新增
 
     private WatchService watchService;
     private ExecutorService executorService;
@@ -285,9 +286,16 @@ public class FileWatcherService {
         String relativePathStr = relativePath.toString().replace('\\', '/');
         String filename = filePath.getFileName().toString();
 
+        // ⭐ 使用有意义的相对路径作为 documentId（见名知意）
+        // 例如: "报告/2024年报.pdf" 而不是 "doc_123456_报告_2024年报.pdf"
+        String documentId = relativePathStr;
+
+        // ⭐ 使用文件名作为进度追踪的标识（用户友好）
+        progressService.startProcessing(filename, filename);
+
         // 创建处理记录
         FileChangeRecord record = FileChangeRecord.builder()
-                .id(UUID.randomUUID().toString())
+                .id(relativePathStr)  // ⭐ 使用相对路径作为ID，而不是UUID
                 .filePath(filePath.toString())
                 .fileName(filename)
                 .changeType(ChangeType.CREATE)
@@ -300,13 +308,13 @@ public class FileWatcherService {
         try {
             log.info("🔄 开始处理文件: {}", relativePathStr);
 
-            // 生成 documentId（使用相对路径，保留目录结构）
-            String documentId = "doc_" + System.currentTimeMillis() + "_" +
-                    relativePathStr.replace("/", "_").replace("\\", "_");
 
             // ========== 步骤1: 读取文件 ==========
             byte[] fileData = Files.readAllBytes(filePath);
             log.info("📄 读取文件: {} bytes", fileData.length);
+            // ⭐ 更新进度：上传完成 (10%)
+            progressService.updateProgress(filename,
+                top.yumbo.ai.omni.web.model.rag.ProcessingStage.UPLOAD, 10);
 
             // ========== 步骤2: 使用 DocumentProcessorManager 处理文档 ==========
             String content;
@@ -314,6 +322,9 @@ public class FileWatcherService {
 
             try {
                 log.info("🔄 使用 DocumentProcessorManager 处理文档...");
+                // ⭐ 更新进度：开始提取 (20%)
+                progressService.updateProgress(filename,
+                    top.yumbo.ai.omni.web.model.rag.ProcessingStage.EXTRACT, 20);
 
                 top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
                     top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
@@ -332,6 +343,9 @@ public class FileWatcherService {
                     images = result.getImages();
                     log.info("✅ 文档处理成功: {} chars, {} images",
                             content.length(), images != null ? images.size() : 0);
+                    // ⭐ 更新进度：提取完成 (40%)
+                    progressService.updateProgress(filename,
+                        top.yumbo.ai.omni.web.model.rag.ProcessingStage.EXTRACT, 40);
                 } else {
                     throw new Exception("文档处理失败: " + result.getError());
                 }
@@ -400,9 +414,16 @@ public class FileWatcherService {
 
             // ========== 步骤5: 智能分块 ==========
             log.info("✂️ 智能分块...");
+            // ⭐ 更新进度：开始分块 (50%)
+            progressService.updateProgress(filename,
+                top.yumbo.ai.omni.web.model.rag.ProcessingStage.CHUNK, 50);
+
             List<Chunk> chunks = chunkingStrategyManager.chunkWithAutoStrategy(
                     documentId, content, filename);
             log.info("✅ 分块完成: {} 个块", chunks.size());
+            // ⭐ 更新进度：分块完成 (60%)
+            progressService.updateProgress(filename,
+                top.yumbo.ai.omni.web.model.rag.ProcessingStage.CHUNK, 60);
 
             // ========== 步骤6: 保存分块 ==========
             log.info("💾 保存分块到存储...");
@@ -411,6 +432,10 @@ public class FileWatcherService {
 
             // ========== 步骤7: RAG索引 ==========
             log.info("📇 索引到 RAG...");
+            // ⭐ 更新进度：开始向量化 (70%)
+            progressService.updateProgress(filename,
+                top.yumbo.ai.omni.web.model.rag.ProcessingStage.VECTORIZE, 70);
+
             for (Chunk chunk : chunks) {
                 top.yumbo.ai.rag.api.model.Document document = top.yumbo.ai.rag.api.model.Document.builder()
                         .id(chunk.getId())
@@ -431,6 +456,9 @@ public class FileWatcherService {
                 ragService.indexDocument(document);
             }
             log.info("✅ RAG索引完成");
+            // ⭐ 更新进度：索引中 (90%)
+            progressService.updateProgress(filename,
+                top.yumbo.ai.omni.web.model.rag.ProcessingStage.INDEX, 90);
 
             // ========== 步骤8: 归档成功，从监听目录移除 ==========
             Files.delete(filePath);
@@ -444,10 +472,19 @@ public class FileWatcherService {
 
             log.info("✅ 处理完成: {}", relativePathStr);
 
+            // ⭐ 标记处理完成 (100%)
+            progressService.markCompleted(filename);
+
         } catch (Exception e) {
             log.error("❌ 处理失败: {} - {}", relativePathStr, e.getMessage(), e);
             record.setProcessed(false);
             record.setNote("失败: " + e.getMessage());
+
+            // ⭐ 标记处理失败
+            progressService.markFailed(filename,
+                top.yumbo.ai.omni.web.model.rag.ProcessingStage.INDEX,
+                e.getMessage());
+
             // 失败的文件保留在监听目录，等待下次扫描重试
         }
     }
