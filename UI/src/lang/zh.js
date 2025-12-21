@@ -154,6 +154,7 @@ export default {
       flow: '流程视图',  // ⭐ RAG流程可视化
       chunking: '分块配置',  // ⭐ 分块策略配置
       queryExpansion: '查询扩展',  // ⭐ 查询扩展配置
+      retrieval: '检索配置',  // ⭐ 检索参数配置
     },
 
     upload: '上传文档',
@@ -1632,6 +1633,321 @@ export default {
       import: '导入',
       clear: '清除',
       refresh: '刷新',
+    },
+  },
+
+  // ============================================================================
+  // 检索参数配置 (Retrieval Configuration)
+  // ============================================================================
+  retrievalConfig: {
+    title: '检索参数配置',
+    subtitle: '配置和优化检索参数，提升检索准确性和效率',
+
+    // 基础配置
+    basicConfig: {
+      title: '基础配置',
+      topK: 'Top-K结果数',
+      topKHelp: '返回相似度最高的K个结果',
+      similarityThreshold: '相似度阈值',
+      similarityThresholdHelp: '只返回相似度高于此阈值的结果',
+      timeout: '超时时间',
+      timeoutHelp: '检索的最大等待时间（秒）',
+    },
+
+    // 检索策略
+    strategy: {
+      title: '检索策略',
+      select: '选择策略',
+      vector: '向量检索',
+      fulltext: '全文检索',
+      hybrid: '混合检索',
+      description: {
+        vector: '基于向量相似度的语义检索，适合语义匹配',
+        fulltext: '基于关键词的全文检索，适合精确匹配',
+        hybrid: '结合向量和全文检索，平衡语义和精确匹配',
+      },
+    },
+
+    // 混合检索权重
+    hybridWeights: {
+      title: '混合检索权重',
+      vectorWeight: '向量权重',
+      vectorWeightHelp: '向量检索结果的权重',
+      fulltextWeight: '全文权重',
+      fulltextWeightHelp: '全文检索结果的权重',
+      weightTip: '权重范围: 0.0 - 1.0，总和应为 1.0',
+    },
+
+    // 重排序
+    reranker: {
+      title: '重排序配置',
+      enable: '启用重排序',
+      enableHelp: '使用重排序模型优化检索结果排序',
+      model: '重排序模型',
+      modelHelp: '选择重排序模型',
+      models: {
+        bgeReranker: 'BGE Reranker',
+        crossEncoder: 'Cross Encoder',
+        colbert: 'ColBERT',
+      },
+    },
+
+    // 并行配置
+    parallel: {
+      title: '并行配置',
+      enable: '启用并行检索',
+      enableHelp: '并行执行多个检索源，提升速度',
+    },
+
+    // 实时测试
+    test: {
+      title: '实时测试',
+      inputQuery: '输入查询',
+      inputPlaceholder: '输入要测试的查询...',
+      testButton: '测试检索',
+      clearButton: '清除',
+      noResults: '暂无检索结果',
+      resultCount: '共 {count} 条结果',
+
+      // 结果展示
+      result: {
+        documentName: '文档名称',
+        score: '相似度',
+        source: '来源',
+        content: '内容摘要',
+        vectorSource: '向量',
+        fulltextSource: '全文',
+      },
+
+      // 统计信息
+      stats: {
+        title: '检索统计',
+        totalResults: '总结果数',
+        retrievalTime: '检索耗时',
+        vectorResults: '向量结果',
+        fulltextResults: '全文结果',
+        avgScore: '平均相似度',
+        minScore: '最小相似度',
+        maxScore: '最大相似度',
+      },
+    },
+
+    // 消息提示
+    message: {
+      configLoadSuccess: '配置加载成功',
+      configLoadFailed: '配置加载失败',
+      configSaveSuccess: '配置保存成功',
+      configSaveFailed: '配置保存失败',
+      testSuccess: '测试完成',
+      testFailed: '测试失败',
+      inputRequired: '请输入查询内容',
+      invalidTopK: 'Top-K值无效',
+      invalidThreshold: '阈值无效，应在 0.0 - 1.0 之间',
+    },
+
+    // 操作按钮
+    actions: {
+      save: '保存配置',
+      reset: '重置',
+      test: '测试',
+      clear: '清除',
+    },
+  },
+
+  // ============================================================================
+  // 缓存管理 (Cache Management)
+  // ============================================================================
+  cacheManagement: {
+    title: '缓存管理',
+    subtitle: '多级缓存统计、监控和管理',
+
+    // 概览
+    overview: {
+      title: '缓存概览',
+      totalHitRate: '总体命中率',
+      totalSize: '总缓存大小',
+      totalRequests: '总请求数',
+    },
+
+    // 缓存类型
+    cacheTypes: {
+      query: '查询缓存',
+      embedding: '向量缓存',
+      retrieval: '检索缓存',
+    },
+
+    // 统计指标
+    stats: {
+      hitRate: '命中率',
+      size: '缓存大小',
+      maxSize: '最大容量',
+      hitCount: '命中次数',
+      missCount: '未命中次数',
+      evictionCount: '淘汰次数',
+      avgLoadTime: '平均加载时间',
+      usagePercent: '使用率',
+    },
+
+    // 热点分析
+    hotkeys: {
+      title: '热点数据',
+      key: '缓存键',
+      hitCount: '访问次数',
+      lastAccess: '最后访问',
+      size: '数据大小',
+      noData: '暂无热点数据',
+    },
+
+    // 趋势图
+    trends: {
+      title: '趋势分析',
+      hitRateTrend: '命中率趋势',
+      sizeTrend: '大小趋势',
+      last24Hours: '最近24小时',
+      last7Days: '最近7天',
+      last30Days: '最近30天',
+    },
+
+    // 操作
+    actions: {
+      clearAll: '清除全部',
+      clearExpired: '清除过期',
+      clearPartial: '清除指定',
+      warmup: '预热缓存',
+      refresh: '刷新',
+      export: '导出统计',
+    },
+
+    // 清除确认
+    clearConfirm: {
+      title: '确认清除',
+      allMessage: '确定要清除所有缓存吗？这将影响系统性能。',
+      expiredMessage: '确定要清除过期缓存吗？',
+      partialMessage: '确定要清除选定的缓存项吗？',
+    },
+
+    // 预热
+    warmup: {
+      title: '缓存预热',
+      inputKeys: '输入缓存键',
+      inputPlaceholder: '每行一个键，或用逗号分隔',
+      startWarmup: '开始预热',
+      progress: '预热进度',
+      result: {
+        title: '预热结果',
+        total: '总数',
+        success: '成功',
+        failure: '失败',
+        duration: '耗时',
+      },
+    },
+
+    // 消息提示
+    message: {
+      loadSuccess: '加载成功',
+      loadFailed: '加载失败',
+      clearSuccess: '清除成功',
+      clearFailed: '清除失败',
+      warmupSuccess: '预热成功',
+      warmupFailed: '预热失败',
+      exportSuccess: '导出成功',
+      exportFailed: '导出失败',
+    },
+  },
+
+  // ============================================================================
+  // 查询过程可视化 (Query Process Visualization)
+  // ============================================================================
+  queryProcess: {
+    processing: '查询处理中...',
+    input: {
+      title: '输入查询',
+      placeholder: '请输入要查询的内容...',
+      startButton: '开始查询',
+    },
+    steps: {
+      received: {
+        title: '接收查询',
+        description: '查询已接收，准备处理',
+      },
+      expansion: {
+        title: '查询扩展',
+        description: '使用同义词和LLM扩展查询',
+      },
+      embedding: {
+        title: '向量化',
+        description: '将查询转换为向量表示',
+      },
+      retrieval: {
+        title: '检索',
+        description: '从知识库检索相关文档',
+      },
+      reranking: {
+        title: '重排序',
+        description: '使用重排序模型优化结果',
+      },
+      completed: {
+        title: '完成',
+        description: '查询处理完成',
+      },
+    },
+    statistics: {
+      title: '处理统计',
+      totalTime: '总耗时',
+      expandedQueries: '扩展查询数',
+      retrievalResults: '检索结果数',
+      finalResults: '最终结果数',
+      cacheHit: '缓存命中',
+      embeddingTime: '向量化耗时',
+      retrievalTime: '检索耗时',
+      rerankingTime: '重排序耗时',
+    },
+    timeline: {
+      title: '处理时间线',
+      received: '查询接收',
+      expanded: '查询扩展',
+      embedded: '向量化',
+      retrieved: '检索完成',
+      reranked: '重排序',
+      completed: '处理完成',
+      vectorGenerated: '向量已生成',
+      results: '个结果',
+      topResults: '精选结果',
+      ready: '准备返回',
+    },
+    progress: {
+      title: '正在处理',
+    },
+  },
+
+  // ============================================================================
+  // 检索结果可视化 (Retrieval Results Visualization)
+  // ============================================================================
+  retrievalResults: {
+    query: '查询',
+    result: '结果',
+    score: '相似度',
+    similarity: '相似度',
+    noResults: '暂无检索结果',
+    statistics: {
+      totalResults: '结果总数',
+      avgScore: '平均相似度',
+      maxScore: '最高相似度',
+      minScore: '最低相似度',
+    },
+    source: {
+      vector: '向量检索',
+      fulltext: '全文检索',
+      hybrid: '混合检索',
+    },
+    sourceDistribution: {
+      title: '来源分布',
+    },
+    scoreDistribution: {
+      title: '相似度分布',
+    },
+    resultsList: {
+      title: '检索结果列表',
     },
   },
 }

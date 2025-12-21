@@ -33,7 +33,7 @@ import {
 import {
   SettingOutlined,
   EyeOutlined,
-  CompareOutlined,
+  SwapOutlined,
   ReloadOutlined,
   InfoCircleOutlined,
   CheckCircleOutlined,
@@ -559,7 +559,7 @@ function ChunkingConfig() {
               <div className="comparison-mode">
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Space>
-                    <CompareOutlined />
+                    <SwapOutlined />
                     <span>{t('chunkingConfig.comparison.title')}</span>
                     <Switch
                       checked={comparisonMode}
@@ -585,7 +585,7 @@ function ChunkingConfig() {
 
                       <Button
                         type="primary"
-                        icon={<CompareOutlined />}
+                        icon={<SwapOutlined />}
                         onClick={handleComparison}
                         block
                       >

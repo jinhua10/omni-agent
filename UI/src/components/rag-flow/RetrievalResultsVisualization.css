@@ -1,0 +1,39 @@
+/**
+ * 检索结果可视化样式 (Retrieval Results Visualization Styles)
+ */
+
+.retrieval-results-container {
+  padding: 24px;
+}
+
+.retrieval-results-container .query-card {
+  background: #e6f7ff;
+  border-left: 4px solid #1890ff;
+}
+
+.retrieval-results-container .stat-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.retrieval-results-container .stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.retrieval-results-container .rank-badge {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.retrieval-results-container .rank-number {
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+

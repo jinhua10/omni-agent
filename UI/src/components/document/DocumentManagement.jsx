@@ -18,13 +18,15 @@ import {
   AppstoreOutlined,
   SyncOutlined,  // ⭐ 流程图标
   SettingOutlined,  // ⭐ 配置图标
-  ThunderboltOutlined  // ⭐ 查询扩展图标
+  ThunderboltOutlined,  // ⭐ 查询扩展图标
+  SearchOutlined  // ⭐ 检索图标
 } from '@ant-design/icons'
 import DocumentList from './DocumentList'
 import DocumentBrowser from './DocumentBrowser'
 import DocumentProcessingFlow from '../rag-flow/DocumentProcessingFlow'  // ⭐ 导入流程组件
 import ChunkingConfig from './ChunkingConfig'  // ⭐ 分块配置组件
 import QueryExpansionConfig from './QueryExpansionConfig'  // ⭐ 查询扩展配置组件
+import RetrievalConfig from './RetrievalConfig'  // ⭐ 检索配置组件
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/document-management.css'
 
@@ -124,6 +126,15 @@ function DocumentManagement() {
                 ),
                 value: 'queryExpansion',
               },
+              {
+                label: (
+                  <Space>
+                    <SearchOutlined />
+                    <span>{t('document.viewMode.retrieval')}</span>
+                  </Space>
+                ),
+                value: 'retrieval',
+              },
             ]}
             size="large"
           />
@@ -158,6 +169,11 @@ function DocumentManagement() {
           // ⭐ 查询扩展配置视图：交互式配置查询扩展策略
           <div className="document-query-expansion-view">
             <QueryExpansionConfig />
+          </div>
+        ) : viewMode === 'retrieval' ? (
+          // ⭐ 检索配置视图：交互式配置检索参数
+          <div className="document-retrieval-view">
+            <RetrievalConfig />
           </div>
         ) : null}
       </div>

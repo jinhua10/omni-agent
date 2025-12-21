@@ -1,0 +1,33 @@
+/**
+ * 查询过程可视化样式 (Query Process Visualization Styles)
+ */
+
+.query-process-container {
+  padding: 24px;
+}
+
+.query-process-container .input-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.query-process-container .steps-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.query-process-container .statistics-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.query-process-container .statistics-card .ant-statistic-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.query-process-container .statistics-card .ant-statistic-content {
+  color: white;
+}
+
+.query-process-container .timeline-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+

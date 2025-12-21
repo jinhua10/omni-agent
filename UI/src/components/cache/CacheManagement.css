@@ -1,0 +1,90 @@
+/**
+ * 缓存管理样式 (Cache Management Styles)
+ *
+ * @author OmniAgent Team
+ * @since 2.0.0 (Phase 4)
+ */
+
+.cache-management-container {
+  padding: 24px;
+  background-color: var(--bg-color, #f5f5f5);
+  min-height: 100vh;
+}
+
+/* 页面标题 */
+.cache-management-container .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.cache-management-container .page-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, #1f1f1f);
+}
+
+.cache-management-container .page-header .subtitle {
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  margin: 8px 0 0 0;
+}
+
+/* 概览卡片 */
+.cache-management-container .overview-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.cache-management-container .overview-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .cache-management-container {
+    padding: 16px;
+  }
+
+  .cache-management-container .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cache-management-container .page-header h1 {
+    font-size: 22px;
+  }
+}
+
+/* 暗色模式 */
+.dark-mode .cache-management-container {
+  background-color: #1f1f1f;
+}
+
+.dark-mode .cache-management-container .page-header h1 {
+  color: #ffffff;
+}
+
+.dark-mode .cache-management-container .page-header .subtitle {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* 动画效果 */
+.cache-management-container .overview-card {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

@@ -154,6 +154,7 @@ export default {
       flow: 'Flow View',  // ⭐ RAG Flow Visualization
       chunking: 'Chunking Config',  // ⭐ Chunking Strategy Configuration
       queryExpansion: 'Query Expansion',  // ⭐ Query Expansion Configuration
+      retrieval: 'Retrieval Config',  // ⭐ Retrieval Parameter Configuration
     },
 
     upload: 'Upload Document',
@@ -1621,6 +1622,282 @@ export default {
       clear: 'Clear',
       refresh: 'Refresh',
     },
+  },
+
+  // ============================================================================
+  // Retrieval Configuration
+  // ============================================================================
+  retrievalConfig: {
+    title: 'Retrieval Configuration',
+    subtitle: 'Configure and optimize retrieval parameters for better accuracy and efficiency',
+
+    // Basic Config
+    basicConfig: {
+      title: 'Basic Configuration',
+      topK: 'Top-K Results',
+      topKHelp: 'Return top K most similar results',
+      similarityThreshold: 'Similarity Threshold',
+      similarityThresholdHelp: 'Only return results with similarity above this threshold',
+      timeout: 'Timeout',
+      timeoutHelp: 'Maximum wait time for retrieval (seconds)',
+    },
+
+    // Strategy
+    strategy: {
+      title: 'Retrieval Strategy',
+      select: 'Select Strategy',
+      vector: 'Vector Search',
+      fulltext: 'Full-text Search',
+      hybrid: 'Hybrid Search',
+      description: {
+        vector: 'Semantic search based on vector similarity, suitable for semantic matching',
+        fulltext: 'Keyword-based full-text search, suitable for exact matching',
+        hybrid: 'Combines vector and full-text search, balancing semantic and exact matching',
+      },
+    },
+
+    // Hybrid Weights
+    hybridWeights: {
+      title: 'Hybrid Search Weights',
+      vectorWeight: 'Vector Weight',
+      vectorWeightHelp: 'Weight for vector search results',
+      fulltextWeight: 'Full-text Weight',
+      fulltextWeightHelp: 'Weight for full-text search results',
+      weightTip: 'Weight range: 0.0 - 1.0, sum should be 1.0',
+    },
+
+    // Reranker
+    reranker: {
+      title: 'Reranker Configuration',
+      enable: 'Enable Reranker',
+      enableHelp: 'Use reranker model to optimize result ranking',
+      model: 'Reranker Model',
+      modelHelp: 'Select reranker model',
+      models: {
+        bgeReranker: 'BGE Reranker',
+        crossEncoder: 'Cross Encoder',
+        colbert: 'ColBERT',
+      },
+    },
+
+    // Parallel
+    parallel: {
+      title: 'Parallel Configuration',
+      enable: 'Enable Parallel Retrieval',
+      enableHelp: 'Execute multiple retrieval sources in parallel for better speed',
+    },
+
+    // Test
+    test: {
+      title: 'Real-time Test',
+      inputQuery: 'Input Query',
+      inputPlaceholder: 'Enter query to test...',
+      testButton: 'Test Retrieval',
+      clearButton: 'Clear',
+      noResults: 'No retrieval results',
+      resultCount: '{count} results',
+
+      // Result Display
+      result: {
+        documentName: 'Document Name',
+        score: 'Similarity',
+        source: 'Source',
+        content: 'Content Summary',
+        vectorSource: 'Vector',
+        fulltextSource: 'Full-text',
+      },
+
+      // Statistics
+      stats: {
+        title: 'Retrieval Statistics',
+        totalResults: 'Total Results',
+        retrievalTime: 'Retrieval Time',
+        vectorResults: 'Vector Results',
+        fulltextResults: 'Full-text Results',
+        avgScore: 'Average Score',
+        minScore: 'Min Score',
+        maxScore: 'Max Score',
+      },
+    },
+
+    // Messages
+    message: {
+      configLoadSuccess: 'Configuration loaded successfully',
+      configLoadFailed: 'Failed to load configuration',
+      configSaveSuccess: 'Configuration saved successfully',
+      configSaveFailed: 'Failed to save configuration',
+      testSuccess: 'Test completed',
+      testFailed: 'Test failed',
+      inputRequired: 'Please input query content',
+      invalidTopK: 'Invalid Top-K value',
+      invalidThreshold: 'Invalid threshold, should be between 0.0 - 1.0',
+    },
+
+    // Actions
+    actions: {
+      save: 'Save Config',
+      reset: 'Reset',
+      test: 'Test',
+      clear: 'Clear',
+    },
+  },
+
+  // ============================================================================
+  // Cache Management
+  // ============================================================================
+  cacheManagement: {
+    title: 'Cache Management',
+    subtitle: 'Multi-level cache statistics, monitoring and management',
+
+    overview: {
+      title: 'Cache Overview',
+      totalHitRate: 'Total Hit Rate',
+      totalSize: 'Total Cache Size',
+      totalRequests: 'Total Requests',
+    },
+
+    cacheTypes: {
+      query: 'Query Cache',
+      embedding: 'Embedding Cache',
+      retrieval: 'Retrieval Cache',
+    },
+
+    stats: {
+      hitRate: 'Hit Rate',
+      size: 'Cache Size',
+      maxSize: 'Max Capacity',
+      hitCount: 'Hit Count',
+      missCount: 'Miss Count',
+      evictionCount: 'Eviction Count',
+      avgLoadTime: 'Avg Load Time',
+      usagePercent: 'Usage',
+    },
+
+    hotkeys: {
+      title: 'Hot Keys',
+      key: 'Cache Key',
+      hitCount: 'Hit Count',
+      lastAccess: 'Last Access',
+      size: 'Size',
+      noData: 'No hot keys data',
+    },
+
+    trends: {
+      title: 'Trends Analysis',
+      hitRateTrend: 'Hit Rate Trend',
+      sizeTrend: 'Size Trend',
+      last24Hours: 'Last 24 Hours',
+      last7Days: 'Last 7 Days',
+      last30Days: 'Last 30 Days',
+    },
+
+    actions: {
+      clearAll: 'Clear All',
+      clearExpired: 'Clear Expired',
+      clearPartial: 'Clear Selected',
+      warmup: 'Warmup',
+      refresh: 'Refresh',
+      export: 'Export Stats',
+    },
+
+    clearConfirm: {
+      title: 'Confirm Clear',
+      allMessage: 'Are you sure to clear all cache? This will affect system performance.',
+      expiredMessage: 'Are you sure to clear expired cache?',
+      partialMessage: 'Are you sure to clear selected cache items?',
+    },
+
+    warmup: {
+      title: 'Cache Warmup',
+      inputKeys: 'Input Cache Keys',
+      inputPlaceholder: 'One key per line, or comma separated',
+      startWarmup: 'Start Warmup',
+      progress: 'Warmup Progress',
+      result: {
+        title: 'Warmup Result',
+        total: 'Total',
+        success: 'Success',
+        failure: 'Failure',
+        duration: 'Duration',
+      },
+    },
+
+    message: {
+      loadSuccess: 'Loaded successfully',
+      loadFailed: 'Failed to load',
+      clearSuccess: 'Cleared successfully',
+      clearFailed: 'Failed to clear',
+      warmupSuccess: 'Warmup completed',
+      warmupFailed: 'Warmup failed',
+      exportSuccess: 'Exported successfully',
+      exportFailed: 'Failed to export',
+    },
+  },
+
+  // Query Process Visualization
+  queryProcess: {
+    processing: 'Processing query...',
+    input: {
+      title: 'Input Query',
+      placeholder: 'Enter your query...',
+      startButton: 'Start Query',
+    },
+    steps: {
+      received: { title: 'Received', description: 'Query received, preparing to process' },
+      expansion: { title: 'Expansion', description: 'Expanding query with synonyms and LLM' },
+      embedding: { title: 'Embedding', description: 'Converting query to vector representation' },
+      retrieval: { title: 'Retrieval', description: 'Retrieving relevant documents' },
+      reranking: { title: 'Reranking', description: 'Optimizing results with reranker' },
+      completed: { title: 'Completed', description: 'Query processing completed' },
+    },
+    statistics: {
+      title: 'Processing Statistics',
+      totalTime: 'Total Time',
+      expandedQueries: 'Expanded Queries',
+      retrievalResults: 'Retrieved Results',
+      finalResults: 'Final Results',
+      cacheHit: 'Cache Hit',
+      embeddingTime: 'Embedding Time',
+      retrievalTime: 'Retrieval Time',
+      rerankingTime: 'Reranking Time',
+    },
+    timeline: {
+      title: 'Processing Timeline',
+      received: 'Query Received',
+      expanded: 'Query Expanded',
+      embedded: 'Vectorized',
+      retrieved: 'Retrieved',
+      reranked: 'Reranked',
+      completed: 'Completed',
+      vectorGenerated: 'Vector generated',
+      results: 'results',
+      topResults: 'Top results',
+      ready: 'Ready to return',
+    },
+    progress: { title: 'Processing' },
+  },
+
+  // Retrieval Results Visualization
+  retrievalResults: {
+    query: 'Query',
+    result: 'Result',
+    score: 'Similarity',
+    similarity: 'Similarity',
+    noResults: 'No retrieval results',
+    statistics: {
+      totalResults: 'Total Results',
+      avgScore: 'Avg Similarity',
+      maxScore: 'Max Similarity',
+      minScore: 'Min Similarity',
+    },
+    source: {
+      vector: 'Vector',
+      fulltext: 'Full-text',
+      hybrid: 'Hybrid',
+    },
+    sourceDistribution: { title: 'Source Distribution' },
+    scoreDistribution: { title: 'Score Distribution' },
+    resultsList: { title: 'Results List' },
   },
 }
 
