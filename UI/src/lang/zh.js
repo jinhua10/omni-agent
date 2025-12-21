@@ -152,6 +152,7 @@ export default {
       list: '列表视图',
       card: '卡片视图',
       flow: '流程视图',  // ⭐ RAG流程可视化
+      textExtraction: '文本提取',  // ⭐ 文本提取配置
       chunking: '分块配置',  // ⭐ 分块策略配置
       queryExpansion: '查询扩展',  // ⭐ 查询扩展配置
       retrieval: '检索配置',  // ⭐ 检索参数配置

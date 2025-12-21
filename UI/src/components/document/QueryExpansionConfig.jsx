@@ -49,7 +49,7 @@ import {
   ImportOutlined,
 } from '@ant-design/icons'
 import { useLanguage } from '../../contexts/LanguageContext'
-import './QueryExpansionConfig.css'
+import '../../assets/css/document/QueryExpansionConfig.css'
 
 const { TextArea } = Input
 

@@ -17,6 +17,7 @@ import {
   FolderOpenOutlined,
   AppstoreOutlined,
   SyncOutlined,  // ⭐ 流程图标
+  FileTextOutlined,  // ⭐ 文本提取图标
   SettingOutlined,  // ⭐ 配置图标
   ThunderboltOutlined,  // ⭐ 查询扩展图标
   SearchOutlined  // ⭐ 检索图标
@@ -27,6 +28,7 @@ import DocumentProcessingFlow from '../rag-flow/DocumentProcessingFlow'  // ⭐ 
 import ChunkingConfig from './ChunkingConfig'  // ⭐ 分块配置组件
 import QueryExpansionConfig from './QueryExpansionConfig'  // ⭐ 查询扩展配置组件
 import RetrievalConfig from './RetrievalConfig'  // ⭐ 检索配置组件
+import TextExtractionConfig from './TextExtractionConfig'  // ⭐ 文本提取配置组件
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/document-management.css'
 
@@ -121,6 +123,15 @@ function DocumentManagement() {
               {
                 label: (
                   <Space>
+                    <FileTextOutlined />
+                    <span>{t('document.viewMode.textExtraction')}</span>
+                  </Space>
+                ),
+                value: 'textExtraction',
+              },
+              {
+                label: (
+                  <Space>
                     <SettingOutlined />
                     <span>{t('document.viewMode.chunking')}</span>
                   </Space>
@@ -171,6 +182,11 @@ function DocumentManagement() {
                 console.error('❌ 文档处理失败:', error)
               }}
             />
+          </div>
+        ) : viewMode === 'textExtraction' ? (
+          // ⭐ 文本提取配置视图：交互式配置文本提取模型
+          <div className="document-text-extraction-view">
+            <TextExtractionConfig />
           </div>
         ) : viewMode === 'chunking' ? (
           // ⭐ 分块配置视图：交互式配置分块策略

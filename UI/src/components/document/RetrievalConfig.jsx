@@ -42,7 +42,7 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons'
 import { useLanguage } from '../../contexts/LanguageContext'
-import './RetrievalConfig.css'
+import '../../assets/css/document/RetrievalConfig.css'
 
 const { TextArea } = Input
 const { Option } = Select

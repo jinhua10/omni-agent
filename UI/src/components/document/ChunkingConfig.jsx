@@ -39,7 +39,7 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons'
 import { useLanguage } from '../../contexts/LanguageContext'
-import './ChunkingConfig.css'
+import '../../assets/css/document/ChunkingConfig.css'
 
 const { Option } = Select
 const { TextArea } = Input

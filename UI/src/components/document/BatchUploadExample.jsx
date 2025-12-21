@@ -12,7 +12,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useMessage } from '../../hooks/useMessage';
 import { batchUploadDocuments } from '../../adapters/PageDataAdapter';
-import UploadDropZone from './UploadDropZone';
+import UploadDropZone from '../../assets/css/document/UploadDropZone';
 
 function BatchUploadExample() {
   const { t } = useLanguage();

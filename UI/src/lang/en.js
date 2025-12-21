@@ -152,6 +152,7 @@ export default {
       list: 'List View',
       card: 'Card View',
       flow: 'Flow View',  // ⭐ RAG Flow Visualization
+      textExtraction: 'Text Extraction',  // ⭐ Text Extraction Configuration
       chunking: 'Chunking Config',  // ⭐ Chunking Strategy Configuration
       queryExpansion: 'Query Expansion',  // ⭐ Query Expansion Configuration
       retrieval: 'Retrieval Config',  // ⭐ Retrieval Parameter Configuration
