@@ -15,10 +15,12 @@ import { Button, Space, Segmented } from 'antd'
 import {
   UnorderedListOutlined,
   FolderOpenOutlined,
-  AppstoreOutlined
+  AppstoreOutlined,
+  SyncOutlined  // ⭐ 流程图标
 } from '@ant-design/icons'
 import DocumentList from './DocumentList'
 import DocumentBrowser from './DocumentBrowser'
+import DocumentProcessingFlow from '../rag-flow/DocumentProcessingFlow'  // ⭐ 导入流程组件
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/document-management.css'
 
@@ -32,11 +34,14 @@ function DocumentManagement() {
   // State / 状态管理
   // ============================================================================
 
-  // 视图模式: 'list' | 'browser'
+  // 视图模式: 'list' | 'browser' | 'flow'
   const [viewMode, setViewMode] = useState(() => {
     // 从 localStorage 读取用户偏好 / Read user preference from localStorage
     return localStorage.getItem('documentViewMode') || 'browser'
   })
+
+  // ⭐ 当前正在处理的文档ID（用于流程视图）
+  const [processingDocumentId, setProcessingDocumentId] = useState(null)
 
   // ============================================================================
   // Functions / 函数
@@ -88,6 +93,15 @@ function DocumentManagement() {
                 ),
                 value: 'list',
               },
+              {
+                label: (
+                  <Space>
+                    <SyncOutlined />
+                    <span>{t('document.viewMode.flow')}</span>
+                  </Space>
+                ),
+                value: 'flow',
+              },
             ]}
             size="large"
           />
@@ -98,8 +112,21 @@ function DocumentManagement() {
       <div className="document-management-content">
         {viewMode === 'browser' ? (
           <DocumentBrowser />
-        ) : (
+        ) : viewMode === 'list' ? (
           <DocumentList />
+        ) : (
+          // ⭐ 流程视图：显示文档处理进度
+          <div className="document-flow-view">
+            <DocumentProcessingFlow
+              documentId={processingDocumentId}
+              onComplete={(progress) => {
+                console.log('✅ 文档处理完成:', progress)
+              }}
+              onError={(error) => {
+                console.error('❌ 文档处理失败:', error)
+              }}
+            />
+          </div>
         )}
       </div>
     </div>

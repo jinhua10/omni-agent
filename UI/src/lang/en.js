@@ -151,6 +151,7 @@ export default {
       browser: 'Browser View',
       list: 'List View',
       card: 'Card View',
+      flow: 'Flow View',  // ⭐ RAG Flow Visualization
     },
 
     upload: 'Upload Document',

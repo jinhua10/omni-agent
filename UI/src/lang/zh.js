@@ -151,6 +151,7 @@ export default {
       browser: '浏览器视图',
       list: '列表视图',
       card: '卡片视图',
+      flow: '流程视图',  // ⭐ RAG流程可视化
     },
 
     upload: '上传文档',
