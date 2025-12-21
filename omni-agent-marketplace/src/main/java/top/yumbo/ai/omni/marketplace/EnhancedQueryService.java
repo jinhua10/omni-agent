@@ -1,12 +1,17 @@
 package top.yumbo.ai.omni.marketplace;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.ai.api.AIService;
+import top.yumbo.ai.omni.core.query.cache.QueryExpansionCacheService;
+import top.yumbo.ai.omni.marketplace.config.QueryExpansionConfig;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.SearchResult;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -19,6 +24,9 @@ import java.util.stream.Collectors;
  * - 语义分块（Semantic Chunking）: 智能文档分块
  * - 结果重排序（Rerank）: 优化检索结果顺序
  * - 多查询融合（Multi-Query Fusion）: 融合多个查询的结果
+ * - LLM查询扩展: 使用LLM生成高质量查询变体
+ * - 缓存优化: 缓存扩展结果和查询结果
+ * - 并行执行: 并行执行多个查询提升性能
  * </p>
  *
  * <p>
@@ -41,6 +49,62 @@ public class EnhancedQueryService {
     @Autowired(required = false)
     private AlgorithmMarketService algorithmMarketService;
 
+    @Autowired(required = false)
+    private AIService aiService;
+
+    @Autowired(required = false)
+    private QueryExpansionCacheService cacheService;
+
+    @Autowired
+    private QueryExpansionConfig config;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * 并行执行线程池
+     */
+    private ExecutorService executorService;
+
+    /**
+     * 初始化方法
+     */
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        // 初始化线程池
+        if (config.getParallel().isEnabled()) {
+            int threadPoolSize = config.getParallel().getThreadPoolSize();
+            this.executorService = Executors.newFixedThreadPool(
+                    threadPoolSize,
+                    r -> {
+                        Thread thread = new Thread(r);
+                        thread.setName("query-expansion-" + thread.threadId());
+                        thread.setDaemon(true);
+                        return thread;
+                    }
+            );
+            log.info("✅ 查询扩展线程池初始化完成: poolSize={}", threadPoolSize);
+        }
+    }
+
+    /**
+     * 销毁方法
+     */
+    @jakarta.annotation.PreDestroy
+    public void destroy() {
+        if (executorService != null) {
+            executorService.shutdown();
+            try {
+                if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            log.info("🔚 查询扩展线程池已关闭");
+        }
+    }
+
     /**
      * 增强查询 - 使用算法市场优化
      *
@@ -55,46 +119,150 @@ public class EnhancedQueryService {
                 question, topK, useExpansion, useRerank);
 
         try {
-            // 1. 查询扩展（如果启用）
+            // 生成缓存键
+            String cacheKey = String.format("enhanced:%s:topK:%d:exp:%b:rerank:%b",
+                    question, topK, useExpansion, useRerank);
+
+            // 1. 尝试从缓存获取完整结果
+            if (cacheService != null) {
+                List<SearchResult> cached = cacheService.getResult(cacheKey);
+                if (cached != null) {
+                    log.info("🎯 增强查询缓存命中: 返回 {} 个结果", cached.size());
+                    return cached;
+                }
+            }
+
+            // 2. 查询扩展（如果启用）
             List<String> queries = new ArrayList<>();
             queries.add(question); // 原始查询
 
-            if (useExpansion && algorithmMarketService != null) {
+            if (useExpansion && config.isEnabled()) {
                 List<String> expandedQueries = performQueryExpansion(question);
                 queries.addAll(expandedQueries);
                 log.info("📈 查询扩展: {} -> {} 个查询", question, queries.size());
             }
 
-            // 2. 多查询检索
-            List<SearchResult> allResults = new ArrayList<>();
-            for (String query : queries) {
-                List<SearchResult> results = ragService.searchByText(query, topK);
-                allResults.addAll(results);
+            // 3. 多查询检索（并行或串行）
+            List<SearchResult> allResults;
+            if (config.getParallel().isEnabled() && queries.size() > 1 && executorService != null) {
+                allResults = parallelSearch(queries, topK);
+            } else {
+                allResults = serialSearch(queries, topK);
             }
 
-            // 3. 去重和融合（基于文档ID）
+            // 4. 去重和融合（基于文档ID）
             List<SearchResult> fusedResults = fuseResults(allResults);
             log.info("🔗 结果融合: {} -> {} 个结果", allResults.size(), fusedResults.size());
 
-            // 4. 重排序（如果启用）
+            // 5. 重排序（如果启用）
             if (useRerank && algorithmMarketService != null) {
                 fusedResults = performRerank(question, fusedResults);
                 log.info("🎯 重排序完成: {} 个结果", fusedResults.size());
             }
 
-            // 5. 截取 topK
+            // 6. 截取 topK
             if (fusedResults.size() > topK) {
                 fusedResults = fusedResults.subList(0, topK);
+            }
+
+            // 7. 缓存结果
+            if (cacheService != null && !fusedResults.isEmpty()) {
+                cacheService.putResult(cacheKey, fusedResults);
             }
 
             log.info("✅ 增强查询完成: 返回 {} 个结果", fusedResults.size());
             return fusedResults;
 
         } catch (Exception e) {
-            log.error("❌ 增强查询失败，降级到普通检索: {}", e.getMessage());
+            log.error("❌ 增强查询失败，降级到普通检索: {}", e.getMessage(), e);
             // 降级：使用普通 RAG 检索
             return ragService.searchByText(question, topK);
         }
+    }
+
+    /**
+     * 并行执行多个查询
+     *
+     * @param queries 查询列表
+     * @param topK 每个查询返回的结果数
+     * @return 所有查询的结果
+     */
+    private List<SearchResult> parallelSearch(List<String> queries, int topK) {
+        log.info("🚀 并行执行 {} 个查询", queries.size());
+        long startTime = System.currentTimeMillis();
+
+        List<CompletableFuture<List<SearchResult>>> futures = queries.stream()
+                .map(query -> CompletableFuture.supplyAsync(
+                        () -> {
+                            try {
+                                return ragService.searchByText(query, topK);
+                            } catch (Exception e) {
+                                log.error("查询失败: query={}, error={}", query, e.getMessage());
+                                return Collections.<SearchResult>emptyList();
+                            }
+                        },
+                        executorService
+                ))
+                .collect(Collectors.toList());
+
+        // 等待所有查询完成（带超时）
+        try {
+            CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+                    futures.toArray(new CompletableFuture[0])
+            );
+
+            // 设置超时
+            allFutures.get(config.getParallel().getTimeoutMs(), TimeUnit.MILLISECONDS);
+
+        } catch (TimeoutException e) {
+            log.warn("⚠️ 并行查询超时，使用已完成的结果");
+        } catch (Exception e) {
+            log.error("❌ 并行查询异常: {}", e.getMessage());
+        }
+
+        // 收集所有完成的结果
+        List<SearchResult> allResults = futures.stream()
+                .filter(CompletableFuture::isDone)
+                .flatMap(future -> {
+                    try {
+                        return future.get().stream();
+                    } catch (Exception e) {
+                        return java.util.stream.Stream.empty();
+                    }
+                })
+                .collect(Collectors.toList());
+
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("✅ 并行查询完成: {} 个查询, 耗时 {}ms", queries.size(), duration);
+
+        return allResults;
+    }
+
+    /**
+     * 串行执行多个查询
+     *
+     * @param queries 查询列表
+     * @param topK 每个查询返回的结果数
+     * @return 所有查询的结果
+     */
+    private List<SearchResult> serialSearch(List<String> queries, int topK) {
+        log.info("📝 串行执行 {} 个查询", queries.size());
+        long startTime = System.currentTimeMillis();
+
+        List<SearchResult> allResults = new ArrayList<>();
+        for (String query : queries) {
+            try {
+                List<SearchResult> results = ragService.searchByText(query, topK);
+                allResults.addAll(results);
+            } catch (Exception e) {
+                log.error("查询失败: query={}, error={}", query, e.getMessage());
+            }
+        }
+
+        long duration = System.currentTimeMillis() - startTime;
+        log.info("✅ 串行查询完成: {} 个查询, 耗时 {}ms", queries.size(), duration);
+
+        return allResults;
     }
 
     /**
@@ -127,37 +295,123 @@ public class EnhancedQueryService {
      */
     @SuppressWarnings("unchecked")
     private List<String> performQueryExpansion(String question) {
-        try {
-            // 使用算法市场的查询扩展组件
-            Map<String, Object> params = new HashMap<>();
-            params.put("method", "synonym");
-            params.put("maxExpansions", 5);
+        if (!config.isEnabled()) {
+            log.debug("⚠️ 查询扩展未启用");
+            return Collections.emptyList();
+        }
 
-            // 直接调用组件（不需要发布算法）
-            var component = algorithmMarketService.getComponent("query_expansion");
-            if (component == null) {
-                log.warn("⚠️ 查询扩展组件未找到，跳过扩展");
-                return Collections.emptyList();
+        try {
+            // 1. 尝试从缓存获取
+            if (cacheService != null) {
+                List<String> cached = cacheService.getExpansion(question);
+                if (cached != null) {
+                    log.info("🎯 查询扩展缓存命中: query={}, count={}", question, cached.size());
+                    return cached;
+                }
             }
 
-            Object result = component.execute(question, params);
-            if (result instanceof Map) {
-                Map<String, Object> resultMap = (Map<String, Object>) result;
-                List<String> expandedQueries = (List<String>) resultMap.get("expandedQueries");
+            List<String> allExpansions = new ArrayList<>();
 
-                // 移除原始查询，只返回扩展的查询
-                if (expandedQueries != null && expandedQueries.contains(question)) {
-                    expandedQueries = new ArrayList<>(expandedQueries);
-                    expandedQueries.remove(question);
+            // 2. 使用 LLM 查询扩展（优先级最高）
+            if (config.isLlmEnabled() && aiService != null) {
+                List<String> llmExpansions = performLLMQueryExpansion(question);
+                allExpansions.addAll(llmExpansions);
+                log.info("🤖 LLM查询扩展: {} -> {} 个查询", question, llmExpansions.size());
+            }
+
+            // 3. 使用算法市场的查询扩展组件（作为补充）
+            if (algorithmMarketService != null) {
+                Map<String, Object> params = new HashMap<>();
+                params.put("method", "synonym");
+                params.put("maxExpansions", config.getMaxExpansions());
+
+                var component = algorithmMarketService.getComponent("query_expansion");
+                if (component != null) {
+                    Object result = component.execute(question, params);
+                    if (result instanceof Map) {
+                        Map<String, Object> resultMap = (Map<String, Object>) result;
+                        List<String> marketExpansions = (List<String>) resultMap.get("expandedQueries");
+
+                        if (marketExpansions != null) {
+                            // 移除原始查询和已有的扩展
+                            final List<String> finalAllExpansions = allExpansions; // 创建final副本供lambda使用
+                            marketExpansions = marketExpansions.stream()
+                                    .filter(q -> !q.equals(question) && !finalAllExpansions.contains(q))
+                                    .toList();
+                            allExpansions.addAll(marketExpansions);
+                            log.info("📈 算法市场查询扩展: 新增 {} 个查询", marketExpansions.size());
+                        }
+                    }
                 }
+            }
 
-                return expandedQueries != null ? expandedQueries : Collections.emptyList();
+            // 4. 限制扩展数量
+            if (allExpansions.size() > config.getMaxExpansions()) {
+                allExpansions = allExpansions.subList(0, config.getMaxExpansions());
+            }
+
+            // 5. 缓存结果
+            if (cacheService != null && !allExpansions.isEmpty()) {
+                cacheService.putExpansion(question, allExpansions);
+            }
+
+            return allExpansions;
+
+        } catch (Exception e) {
+            log.error("❌ 查询扩展失败: {}", e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * 使用 LLM 执行查询扩展
+     *
+     * @param question 原始问题
+     * @return 扩展后的查询列表
+     */
+    private List<String> performLLMQueryExpansion(String question) {
+        try {
+            String prompt = String.format("""
+                你是一个查询扩展专家。请为以下用户问题生成3-5个语义相似但表达不同的查询变体。
+                
+                原始问题: %s
+                
+                要求:
+                1. 保持原始问题的核心意图
+                2. 使用不同的词汇和表达方式
+                3. 覆盖可能的同义词和领域相关词
+                4. 每个查询变体都应该是完整的问题
+                
+                输出格式（JSON）:
+                {
+                  "expandedQueries": ["查询1", "查询2", "查询3"]
+                }
+                
+                只输出JSON，不要有其他内容。
+                """, question);
+
+            // 调用 LLM
+            String response = aiService.chat(prompt);
+
+            // 解析 JSON 响应
+            Map<String, Object> resultMap = objectMapper.readValue(response, Map.class);
+            @SuppressWarnings("unchecked")
+            List<String> expandedQueries = (List<String>) resultMap.get("expandedQueries");
+
+            if (expandedQueries != null && !expandedQueries.isEmpty()) {
+                // 移除原始查询
+                expandedQueries = expandedQueries.stream()
+                        .filter(q -> !q.equals(question))
+                        .toList();
+
+                log.info("🤖 LLM生成了 {} 个查询变体", expandedQueries.size());
+                return expandedQueries;
             }
 
             return Collections.emptyList();
 
         } catch (Exception e) {
-            log.error("❌ 查询扩展失败: {}", e.getMessage());
+            log.error("❌ LLM查询扩展失败: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -272,7 +526,7 @@ public class EnhancedQueryService {
         }
 
         // 按 RRF 分数降序排序
-        List<SearchResult> fusedResults = docScores.entrySet().stream()
+        return docScores.entrySet().stream()
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
                 .map(entry -> {
                     SearchResult result = docMap.get(entry.getKey());
@@ -281,8 +535,6 @@ public class EnhancedQueryService {
                     return result;
                 })
                 .collect(Collectors.toList());
-
-        return fusedResults;
     }
 
     /**
@@ -302,6 +554,11 @@ public class EnhancedQueryService {
     public Map<String, Object> getStatistics() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("algorithmMarketAvailable", isAlgorithmMarketAvailable());
+        stats.put("aiServiceAvailable", aiService != null);
+        stats.put("cacheServiceAvailable", cacheService != null);
+        stats.put("configEnabled", config.isEnabled());
+        stats.put("llmEnabled", config.isLlmEnabled());
+        stats.put("parallelEnabled", config.getParallel().isEnabled());
 
         if (algorithmMarketService != null) {
             stats.put("queryExpansionAvailable", algorithmMarketService.getComponent("query_expansion") != null);
@@ -309,7 +566,37 @@ public class EnhancedQueryService {
             stats.put("semanticChunkingAvailable", algorithmMarketService.getComponent("semantic_chunking") != null);
         }
 
+        // 添加缓存统计
+        if (cacheService != null) {
+            try {
+                var cacheStats = cacheService.getStatistics();
+                stats.put("cacheStatistics", Map.of(
+                        "queryCacheSize", cacheStats.getQueryCacheSize(),
+                        "queryCacheHits", cacheStats.getQueryCacheHits(),
+                        "queryCacheMisses", cacheStats.getQueryCacheMisses(),
+                        "queryCacheHitRate", String.format("%.2f%%", cacheStats.getQueryCacheHitRate() * 100),
+                        "expansionCacheSize", cacheStats.getExpansionCacheSize(),
+                        "expansionCacheHits", cacheStats.getExpansionCacheHits(),
+                        "expansionCacheMisses", cacheStats.getExpansionCacheMisses(),
+                        "expansionCacheHitRate", String.format("%.2f%%", cacheStats.getExpansionCacheHitRate() * 100),
+                        "overallHitRate", String.format("%.2f%%", cacheStats.getOverallHitRate() * 100)
+                ));
+            } catch (Exception e) {
+                log.error("获取缓存统计失败", e);
+            }
+        }
+
         return stats;
+    }
+
+    /**
+     * 清除所有缓存
+     */
+    public void clearCache() {
+        if (cacheService != null) {
+            cacheService.clearAll();
+            log.info("🧹 已清除所有查询扩展缓存");
+        }
     }
 }
 

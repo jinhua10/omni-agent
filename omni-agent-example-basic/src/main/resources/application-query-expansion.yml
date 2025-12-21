@@ -1,0 +1,60 @@
+# ===============================================
+# 查询扩展配置 (Query Expansion Configuration)
+# ===============================================
+omni-agent:
+  query-expansion:
+    # 是否启用查询扩展
+    enabled: true
+
+    # 最大扩展查询数量
+    max-expansions: 5
+
+    # 是否启用LLM查询扩展
+    llm-enabled: false
+
+    # LLM模型名称
+    llm-model: qwen2.5
+
+    # 查询扩展策略权重
+    strategy-weights:
+      synonym: 0.3    # 同义词策略
+      llm: 0.5        # LLM策略
+      domain: 0.2     # 领域词策略
+
+    # 领域词映射
+    domain-words:
+      spring:
+        - boot
+        - framework
+        - cloud
+      java:
+        - jdk
+        - jvm
+        - maven
+      数据库:
+        - mysql
+        - postgresql
+        - mongodb
+      缓存:
+        - redis
+        - memcached
+        - caffeine
+
+    # 缓存配置
+    cache:
+      # 是否启用缓存
+      enabled: true
+      # 缓存最大条目数
+      max-size: 1000
+      # 缓存过期时间（分钟）
+      expire-minutes: 60
+
+    # 并行执行配置
+    parallel:
+      # 是否启用并行执行
+      enabled: true
+      # 并行执行超时时间（毫秒）
+      timeout-ms: 5000
+      # 线程池大小
+      thread-pool-size: 10
+

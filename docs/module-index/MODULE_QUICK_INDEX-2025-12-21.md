@@ -429,10 +429,15 @@ EnhancedQueryService (算法市场)
 
 ## 🔮 未来计划与扩展
 
-### Phase 1: 查询扩展实现 (进行中)
-- [ ] 从 `old/ai-reviewer-base-file-rag` 复用查询扩展代码
-- [ ] 集成到 `omni-agent-marketplace`
-- [ ] 实现多策略查询扩展
+### Phase 1: 查询扩展实现 ✅ (已完成)
+- [x] ~~从 `old/ai-reviewer-base-file-rag` 复用查询扩展代码~~ (基础实现已完成)
+- [x] ~~集成到 `omni-agent-marketplace`~~ (EnhancedQueryService)
+- [x] ~~实现多策略查询扩展~~ (同义词、领域词、RRF融合)
+- [x] ~~实现结果重排序~~ (Rerank组件)
+- [ ] 🔄 集成 LLM 驱动的查询扩展 (改进中)
+- [ ] 🔄 从 old 复用高级查询处理器 (缓存、分页) (改进中)
+
+> 📊 详细报告: [QUERY_EXPANSION_STATUS_REPORT-2025-12-21.md](../worklog/QUERY_EXPANSION_STATUS_REPORT-2025-12-21.md)
 
 ### Phase 2: 角色数据库
 - [ ] 不同角色对同一问题的不同回复
