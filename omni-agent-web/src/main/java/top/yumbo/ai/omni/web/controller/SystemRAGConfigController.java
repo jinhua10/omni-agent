@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.web.model.RAGStrategyTemplate;
+import top.yumbo.ai.omni.web.service.DocumentProcessingService;
 import top.yumbo.ai.omni.web.service.SystemRAGConfigService;
 
 import java.util.ArrayList;
@@ -27,8 +28,9 @@ import java.util.Map;
 public class SystemRAGConfigController {
 
     private final SystemRAGConfigService configService;
+    private final DocumentProcessingService processingService;  // ⭐ 新增
 
-    /**
+    /*
      * 获取系统RAG配置
      * GET /api/system/rag-config
      */
@@ -122,9 +124,30 @@ public class SystemRAGConfigController {
             config.setUpdatedAt(System.currentTimeMillis());
             configService.setDocumentConfig(documentId, config);
 
-            // TODO: 触发实际的文本提取流程
-            // 这里应该调用DocumentProcessingService来执行真实的文本提取
-            // documentProcessingService.extractText(documentId, request.getModel());
+            // ⭐ 触发实际的文本提取流程
+            // 从data/documents/{documentId}读取文件
+            byte[] content;
+            try {
+                java.nio.file.Path documentPath = java.nio.file.Paths.get("data/documents", documentId);
+                if (!java.nio.file.Files.exists(documentPath)) {
+                    log.error("❌ 文档文件不存在: {}", documentPath);
+                    return ApiResponse.error("文档文件不存在: " + documentId);
+                }
+                content = java.nio.file.Files.readAllBytes(documentPath);
+                log.info("📄 读取文档文件: {} ({} bytes)", documentPath, content.length);
+            } catch (java.io.IOException e) {
+                log.error("❌ 读取文档文件失败: documentId={}", documentId, e);
+                return ApiResponse.error("读取文件失败: " + e.getMessage());
+            }
+
+            processingService.processDocument(documentId, documentId, content)
+                .exceptionally(throwable -> {
+                    log.error("❌ 文本提取失败: documentId={}", documentId, throwable);
+                    config.setStatus("FAILED");
+                    config.setErrorMessage(throwable.getMessage());
+                    configService.setDocumentConfig(documentId, config);
+                    return null;
+                });
 
             log.info("🔍 触发文本提取: documentId={}, model={}", documentId, request.getModel());
             return ApiResponse.success(null, "文本提取已启动");
@@ -150,9 +173,29 @@ public class SystemRAGConfigController {
             config.setUpdatedAt(System.currentTimeMillis());
             configService.setDocumentConfig(documentId, config);
 
-            // TODO: 触发实际的分块处理流程
-            // 这里应该调用DocumentProcessingService来执行真实的分块
-            // documentProcessingService.chunkDocument(documentId, request.getStrategy(), request.getParams());
+            // ⭐ 触发实际的分块处理流程
+            // 从data/documents/{documentId}读取文件
+            byte[] content;
+            try {
+                java.nio.file.Path documentPath = java.nio.file.Paths.get("data/documents", documentId);
+                if (!java.nio.file.Files.exists(documentPath)) {
+                    log.error("❌ 文档文件不存在: {}", documentPath);
+                    return ApiResponse.error("文档文件不存在: " + documentId);
+                }
+                content = java.nio.file.Files.readAllBytes(documentPath);
+            } catch (java.io.IOException e) {
+                log.error("❌ 读取文档文件失败: documentId={}", documentId, e);
+                return ApiResponse.error("读取文件失败: " + e.getMessage());
+            }
+
+            processingService.processDocument(documentId, documentId, content)
+                .exceptionally(throwable -> {
+                    log.error("❌ 分块处理失败: documentId={}", documentId, throwable);
+                    config.setStatus("FAILED");
+                    config.setErrorMessage(throwable.getMessage());
+                    configService.setDocumentConfig(documentId, config);
+                    return null;
+                });
 
             log.info("✂️ 触发分块处理: documentId={}, strategy={}", documentId, request.getStrategy());
             return ApiResponse.success(null, "分块处理已启动");
@@ -193,7 +236,29 @@ public class SystemRAGConfigController {
 
             configService.setDocumentConfig(documentId, config);
 
-            // TODO: 触发实际的重建流程
+            // ⭐ 触发实际的重建流程
+            // 从data/documents/{documentId}读取文件
+            byte[] content;
+            try {
+                java.nio.file.Path documentPath = java.nio.file.Paths.get("data/documents", documentId);
+                if (!java.nio.file.Files.exists(documentPath)) {
+                    log.error("❌ 文档文件不存在: {}", documentPath);
+                    return ApiResponse.error("文档文件不存在: " + documentId);
+                }
+                content = java.nio.file.Files.readAllBytes(documentPath);
+            } catch (java.io.IOException e) {
+                log.error("❌ 读取文档文件失败: documentId={}", documentId, e);
+                return ApiResponse.error("读取文件失败: " + e.getMessage());
+            }
+
+            processingService.processDocument(documentId, documentId, content)
+                .exceptionally(throwable -> {
+                    log.error("❌ 文档重建失败: documentId={}", documentId, throwable);
+                    config.setStatus("FAILED");
+                    config.setErrorMessage(throwable.getMessage());
+                    configService.setDocumentConfig(documentId, config);
+                    return null;
+                });
 
             log.info("🔄 触发文档重建: documentId={}", documentId);
             return ApiResponse.success(null, "文档重建已启动");
@@ -210,9 +275,12 @@ public class SystemRAGConfigController {
     @GetMapping("/pending-documents")
     public ApiResponse<List<SystemRAGConfigService.DocumentRAGConfig>> getPendingDocuments() {
         try {
-            // TODO: 从实际的存储中获取待处理文档列表
-            // 这里暂时返回空列表，需要集成文件监听服务
-            List<SystemRAGConfigService.DocumentRAGConfig> pendingDocs = new ArrayList<>();
+            // ⭐ 从SystemRAGConfigService获取所有文档状态，筛选出PENDING状态的文档
+            Map<String, SystemRAGConfigService.DocumentRAGConfig> allDocs = configService.getAllDocumentsStatus();
+            List<SystemRAGConfigService.DocumentRAGConfig> pendingDocs = allDocs.values().stream()
+                .filter(doc -> "PENDING".equals(doc.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+
             log.info("📋 获取待处理文档列表: {} 个", pendingDocs.size());
             return ApiResponse.success(pendingDocs);
         } catch (Exception e) {
@@ -228,9 +296,10 @@ public class SystemRAGConfigController {
     @GetMapping("/documents-status")
     public ApiResponse<Map<String, SystemRAGConfigService.DocumentRAGConfig>> getDocumentsStatus() {
         try {
+            // ⭐ 从SystemRAGConfigService获取所有文档状态
+            // 注意：当前使用内存存储，后续可以扩展为从数据库或其他持久化存储获取
             Map<String, SystemRAGConfigService.DocumentRAGConfig> allStatus = configService.getAllDocumentsStatus();
-            // TODO: 实际实现应该从持久化存储中获取
-            log.info("📊 获取所有文档状态");
+            log.info("📊 获取所有文档状态: {} 个", allStatus.size());
             return ApiResponse.success(allStatus);
         } catch (Exception e) {
             log.error("❌ 获取文档状态失败", e);
