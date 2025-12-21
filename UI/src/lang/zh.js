@@ -1283,5 +1283,78 @@ export default {
     created: '创建成功',
     uploaded: '上传成功',
   },
+  // ============================================================================
+  // RAG 流程可视化 (RAG Flow Visualization)
+  // ============================================================================
+  ragFlow: {
+    // 文档处理流程 (Document Processing Flow)
+    document: {
+      title: '文档处理流程',
+      subtitle: '实时追踪文档从上传到索引的完整过程',
+    },
+
+    // 处理阶段 (Processing Stages)
+    stages: {
+      upload: {
+        title: '文档上传',
+        desc: '上传文档到系统',
+      },
+      extract: {
+        title: '文本提取',
+        desc: '从文档中提取文本内容',
+      },
+      chunk: {
+        title: '智能分块',
+        desc: '使用算法进行智能分块',
+      },
+      vectorize: {
+        title: '向量化',
+        desc: '将文本转换为向量表示',
+      },
+      index: {
+        title: '索引存储',
+        desc: '存储到向量数据库',
+      },
+      completed: {
+        title: '处理完成',
+        desc: '文档已成功索引到系统',
+      },
+    },
+
+    // 状态 (Status)
+    status: {
+      running: '处理中',
+      completed: '已完成',
+      failed: '处理失败',
+      waiting: '等待中',
+    },
+
+    // 消息 (Messages)
+    messages: {
+      noDocument: '请选择要处理的文档',
+      uploadTip: '上传文档后将自动开始处理流程',
+      processingFailed: '处理失败',
+      wsError: 'WebSocket连接错误',
+    },
+
+    // 操作 (Actions)
+    actions: {
+      viewResult: '查看结果',
+      retry: '重新处理',
+      delete: '删除记录',
+      refresh: '刷新',
+    },
+
+    // 信息显示 (Info Display)
+    info: {
+      documentName: '文档名称',
+      documentId: '文档ID',
+      status: '状态',
+      currentProgress: '当前进度',
+      step: '步骤',
+      elapsedTime: '已耗时',
+      preview: '预览',
+    },
+  },
 }
 

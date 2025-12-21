@@ -1270,5 +1270,79 @@ export default {
     created: 'Created successfully',
     uploaded: 'Uploaded successfully',
   },
+
+  // ============================================================================
+  // RAG Flow Visualization
+  // ============================================================================
+  ragFlow: {
+    // Document Processing Flow
+    document: {
+      title: 'Document Processing Flow',
+      subtitle: 'Real-time tracking of the complete process from upload to indexing',
+    },
+
+    // Processing Stages
+    stages: {
+      upload: {
+        title: 'Document Upload',
+        desc: 'Upload document to system',
+      },
+      extract: {
+        title: 'Text Extraction',
+        desc: 'Extract text content from document',
+      },
+      chunk: {
+        title: 'Smart Chunking',
+        desc: 'Smart chunking using algorithms',
+      },
+      vectorize: {
+        title: 'Vectorization',
+        desc: 'Convert text to vector representation',
+      },
+      index: {
+        title: 'Index Storage',
+        desc: 'Store to vector database',
+      },
+      completed: {
+        title: 'Completed',
+        desc: 'Document successfully indexed to system',
+      },
+    },
+
+    // Status
+    status: {
+      running: 'Processing',
+      completed: 'Completed',
+      failed: 'Failed',
+      waiting: 'Waiting',
+    },
+
+    // Messages
+    messages: {
+      noDocument: 'Please select a document to process',
+      uploadTip: 'Processing will start automatically after uploading',
+      processingFailed: 'Processing failed',
+      wsError: 'WebSocket connection error',
+    },
+
+    // Actions
+    actions: {
+      viewResult: 'View Result',
+      retry: 'Retry',
+      delete: 'Delete Record',
+      refresh: 'Refresh',
+    },
+
+    // Information Display
+    info: {
+      documentName: 'Document Name',
+      documentId: 'Document ID',
+      status: 'Status',
+      currentProgress: 'Current Progress',
+      step: 'Step',
+      elapsedTime: 'Elapsed Time',
+      preview: 'Preview',
+    },
+  },
 }
 
