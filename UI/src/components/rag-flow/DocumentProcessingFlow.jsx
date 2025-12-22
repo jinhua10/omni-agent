@@ -623,115 +623,6 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                     </div>
                                 </div>
 
-                                {/* 快速配置区域 */}
-                                {doc.status === 'PENDING' && (
-                                    <div style={{
-                                        borderTop: '1px solid #f0f0f0',
-                                        paddingTop: '12px',
-                                        marginBottom: '12px'
-                                    }}>
-                                        <Space direction="vertical" style={{ width: '100%' }} size="small">
-                                            {/* 文本提取方式 */}
-                                            <div>
-                                                <div style={{ fontSize: '12px', color: '#666', marginBottom: 4 }}>
-                                                    📄 文本提取方式：
-                                                </div>
-                                                <Select
-                                                    style={{ width: '100%' }}
-                                                    size="small"
-                                                    placeholder="选择文本提取方式"
-                                                    value={documentConfigs[doc.documentId]?.textExtractionModel}
-                                                    onChange={(value) => {
-                                                        updateDocumentConfig(doc.documentId, { textExtractionModel: value });
-                                                    }}
-                                                    dropdownRender={(menu) => (
-                                                        <>
-                                                            {menu}
-                                                            <Divider style={{ margin: '8px 0' }} />
-                                                            <div style={{ padding: '4px 8px', fontSize: '12px', color: '#999' }}>
-                                                                <SettingOutlined /> <a 
-                                                                    onClick={() => window.location.hash = `#/documents?view=textExtraction&docId=${doc.documentId}`}
-                                                                    style={{ color: '#1890ff' }}
-                                                                >
-                                                                    高级配置
-                                                                </a>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                >
-                                                    <Option value="standard">
-                                                        <Space>
-                                                            <FileTextOutlined style={{ color: '#1890ff' }} />
-                                                            标准提取
-                                                        </Space>
-                                                    </Option>
-                                                    <Option value="vision-llm">
-                                                        <Space>
-                                                            <EyeOutlined style={{ color: '#722ed1' }} />
-                                                            Vision LLM
-                                                        </Space>
-                                                    </Option>
-                                                    <Option value="ocr">
-                                                        <Space>
-                                                            <ScanOutlined style={{ color: '#52c41a' }} />
-                                                            OCR识别
-                                                        </Space>
-                                                    </Option>
-                                                </Select>
-                                            </div>
-
-                                            {/* 分块策略 */}
-                                            <div>
-                                                <div style={{ fontSize: '12px', color: '#666', marginBottom: 4 }}>
-                                                    ✂️ 分块策略：
-                                                </div>
-                                                <Select
-                                                    style={{ width: '100%' }}
-                                                    size="small"
-                                                    placeholder="选择分块策略"
-                                                    value={documentConfigs[doc.documentId]?.chunkingStrategy?.strategyName}
-                                                    onChange={(value) => {
-                                                        const strategy = chunkingStrategies.find(s => s.name === value);
-                                                        if (strategy) {
-                                                            updateDocumentConfig(doc.documentId, {
-                                                                chunkingStrategy: {
-                                                                    strategyName: strategy.name,
-                                                                    ...strategy.defaultParams
-                                                                }
-                                                            });
-                                                        }
-                                                    }}
-                                                    dropdownRender={(menu) => (
-                                                        <>
-                                                            {menu}
-                                                            <Divider style={{ margin: '8px 0' }} />
-                                                            <div style={{ padding: '4px 8px', fontSize: '12px', color: '#999' }}>
-                                                                <SettingOutlined /> <a 
-                                                                    onClick={() => window.location.hash = `#/documents?view=chunking&docId=${doc.documentId}`}
-                                                                    style={{ color: '#1890ff' }}
-                                                                >
-                                                                    高级配置
-                                                                </a>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                >
-                                                    {chunkingStrategies.map(strategy => (
-                                                        <Option key={strategy.name} value={strategy.name}>
-                                                            <Space>
-                                                                <span>{strategy.displayName || strategy.name}</span>
-                                                                {strategy.description && (
-                                                                    <span style={{ fontSize: '11px', color: '#999' }}>({strategy.description})</span>
-                                                                )}
-                                                            </Space>
-                                                        </Option>
-                                                    ))}
-                                                </Select>
-                                            </div>
-                                        </Space>
-                                    </div>
-                                )}
-
                                 {/* 快速处理操作栏 */}
                                 {doc.status === 'PENDING' && (
                                     <div style={{
@@ -745,22 +636,6 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                             placeholder="选择策略模板"
                                             style={{ flex: 1 }}
                                             size="small"
-                                            popupRender={(menu) => (
-                                                <>
-                                                    {menu}
-                                                    <Divider style={{ margin: '8px 0' }} />
-                                                    <Space style={{ padding: '0 8px 4px' }}>
-                                                        <Button 
-                                                            type="text" 
-                                                            icon={<PlusOutlined />} 
-                                                            onClick={() => openSaveTemplateModal(doc.documentId)}
-                                                            size="small"
-                                                        >
-                                                            新建模板
-                                                        </Button>
-                                                    </Space>
-                                                </>
-                                            )}
                                             onChange={(templateId) => {
                                                 applyTemplateToDocument(doc.documentId, templateId);
                                             }}
@@ -787,14 +662,6 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                                 </Option>
                                             ))}
                                         </Select>
-                                        <Button
-                                            icon={<SaveOutlined />}
-                                            size="small"
-                                            onClick={() => openSaveTemplateModal(doc.documentId)}
-                                            title="将当前配置保存为模板"
-                                        >
-                                            保存为模板
-                                        </Button>
                                         <Button
                                             type="primary"
                                             size="small"
@@ -892,27 +759,56 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         icon: STAGE_CONFIG.EXTRACT.icon,
                         status: getStepStatus(1),
                         description: (progress?.documentId || selectedDocId) && (
-                            <span 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const docId = progress?.documentId || selectedDocId;
-                                    if (docId) {
-                                        console.log('点击文本提取描述，docId:', docId);
-                                        window.location.hash = `#/documents?view=textExtraction&docId=${docId}`;
-                                    }
-                                }} 
-                                style={{ 
-                                    cursor: 'pointer',
-                                    color: '#1890ff',
-                                    textDecoration: 'underline',
-                                    userSelect: 'none',
-                                    fontSize: '12px',
-                                    display: 'inline-block',
-                                    marginTop: '4px'
-                                }}
-                            >
-                                <SettingOutlined /> 点击配置文本提取
-                            </span>
+                            <div style={{ marginTop: '8px' }}>
+                                <Select
+                                    style={{ width: '100%', maxWidth: '300px' }}
+                                    size="small"
+                                    placeholder="选择文本提取方式"
+                                    value={documentConfigs[progress?.documentId || selectedDocId]?.textExtractionModel}
+                                    onChange={(value) => {
+                                        const docId = progress?.documentId || selectedDocId;
+                                        if (docId) {
+                                            updateDocumentConfig(docId, { textExtractionModel: value });
+                                        }
+                                    }}
+                                    dropdownRender={(menu) => (
+                                        <>
+                                            {menu}
+                                            <Divider style={{ margin: '8px 0' }} />
+                                            <div style={{ padding: '4px 8px', fontSize: '12px', color: '#999' }}>
+                                                <SettingOutlined /> <a 
+                                                    onClick={() => {
+                                                        const docId = progress?.documentId || selectedDocId;
+                                                        window.location.hash = `#/documents?view=textExtraction&docId=${docId}`;
+                                                    }}
+                                                    style={{ color: '#1890ff' }}
+                                                >
+                                                    高级配置
+                                                </a>
+                                            </div>
+                                        </>
+                                    )}
+                                >
+                                    <Option value="standard">
+                                        <Space>
+                                            <FileTextOutlined style={{ color: '#1890ff' }} />
+                                            标准提取
+                                        </Space>
+                                    </Option>
+                                    <Option value="vision-llm">
+                                        <Space>
+                                            <EyeOutlined style={{ color: '#722ed1' }} />
+                                            Vision LLM
+                                        </Space>
+                                    </Option>
+                                    <Option value="ocr">
+                                        <Space>
+                                            <ScanOutlined style={{ color: '#52c41a' }} />
+                                            OCR识别
+                                        </Space>
+                                    </Option>
+                                </Select>
+                            </div>
                         ),
                         content: renderStepDescription('EXTRACT')
                     },
@@ -921,27 +817,56 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         icon: STAGE_CONFIG.CHUNK.icon,
                         status: getStepStatus(2),
                         description: (progress?.documentId || selectedDocId) && (
-                            <span 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const docId = progress?.documentId || selectedDocId;
-                                    if (docId) {
-                                        console.log('点击智能分块描述，docId:', docId);
-                                        window.location.hash = `#/documents?view=chunking&docId=${docId}`;
-                                    }
-                                }} 
-                                style={{ 
-                                    cursor: 'pointer',
-                                    color: '#1890ff',
-                                    textDecoration: 'underline',
-                                    userSelect: 'none',
-                                    fontSize: '12px',
-                                    display: 'inline-block',
-                                    marginTop: '4px'
-                                }}
-                            >
-                                <SettingOutlined /> 点击配置智能分块
-                            </span>
+                            <div style={{ marginTop: '8px' }}>
+                                <Select
+                                    style={{ width: '100%', maxWidth: '300px' }}
+                                    size="small"
+                                    placeholder="选择分块策略"
+                                    value={documentConfigs[progress?.documentId || selectedDocId]?.chunkingStrategy?.strategyName}
+                                    onChange={(value) => {
+                                        const docId = progress?.documentId || selectedDocId;
+                                        if (docId) {
+                                            const strategy = chunkingStrategies.find(s => s.name === value);
+                                            if (strategy) {
+                                                updateDocumentConfig(docId, {
+                                                    chunkingStrategy: {
+                                                        strategyName: strategy.name,
+                                                        ...strategy.defaultParams
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    }}
+                                    dropdownRender={(menu) => (
+                                        <>
+                                            {menu}
+                                            <Divider style={{ margin: '8px 0' }} />
+                                            <div style={{ padding: '4px 8px', fontSize: '12px', color: '#999' }}>
+                                                <SettingOutlined /> <a 
+                                                    onClick={() => {
+                                                        const docId = progress?.documentId || selectedDocId;
+                                                        window.location.hash = `#/documents?view=chunking&docId=${docId}`;
+                                                    }}
+                                                    style={{ color: '#1890ff' }}
+                                                >
+                                                    高级配置
+                                                </a>
+                                            </div>
+                                        </>
+                                    )}
+                                >
+                                    {chunkingStrategies.map(strategy => (
+                                        <Option key={strategy.name} value={strategy.name}>
+                                            <Space>
+                                                <span>{strategy.displayName || strategy.name}</span>
+                                                {strategy.description && (
+                                                    <span style={{ fontSize: '11px', color: '#999' }}>({strategy.description})</span>
+                                                )}
+                                            </Space>
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
                         ),
                         content: renderStepDescription('CHUNK')
                     },
@@ -1010,22 +935,35 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         </Button>
                     </Space>
 
-                    <Button
-                        type="primary"
-                        size="large"
-                        icon={<ThunderboltOutlined />}
-                        onClick={async () => {
-                            try {
+                    <Space>
+                        <Button
+                            icon={<SaveOutlined />}
+                            onClick={() => {
                                 const docId = progress?.documentId || selectedDocId;
-                                // TODO: 触发完整的处理流程
-                                message.success('开始处理文档：' + docId);
-                            } catch (error) {
-                                message.error('处理失败：' + error.message);
-                            }
-                        }}
-                    >
-                        开始完整处理
-                    </Button>
+                                if (docId) {
+                                    openSaveTemplateModal(docId);
+                                }
+                            }}
+                        >
+                            保存为模板
+                        </Button>
+                        <Button
+                            type="primary"
+                            size="large"
+                            icon={<ThunderboltOutlined />}
+                            onClick={async () => {
+                                try {
+                                    const docId = progress?.documentId || selectedDocId;
+                                    // TODO: 触发完整的处理流程
+                                    message.success('开始处理文档：' + docId);
+                                } catch (error) {
+                                    message.error('处理失败：' + error.message);
+                                }
+                            }}
+                        >
+                            开始完整处理
+                        </Button>
+                    </Space>
                 </div>
             )}
             <Divider />
