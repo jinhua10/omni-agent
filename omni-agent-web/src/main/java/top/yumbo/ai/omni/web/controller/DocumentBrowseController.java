@@ -48,7 +48,7 @@ public class DocumentBrowseController {
     /**
      * 列出指定路径下的文件和文件夹
      *
-     * @param path 虚拟路径（为空则列出根目录）
+     * @param path 虚拟路径（为空则列出根目录，可以包含documents前缀）
      * @return 文件和文件夹列表
      */
     @GetMapping("/list")
@@ -57,7 +57,15 @@ public class DocumentBrowseController {
 
         try {
             // 构建虚拟路径
-            String virtualPath = path.isEmpty() ? VIRTUAL_ROOT : VIRTUAL_ROOT + "/" + path;
+            // 如果path已经以documents开头，直接使用；否则添加VIRTUAL_ROOT前缀
+            String virtualPath;
+            if (path.isEmpty()) {
+                virtualPath = VIRTUAL_ROOT;
+            } else if (path.startsWith(VIRTUAL_ROOT + "/") || path.equals(VIRTUAL_ROOT)) {
+                virtualPath = path;  // 已经包含documents前缀
+            } else {
+                virtualPath = VIRTUAL_ROOT + "/" + path;  // 添加documents前缀
+            }
 
             // 通过存储服务列出文件
             List<Map<String, Object>> items = storageService.listFiles(virtualPath);
@@ -98,14 +106,20 @@ public class DocumentBrowseController {
     /**
      * 下载文件
      *
-     * @param path 文件虚拟路径
+     * @param path 文件虚拟路径（可以包含documents前缀）
      * @return 文件内容
      */
     @GetMapping("/download")
     public ResponseEntity<Resource> downloadFile(@RequestParam String path) {
         try {
             // 构建虚拟路径
-            String virtualPath = VIRTUAL_ROOT + "/" + path;
+            // 如果path已经以documents开头，直接使用；否则添加VIRTUAL_ROOT前缀
+            String virtualPath;
+            if (path.startsWith(VIRTUAL_ROOT + "/") || path.equals(VIRTUAL_ROOT)) {
+                virtualPath = path;  // 已经包含documents前缀
+            } else {
+                virtualPath = VIRTUAL_ROOT + "/" + path;  // 添加documents前缀
+            }
 
             // 通过存储服务读取文件
             byte[] data = storageService.readFile(virtualPath);
@@ -141,14 +155,22 @@ public class DocumentBrowseController {
     /**
      * 删除文件或文件夹
      *
-     * @param path 虚拟路径
+     * @param path 虚拟路径（可以包含documents前缀）
      * @return 删除结果
      */
     @DeleteMapping("/delete")
     public ResponseEntity<Map<String, Object>> deleteFileOrFolder(@RequestParam String path) {
         try {
             // 构建虚拟路径
-            String virtualPath = VIRTUAL_ROOT + "/" + path;
+            // 如果path已经以documents开头，直接使用；否则添加VIRTUAL_ROOT前缀
+            String virtualPath;
+            if (path.startsWith(VIRTUAL_ROOT + "/") || path.equals(VIRTUAL_ROOT)) {
+                virtualPath = path;  // 已经包含documents前缀
+            } else {
+                virtualPath = VIRTUAL_ROOT + "/" + path;  // 添加documents前缀
+            }
+
+            log.info("🗑️ 删除请求: path={}, virtualPath={}", path, virtualPath);
 
             // 通过存储服务删除
             boolean success = storageService.deleteFile(virtualPath);
@@ -184,14 +206,20 @@ public class DocumentBrowseController {
     /**
      * 创建文件夹
      *
-     * @param path 虚拟路径
+     * @param path 虚拟路径（可以包含documents前缀）
      * @return 创建结果
      */
     @PostMapping("/mkdir")
     public ResponseEntity<Map<String, Object>> createFolder(@RequestParam String path) {
         try {
             // 构建虚拟路径
-            String virtualPath = VIRTUAL_ROOT + "/" + path;
+            // 如果path已经以documents开头，直接使用；否则添加VIRTUAL_ROOT前缀
+            String virtualPath;
+            if (path.startsWith(VIRTUAL_ROOT + "/") || path.equals(VIRTUAL_ROOT)) {
+                virtualPath = path;  // 已经包含documents前缀
+            } else {
+                virtualPath = VIRTUAL_ROOT + "/" + path;  // 添加documents前缀
+            }
 
             // 通过存储服务创建目录
             boolean success = storageService.createDirectory(virtualPath);

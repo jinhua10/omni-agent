@@ -61,10 +61,11 @@ public class DocumentManagementController {
      * 上传文档（异步处理版本）⭐
      * POST /api/documents/upload
      *
-     * 新逻辑：
-     * 1. 直接保存文件到监听目录（data/documents）
-     * 2. 返回"索引中"状态
-     * 3. 由 FileWatcherService 自动处理和索引
+     * 新逻辑（中转站模式）：
+     * 1. 先保存文件到监听目录（data/documents）作为中转站
+     * 2. 触发异步RAG处理：文本提取 → 分块 → 索引
+     * 3. RAG处理完成后，由DocumentProcessingService保存到存储服务（虚拟路径系统）
+     * 4. 返回"索引中"状态，前端订阅WebSocket进度
      */
     @PostMapping("/upload")
     public UploadResponse uploadDocument(
@@ -81,9 +82,9 @@ public class DocumentManagementController {
             }
 
             String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
-            log.info("📤 上传文档（异步）: filename={}, size={} bytes", filename, file.getSize());
+            log.info("📤 上传文档（异步-中转站模式）: filename={}, size={} bytes", filename, file.getSize());
 
-            // ⭐ 直接保存到监听目录
+            // ⭐ 步骤1：先保存到监听目录作为中转站
             Path watchDir = Paths.get(watchDirectory);
             if (!Files.exists(watchDir)) {
                 Files.createDirectories(watchDir);
@@ -92,13 +93,13 @@ public class DocumentManagementController {
             Path targetFile = watchDir.resolve(filename);
             file.transferTo(targetFile);
 
-            log.info("✅ 文件已保存到监听目录: {}", targetFile);
+            log.info("✅ 文件已保存到中转站（监听目录）: {}", targetFile);
 
-            // ⭐ 生成文档ID
-            String documentId = "doc_" + System.currentTimeMillis() + "_" +
-                filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+            // ⭐ 步骤2：生成文档ID（使用原始文件名）
+            String documentId = filename;
 
-            // ⭐ 触发异步处理流程（推送WebSocket进度）
+            // ⭐ 步骤3：触发异步RAG处理流程（推送WebSocket进度）
+            // 处理完成后会自动保存到存储服务
             documentProcessingService.processDocument(documentId, filename, file.getBytes())
                 .exceptionally(throwable -> {
                     log.error("❌ 文档处理异常: documentId={}", documentId, throwable);
@@ -111,9 +112,9 @@ public class DocumentManagementController {
             response.setFileSize(file.getSize());
             response.setDocumentId(documentId);  // ⭐ 返回documentId供前端订阅进度
             response.setAutoIndexed(true);
-            response.setIndexing(true);  // ⭐ 新增：索引中状态
+            response.setIndexing(true);  // ⭐ 索引中状态
 
-            log.info("📤 文档上传成功（异步）: filename={}, documentId={}", filename, documentId);
+            log.info("📤 文档上传成功（异步-中转站模式）: filename={}, documentId={}, 等待RAG处理", filename, documentId);
 
         } catch (Exception e) {
             log.error("文档上传失败", e);

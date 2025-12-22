@@ -114,7 +114,7 @@ function DocumentAdvancedSearch(props) {
   if (!visible) return null
 
   return (
-    <Card className="document-advanced-search" bodyStyle={{ padding: '20px' }}>
+    <Card className="document-advanced-search" styles={{ body: { padding: '20px' } }}>
       <div className="document-advanced-search__header">
         <span className="document-advanced-search__title">🔍 高级搜索</span>
         <Button 
