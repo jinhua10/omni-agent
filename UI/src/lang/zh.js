@@ -1328,6 +1328,7 @@ export default {
 
     // 状态 (Status)
     status: {
+      pending: '待处理',
       running: '处理中',
       processing: '处理中',
       completed: '已完成',

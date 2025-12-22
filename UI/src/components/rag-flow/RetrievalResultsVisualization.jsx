@@ -34,7 +34,7 @@ import {
 } from '@ant-design/icons'
 import { Column, Pie } from '@ant-design/plots'
 import { useLanguage } from '../../contexts/LanguageContext'
-import './RetrievalResultsVisualization.css'
+import '../../assets/css/rag-flows/RetrievalResultsVisualization.css'
 
 function RetrievalResultsVisualization({ results, query }) {
   const { t } = useLanguage()

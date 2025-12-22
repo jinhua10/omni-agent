@@ -36,7 +36,7 @@ import {
   FireOutlined,
 } from '@ant-design/icons'
 import { useLanguage } from '../../contexts/LanguageContext'
-import './QueryProcessVisualization.css'
+import '../../assets/css/rag-flow/QueryProcessVisualization.css'
 
 const { Step } = Steps
 const { TextArea } = Input

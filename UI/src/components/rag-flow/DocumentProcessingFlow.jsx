@@ -31,7 +31,7 @@ import {
 } from '@ant-design/icons';
 import WebSocketClient from '../../utils/WebSocketClient';
 import { useLanguage } from '../../contexts/LanguageContext';  // ⭐ 导入国际化Hook
-import './DocumentProcessingFlow.css';
+import '../../assets/css/rag-flow/DocumentProcessingFlow.css';
 
 const { Option } = Select;
 
@@ -112,6 +112,43 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     useEffect(() => {
         loadDocumentsList();
     }, [loadDocumentsList]);
+
+    // 当选择文档时，根据文档状态初始化progress
+    useEffect(() => {
+        if (selectedDocId && documentsList.length > 0) {
+            const doc = documentsList.find(d => d.documentId === selectedDocId);
+            if (doc) {
+                // 根据文档状态设置对应的处理阶段
+                let stage = 'UPLOAD';
+                let percentage = 0;
+                
+                if (doc.status === 'COMPLETED') {
+                    stage = 'COMPLETED';
+                    percentage = 100;
+                } else if (doc.status === 'PENDING') {
+                    // PENDING状态表示已上传但未处理，应该在UPLOAD之后
+                    stage = 'EXTRACT';
+                    percentage = 20;
+                } else if (doc.status === 'PROCESSING') {
+                    // 如果有currentStage信息，使用它
+                    stage = doc.currentStage || 'CHUNK';
+                    percentage = 50;
+                }
+                
+                setProgress({
+                    documentId: doc.documentId,
+                    documentName: doc.documentId,
+                    stage: stage,
+                    status: doc.status,
+                    percentage: percentage,
+                    message: `当前阶段: ${STAGE_CONFIG[stage]?.title[language] || stage}`,
+                    chunks: doc.chunks || 0,
+                    vectors: doc.vectors || 0,
+                    startTime: doc.createdAt
+                });
+            }
+        }
+    }, [selectedDocId, documentsList, language]);
 
     // 演示模式：模拟处理流程 (Demo mode: simulate processing flow)
     useEffect(() => {
@@ -338,11 +375,14 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                             <div
                                 key={doc.documentId}
                                 style={{
-                                    background: selectedDocId === doc.documentId ? '#e6f7ff' : 'transparent',
-                                    border: selectedDocId === doc.documentId ? '2px solid #1890ff' : '1px solid #f0f0f0',
+                                    background: selectedDocId === doc.documentId 
+                                        ? 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)' 
+                                        : '#fafafa',
+                                    border: selectedDocId === doc.documentId ? '2px solid #1890ff' : '1px solid #e8e8e8',
                                     padding: '16px',
-                                    borderRadius: '6px',
-                                    transition: 'all 0.3s ease'
+                                    borderRadius: '8px',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: selectedDocId === doc.documentId ? '0 2px 8px rgba(24, 144, 255, 0.15)' : 'none'
                                 }}
                             >
                                 <div
@@ -363,7 +403,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                             doc.status === 'FAILED' ? 'red' :
                                             'blue'
                                         }>
-                                            {doc.status}
+                                            {t(`ragFlow.status.${(doc.status || 'pending').toLowerCase()}`)}
                                         </Tag>
                                         {selectedDocId === doc.documentId && (
                                             <Tag color="blue" icon={<CheckCircleOutlined />}>已选中</Tag>
@@ -477,6 +517,11 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 <Steps
                     current={getCurrentStep()}
                     status={progress?.status === 'FAILED' ? 'error' : progress?.status === 'COMPLETED' ? 'finish' : 'process'}
+                    size="default"
+                    style={{
+                        marginBottom: '32px',
+                        padding: '24px'
+                    }}
                     items={[
                     {
                         title: STAGE_CONFIG.UPLOAD.title[language],
@@ -549,12 +594,14 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             {selectedDocId && (
                 <div style={{
                     marginTop: '24px',
-                    padding: '16px',
-                    background: '#f5f5f5',
+                    padding: '20px',
+                    background: 'linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%)',
                     borderRadius: '8px',
+                    border: '1px solid #d6e4ff',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.02)'
                 }}>
                     <Space>
                         <Button

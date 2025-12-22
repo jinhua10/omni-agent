@@ -1316,6 +1316,7 @@ export default {
 
     // Status
     status: {
+      pending: 'Pending',
       running: 'Processing',
       processing: 'Processing',
       completed: 'Completed',

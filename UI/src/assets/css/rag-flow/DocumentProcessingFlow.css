@@ -6,9 +6,9 @@
 /* 容器样式 */
 .document-processing-flow-container {
     padding: 24px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    /* background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); */
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); */
     min-height: 400px;
 }
 
@@ -255,17 +255,17 @@
 
 /* Steps样式美化 */
 .document-processing-flow .ant-steps-item-process .ant-steps-item-icon {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
     border-color: #667eea;
 }
 
 .document-processing-flow .ant-steps-item-finish .ant-steps-item-icon {
-    background: #52c41a;
+    /* background: #52c41a; */
     border-color: #52c41a;
 }
 
 .document-processing-flow .ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon {
-    color: white;
+    color: #52c41a;
 }
 
 .document-processing-flow .ant-steps-item-wait .ant-steps-item-icon {
