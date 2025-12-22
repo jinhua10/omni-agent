@@ -30,7 +30,9 @@ import {
     ThunderboltOutlined,
     SaveOutlined,
     PlusOutlined,
-    DeleteOutlined
+    DeleteOutlined,
+    EyeOutlined,
+    ScanOutlined
 } from '@ant-design/icons';
 import WebSocketClient from '../../utils/WebSocketClient';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -100,6 +102,61 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     const [newTemplateDesc, setNewTemplateDesc] = useState('');
     const [templatesLoading, setTemplatesLoading] = useState(false);
     const [documentConfigForTemplate, setDocumentConfigForTemplate] = useState(null);
+    
+    // 每个文档的配置信息 (key: documentId, value: config)
+    const [documentConfigs, setDocumentConfigs] = useState({});
+    // 分块策略列表
+    const [chunkingStrategies, setChunkingStrategies] = useState([]);
+
+    // 加载分块策略列表
+    const loadChunkingStrategies = useCallback(async () => {
+        try {
+            const response = await fetch('/api/chunking/strategies');
+            const result = await response.json();
+            if (result.success && result.data) {
+                setChunkingStrategies(result.data);
+            }
+        } catch (error) {
+            console.error('加载分块策略失败:', error);
+        }
+    }, []);
+
+    // 加载单个文档配置
+    const loadDocumentConfig = useCallback(async (docId) => {
+        try {
+            const result = await ragStrategyApi.getDocumentConfig(docId);
+            if (result.success && result.data) {
+                setDocumentConfigs(prev => ({
+                    ...prev,
+                    [docId]: result.data
+                }));
+            }
+        } catch (error) {
+            console.error('加载文档配置失败:', error);
+        }
+    }, []);
+
+    // 更新文档配置
+    const updateDocumentConfig = useCallback(async (docId, configUpdates) => {
+        try {
+            const response = await fetch(`/api/system/rag-config/document/${docId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(configUpdates)
+            });
+            const result = await response.json();
+            if (result.success) {
+                // 重新加载配置
+                loadDocumentConfig(docId);
+                message.success('配置已保存');
+            } else {
+                message.error(result.message || '保存失败');
+            }
+        } catch (error) {
+            console.error('更新配置失败:', error);
+            message.error('保存失败: ' + error.message);
+        }
+    }, [loadDocumentConfig, message]);
 
     // 加载策略模板列表
     const loadTemplates = useCallback(async () => {
@@ -156,7 +213,18 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             // 加载文档配置
             const result = await ragStrategyApi.getDocumentConfig(docId);
             if (result.success && result.data) {
-                setDocumentConfigForTemplate(result.data);
+                const config = result.data;
+                // 验证配置完整性
+                if (!config.textExtractionModel) {
+                    message.warning('请先选择文本提取方式');
+                    return;
+                }
+                if (!config.chunkingStrategy || !config.chunkingStrategy.strategyName) {
+                    message.warning('请先选择分块策略');
+                    return;
+                }
+                
+                setDocumentConfigForTemplate(config);
                 setSelectedDocId(docId);
                 setTemplateModalVisible(true);
             } else {
@@ -240,7 +308,19 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     useEffect(() => {
         loadDocumentsList();
         loadTemplates(); // 加载策略模板列表
-    }, [loadDocumentsList, loadTemplates]);
+        loadChunkingStrategies(); // 加载分块策略列表
+    }, [loadDocumentsList, loadTemplates, loadChunkingStrategies]);
+
+    // 当文档列表加载后，加载每个文档的配置
+    useEffect(() => {
+        if (documentsList && documentsList.length > 0) {
+            documentsList.forEach(doc => {
+                if (doc.status === 'PENDING' && !documentConfigs[doc.documentId]) {
+                    loadDocumentConfig(doc.documentId);
+                }
+            });
+        }
+    }, [documentsList, documentConfigs, loadDocumentConfig]);
 
     // 当选择文档时，根据文档状态初始化progress
     useEffect(() => {
@@ -542,6 +622,115 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                         {t('ragFlow.component.createdAt')}: {new Date(doc.createdAt).toLocaleString()}
                                     </div>
                                 </div>
+
+                                {/* 快速配置区域 */}
+                                {doc.status === 'PENDING' && (
+                                    <div style={{
+                                        borderTop: '1px solid #f0f0f0',
+                                        paddingTop: '12px',
+                                        marginBottom: '12px'
+                                    }}>
+                                        <Space direction="vertical" style={{ width: '100%' }} size="small">
+                                            {/* 文本提取方式 */}
+                                            <div>
+                                                <div style={{ fontSize: '12px', color: '#666', marginBottom: 4 }}>
+                                                    📄 文本提取方式：
+                                                </div>
+                                                <Select
+                                                    style={{ width: '100%' }}
+                                                    size="small"
+                                                    placeholder="选择文本提取方式"
+                                                    value={documentConfigs[doc.documentId]?.textExtractionModel}
+                                                    onChange={(value) => {
+                                                        updateDocumentConfig(doc.documentId, { textExtractionModel: value });
+                                                    }}
+                                                    dropdownRender={(menu) => (
+                                                        <>
+                                                            {menu}
+                                                            <Divider style={{ margin: '8px 0' }} />
+                                                            <div style={{ padding: '4px 8px', fontSize: '12px', color: '#999' }}>
+                                                                <SettingOutlined /> <a 
+                                                                    onClick={() => window.location.hash = `#/documents?view=textExtraction&docId=${doc.documentId}`}
+                                                                    style={{ color: '#1890ff' }}
+                                                                >
+                                                                    高级配置
+                                                                </a>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                >
+                                                    <Option value="standard">
+                                                        <Space>
+                                                            <FileTextOutlined style={{ color: '#1890ff' }} />
+                                                            标准提取
+                                                        </Space>
+                                                    </Option>
+                                                    <Option value="vision-llm">
+                                                        <Space>
+                                                            <EyeOutlined style={{ color: '#722ed1' }} />
+                                                            Vision LLM
+                                                        </Space>
+                                                    </Option>
+                                                    <Option value="ocr">
+                                                        <Space>
+                                                            <ScanOutlined style={{ color: '#52c41a' }} />
+                                                            OCR识别
+                                                        </Space>
+                                                    </Option>
+                                                </Select>
+                                            </div>
+
+                                            {/* 分块策略 */}
+                                            <div>
+                                                <div style={{ fontSize: '12px', color: '#666', marginBottom: 4 }}>
+                                                    ✂️ 分块策略：
+                                                </div>
+                                                <Select
+                                                    style={{ width: '100%' }}
+                                                    size="small"
+                                                    placeholder="选择分块策略"
+                                                    value={documentConfigs[doc.documentId]?.chunkingStrategy?.strategyName}
+                                                    onChange={(value) => {
+                                                        const strategy = chunkingStrategies.find(s => s.name === value);
+                                                        if (strategy) {
+                                                            updateDocumentConfig(doc.documentId, {
+                                                                chunkingStrategy: {
+                                                                    strategyName: strategy.name,
+                                                                    ...strategy.defaultParams
+                                                                }
+                                                            });
+                                                        }
+                                                    }}
+                                                    dropdownRender={(menu) => (
+                                                        <>
+                                                            {menu}
+                                                            <Divider style={{ margin: '8px 0' }} />
+                                                            <div style={{ padding: '4px 8px', fontSize: '12px', color: '#999' }}>
+                                                                <SettingOutlined /> <a 
+                                                                    onClick={() => window.location.hash = `#/documents?view=chunking&docId=${doc.documentId}`}
+                                                                    style={{ color: '#1890ff' }}
+                                                                >
+                                                                    高级配置
+                                                                </a>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                >
+                                                    {chunkingStrategies.map(strategy => (
+                                                        <Option key={strategy.name} value={strategy.name}>
+                                                            <Space>
+                                                                <span>{strategy.displayName || strategy.name}</span>
+                                                                {strategy.description && (
+                                                                    <span style={{ fontSize: '11px', color: '#999' }}>({strategy.description})</span>
+                                                                )}
+                                                            </Space>
+                                                        </Option>
+                                                    ))}
+                                                </Select>
+                                            </div>
+                                        </Space>
+                                    </div>
+                                )}
 
                                 {/* 快速处理操作栏 */}
                                 {doc.status === 'PENDING' && (
