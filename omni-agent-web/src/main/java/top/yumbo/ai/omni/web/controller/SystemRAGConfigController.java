@@ -8,7 +8,6 @@ import top.yumbo.ai.omni.web.model.RAGStrategyTemplate;
 import top.yumbo.ai.omni.web.service.DocumentProcessingService;
 import top.yumbo.ai.omni.web.service.SystemRAGConfigService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -377,9 +376,9 @@ public class SystemRAGConfigController {
 
     /**
      * 应用策略模板到文档
-     * POST /api/system/rag-config/document/{documentId}/apply-template
+     * POST /api/system/rag-config/documents/{documentId}/apply-template
      */
-    @PostMapping("/document/{documentId}/apply-template")
+    @PostMapping("/documents/{documentId}/apply-template")
     public ApiResponse<Void> applyTemplate(
             @PathVariable String documentId,
             @RequestBody ApplyTemplateRequest request) {
@@ -390,6 +389,103 @@ public class SystemRAGConfigController {
         } catch (Exception e) {
             log.error("❌ 应用策略模板失败: doc={}, template={}", documentId, request.getTemplateId(), e);
             return ApiResponse.error("应用失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 从当前文档配置保存为策略模板
+     * POST /api/system/rag-config/documents/{documentId}/save-as-template
+     */
+    @PostMapping("/documents/{documentId}/save-as-template")
+    public ApiResponse<RAGStrategyTemplate> saveDocumentAsTemplate(
+            @PathVariable String documentId,
+            @RequestBody SaveAsTemplateRequest request) {
+        try {
+            // 获取文档当前配置
+            SystemRAGConfigService.DocumentRAGConfig docConfig = configService.getDocumentConfig(documentId);
+            
+            // 创建模板
+            RAGStrategyTemplate template = new RAGStrategyTemplate();
+            template.setTemplateId(java.util.UUID.randomUUID().toString());
+            template.setTemplateName(request.getName());
+            template.setDescription(request.getDescription());
+            template.setTextExtractionModel(docConfig.getTextExtractionModel());
+            template.setChunkingStrategy(docConfig.getChunkingStrategy());
+            template.setChunkingParams(docConfig.getChunkingParams());
+            template.setCreatedAt(System.currentTimeMillis());
+            template.setUpdatedAt(System.currentTimeMillis());
+            template.setDefault(false);  // 用户创建的模板不是默认模板
+            template.setUseCount(0);
+
+            // 保存模板
+            RAGStrategyTemplate saved = configService.saveStrategyTemplate(template);
+            log.info("💾 从文档配置保存为模板: doc={}, template={}", documentId, request.getName());
+            return ApiResponse.success(saved, "模板保存成功");
+        } catch (Exception e) {
+            log.error("❌ 保存模板失败: doc={}", documentId, e);
+            return ApiResponse.error("保存失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 开始处理文档（使用当前配置）
+     * POST /api/system/rag-config/documents/{documentId}/process
+     */
+    @PostMapping("/documents/{documentId}/process")
+    public ApiResponse<Void> startProcessing(@PathVariable String documentId) {
+        try {
+            // 获取文档配置
+            SystemRAGConfigService.DocumentRAGConfig config = configService.getDocumentConfig(documentId);
+            
+            // 验证配置完整性
+            if (config.getTextExtractionModel() == null) {
+                return ApiResponse.error("请先配置文本提取方式");
+            }
+            if (config.getChunkingStrategy() == null) {
+                return ApiResponse.error("请先配置分块策略");
+            }
+            
+            // 更新状态为处理中
+            config.setStatus("PROCESSING");
+            config.setUpdatedAt(System.currentTimeMillis());
+            configService.setDocumentConfig(documentId, config);
+            
+            // 读取文档文件
+            byte[] content;
+            try {
+                java.nio.file.Path documentPath = java.nio.file.Paths.get("data/documents", documentId);
+                if (!java.nio.file.Files.exists(documentPath)) {
+                    log.error("❌ 文档文件不存在: {}", documentPath);
+                    return ApiResponse.error("文档文件不存在: " + documentId);
+                }
+                content = java.nio.file.Files.readAllBytes(documentPath);
+            } catch (java.io.IOException e) {
+                log.error("❌ 读取文档文件失败: documentId={}", documentId, e);
+                return ApiResponse.error("读取文件失败: " + e.getMessage());
+            }
+            
+            // 触发处理流程
+            processingService.processDocument(documentId, documentId, content)
+                .thenAccept(result -> {
+                    config.setStatus("COMPLETED");
+                    config.setUpdatedAt(System.currentTimeMillis());
+                    configService.setDocumentConfig(documentId, config);
+                    log.info("✅ 文档处理完成: {}", documentId);
+                })
+                .exceptionally(throwable -> {
+                    log.error("❌ 文档处理失败: documentId={}", documentId, throwable);
+                    config.setStatus("FAILED");
+                    config.setErrorMessage(throwable.getMessage());
+                    config.setUpdatedAt(System.currentTimeMillis());
+                    configService.setDocumentConfig(documentId, config);
+                    return null;
+                });
+            
+            log.info("🚀 开始处理文档: documentId={}", documentId);
+            return ApiResponse.success(null, "文档处理已启动");
+        } catch (Exception e) {
+            log.error("❌ 启动文档处理失败: documentId={}", documentId, e);
+            return ApiResponse.error("启动失败: " + e.getMessage());
         }
     }
 
@@ -457,6 +553,15 @@ public class SystemRAGConfigController {
     @Data
     public static class ApplyTemplateRequest {
         private String templateId;
+    }
+
+    /**
+     * 保存为模板请求
+     */
+    @Data
+    public static class SaveAsTemplateRequest {
+        private String name;
+        private String description;
     }
 }
 
