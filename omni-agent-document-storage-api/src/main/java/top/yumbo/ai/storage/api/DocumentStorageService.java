@@ -8,6 +8,7 @@ import top.yumbo.ai.storage.api.model.StorageStatistics;
 import top.yumbo.ai.storage.api.model.DocumentMetadata;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -263,5 +264,42 @@ public interface DocumentStorageService {
      * @return 健康状态
      */
     boolean isHealthy();
+
+    // ========== 文件系统浏览 (File System Browse) ==========
+
+    /**
+     * 列出指定路径下的文件和文件夹
+     * @param virtualPath 虚拟路径
+     * @return 文件和文件夹列表，每项包含: name, type(file/directory), path, size, modified等
+     */
+    List<Map<String, Object>> listFiles(String virtualPath);
+
+    /**
+     * 读取文件内容
+     * @param virtualPath 虚拟路径
+     * @return 文件内容
+     */
+    byte[] readFile(String virtualPath);
+
+    /**
+     * 删除文件或文件夹
+     * @param virtualPath 虚拟路径
+     * @return 是否删除成功
+     */
+    boolean deleteFile(String virtualPath);
+
+    /**
+     * 创建目录
+     * @param virtualPath 虚拟路径
+     * @return 是否创建成功
+     */
+    boolean createDirectory(String virtualPath);
+
+    /**
+     * 获取存储统计信息（指定路径）
+     * @param virtualPath 虚拟路径
+     * @return 统计信息，包含: totalFiles, totalFolders, totalSize等
+     */
+    Map<String, Object> getStorageStats(String virtualPath);
 }
 

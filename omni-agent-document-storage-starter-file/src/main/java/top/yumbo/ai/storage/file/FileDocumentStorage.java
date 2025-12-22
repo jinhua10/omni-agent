@@ -492,8 +492,6 @@ public class FileDocumentStorage implements DocumentStorageService {
         return json.toString();
     }
 
-    // ...existing code...
-
     @Override
     public Optional<Image> getImage(String imageId) {
         try {
@@ -1421,6 +1419,226 @@ public class FileDocumentStorage implements DocumentStorageService {
             return 0;
         }
     }
+
+    // ========== 文件系统浏览实现 (File System Browse Implementation) ==========
+
+    @Override
+    public List<Map<String, Object>> listFiles(String virtualPath) {
+        try {
+            // 将虚拟路径映射到物理路径
+            Path fullPath = resolvePath(virtualPath);
+
+            // 安全检查：防止路径遍历攻击
+            if (!isPathSafe(fullPath)) {
+                throw new IllegalArgumentException("非法路径: " + virtualPath);
+            }
+
+            if (!Files.exists(fullPath) || !Files.isDirectory(fullPath)) {
+                log.warn("目录不存在或不是目录: {}", fullPath);
+                return new ArrayList<>();
+            }
+
+            // 列出文件和文件夹
+            return Files.list(fullPath)
+                    .map(p -> {
+                        try {
+                            Map<String, Object> item = new HashMap<>();
+                            String fileName = p.getFileName().toString();
+                            boolean isDirectory = Files.isDirectory(p);
+
+                            // 计算相对路径
+                            String relativePath = basePath.relativize(p).toString().replace("\\", "/");
+
+                            item.put("name", fileName);
+                            item.put("type", isDirectory ? "directory" : "file");
+                            item.put("path", relativePath);
+
+                            if (!isDirectory) {
+                                item.put("size", Files.size(p));
+                                item.put("modified", Files.getLastModifiedTime(p).toMillis());
+                            }
+
+                            return item;
+                        } catch (IOException e) {
+                            log.error("获取文件信息失败: {}", p, e);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+        } catch (IOException e) {
+            log.error("列出文件失败: {}", virtualPath, e);
+            throw new RuntimeException("列出文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public byte[] readFile(String virtualPath) {
+        try {
+            // 将虚拟路径映射到物理路径
+            Path fullPath = resolvePath(virtualPath);
+
+            // 安全检查
+            if (!isPathSafe(fullPath)) {
+                throw new IllegalArgumentException("非法路径: " + virtualPath);
+            }
+
+            if (!Files.exists(fullPath) || !Files.isRegularFile(fullPath)) {
+                log.warn("文件不存在或不是常规文件: {}", fullPath);
+                return null;
+            }
+
+            return Files.readAllBytes(fullPath);
+
+        } catch (IOException e) {
+            log.error("读取文件失败: {}", virtualPath, e);
+            throw new RuntimeException("读取文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean deleteFile(String virtualPath) {
+        try {
+            // 将虚拟路径映射到物理路径
+            Path fullPath = resolvePath(virtualPath);
+
+            // 安全检查
+            if (!isPathSafe(fullPath)) {
+                throw new IllegalArgumentException("非法路径: " + virtualPath);
+            }
+
+            if (!Files.exists(fullPath)) {
+                log.warn("文件或文件夹不存在: {}", fullPath);
+                return false;
+            }
+
+            // 递归删除
+            if (Files.isDirectory(fullPath)) {
+                Files.walk(fullPath)
+                        .sorted(Comparator.reverseOrder())
+                        .forEach(p -> {
+                            try {
+                                Files.delete(p);
+                            } catch (IOException e) {
+                                log.error("删除失败: {}", p, e);
+                            }
+                        });
+            } else {
+                Files.delete(fullPath);
+            }
+
+            log.info("✅ 删除成功: {}", virtualPath);
+            return true;
+
+        } catch (IOException e) {
+            log.error("删除失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean createDirectory(String virtualPath) {
+        try {
+            // 将虚拟路径映射到物理路径
+            Path fullPath = resolvePath(virtualPath);
+
+            // 安全检查
+            if (!isPathSafe(fullPath)) {
+                throw new IllegalArgumentException("非法路径: " + virtualPath);
+            }
+
+            if (Files.exists(fullPath)) {
+                log.warn("文件夹已存在: {}", fullPath);
+                return false;
+            }
+
+            Files.createDirectories(fullPath);
+            log.info("✅ 创建文件夹成功: {}", virtualPath);
+            return true;
+
+        } catch (IOException e) {
+            log.error("创建文件夹失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public Map<String, Object> getStorageStats(String virtualPath) {
+        try {
+            // 将虚拟路径映射到物理路径
+            Path fullPath = resolvePath(virtualPath);
+
+            // 安全检查
+            if (!isPathSafe(fullPath)) {
+                throw new IllegalArgumentException("非法路径: " + virtualPath);
+            }
+
+            if (!Files.exists(fullPath)) {
+                log.warn("路径不存在: {}", fullPath);
+                return Map.of(
+                        "totalFiles", 0L,
+                        "totalFolders", 0L,
+                        "totalSize", 0L
+                );
+            }
+
+            // 统计文件数量、文件夹数量、总大小
+            long[] stats = new long[3]; // [files, folders, size]
+
+            Files.walk(fullPath)
+                    .forEach(p -> {
+                        try {
+                            if (Files.isRegularFile(p)) {
+                                stats[0]++; // 文件数
+                                stats[2] += Files.size(p); // 总大小
+                            } else if (Files.isDirectory(p) && !p.equals(fullPath)) {
+                                stats[1]++; // 文件夹数（不包括根目录）
+                            }
+                        } catch (IOException e) {
+                            log.error("统计文件信息失败: {}", p, e);
+                        }
+                    });
+
+            return Map.of(
+                    "totalFiles", stats[0],
+                    "totalFolders", stats[1],
+                    "totalSize", stats[2]
+            );
+
+        } catch (IOException e) {
+            log.error("获取存储统计失败: {}", virtualPath, e);
+            return Map.of(
+                    "totalFiles", 0L,
+                    "totalFolders", 0L,
+                    "totalSize", 0L
+            );
+        }
+    }
+
+    /**
+     * 将虚拟路径解析为物理路径
+     */
+    private Path resolvePath(String virtualPath) {
+        if (virtualPath == null || virtualPath.isEmpty()) {
+            return basePath;
+        }
+        // 移除开头的斜杠
+        String cleanPath = virtualPath.startsWith("/") ? virtualPath.substring(1) : virtualPath;
+        return basePath.resolve(cleanPath).normalize();
+    }
+
+    /**
+     * 检查路径是否安全（防止路径遍历攻击）
+     */
+    private boolean isPathSafe(Path path) {
+        try {
+            Path normalizedPath = path.normalize();
+            Path normalizedBase = basePath.normalize();
+            return normalizedPath.startsWith(normalizedBase);
+        } catch (Exception e) {
+            log.error("路径安全检查失败", e);
+            return false;
+        }
+    }
 }
-
-

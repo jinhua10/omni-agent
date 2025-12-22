@@ -572,7 +572,58 @@ function DocumentBrowser() {
         </Space>
       )
     },
-    // ...existing code...
+    {
+      title: t('document.browse.type'),
+      dataIndex: 'type',
+      key: 'type',
+      width: 100,
+      render: (type) => (
+        <Tag color={type === 'directory' ? 'gold' : 'blue'}>
+          {type === 'directory' ? t('document.browse.folder') : t('document.browse.file')}
+        </Tag>
+      )
+    },
+    {
+      title: t('document.browse.size'),
+      dataIndex: 'size',
+      key: 'size',
+      width: 120,
+      sorter: (a, b) => (a.size || 0) - (b.size || 0),
+      render: (size, record) => (
+        record.type === 'file' ? formatFileSize(size) : '-'
+      )
+    },
+    {
+      title: t('document.browse.modified'),
+      dataIndex: 'modified',
+      key: 'modified',
+      width: 180,
+      sorter: (a, b) => (a.modified || 0) - (b.modified || 0),
+      render: (modified) => formatDateTime(modified)
+    },
+    {
+      title: t('document.browse.indexStatus'),
+      key: 'indexStatus',
+      width: 120,
+      render: (_, record) => {
+        if (record.type === 'directory') return null
+        const status = record.indexStatus || 'pending'
+        const statusConfig = {
+          pending: { color: 'default', icon: <ClockCircleOutlined />, text: t('document.browse.statusPending') },
+          indexing: { color: 'processing', icon: <SyncOutlined spin />, text: t('document.browse.statusIndexing') },
+          done: { color: 'success', icon: <CheckCircleOutlined />, text: t('document.browse.statusDone') },
+          completed: { color: 'success', icon: <CheckCircleOutlined />, text: t('document.browse.statusDone') },
+          failed: { color: 'error', icon: <ErrorIcon />, text: t('document.browse.statusFailed') },
+          error: { color: 'error', icon: <ErrorIcon />, text: t('document.browse.statusFailed') }
+        }
+        const config = statusConfig[status] || statusConfig.pending
+        return (
+          <Tag icon={config.icon} color={config.color}>
+            {config.text}
+          </Tag>
+        )
+      }
+    },
     {
       title: t('document.browse.actions'),
       key: 'actions',
