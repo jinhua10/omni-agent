@@ -180,6 +180,15 @@ public class SystemRAGConfigController {
                             String extractedText = getExtractedText(documentId);
                             double accuracy = calculateExtractionAccuracy(documentId, extractedText);
                             
+                            // ⭐ 保存提取内容和精度到配置（持久化）
+                            config.setExtractedText(extractedText);
+                            config.setExtractionAccuracy(accuracy);
+                            config.setStatus("EXTRACTED");
+                            config.setUpdatedAt(System.currentTimeMillis());
+                            configService.setDocumentConfig(documentId, config);
+                            log.info("💾 已保存提取内容: documentId={}, textLength={}, accuracy={}", 
+                                documentId, extractedText.length(), accuracy);
+                            
                             // 发送提取精度
                             emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()
                                 .name("message")
@@ -200,11 +209,6 @@ public class SystemRAGConfigController {
                                     .data("{\"type\":\"content\",\"content\":\"" + chunk + "\"}"));
                                 Thread.sleep(50); // 模拟流式输出
                             }
-
-                            // 更新配置状态
-                            config.setStatus("EXTRACTED");
-                            config.setUpdatedAt(System.currentTimeMillis());
-                            configService.setDocumentConfig(documentId, config);
 
                             // 发送完成信号
                             emitter.send(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event()

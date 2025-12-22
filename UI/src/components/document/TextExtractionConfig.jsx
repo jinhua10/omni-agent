@@ -95,14 +95,15 @@ function TextExtractionConfig({ documentId }) {
 
   // 当有documentId时，自动开始提取
   useEffect(() => {
-    if (documentId && documentConfig && !extracting) {
+    if (documentId && documentConfig && !extracting && !extractionResult) {
+      // 只有在没有提取结果时才自动开始
       // 延迟500ms自动开始，给用户看到界面的机会
       const timer = setTimeout(() => {
         handleAutoExtract()
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [documentId, documentConfig])
+  }, [documentId, documentConfig, extractionResult])
 
   const loadDocumentConfig = async () => {
     if (!documentId) return
@@ -112,6 +113,17 @@ function TextExtractionConfig({ documentId }) {
       if (result.success) {
         setDocumentConfig(result.data)
         setSelectedModel(result.data.textExtractionModel || 'standard')
+        
+        // ⭐ 如果已经有提取的内容，直接显示
+        if (result.data.extractedText) {
+          setExtractionResult(result.data.extractedText)
+          setExtractionProgress({ 
+            status: 'success', 
+            percent: 100,
+            accuracy: result.data.extractionAccuracy || 0.85
+          })
+          console.log('📄 加载已保存的提取内容:', result.data.extractedText.length, '字符')
+        }
       }
     } catch (error) {
       console.error('加载文档配置失败:', error)
@@ -182,10 +194,21 @@ function TextExtractionConfig({ documentId }) {
                   percent: data.percent || 0,
                   message: data.message
                 })
+              } else if (data.type === 'accuracy') {
+                // ⭐ 保存精度信息
+                setExtractionProgress(prev => ({
+                  ...prev,
+                  accuracy: data.value,
+                  message: data.message
+                }))
               } else if (data.type === 'content') {
                 setExtractionResult(prev => prev + (data.content || ''))
               } else if (data.type === 'complete') {
-                setExtractionProgress({ status: 'success', percent: 100 })
+                setExtractionProgress({ 
+                  status: 'success', 
+                  percent: 100,
+                  accuracy: data.accuracy || 0.85
+                })
                 message.success(t('textExtractionConfig.tips.extractionComplete') || '提取完成')
               }
             } catch (e) {
@@ -246,8 +269,21 @@ function TextExtractionConfig({ documentId }) {
             <Space vertical style={{ width: '100%' }} size="large">
               {documentId && extractionProgress && (
                 <Alert
-                  title={extractionProgress.status === 'processing' ? '正在提取文本...' : extractionProgress.status === 'success' ? '✅ 提取完成' : '❌ 提取失败'}
-                  description={extractionProgress.message || `进度: ${extractionProgress.percent}%`}
+                  title={
+                    extractionProgress.status === 'processing' ? '正在提取文本...' : 
+                    extractionProgress.status === 'success' ? '✅ 提取完成' : 
+                    '❌ 提取失败'
+                  }
+                  description={
+                    <div>
+                      {extractionProgress.message || `进度: ${extractionProgress.percent}%`}
+                      {extractionProgress.accuracy && (
+                        <div style={{ marginTop: 8, fontSize: 16, fontWeight: 'bold', color: '#52c41a' }}>
+                          📊 提取精度: {(extractionProgress.accuracy * 100).toFixed(1)}%
+                        </div>
+                      )}
+                    </div>
+                  }
                   type={extractionProgress.status === 'processing' ? 'info' : extractionProgress.status === 'success' ? 'success' : 'error'}
                   showIcon
                 />
@@ -333,12 +369,24 @@ function TextExtractionConfig({ documentId }) {
 
               {/* 提取结果显示 */}
               {documentId && extractionResult && (
-                <Card title="📄 提取结果" style={{ marginTop: 16 }}>
+                <Card 
+                  title={
+                    <Space>
+                      <span>📄 提取结果</span>
+                      <Tag color="blue">{extractionResult.length} 字符</Tag>
+                      {extractionProgress?.accuracy && (
+                        <Tag color="green">精度: {(extractionProgress.accuracy * 100).toFixed(1)}%</Tag>
+                      )}
+                    </Space>
+                  } 
+                  style={{ marginTop: 16 }}
+                >
                   <TextArea
                     value={extractionResult}
                     readOnly
                     autoSize={{ minRows: 10, maxRows: 30 }}
                     style={{ fontFamily: 'monospace' }}
+                    placeholder="提取的文本内容将显示在这里..."
                   />
                 </Card>
               )}

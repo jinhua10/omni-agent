@@ -259,6 +259,9 @@ public class SystemRAGConfigService {
         // 提取的文本内容（缓存）
         private String extractedText;
 
+        // 提取精度（0.0-1.0）
+        private Double extractionAccuracy;
+
         // 错误信息
         private String errorMessage;
 
