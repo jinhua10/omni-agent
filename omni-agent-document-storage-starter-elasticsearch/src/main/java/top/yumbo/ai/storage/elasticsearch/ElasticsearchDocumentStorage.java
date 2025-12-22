@@ -798,5 +798,208 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
             return false;
         }
     }
-}
 
+    // ========== 文件系统浏览实现 (File System Browse Implementation) ==========
+    // 注意：Elasticsearch作为文档数据库，文件系统浏览功能基于索引查询实现
+
+    @Override
+    public List<Map<String, Object>> listFiles(String virtualPath) {
+        try {
+            // ES中的"虚拟目录"通过文档的path字段实现
+            // 例如：documents/子目录/文件.pdf 存储为 path: "documents/子目录/文件.pdf"
+
+            List<Map<String, Object>> items = new ArrayList<>();
+
+            // 查询指定路径下的所有文档
+            String searchPath = virtualPath.isEmpty() ? "" : virtualPath + "/";
+
+            SearchResponse<Map> response = client.search(s -> s
+                    .index("documents")
+                    .query(q -> q
+                        .prefix(p -> p
+                            .field("path")
+                            .value(searchPath)
+                        )
+                    )
+                    .size(1000), // 限制返回数量
+                    Map.class
+            );
+
+            // 处理结果，提取文件和目录
+            Set<String> directories = new HashSet<>();
+            for (Hit<Map> hit : response.hits().hits()) {
+                Map<String, Object> source = hit.source();
+                if (source != null) {
+                    String path = (String) source.get("path");
+                    if (path != null && path.startsWith(searchPath)) {
+                        String relativePath = path.substring(searchPath.length());
+                        int slashIndex = relativePath.indexOf('/');
+
+                        if (slashIndex > 0) {
+                            // 这是子目录中的文件，提取目录名
+                            String dirName = relativePath.substring(0, slashIndex);
+                            if (!directories.contains(dirName)) {
+                                directories.add(dirName);
+                                Map<String, Object> dirItem = new HashMap<>();
+                                dirItem.put("name", dirName);
+                                dirItem.put("type", "directory");
+                                dirItem.put("path", virtualPath.isEmpty() ? dirName : virtualPath + "/" + dirName);
+                                items.add(dirItem);
+                            }
+                        } else {
+                            // 这是当前目录的文件
+                            Map<String, Object> fileItem = new HashMap<>();
+                            fileItem.put("name", relativePath);
+                            fileItem.put("type", "file");
+                            fileItem.put("path", path);
+                            fileItem.put("size", source.getOrDefault("size", 0L));
+                            fileItem.put("modified", source.getOrDefault("modified", System.currentTimeMillis()));
+                            items.add(fileItem);
+                        }
+                    }
+                }
+            }
+
+            return items;
+        } catch (Exception e) {
+            log.error("列出文件失败: {}", virtualPath, e);
+            throw new RuntimeException("列出文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public byte[] readFile(String virtualPath) {
+        try {
+            // 从ES中查询文档
+            SearchResponse<Map> response = client.search(s -> s
+                    .index("documents")
+                    .query(q -> q
+                        .term(t -> t
+                            .field("path")
+                            .value(virtualPath)
+                        )
+                    )
+                    .size(1),
+                    Map.class
+            );
+
+            if (response.hits().hits().isEmpty()) {
+                log.warn("文件不存在: {}", virtualPath);
+                return null;
+            }
+
+            Map<String, Object> source = response.hits().hits().get(0).source();
+            if (source != null && source.containsKey("content")) {
+                // 内容以Base64存储
+                String base64Content = (String) source.get("content");
+                return Base64.getDecoder().decode(base64Content);
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.error("读取文件失败: {}", virtualPath, e);
+            throw new RuntimeException("读取文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean deleteFile(String virtualPath) {
+        try {
+            // 删除指定路径的文档
+            DeleteByQueryResponse response = client.deleteByQuery(d -> d
+                    .index("documents")
+                    .query(q -> q
+                        .bool(b -> b
+                            .should(s -> s
+                                .term(t -> t
+                                    .field("path")
+                                    .value(virtualPath)
+                                )
+                            )
+                            .should(s -> s
+                                .prefix(p -> p
+                                    .field("path")
+                                    .value(virtualPath + "/")
+                                )
+                            )
+                        )
+                    )
+            );
+
+            long deleted = response.deleted();
+            log.info("✅ 删除成功: {} (删除了{}个文档)", virtualPath, deleted);
+            return deleted > 0;
+        } catch (Exception e) {
+            log.error("删除失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean createDirectory(String virtualPath) {
+        try {
+            // ES中创建"目录"只是一个标记，实际不存储空目录
+            // 创建一个元数据文档表示目录
+            Map<String, Object> dirDoc = new HashMap<>();
+            dirDoc.put("path", virtualPath);
+            dirDoc.put("type", "directory");
+            dirDoc.put("created", System.currentTimeMillis());
+
+            IndexResponse response = client.index(i -> i
+                    .index("documents")
+                    .document(dirDoc)
+            );
+
+            log.info("✅ 创建目录成功: {}", virtualPath);
+            return response.result() == Result.Created;
+        } catch (Exception e) {
+            log.error("创建目录失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public Map<String, Object> getStorageStats(String virtualPath) {
+        try {
+            // 统计指定路径下的文档
+            String searchPath = virtualPath.isEmpty() ? "" : virtualPath + "/";
+
+            SearchResponse<Map> response = client.search(s -> s
+                    .index("documents")
+                    .query(q -> q
+                        .prefix(p -> p
+                            .field("path")
+                            .value(searchPath)
+                        )
+                    )
+                    .size(0) // 只要统计数量，不返回文档
+                    .aggregations("total_size", a -> a
+                        .sum(su -> su.field("size"))
+                    ),
+                    Map.class
+            );
+
+            long totalFiles = response.hits().total().value();
+            long totalSize = (long) response.aggregations()
+                    .get("total_size")
+                    .sum()
+                    .value();
+
+            // ES中目录是虚拟的，通过路径层级计算
+            long totalFolders = 0;
+
+            return Map.of(
+                    "totalFiles", totalFiles,
+                    "totalFolders", totalFolders,
+                    "totalSize", totalSize
+            );
+        } catch (Exception e) {
+            log.error("获取存储统计失败: {}", virtualPath, e);
+            return Map.of(
+                    "totalFiles", 0L,
+                    "totalFolders", 0L,
+                    "totalSize", 0L
+            );
+        }
+    }
+}

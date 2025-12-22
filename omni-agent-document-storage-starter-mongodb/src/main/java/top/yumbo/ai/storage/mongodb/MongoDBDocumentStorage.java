@@ -9,6 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 import top.yumbo.ai.storage.api.model.Chunk;
 import top.yumbo.ai.storage.api.model.Image;
@@ -707,5 +710,167 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
             return false;
         }
     }
-}
 
+    // ========== 文件系统浏览实现 (File System Browse Implementation) ==========
+    // MongoDB通过GridFS和文档的path字段实现虚拟文件系统
+
+    @Override
+    public List<Map<String, Object>> listFiles(String virtualPath) {
+        try {
+            List<Map<String, Object>> items = new ArrayList<>();
+            String searchPath = virtualPath.isEmpty() ? "" : virtualPath + "/";
+
+            // 使用GridFSBucket查询文件
+            Document query = new Document();
+            if (!searchPath.isEmpty()) {
+                query.append("metadata.path", new Document("$regex", "^" + searchPath));
+            }
+
+            List<GridFSFile> files = gridFSBucket.find(query).into(new ArrayList<>());
+            Set<String> directories = new HashSet<>();
+
+            for (GridFSFile gridFSFile : files) {
+                Document metadata = gridFSFile.getMetadata();
+                String path = metadata != null ? metadata.getString("path") : "";
+
+                if (path != null && path.startsWith(searchPath)) {
+                    String relativePath = path.substring(searchPath.length());
+                    int slashIndex = relativePath.indexOf('/');
+
+                    if (slashIndex > 0) {
+                        // 子目录
+                        String dirName = relativePath.substring(0, slashIndex);
+                        if (!directories.contains(dirName)) {
+                            directories.add(dirName);
+                            Map<String, Object> dirItem = new HashMap<>();
+                            dirItem.put("name", dirName);
+                            dirItem.put("type", "directory");
+                            dirItem.put("path", virtualPath.isEmpty() ? dirName : virtualPath + "/" + dirName);
+                            items.add(dirItem);
+                        }
+                    } else {
+                        // 文件
+                        Map<String, Object> fileItem = new HashMap<>();
+                        fileItem.put("name", relativePath);
+                        fileItem.put("type", "file");
+                        fileItem.put("path", path);
+                        fileItem.put("size", gridFSFile.getLength());
+                        fileItem.put("modified", gridFSFile.getUploadDate() != null ?
+                            gridFSFile.getUploadDate().getTime() : System.currentTimeMillis());
+                        items.add(fileItem);
+                    }
+                }
+            }
+
+            return items;
+        } catch (Exception e) {
+            log.error("列出文件失败: {}", virtualPath, e);
+            throw new RuntimeException("列出文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public byte[] readFile(String virtualPath) {
+        try {
+            Document query = new Document("metadata.path", virtualPath);
+            GridFSFile gridFSFile = gridFSBucket.find(query).first();
+
+            if (gridFSFile == null) {
+                log.warn("文件不存在: {}", virtualPath);
+                return null;
+            }
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            gridFSBucket.downloadToStream(gridFSFile.getObjectId(), outputStream);
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            log.error("读取文件失败: {}", virtualPath, e);
+            throw new RuntimeException("读取文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean deleteFile(String virtualPath) {
+        try {
+            // 删除文件或整个目录
+            Document query = new Document("metadata.path", new Document("$regex", "^" + virtualPath));
+
+            List<GridFSFile> files = gridFSBucket.find(query).into(new ArrayList<>());
+            for (GridFSFile file : files) {
+                gridFSBucket.delete(file.getObjectId());
+            }
+
+            log.info("✅ 删除成功: {}", virtualPath);
+            return !files.isEmpty();
+        } catch (Exception e) {
+            log.error("删除失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean createDirectory(String virtualPath) {
+        try {
+            // MongoDB GridFS不需要显式创建目录
+            // 创建一个标记文档
+            Document metadata = new Document();
+            metadata.put("path", virtualPath);
+            metadata.put("type", "directory");
+            metadata.put("created", System.currentTimeMillis());
+
+            GridFSUploadOptions options = new GridFSUploadOptions().metadata(metadata);
+
+            gridFSBucket.uploadFromStream(
+                virtualPath + "/.dir",
+                new ByteArrayInputStream(new byte[0]),
+                options
+            );
+
+            log.info("✅ 创建目录成功: {}", virtualPath);
+            return true;
+        } catch (Exception e) {
+            log.error("创建目录失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public Map<String, Object> getStorageStats(String virtualPath) {
+        try {
+            String searchPath = virtualPath.isEmpty() ? "" : virtualPath + "/";
+            Document query = new Document();
+
+            if (!searchPath.isEmpty()) {
+                query.append("metadata.path", new Document("$regex", "^" + searchPath));
+            }
+
+            long[] stats = {0, 0, 0}; // [files, folders, size]
+
+            List<GridFSFile> files = gridFSBucket.find(query).into(new ArrayList<>());
+            for (GridFSFile gridFSFile : files) {
+                Document metadata = gridFSFile.getMetadata();
+                String type = metadata != null ? metadata.getString("type") : "file";
+
+                if ("directory".equals(type)) {
+                    stats[1]++;
+                } else {
+                    stats[0]++;
+                    stats[2] += gridFSFile.getLength();
+                }
+            }
+
+            return Map.of(
+                "totalFiles", stats[0],
+                "totalFolders", stats[1],
+                "totalSize", stats[2]
+            );
+        } catch (Exception e) {
+            log.error("获取存储统计失败: {}", virtualPath, e);
+            return Map.of(
+                "totalFiles", 0L,
+                "totalFolders", 0L,
+                "totalSize", 0L
+            );
+        }
+    }
+}
