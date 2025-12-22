@@ -117,7 +117,6 @@ function DocumentBrowser() {
   const [loading, setLoading] = useState(false) // 加载状态 / Loading state
   const [selectedItems, setSelectedItems] = useState([]) // 选中的项 / Selected items
   const [searchKeyword, setSearchKeyword] = useState('') // 搜索关键词 / Search keyword
-  const [statusFilter, setStatusFilter] = useState('all') // 状态过滤器 / Status filter: all, indexing, done, failed
 
   // UI 状态 / UI state
   const [uploadVisible, setUploadVisible] = useState(false) // 上传对话框 / Upload dialog
@@ -416,29 +415,8 @@ function DocumentBrowser() {
       })
     }
 
-    // 状态过滤 / Status filter
-    if (statusFilter !== 'all') {
-      result = result.filter(item => {
-        // 文件夹不参与状态过滤
-        if (item.type === 'directory') return true
-
-        // 根据索引状态过滤
-        const status = item.indexStatus || 'pending'
-        if (statusFilter === 'failed') {
-          return status === 'failed' || status === 'error'
-        }
-        if (statusFilter === 'indexing') {
-          return status === 'indexing' || status === 'pending'
-        }
-        if (statusFilter === 'done') {
-          return status === 'done' || status === 'completed'
-        }
-        return true
-      })
-    }
-
     return result
-  }, [items, searchKeyword, statusFilter])
+  }, [items, searchKeyword])
 
   /**
    * 清除搜索 / Clear search
@@ -446,57 +424,6 @@ function DocumentBrowser() {
   const handleClearSearch = useCallback(() => {
     setSearchKeyword('')
   }, [])
-
-  /**
-   * 重建索引 / Rebuild index
-   */
-  const handleRebuildIndex = useCallback(async (items) => {
-    const fileItems = Array.isArray(items) ? items : [items]
-    const filePaths = fileItems
-      .filter(item => item.type === 'file')
-      .map(item => item.path)
-
-    if (filePaths.length === 0) {
-      antdMessage.warning(t('document.browse.noFilesSelected'))
-      return
-    }
-
-    try {
-      const response = await axios.post('/api/documents/rebuild-index', {
-        filePaths
-      })
-
-      if (response.data && response.data.success) {
-        antdMessage.success(t('document.browse.rebuildIndexStarted'))
-        // 刷新列表
-        loadDirectory(currentPath)
-      } else {
-        antdMessage.error(response.data.message || t('document.browse.rebuildIndexFailed'))
-      }
-    } catch (error) {
-      console.error('Failed to rebuild index:', error)
-      antdMessage.error(t('document.browse.rebuildIndexFailed'))
-    }
-  }, [currentPath, loadDirectory, t])
-
-  /**
-   * 批量重建索引 / Batch rebuild index
-   */
-  const handleBatchRebuild = useCallback(() => {
-    if (selectedItems.length === 0) {
-      antdMessage.warning(t('document.browse.noFilesSelected'))
-      return
-    }
-
-    Modal.confirm({
-      title: t('document.browse.confirmRebuildIndex'),
-      content: t('document.browse.rebuildIndexWarning', { count: selectedItems.length })
-        .replace('{count}', selectedItems.length),
-      onOk: () => handleRebuildIndex(selectedItems.map(key =>
-        items.find(item => item.path === key)
-      ))
-    })
-  }, [selectedItems, items, handleRebuildIndex, t])
 
   /**
    * 批量添加到AI分析 / Batch add to AI analysis
@@ -602,29 +529,6 @@ function DocumentBrowser() {
       render: (modified) => formatDateTime(modified)
     },
     {
-      title: t('document.browse.indexStatus'),
-      key: 'indexStatus',
-      width: 120,
-      render: (_, record) => {
-        if (record.type === 'directory') return null
-        const status = record.indexStatus || 'pending'
-        const statusConfig = {
-          pending: { color: 'default', icon: <ClockCircleOutlined />, text: t('document.browse.statusPending') },
-          indexing: { color: 'processing', icon: <SyncOutlined spin />, text: t('document.browse.statusIndexing') },
-          done: { color: 'success', icon: <CheckCircleOutlined />, text: t('document.browse.statusDone') },
-          completed: { color: 'success', icon: <CheckCircleOutlined />, text: t('document.browse.statusDone') },
-          failed: { color: 'error', icon: <ErrorIcon />, text: t('document.browse.statusFailed') },
-          error: { color: 'error', icon: <ErrorIcon />, text: t('document.browse.statusFailed') }
-        }
-        const config = statusConfig[status] || statusConfig.pending
-        return (
-          <Tag icon={config.icon} color={config.color}>
-            {config.text}
-          </Tag>
-        )
-      }
-    },
-    {
       title: t('document.browse.actions'),
       key: 'actions',
       width: 350,
@@ -679,18 +583,7 @@ function DocumentBrowser() {
                   }}
                 />
               </Tooltip>
-              <Tooltip title={t('document.browse.rebuildIndex')}>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<SyncOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleRebuildIndex(record)
-                  }}
-                  disabled={record.indexStatus === 'indexing'}
-                />
-              </Tooltip>
+
             </>
           )}
           <Tooltip title={t('document.browse.delete')}>
@@ -739,56 +632,15 @@ function DocumentBrowser() {
             {t('common.refresh')}
           </Button>
 
-          {/* 状态过滤器 / Status filter */}
-          <Space.Compact>
-            <Button
-              icon={<FilterOutlined />}
-              type={statusFilter === 'all' ? 'primary' : 'default'}
-              onClick={() => setStatusFilter('all')}
-            >
-              {t('document.browse.filterAll')}
-            </Button>
-            <Button
-              icon={<SyncOutlined />}
-              type={statusFilter === 'indexing' ? 'primary' : 'default'}
-              onClick={() => setStatusFilter('indexing')}
-            >
-              {t('document.browse.filterIndexing')}
-            </Button>
-            <Button
-              icon={<CheckCircleOutlined />}
-              type={statusFilter === 'done' ? 'primary' : 'default'}
-              onClick={() => setStatusFilter('done')}
-            >
-              {t('document.browse.filterDone')}
-            </Button>
-            <Button
-              icon={<ErrorIcon />}
-              type={statusFilter === 'failed' ? 'primary' : 'default'}
-              onClick={() => setStatusFilter('failed')}
-              danger={statusFilter === 'failed'}
-            >
-              {t('document.browse.filterFailed')}
-            </Button>
-          </Space.Compact>
-
           {/* 批量操作按钮 / Batch operation buttons */}
           {selectedItems.length > 0 && (
-            <>
-              <Button
-                icon={<SyncOutlined />}
-                onClick={handleBatchRebuild}
-              >
-                {t('document.browse.batchRebuild')} ({selectedItems.length})
-              </Button>
-              <Button
+            <Button
                 type="primary"
                 icon={<MessageOutlined />}
                 onClick={handleBatchAddToAI}
               >
                 {t('document.browse.batchAddToAI')} ({selectedItems.length})
               </Button>
-            </>
           )}
 
           {/* 搜索框 / Search box */}
