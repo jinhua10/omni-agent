@@ -12,6 +12,7 @@ import top.yumbo.ai.storage.api.model.StorageStatistics;
 import top.yumbo.ai.storage.api.model.DocumentMetadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -801,5 +802,196 @@ public class MinIODocumentStorage implements DocumentStorageService {
             return false;
         }
     }
-}
 
+    // ========== 文件系统浏览实现 (File System Browse Implementation) ==========
+    // MinIO通过对象键(Object Key)实现虚拟文件系统，使用/分隔路径
+
+    @Override
+    public List<Map<String, Object>> listFiles(String virtualPath) {
+        try {
+            List<Map<String, Object>> items = new ArrayList<>();
+            String prefix = virtualPath.isEmpty() ? "" : virtualPath + "/";
+            Set<String> directories = new HashSet<>();
+
+            // 列出指定前缀的所有对象
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .recursive(false) // 不递归，只列出当前层级
+                    .build()
+            );
+
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                String objectName = item.objectName();
+
+                if (item.isDir()) {
+                    // 目录
+                    String dirName = objectName.substring(prefix.length());
+                    dirName = dirName.endsWith("/") ? dirName.substring(0, dirName.length() - 1) : dirName;
+
+                    Map<String, Object> dirItem = new HashMap<>();
+                    dirItem.put("name", dirName);
+                    dirItem.put("type", "directory");
+                    dirItem.put("path", virtualPath.isEmpty() ? dirName : virtualPath + "/" + dirName);
+                    items.add(dirItem);
+                } else {
+                    // 文件
+                    String fileName = objectName.substring(prefix.length());
+
+                    Map<String, Object> fileItem = new HashMap<>();
+                    fileItem.put("name", fileName);
+                    fileItem.put("type", "file");
+                    fileItem.put("path", objectName);
+                    fileItem.put("size", item.size());
+                    fileItem.put("modified", item.lastModified() != null ?
+                        item.lastModified().toEpochSecond() * 1000 : System.currentTimeMillis());
+                    items.add(fileItem);
+                }
+            }
+
+            return items;
+        } catch (Exception e) {
+            log.error("列出文件失败: {}", virtualPath, e);
+            throw new RuntimeException("列出文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public byte[] readFile(String virtualPath) {
+        try {
+            InputStream stream = minioClient.getObject(
+                GetObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(virtualPath)
+                    .build()
+            );
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = stream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            stream.close();
+
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            log.error("读取文件失败: {}", virtualPath, e);
+            return null;
+        }
+    }
+
+    @Override
+    public boolean deleteFile(String virtualPath) {
+        try {
+            // 删除单个文件或递归删除目录
+            String prefix = virtualPath.endsWith("/") ? virtualPath : virtualPath + "/";
+
+            // 先尝试删除作为文件
+            try {
+                minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                        .bucket(properties.getBucketName())
+                        .object(virtualPath)
+                        .build()
+                );
+                log.info("✅ 删除文件成功: {}", virtualPath);
+                return true;
+            } catch (Exception e) {
+                // 可能是目录，继续尝试删除目录内容
+            }
+
+            // 列出并删除所有匹配的对象
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .recursive(true)
+                    .build()
+            );
+
+            boolean deleted = false;
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                        .bucket(properties.getBucketName())
+                        .object(item.objectName())
+                        .build()
+                );
+                deleted = true;
+            }
+
+            if (deleted) {
+                log.info("✅ 删除目录成功: {}", virtualPath);
+            }
+            return deleted;
+        } catch (Exception e) {
+            log.error("删除失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean createDirectory(String virtualPath) {
+        try {
+            // MinIO中创建"目录"只需上传一个空对象，对象名以/结尾
+            String dirPath = virtualPath.endsWith("/") ? virtualPath : virtualPath + "/";
+
+            minioClient.putObject(
+                PutObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(dirPath)
+                    .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
+                    .build()
+            );
+
+            log.info("✅ 创建目录成功: {}", virtualPath);
+            return true;
+        } catch (Exception e) {
+            log.error("创建目录失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public Map<String, Object> getStorageStats(String virtualPath) {
+        try {
+            String prefix = virtualPath.isEmpty() ? "" : virtualPath + "/";
+            long[] stats = {0, 0, 0}; // [files, folders, size]
+
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .recursive(true)
+                    .build()
+            );
+
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                if (item.isDir()) {
+                    stats[1]++;
+                } else {
+                    stats[0]++;
+                    stats[2] += item.size();
+                }
+            }
+
+            return Map.of(
+                "totalFiles", stats[0],
+                "totalFolders", stats[1],
+                "totalSize", stats[2]
+            );
+        } catch (Exception e) {
+            log.error("获取存储统计失败: {}", virtualPath, e);
+            return Map.of(
+                "totalFiles", 0L,
+                "totalFolders", 0L,
+                "totalSize", 0L
+            );
+        }
+    }
+}

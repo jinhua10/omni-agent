@@ -695,5 +695,144 @@ public class RedisDocumentStorage implements DocumentStorageService {
             return false;
         }
     }
-}
 
+    // ========== 文件系统浏览实现 (File System Browse Implementation) =========
+    // Redis通过Key命名实现虚拟文件系统，使用:分隔路径层级
+
+    @Override
+    public List<Map<String, Object>> listFiles(String virtualPath) {
+        try {
+            List<Map<String, Object>> items = new ArrayList<>();
+            String searchPattern = virtualPath.isEmpty() ? "*" : virtualPath.replace("/", ":") + ":*";
+            Set<String> directories = new HashSet<>();
+
+            // 使用SCAN命令扫描匹配的键
+            Set<String> keys = redisTemplate.keys(searchPattern);
+            if (keys == null) {
+                return items;
+            }
+
+            for (String key : keys) {
+                String relativePath = key.substring((virtualPath.isEmpty() ? "" : virtualPath + "/").length());
+                int colonIndex = relativePath.indexOf(':');
+
+                if (colonIndex > 0) {
+                    // 子目录
+                    String dirName = relativePath.substring(0, colonIndex);
+                    if (!directories.contains(dirName)) {
+                        directories.add(dirName);
+                        Map<String, Object> dirItem = new HashMap<>();
+                        dirItem.put("name", dirName);
+                        dirItem.put("type", "directory");
+                        dirItem.put("path", virtualPath.isEmpty() ? dirName : virtualPath + "/" + dirName);
+                        items.add(dirItem);
+                    }
+                } else {
+                    // 文件
+                    Object dataObj = redisTemplate.opsForValue().get(key);
+                    byte[] data = dataObj instanceof byte[] ? (byte[]) dataObj : null;
+                    Map<String, Object> fileItem = new HashMap<>();
+                    fileItem.put("name", relativePath);
+                    fileItem.put("type", "file");
+                    fileItem.put("path", key.replace(":", "/"));
+                    fileItem.put("size", data != null ? data.length : 0L);
+                    fileItem.put("modified", System.currentTimeMillis());
+                    items.add(fileItem);
+                }
+            }
+
+            return items;
+        } catch (Exception e) {
+            log.error("列出文件失败: {}", virtualPath, e);
+            throw new RuntimeException("列出文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public byte[] readFile(String virtualPath) {
+        try {
+            String key = virtualPath.replace("/", ":");
+            Object dataObj = redisTemplate.opsForValue().get(key);
+
+            if (dataObj == null) {
+                log.warn("文件不存在: {}", virtualPath);
+                return null;
+            }
+
+            return dataObj instanceof byte[] ? (byte[]) dataObj : null;
+        } catch (Exception e) {
+            log.error("读取文件失败: {}", virtualPath, e);
+            throw new RuntimeException("读取文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean deleteFile(String virtualPath) {
+        try {
+            String keyPattern = virtualPath.replace("/", ":") + "*";
+            Set<String> keys = redisTemplate.keys(keyPattern);
+
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+                log.info("✅ 删除成功: {} (删除了{}个键)", virtualPath, keys.size());
+                return true;
+            }
+
+            return false;
+        } catch (Exception e) {
+            log.error("删除失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean createDirectory(String virtualPath) {
+        try {
+            // Redis中创建"目录"只是一个标记
+            String key = virtualPath.replace("/", ":") + ":_dir";
+            redisTemplate.opsForValue().set(key, new byte[0]);
+
+            log.info("✅ 创建目录成功: {}", virtualPath);
+            return true;
+        } catch (Exception e) {
+            log.error("创建目录失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public Map<String, Object> getStorageStats(String virtualPath) {
+        try {
+            String searchPattern = virtualPath.isEmpty() ? "*" : virtualPath.replace("/", ":") + ":*";
+            Set<String> keys = redisTemplate.keys(searchPattern);
+
+            long[] stats = {0, 0, 0}; // [files, folders, size]
+
+            if (keys != null) {
+                for (String key : keys) {
+                    if (key.endsWith(":_dir")) {
+                        stats[1]++;
+                    } else {
+                        stats[0]++;
+                        Object dataObj = redisTemplate.opsForValue().get(key);
+                        byte[] data = dataObj instanceof byte[] ? (byte[]) dataObj : null;
+                        stats[2] += data != null ? data.length : 0;
+                    }
+                }
+            }
+
+            return Map.of(
+                "totalFiles", stats[0],
+                "totalFolders", stats[1],
+                "totalSize", stats[2]
+            );
+        } catch (Exception e) {
+            log.error("获取存储统计失败: {}", virtualPath, e);
+            return Map.of(
+                "totalFiles", 0L,
+                "totalFolders", 0L,
+                "totalSize", 0L
+            );
+        }
+    }
+}
