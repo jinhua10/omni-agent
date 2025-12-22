@@ -1549,6 +1549,7 @@ export default {
       saveSuccess: 'Configuration saved',
       saveFailed: 'Save failed',
       extractionStarted: 'Text extraction started',
+      autoExtractionStarted: 'Starting auto extraction...',
       operationFailed: 'Operation failed',
     },
 

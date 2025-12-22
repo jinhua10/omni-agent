@@ -44,7 +44,7 @@ import '../../assets/css/document/ChunkingConfig.css'
 const { Option } = Select
 const { TextArea } = Input
 
-function ChunkingConfig() {
+function ChunkingConfig({ documentId }) {
   const { t } = useLanguage()
   const [form] = Form.useForm()
   const { message } = App.useApp() // ⭐ 使用App钩子获取message API
@@ -53,16 +53,38 @@ function ChunkingConfig() {
   const [loading, setLoading] = useState(false)
   const [strategies, setStrategies] = useState([])
   const [currentStrategy, setCurrentStrategy] = useState(null)
+  const [documentConfig, setDocumentConfig] = useState(null)
   const [previewText, setPreviewText] = useState('')
   const [previewResult, setPreviewResult] = useState(null)
   const [comparisonMode, setComparisonMode] = useState(false)
   const [comparisonStrategies, setComparisonStrategies] = useState([])
   const [comparisonResults, setComparisonResults] = useState([])
 
-  // 加载可用策略
+  // 加载可用策略和文档配置
   useEffect(() => {
     loadStrategies()
-  }, [])
+    if (documentId) {
+      loadDocumentConfig()
+    }
+  }, [documentId])
+
+  // 加载文档配置
+  const loadDocumentConfig = async () => {
+    if (!documentId) return
+    try {
+      const response = await fetch(`/api/system/rag-config/document/${documentId}`)
+      const result = await response.json()
+      if (result.success && result.data) {
+        setDocumentConfig(result.data)
+        // 如果有文档配置，应用其分块策略
+        if (result.data.chunkingStrategy) {
+          form.setFieldsValue(result.data.chunkingStrategy)
+        }
+      }
+    } catch (error) {
+      console.error('加载文档配置失败:', error)
+    }
+  }
 
   // 加载策略列表
   const loadStrategies = async () => {
@@ -73,8 +95,8 @@ function ChunkingConfig() {
 
       if (result.success && result.data) {
         setStrategies(result.data)
-        if (result.data.length > 0) {
-          // 默认选择第一个策略
+        if (result.data.length > 0 && !documentConfig) {
+          // 仅在没有文档配置时默认选择第一个策略
           selectStrategy(result.data[0])
         }
         message.success(t('chunkingConfig.message.loadSuccess'))

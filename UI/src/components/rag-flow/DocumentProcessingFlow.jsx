@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Steps, Card, Progress, Alert, Button, Tag, Space, Divider, Dropdown, Spin, Select, App } from 'antd';
+import { Steps, Card, Progress, Alert, Button, Tag, Space, Divider, Dropdown, Spin, Select, App, Modal, Input } from 'antd';
 import {
     FileAddOutlined,
     FileTextOutlined,
@@ -27,13 +27,18 @@ import {
     SyncOutlined,
     LeftOutlined,
     RightOutlined,
-    ThunderboltOutlined
+    ThunderboltOutlined,
+    SaveOutlined,
+    PlusOutlined,
+    DeleteOutlined
 } from '@ant-design/icons';
 import WebSocketClient from '../../utils/WebSocketClient';
-import { useLanguage } from '../../contexts/LanguageContext';  // ⭐ 导入国际化Hook
+import { useLanguage } from '../../contexts/LanguageContext';
+import ragStrategyApi from '../../api/modules/ragStrategy';
 import '../../assets/css/rag-flow/DocumentProcessingFlow.css';
 
 const { Option } = Select;
+const { TextArea } = Input;
 
 /**
  * 处理阶段配置
@@ -83,10 +88,114 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     const [error, setError] = useState(null);
     const [demoMode, setDemoMode] = useState(showDemo);
     const [demoStep, setDemoStep] = useState(0);
-    const [demoExpanded, setDemoExpanded] = useState(false); // 演示模式是否展开
-    const [documentsList, setDocumentsList] = useState([]); // 文档列表
-    const [loading, setLoading] = useState(false); // 加载状态
-    const [selectedDocId, setSelectedDocId] = useState(documentId); // 当前选中的文档ID
+    const [demoExpanded, setDemoExpanded] = useState(false);
+    const [documentsList, setDocumentsList] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [selectedDocId, setSelectedDocId] = useState(documentId);
+    
+    // 策略模板管理 (Strategy Template Management - 从后端加载)
+    const [strategyTemplates, setStrategyTemplates] = useState([]);
+    const [templateModalVisible, setTemplateModalVisible] = useState(false);
+    const [newTemplateName, setNewTemplateName] = useState('');
+    const [newTemplateDesc, setNewTemplateDesc] = useState('');
+    const [templatesLoading, setTemplatesLoading] = useState(false);
+
+    // 加载策略模板列表
+    const loadTemplates = useCallback(async () => {
+        setTemplatesLoading(true);
+        try {
+            const result = await ragStrategyApi.getTemplates();
+            if (result.success) {
+                setStrategyTemplates(result.data || []);
+            } else {
+                console.error('加载策略模板失败:', result.message);
+            }
+        } catch (error) {
+            console.error('加载策略模板失败:', error);
+        } finally {
+            setTemplatesLoading(false);
+        }
+    }, []);
+
+    // 删除策略模板
+    const deleteTemplate = useCallback(async (templateId) => {
+        try {
+            const result = await ragStrategyApi.deleteTemplate(templateId);
+            if (result.success) {
+                message.success('模板已删除');
+                loadTemplates(); // 重新加载列表
+            } else {
+                message.error(result.message || '删除失败');
+            }
+        } catch (error) {
+            console.error('删除模板失败:', error);
+            message.error('删除失败: ' + error.message);
+        }
+    }, [message, loadTemplates]);
+
+    // 应用策略模板到文档
+    const applyTemplateToDocument = useCallback(async (docId, templateId) => {
+        try {
+            const result = await ragStrategyApi.applyTemplateToDocument(docId, templateId);
+            if (result.success) {
+                message.success('策略模板已应用');
+                loadDocumentsList(); // 刷新文档列表
+            } else {
+                message.error(result.message || '应用失败');
+            }
+        } catch (error) {
+            console.error('应用模板失败:', error);
+            message.error('应用失败: ' + error.message);
+        }
+    }, [message]);
+
+    // 保存当前配置为模板
+    const saveCurrentAsTemplate = useCallback(async () => {
+        if (!selectedDocId) {
+            message.warning('请先选择文档');
+            return;
+        }
+        if (!newTemplateName.trim()) {
+            message.warning('请输入模板名称');
+            return;
+        }
+
+        try {
+            const result = await ragStrategyApi.saveCurrentAsTemplate(selectedDocId, {
+                name: newTemplateName.trim(),
+                description: newTemplateDesc.trim()
+            });
+            
+            if (result.success) {
+                message.success('策略模板已保存');
+                setTemplateModalVisible(false);
+                setNewTemplateName('');
+                setNewTemplateDesc('');
+                loadTemplates(); // 重新加载模板列表
+            } else {
+                message.error(result.message || '保存失败');
+            }
+        } catch (error) {
+            console.error('保存模板失败:', error);
+            message.error('保存失败: ' + error.message);
+        }
+    }, [selectedDocId, newTemplateName, newTemplateDesc, message, loadTemplates]);
+
+    // 开始处理文档
+    const startProcessDocument = useCallback(async (docId) => {
+        try {
+            const result = await ragStrategyApi.startProcessing(docId);
+            if (result.success) {
+                message.success('开始处理文档：' + docId);
+                loadDocumentsList(); // 刷新文档列表
+            } else {
+                message.error(result.message || '处理失败');
+            }
+        } catch (error) {
+            console.error('开始处理失败:', error);
+            message.error('处理失败: ' + error.message);
+        }
+    }, [message]);
 
     // 加载文档列表
     const loadDocumentsList = useCallback(async () => {
@@ -111,7 +220,8 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     // 初始加载
     useEffect(() => {
         loadDocumentsList();
-    }, [loadDocumentsList]);
+        loadTemplates(); // 加载策略模板列表
+    }, [loadDocumentsList, loadTemplates]);
 
     // 当选择文档时，根据文档状态初始化progress
     useEffect(() => {
@@ -427,21 +537,67 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                             placeholder="选择策略模板"
                                             style={{ flex: 1 }}
                                             size="small"
+                                            popupRender={(menu) => (
+                                                <>
+                                                    {menu}
+                                                    <Divider style={{ margin: '8px 0' }} />
+                                                    <Space style={{ padding: '0 8px 4px' }}>
+                                                        <Button 
+                                                            type="text" 
+                                                            icon={<PlusOutlined />} 
+                                                            onClick={() => {
+                                                                setSelectedDocId(doc.documentId);
+                                                                setTemplateModalVisible(true);
+                                                            }}
+                                                            size="small"
+                                                        >
+                                                            新建模板
+                                                        </Button>
+                                                    </Space>
+                                                </>
+                                            )}
                                             onChange={(templateId) => {
-                                                // TODO: 应用策略模板
-                                                console.log('应用模板:', templateId, '到文档:', doc.documentId);
+                                                applyTemplateToDocument(doc.documentId, templateId);
                                             }}
                                         >
-                                            <Option value="default">默认策略</Option>
-                                            <Option value="pdf-standard">PDF标准处理</Option>
-                                            <Option value="ppt-vision">PPT视觉处理</Option>
+                                            {strategyTemplates.map(template => (
+                                                <Option key={template.id} value={template.id}>
+                                                    <Space>
+                                                        {template.name}
+                                                        {template.description && (
+                                                            <span style={{ fontSize: '12px', color: '#999' }}>
+                                                                ({template.description})
+                                                            </span>
+                                                        )}
+                                                        {!template.builtin && (
+                                                            <DeleteOutlined 
+                                                                style={{ color: '#ff4d4f', fontSize: '12px' }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    deleteTemplate(template.id);
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </Space>
+                                                </Option>
+                                            ))}
                                         </Select>
+                                        <Button
+                                            icon={<SaveOutlined />}
+                                            size="small"
+                                            onClick={() => {
+                                                setSelectedDocId(doc.documentId);
+                                                setTemplateModalVisible(true);
+                                            }}
+                                            title="将当前配置保存为模板"
+                                        >
+                                            保存为模板
+                                        </Button>
                                         <Button
                                             type="primary"
                                             size="small"
                                             onClick={() => {
-                                                // TODO: 开始处理
-                                                console.log('开始处理文档:', doc.documentId);
+                                                startProcessDocument(doc.documentId);
                                             }}
                                         >
                                             开始处理
@@ -800,6 +956,42 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             </div>
             </Card>
             )}
+
+            {/* 保存策略模板Modal */}
+            <Modal
+                title="保存为策略模板"
+                open={templateModalVisible}
+                onOk={saveCurrentAsTemplate}
+                onCancel={() => {
+                    setTemplateModalVisible(false);
+                    setNewTemplateName('');
+                    setNewTemplateDesc('');
+                }}
+                okText="保存"
+                cancelText="取消"
+            >
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                    <div>
+                        <div style={{ marginBottom: 8 }}>模板名称</div>
+                        <Input
+                            value={newTemplateName}
+                            onChange={(e) => setNewTemplateName(e.target.value)}
+                            placeholder="请输入模板名称"
+                            maxLength={50}
+                        />
+                    </div>
+                    <div>
+                        <div style={{ marginBottom: 8 }}>模板描述（可选）</div>
+                        <TextArea
+                            value={newTemplateDesc}
+                            onChange={(e) => setNewTemplateDesc(e.target.value)}
+                            placeholder="请简要描述该模板的用途和适用场景"
+                            rows={4}
+                            maxLength={200}
+                        />
+                    </div>
+                </Space>
+            </Modal>
         </div>
     );
 }

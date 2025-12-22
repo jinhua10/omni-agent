@@ -22,7 +22,8 @@ import {
   Descriptions,
   Tag,
   Spin,
-  message,
+  App,
+  Input,
 } from 'antd'
 import {
   FileTextOutlined,
@@ -35,6 +36,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/TextExtractionConfig.css'
 
 const { Option } = Select
+const { TextArea } = Input
 
 /**
  * 文本提取模型配置
@@ -74,10 +76,14 @@ const EXTRACTION_MODELS = {
 
 function TextExtractionConfig({ documentId }) {
   const { t, language } = useLanguage()
+  const { message } = App.useApp()
   const [selectedModel, setSelectedModel] = useState('standard')
   const [loading, setLoading] = useState(false)
   const [systemConfig, setSystemConfig] = useState(null)
   const [documentConfig, setDocumentConfig] = useState(null)
+  const [extracting, setExtracting] = useState(false)
+  const [extractionProgress, setExtractionProgress] = useState(null)
+  const [extractionResult, setExtractionResult] = useState('')
 
   // 加载系统配置
   useEffect(() => {
@@ -86,6 +92,17 @@ function TextExtractionConfig({ documentId }) {
       loadDocumentConfig()
     }
   }, [documentId])
+
+  // 当有documentId时，自动开始提取
+  useEffect(() => {
+    if (documentId && documentConfig && !extracting) {
+      // 延迟500ms自动开始，给用户看到界面的机会
+      const timer = setTimeout(() => {
+        handleAutoExtract()
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [documentId, documentConfig])
 
   const loadDocumentConfig = async () => {
     if (!documentId) return
@@ -120,27 +137,78 @@ function TextExtractionConfig({ documentId }) {
     setSelectedModel(value)
   }
 
+  // 自动提取处理（流式）
+  const handleAutoExtract = async () => {
+    if (!documentId || extracting) return
+    
+    setExtracting(true)
+    setExtractionProgress({ status: 'processing', percent: 0 })
+    message.info(t('textExtractionConfig.tips.autoExtractionStarted') || '开始自动提取...')
+
+    try {
+      const response = await fetch(`/api/system/rag-config/document/${documentId}/extract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: selectedModel,
+          streaming: true
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('提取请求失败')
+      }
+
+      // 处理流式响应
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() // 保留不完整的行
+
+        for (const line of lines) {
+          if (line.trim().startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              if (data.type === 'progress') {
+                setExtractionProgress({
+                  status: 'processing',
+                  percent: data.percent || 0,
+                  message: data.message
+                })
+              } else if (data.type === 'content') {
+                setExtractionResult(prev => prev + (data.content || ''))
+              } else if (data.type === 'complete') {
+                setExtractionProgress({ status: 'success', percent: 100 })
+                message.success(t('textExtractionConfig.tips.extractionComplete') || '提取完成')
+              }
+            } catch (e) {
+              console.error('解析SSE数据失败:', e)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('自动提取失败:', error)
+      setExtractionProgress({ status: 'error', percent: 0 })
+      message.error(t('textExtractionConfig.tips.extractionFailed') || '提取失败')
+    } finally {
+      setExtracting(false)
+    }
+  }
+
   const handleApply = async () => {
     setLoading(true)
     try {
       if (documentId) {
-        // 为特定文档触发文本提取
-        const response = await fetch(`/api/system/rag-config/document/${documentId}/extract`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: selectedModel,
-          }),
-        })
-
-        const result = await response.json()
-        if (result.success) {
-          message.success(t('textExtractionConfig.tips.extractionStarted'))
-          // 跳转回流程视图查看进度
-          window.location.hash = '#/documents?view=flow'
-        } else {
-          message.error(result.message || t('textExtractionConfig.tips.operationFailed'))
-        }
+        // 手动触发提取
+        await handleAutoExtract()
       } else {
         // 更新系统配置
         const response = await fetch('/api/system/rag-config', {
@@ -176,14 +244,22 @@ function TextExtractionConfig({ documentId }) {
         <div className="config-panel">
           <Card title={documentId ? `${t('textExtractionConfig.documentTitle')} - ${documentId}` : t('textExtractionConfig.title')}>
             <Space vertical style={{ width: '100%' }} size="large">
-              {documentId ? (
+              {documentId && extractionProgress && (
+                <Alert
+                  title={extractionProgress.status === 'processing' ? '正在提取文本...' : extractionProgress.status === 'success' ? '✅ 提取完成' : '❌ 提取失败'}
+                  description={extractionProgress.message || `进度: ${extractionProgress.percent}%`}
+                  type={extractionProgress.status === 'processing' ? 'info' : extractionProgress.status === 'success' ? 'success' : 'error'}
+                  showIcon
+                />
+              )}
+              {documentId && !extractionProgress ? (
                 <Alert
                   title={t('textExtractionConfig.alerts.documentConfigTitle')}
                   description={t('textExtractionConfig.alerts.documentConfigDesc').replace('{docId}', documentId)}
                   type="warning"
                   showIcon
                 />
-              ) : (
+              ) : !documentId && (
                 <Alert
                   title={t('textExtractionConfig.alerts.systemConfigTitle')}
                   description={t('textExtractionConfig.alerts.systemConfigDesc')}
@@ -235,17 +311,18 @@ function TextExtractionConfig({ documentId }) {
                     type="primary"
                     icon={<ThunderboltOutlined />}
                     onClick={handleApply}
-                    loading={loading}
+                    loading={loading || extracting}
+                    disabled={extracting}
                     size="large"
                   >
-                    {documentId ? t('textExtractionConfig.buttons.startExtraction') : t('textExtractionConfig.buttons.applyConfig')}
+                    {documentId ? (extracting ? '提取中...' : t('textExtractionConfig.buttons.startExtraction')) : t('textExtractionConfig.buttons.applyConfig')}
                   </Button>
-                  <Button onClick={loadSystemConfig} size="large">
+                  <Button onClick={loadSystemConfig} size="large" disabled={extracting}>
                     {t('textExtractionConfig.buttons.reset')}
                   </Button>
                   {documentId && (
                     <Button
-                      onClick={() => window.location.hash = '#/documents?view=flow'}
+                      onClick={() => window.location.hash = '#/documents?view=flow&docId=' + documentId}
                       size="large"
                     >
                       {t('textExtractionConfig.buttons.backToFlow')}
@@ -253,6 +330,18 @@ function TextExtractionConfig({ documentId }) {
                   )}
                 </Space>
               </div>
+
+              {/* 提取结果显示 */}
+              {documentId && extractionResult && (
+                <Card title="📄 提取结果" style={{ marginTop: 16 }}>
+                  <TextArea
+                    value={extractionResult}
+                    readOnly
+                    autoSize={{ minRows: 10, maxRows: 30 }}
+                    style={{ fontFamily: 'monospace' }}
+                  />
+                </Card>
+              )}
             </Space>
           </Card>
         </div>

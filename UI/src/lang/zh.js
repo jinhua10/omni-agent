@@ -1561,6 +1561,7 @@ export default {
       saveSuccess: '配置已保存',
       saveFailed: '保存失败',
       extractionStarted: '文本提取已启动',
+      autoExtractionStarted: '开始自动提取...',
       operationFailed: '操作失败',
     },
 
