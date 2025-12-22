@@ -99,6 +99,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     const [newTemplateName, setNewTemplateName] = useState('');
     const [newTemplateDesc, setNewTemplateDesc] = useState('');
     const [templatesLoading, setTemplatesLoading] = useState(false);
+    const [documentConfigForTemplate, setDocumentConfigForTemplate] = useState(null);
 
     // 加载策略模板列表
     const loadTemplates = useCallback(async () => {
@@ -146,6 +147,24 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         } catch (error) {
             console.error('应用模板失败:', error);
             message.error('应用失败: ' + error.message);
+        }
+    }, [message]);
+
+    // 打开保存模板Modal并加载配置
+    const openSaveTemplateModal = useCallback(async (docId) => {
+        try {
+            // 加载文档配置
+            const result = await ragStrategyApi.getDocumentConfig(docId);
+            if (result.success && result.data) {
+                setDocumentConfigForTemplate(result.data);
+                setSelectedDocId(docId);
+                setTemplateModalVisible(true);
+            } else {
+                message.warning('无法加载文档配置');
+            }
+        } catch (error) {
+            console.error('加载文档配置失败:', error);
+            message.error('加载配置失败: ' + error.message);
         }
     }, [message]);
 
@@ -545,10 +564,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                                         <Button 
                                                             type="text" 
                                                             icon={<PlusOutlined />} 
-                                                            onClick={() => {
-                                                                setSelectedDocId(doc.documentId);
-                                                                setTemplateModalVisible(true);
-                                                            }}
+                                                            onClick={() => openSaveTemplateModal(doc.documentId)}
                                                             size="small"
                                                         >
                                                             新建模板
@@ -585,10 +601,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                         <Button
                                             icon={<SaveOutlined />}
                                             size="small"
-                                            onClick={() => {
-                                                setSelectedDocId(doc.documentId);
-                                                setTemplateModalVisible(true);
-                                            }}
+                                            onClick={() => openSaveTemplateModal(doc.documentId)}
                                             title="将当前配置保存为模板"
                                         >
                                             保存为模板
@@ -981,11 +994,48 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                     setTemplateModalVisible(false);
                     setNewTemplateName('');
                     setNewTemplateDesc('');
+                    setDocumentConfigForTemplate(null);
                 }}
                 okText="保存"
                 cancelText="取消"
             >
                 <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                    {/* 显示当前配置摘要 */}
+                    {documentConfigForTemplate && (
+                        <Alert
+                            message="当前配置"
+                            description={
+                                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                                    <div>
+                                        <strong>📄 文本提取方式：</strong>
+                                        <Tag color="blue" style={{ marginLeft: 8 }}>
+                                            {documentConfigForTemplate.textExtractionModel === 'standard' ? '标准提取' :
+                                             documentConfigForTemplate.textExtractionModel === 'vision-llm' ? 'Vision LLM' :
+                                             documentConfigForTemplate.textExtractionModel === 'ocr' ? 'OCR识别' : '未配置'}
+                                        </Tag>
+                                    </div>
+                                    <div>
+                                        <strong>✂️ 分块策略：</strong>
+                                        <Tag color="green" style={{ marginLeft: 8 }}>
+                                            {documentConfigForTemplate.chunkingStrategy?.strategyName || '未配置'}
+                                        </Tag>
+                                    </div>
+                                    {documentConfigForTemplate.chunkingStrategy?.chunkSize && (
+                                        <div style={{ fontSize: '12px', color: '#666' }}>
+                                            块大小: {documentConfigForTemplate.chunkingStrategy.chunkSize}, 
+                                            重叠: {documentConfigForTemplate.chunkingStrategy.overlap || 0}
+                                        </div>
+                                    )}
+                                    <div style={{ fontSize: '12px', color: '#999', marginTop: 4 }}>
+                                        💡 保存后，此配置可快速应用到其他文档
+                                    </div>
+                                </Space>
+                            }
+                            type="info"
+                            showIcon
+                            style={{ marginBottom: 16 }}
+                        />
+                    )}
                     <div>
                         <div style={{ marginBottom: 8 }}>模板名称</div>
                         <Input
