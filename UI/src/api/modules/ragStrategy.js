@@ -101,7 +101,7 @@ const ragStrategyApi = {
    * @returns {Promise} 文档配置
    */
   getDocumentConfig: async (documentId) => {
-    const response = await axios.get(`${BASE_URL}/documents/${documentId}/config`);
+    const response = await axios.get(`${BASE_URL}/document/${documentId}`);
     return response.data;
   },
 

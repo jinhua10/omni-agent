@@ -755,10 +755,38 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         content: renderStepDescription('UPLOAD')
                     },
                     {
-                        title: STAGE_CONFIG.EXTRACT.title[language],
+                        title: (
+                            <span 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const docId = progress?.documentId || selectedDocId;
+                                    console.log('点击文本提取标题, docId:', docId, 'progress:', progress, 'selectedDocId:', selectedDocId);
+                                    if (docId) {
+                                        const newHash = `#/documents?view=textExtraction&docId=${docId}`;
+                                        // 如果 hash 相同，先改成别的，再改回来，强制触发 hashchange
+                                        if (window.location.hash === newHash) {
+                                            console.log('⚡ Hash相同，强制刷新视图');
+                                            window.location.hash = '#/documents?view=flow';
+                                            setTimeout(() => {
+                                                window.location.hash = newHash;
+                                            }, 0);
+                                        } else {
+                                            window.location.hash = newHash;
+                                        }
+                                    }
+                                }}
+                                style={{
+                                    cursor: (progress?.documentId || selectedDocId) ? 'pointer' : 'default',
+                                    color: (progress?.documentId || selectedDocId) ? '#1890ff' : 'inherit',
+                                    textDecoration: (progress?.documentId || selectedDocId) ? 'underline' : 'none'
+                                }}
+                            >
+                                {STAGE_CONFIG.EXTRACT.title[language]}
+                            </span>
+                        ),
                         icon: STAGE_CONFIG.EXTRACT.icon,
                         status: getStepStatus(1),
-                        description: (progress?.documentId || selectedDocId) && (
+                        subTitle: (progress?.documentId || selectedDocId) && (
                             <div style={{ marginTop: '8px' }}>
                                 <Select
                                     style={{ width: '100%', maxWidth: '300px' }}
@@ -771,7 +799,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                             updateDocumentConfig(docId, { textExtractionModel: value });
                                         }
                                     }}
-                                    dropdownRender={(menu) => (
+                                    popupRender={(menu) => (
                                         <>
                                             {menu}
                                             <Divider style={{ margin: '8px 0' }} />
@@ -813,10 +841,38 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         content: renderStepDescription('EXTRACT')
                     },
                     {
-                        title: STAGE_CONFIG.CHUNK.title[language],
+                        title: (
+                            <span 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const docId = progress?.documentId || selectedDocId;
+                                    console.log('点击智能分块标题, docId:', docId, 'progress:', progress, 'selectedDocId:', selectedDocId);
+                                    if (docId) {
+                                        const newHash = `#/documents?view=chunking&docId=${docId}`;
+                                        // 如果 hash 相同，先改成别的，再改回来，强制触发 hashchange
+                                        if (window.location.hash === newHash) {
+                                            console.log('⚡ Hash相同，强制刷新视图');
+                                            window.location.hash = '#/documents?view=flow';
+                                            setTimeout(() => {
+                                                window.location.hash = newHash;
+                                            }, 0);
+                                        } else {
+                                            window.location.hash = newHash;
+                                        }
+                                    }
+                                }}
+                                style={{
+                                    cursor: (progress?.documentId || selectedDocId) ? 'pointer' : 'default',
+                                    color: (progress?.documentId || selectedDocId) ? '#1890ff' : 'inherit',
+                                    textDecoration: (progress?.documentId || selectedDocId) ? 'underline' : 'none'
+                                }}
+                            >
+                                {STAGE_CONFIG.CHUNK.title[language]}
+                            </span>
+                        ),
                         icon: STAGE_CONFIG.CHUNK.icon,
                         status: getStepStatus(2),
-                        description: (progress?.documentId || selectedDocId) && (
+                        subTitle: (progress?.documentId || selectedDocId) && (
                             <div style={{ marginTop: '8px' }}>
                                 <Select
                                     style={{ width: '100%', maxWidth: '300px' }}
@@ -837,7 +893,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                             }
                                         }
                                     }}
-                                    dropdownRender={(menu) => (
+                                    popupRender={(menu) => (
                                         <>
                                             {menu}
                                             <Divider style={{ margin: '8px 0' }} />

@@ -58,7 +58,8 @@ function DocumentManagement() {
   // 视图模式: 'list' | 'browser' | 'flow'
   const [viewMode, setViewMode] = useState(() => {
     // 优先使用URL参数，否则从localStorage读取
-    return urlParams.view || localStorage.getItem('documentViewMode') || 'browser'
+    const initialView = urlParams.view || localStorage.getItem('documentViewMode') || 'browser'
+    return initialView
   })
 
   // ⭐ 当前正在处理的文档ID（用于流程视图）
@@ -68,17 +69,22 @@ function DocumentManagement() {
   useEffect(() => {
     const handleHashChange = () => {
       const params = getUrlParams()
-      if (params.view) {
+      if (params.view && params.view !== viewMode) {
         setViewMode(params.view)
+        // 同步更新 localStorage，确保 URL 优先级最高
+        localStorage.setItem('documentViewMode', params.view)
       }
-      if (params.docId) {
+      if (params.docId && params.docId !== processingDocumentId) {
         setProcessingDocumentId(params.docId)
       }
     }
 
+    // 立即执行一次，处理初始 URL
+    handleHashChange()
+
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [])
+  }, [viewMode, processingDocumentId])  // 添加依赖项，避免闭包陷阱
 
   // ⭐ 处理文档上传成功
   const handleDocumentUploaded = (documentId) => {
@@ -102,6 +108,13 @@ function DocumentManagement() {
   const handleViewModeChange = (mode) => {
     setViewMode(mode)
     localStorage.setItem('documentViewMode', mode)
+    // 同步更新 URL，保持一致性
+    const docId = processingDocumentId
+    if (docId) {
+      window.location.hash = `#/documents?view=${mode}&docId=${docId}`
+    } else {
+      window.location.hash = `#/documents?view=${mode}`
+    }
   }
 
   // ============================================================================

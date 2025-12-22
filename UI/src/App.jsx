@@ -54,6 +54,25 @@ function AppContent() {
     return { dockPosition: DOCK_POSITIONS.NONE }
   })
 
+  // 监听URL hash变化，自动切换菜单
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash
+      // 解析 hash，例如 #/documents?view=chunking
+      const path = hash.split('?')[0].replace('#/', '')
+      if (path && path !== activeMenu) {
+        console.log('Hash changed, switching menu from', activeMenu, 'to', path)
+        setActiveMenu(path)
+      }
+    }
+
+    // 初始化时也检查一次
+    handleHashChange()
+
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [activeMenu])
+
   // 监听localStorage变化
   React.useEffect(() => {
     const handleStorageChange = () => {
