@@ -686,50 +686,62 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         content: renderStepDescription('UPLOAD')
                     },
                     {
-                        title: (
-                            <a onClick={() => {
-                                if (selectedDocId) {
-                                    window.location.hash = `#/documents?view=textExtraction&docId=${selectedDocId}`;
-                                }
-                            }} style={{ cursor: selectedDocId ? 'pointer' : 'default' }}>
-                                {STAGE_CONFIG.EXTRACT.title[language]}
-                            </a>
-                        ),
+                        title: STAGE_CONFIG.EXTRACT.title[language],
                         icon: STAGE_CONFIG.EXTRACT.icon,
                         status: getStepStatus(1),
-                        content: (
-                            <div>
-                                {renderStepDescription('EXTRACT')}
-                                {selectedDocId && (
-                                    <div style={{ marginTop: 4, fontSize: 12, color: '#1890ff' }}>
-                                        <SettingOutlined /> {t('ragFlow.component.clickToConfigExtract')}
-                                    </div>
-                                )}
-                            </div>
-                        )
+                        description: (progress?.documentId || selectedDocId) && (
+                            <span 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const docId = progress?.documentId || selectedDocId;
+                                    if (docId) {
+                                        console.log('点击文本提取描述，docId:', docId);
+                                        window.location.hash = `#/documents?view=textExtraction&docId=${docId}`;
+                                    }
+                                }} 
+                                style={{ 
+                                    cursor: 'pointer',
+                                    color: '#1890ff',
+                                    textDecoration: 'underline',
+                                    userSelect: 'none',
+                                    fontSize: '12px',
+                                    display: 'inline-block',
+                                    marginTop: '4px'
+                                }}
+                            >
+                                <SettingOutlined /> 点击配置文本提取
+                            </span>
+                        ),
+                        content: renderStepDescription('EXTRACT')
                     },
                     {
-                        title: (
-                            <a onClick={() => {
-                                if (selectedDocId) {
-                                    window.location.hash = `#/documents?view=chunking&docId=${selectedDocId}`;
-                                }
-                            }} style={{ cursor: selectedDocId ? 'pointer' : 'default' }}>
-                                {STAGE_CONFIG.CHUNK.title[language]}
-                            </a>
-                        ),
+                        title: STAGE_CONFIG.CHUNK.title[language],
                         icon: STAGE_CONFIG.CHUNK.icon,
                         status: getStepStatus(2),
-                        content: (
-                            <div>
-                                {renderStepDescription('CHUNK')}
-                                {selectedDocId && (
-                                    <div style={{ marginTop: 4, fontSize: 12, color: '#1890ff' }}>
-                                        <SettingOutlined /> {t('ragFlow.component.clickToConfigChunk')}
-                                    </div>
-                                )}
-                            </div>
-                        )
+                        description: (progress?.documentId || selectedDocId) && (
+                            <span 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const docId = progress?.documentId || selectedDocId;
+                                    if (docId) {
+                                        console.log('点击智能分块描述，docId:', docId);
+                                        window.location.hash = `#/documents?view=chunking&docId=${docId}`;
+                                    }
+                                }} 
+                                style={{ 
+                                    cursor: 'pointer',
+                                    color: '#1890ff',
+                                    textDecoration: 'underline',
+                                    userSelect: 'none',
+                                    fontSize: '12px',
+                                    display: 'inline-block',
+                                    marginTop: '4px'
+                                }}
+                            >
+                                <SettingOutlined /> 点击配置智能分块
+                            </span>
+                        ),
+                        content: renderStepDescription('CHUNK')
                     },
                     {
                         title: STAGE_CONFIG.VECTORIZE.title[language],
@@ -747,7 +759,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             />
 
             {/* 流程控制按钮 */}
-            {selectedDocId && (
+            {(progress?.documentId || selectedDocId) && (
                 <div style={{
                     marginTop: '24px',
                     padding: '20px',
@@ -763,13 +775,14 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         <Button
                             icon={<LeftOutlined />}
                             onClick={() => {
+                                const docId = progress?.documentId || selectedDocId;
                                 const currentStep = getCurrentStep();
                                 if (currentStep === 1) {
                                     // 从文本提取回到上传
                                     window.location.hash = '#/documents?view=flow';
                                 } else if (currentStep === 2) {
                                     // 从分块回到文本提取
-                                    window.location.hash = `#/documents?view=textExtraction&docId=${selectedDocId}`;
+                                    window.location.hash = `#/documents?view=textExtraction&docId=${docId}`;
                                 }
                             }}
                             disabled={getCurrentStep() === 0}
@@ -779,13 +792,14 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         <Button
                             icon={<RightOutlined />}
                             onClick={() => {
+                                const docId = progress?.documentId || selectedDocId;
                                 const currentStep = getCurrentStep();
                                 if (currentStep === 0) {
                                     // 从上传到文本提取
-                                    window.location.hash = `#/documents?view=textExtraction&docId=${selectedDocId}`;
+                                    window.location.hash = `#/documents?view=textExtraction&docId=${docId}`;
                                 } else if (currentStep === 1) {
                                     // 从文本提取到分块
-                                    window.location.hash = `#/documents?view=chunking&docId=${selectedDocId}`;
+                                    window.location.hash = `#/documents?view=chunking&docId=${docId}`;
                                 }
                             }}
                             disabled={getCurrentStep() >= 2}
@@ -800,8 +814,9 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         icon={<ThunderboltOutlined />}
                         onClick={async () => {
                             try {
+                                const docId = progress?.documentId || selectedDocId;
                                 // TODO: 触发完整的处理流程
-                                message.success('开始处理文档：' + selectedDocId);
+                                message.success('开始处理文档：' + docId);
                             } catch (error) {
                                 message.error('处理失败：' + error.message);
                             }
