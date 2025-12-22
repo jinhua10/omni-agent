@@ -2,6 +2,7 @@ package top.yumbo.ai.storage.s3;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -11,6 +12,7 @@ import top.yumbo.ai.storage.api.model.Image;
 import top.yumbo.ai.storage.api.model.PPLData;
 import top.yumbo.ai.storage.api.model.StorageStatistics;
 
+import java.io.ByteArrayOutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -767,5 +769,211 @@ public class S3DocumentStorage implements DocumentStorageService {
             return false;
         }
     }
-}
 
+    // ========== 文件系统浏览实现 (File System Browse Implementation) ==========
+    // S3通过对象键(Object Key)实现虚拟文件系统，使用/分隔路径
+
+    @Override
+    public List<Map<String, Object>> listFiles(String virtualPath) {
+        try {
+            List<Map<String, Object>> items = new ArrayList<>();
+            String prefix = virtualPath.isEmpty() ? "" : virtualPath + "/";
+            Set<String> directories = new HashSet<>();
+
+            // 列出指定前缀的所有对象
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .delimiter("/")  // 使用分隔符模拟目录结构
+                    .build();
+
+            ListObjectsV2Response response = s3Client.listObjectsV2(listRequest);
+
+            // 处理公共前缀（目录）
+            for (CommonPrefix commonPrefix : response.commonPrefixes()) {
+                String dirPath = commonPrefix.prefix();
+                String dirName = dirPath.substring(prefix.length());
+                dirName = dirName.endsWith("/") ? dirName.substring(0, dirName.length() - 1) : dirName;
+
+                Map<String, Object> dirItem = new HashMap<>();
+                dirItem.put("name", dirName);
+                dirItem.put("type", "directory");
+                dirItem.put("path", virtualPath.isEmpty() ? dirName : virtualPath + "/" + dirName);
+                items.add(dirItem);
+            }
+
+            // 处理对象（文件）
+            for (S3Object s3Object : response.contents()) {
+                String objectKey = s3Object.key();
+                // 跳过目录本身
+                if (objectKey.equals(prefix)) {
+                    continue;
+                }
+
+                String fileName = objectKey.substring(prefix.length());
+
+                Map<String, Object> fileItem = new HashMap<>();
+                fileItem.put("name", fileName);
+                fileItem.put("type", "file");
+                fileItem.put("path", objectKey);
+                fileItem.put("size", s3Object.size());
+                fileItem.put("modified", s3Object.lastModified() != null ?
+                        s3Object.lastModified().toEpochMilli() : System.currentTimeMillis());
+                items.add(fileItem);
+            }
+
+            return items;
+        } catch (Exception e) {
+            log.error("列出文件失败: {}", virtualPath, e);
+            throw new RuntimeException("列出文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public byte[] readFile(String virtualPath) {
+        try {
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(virtualPath)
+                    .build();
+
+            ResponseInputStream<GetObjectResponse> response = s3Client.getObject(getRequest);
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = response.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            response.close();
+
+            return outputStream.toByteArray();
+        } catch (NoSuchKeyException e) {
+            log.warn("文件不存在: {}", virtualPath);
+            return null;
+        } catch (Exception e) {
+            log.error("读取文件失败: {}", virtualPath, e);
+            throw new RuntimeException("读取文件失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean deleteFile(String virtualPath) {
+        try {
+            // 删除单个文件或递归删除目录
+            String prefix = virtualPath.endsWith("/") ? virtualPath : virtualPath + "/";
+
+            // 先尝试删除作为文件
+            try {
+                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .key(virtualPath)
+                        .build();
+
+                s3Client.deleteObject(deleteRequest);
+                log.info("✅ 删除文件成功: {}", virtualPath);
+                return true;
+            } catch (Exception e) {
+                // 可能是目录，继续尝试删除目录内容
+            }
+
+            // 列出并删除所有匹配的对象
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            boolean deleted = false;
+            for (S3Object s3Object : listResponse.contents()) {
+                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .key(s3Object.key())
+                        .build();
+
+                s3Client.deleteObject(deleteRequest);
+                deleted = true;
+            }
+
+            if (deleted) {
+                log.info("✅ 删除目录成功: {}", virtualPath);
+            }
+            return deleted;
+        } catch (Exception e) {
+            log.error("删除失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean createDirectory(String virtualPath) {
+        try {
+            // S3中创建"目录"只需上传一个空对象，对象名以/结尾
+            String dirPath = virtualPath.endsWith("/") ? virtualPath : virtualPath + "/";
+
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(dirPath)
+                    .build();
+
+            s3Client.putObject(putRequest, RequestBody.fromBytes(new byte[0]));
+
+            log.info("✅ 创建目录成功: {}", virtualPath);
+            return true;
+        } catch (Exception e) {
+            log.error("创建目录失败: {}", virtualPath, e);
+            return false;
+        }
+    }
+
+    @Override
+    public Map<String, Object> getStorageStats(String virtualPath) {
+        try {
+            String prefix = virtualPath.isEmpty() ? "" : virtualPath + "/";
+            long[] stats = {0, 0, 0}; // [files, folders, size]
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response response;
+            String continuationToken = null;
+
+            do {
+                if (continuationToken != null) {
+                    listRequest = listRequest.toBuilder()
+                            .continuationToken(continuationToken)
+                            .build();
+                }
+
+                response = s3Client.listObjectsV2(listRequest);
+
+                for (S3Object s3Object : response.contents()) {
+                    if (s3Object.key().endsWith("/")) {
+                        stats[1]++; // 目录
+                    } else {
+                        stats[0]++; // 文件
+                        stats[2] += s3Object.size();
+                    }
+                }
+
+                continuationToken = response.nextContinuationToken();
+            } while (response.isTruncated());
+
+            return Map.of(
+                    "totalFiles", stats[0],
+                    "totalFolders", stats[1],
+                    "totalSize", stats[2]
+            );
+        } catch (Exception e) {
+            log.error("获取存储统计失败: {}", virtualPath, e);
+            return Map.of(
+                    "totalFiles", 0L,
+                    "totalFolders", 0L,
+                    "totalSize", 0L
+            );
+        }
+    }
+}
