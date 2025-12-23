@@ -93,18 +93,6 @@ function TextExtractionConfig({ documentId }) {
     }
   }, [documentId])
 
-  // 当有documentId时，自动开始提取
-  useEffect(() => {
-    if (documentId && documentConfig && !extracting && !extractionResult) {
-      // 只有在没有提取结果时才自动开始
-      // 延迟500ms自动开始，给用户看到界面的机会
-      const timer = setTimeout(() => {
-        handleAutoExtract()
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [documentId, documentConfig, extractionResult])
-
   const loadDocumentConfig = async () => {
     if (!documentId) return
     try {
@@ -191,9 +179,16 @@ function TextExtractionConfig({ documentId }) {
         buffer = lines.pop() // 保留不完整的行
 
         for (const line of lines) {
-          if (line.trim().startsWith('data: ')) {
+          const trimmedLine = line.trim()
+          // 处理SSE格式：忽略event行，只处理data行
+          if (trimmedLine.startsWith('data:')) {
             try {
-              const data = JSON.parse(line.slice(6))
+              // 提取data:后面的JSON内容（处理有无空格的情况）
+              const jsonStr = trimmedLine.startsWith('data: ') ? trimmedLine.slice(6) : trimmedLine.slice(5)
+              const data = JSON.parse(jsonStr)
+              
+              console.log('📥 收到SSE事件:', data.type, data)
+              
               if (data.type === 'progress') {
                 setExtractionProgress({
                   status: 'processing',
@@ -208,6 +203,7 @@ function TextExtractionConfig({ documentId }) {
                   message: data.message
                 }))
               } else if (data.type === 'content') {
+                console.log('📄 累加文本内容，长度:', data.content?.length || 0)
                 setExtractionResult(prev => prev + (data.content || ''))
               } else if (data.type === 'complete') {
                 setExtractionProgress({ 
@@ -218,7 +214,7 @@ function TextExtractionConfig({ documentId }) {
                 message.success(t('textExtractionConfig.tips.extractionComplete') || '提取完成')
               }
             } catch (e) {
-              console.error('解析SSE数据失败:', e)
+              console.error('解析SSE数据失败:', e, '原始行:', trimmedLine)
             }
           }
         }
@@ -372,36 +368,43 @@ function TextExtractionConfig({ documentId }) {
                   )}
                 </Space>
               </div>
-
-              {/* 提取结果显示 */}
-              {documentId && extractionResult && (
-                <Card 
-                  title={
-                    <Space>
-                      <span>📄 提取结果</span>
-                      <Tag color="blue">{extractionResult.length} 字符</Tag>
-                      {extractionProgress?.accuracy && (
-                        <Tag color="green">精度: {(extractionProgress.accuracy * 100).toFixed(1)}%</Tag>
-                      )}
-                    </Space>
-                  } 
-                  style={{ marginTop: 16 }}
-                >
-                  <TextArea
-                    value={extractionResult}
-                    readOnly
-                    autoSize={{ minRows: 10, maxRows: 30 }}
-                    style={{ fontFamily: 'monospace' }}
-                    placeholder="提取的文本内容将显示在这里..."
-                  />
-                </Card>
-              )}
             </Space>
           </Card>
         </div>
 
-        {/* 右侧：预览/说明 */}
-        <div className="preview-panel">
+        {/* 右侧：如果有文档ID且有提取结果，显示提取结果；否则显示模型说明 */}
+        {documentId && extractionResult ? (
+          <div className="preview-panel">
+            <Card 
+              title={
+                <Space>
+                  <span>📄 提取结果</span>
+                  <Tag color="blue">{extractionResult.length} 字符</Tag>
+                  {extractionProgress?.accuracy && (
+                    <Tag color="green">精度: {(extractionProgress.accuracy * 100).toFixed(1)}%</Tag>
+                  )}
+                </Space>
+              }
+              style={{ height: '100%' }}
+              bodyStyle={{ height: 'calc(100% - 57px)', padding: 0 }}
+            >
+              <TextArea
+                value={extractionResult}
+                readOnly
+                style={{ 
+                  height: '100%',
+                  fontFamily: 'monospace',
+                  fontSize: '13px',
+                  lineHeight: '1.6',
+                  border: 'none',
+                  resize: 'none'
+                }}
+                placeholder="提取的文本内容将显示在这里..."
+              />
+            </Card>
+          </div>
+        ) : (
+          <div className="preview-panel">
           <Card
             title={
               <Space>
@@ -498,6 +501,7 @@ function TextExtractionConfig({ documentId }) {
             </Space>
           </Card>
         </div>
+        )}
       </div>
     </div>
   )

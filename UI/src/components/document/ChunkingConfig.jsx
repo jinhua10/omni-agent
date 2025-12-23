@@ -54,6 +54,7 @@ function ChunkingConfig({ documentId }) {
   const [strategies, setStrategies] = useState([])
   const [currentStrategy, setCurrentStrategy] = useState(null)
   const [documentConfig, setDocumentConfig] = useState(null)
+  const [documentInfo, setDocumentInfo] = useState(null)
   const [previewText, setPreviewText] = useState('')
   const [previewResult, setPreviewResult] = useState(null)
   const [comparisonMode, setComparisonMode] = useState(false)
@@ -74,14 +75,29 @@ function ChunkingConfig({ documentId }) {
     try {
       // ⭐ 对URL中的documentId进行编码
       const encodedDocId = encodeURIComponent(documentId)
-      const response = await fetch(`/api/system/rag-config/document/${encodedDocId}`)
-      const result = await response.json()
-      if (result.success && result.data) {
-        setDocumentConfig(result.data)
+      
+      // 加载文档配置
+      const configResponse = await fetch(`/api/system/rag-config/document/${encodedDocId}`)
+      const configResult = await configResponse.json()
+      if (configResult.success && configResult.data) {
+        setDocumentConfig(configResult.data)
         // 如果有文档配置，应用其分块策略
-        if (result.data.chunkingStrategy) {
-          form.setFieldsValue(result.data.chunkingStrategy)
+        if (configResult.data.chunkingStrategy) {
+          form.setFieldsValue(configResult.data.chunkingStrategy)
         }
+        // 如果有提取的文本，自动填充到预览文本框
+        if (configResult.data.extractedText) {
+          console.log('📄 加载已提取的文本，长度:', configResult.data.extractedText.length)
+          setPreviewText(configResult.data.extractedText)
+        }
+      }
+      
+      // 加载文档详情（文件名等信息）
+      const docResponse = await fetch(`/api/documents/${encodedDocId}`)
+      const docResult = await docResponse.json()
+      if (docResult.success && docResult.data) {
+        setDocumentInfo(docResult.data)
+        console.log('📋 加载文档信息:', docResult.data.fileName)
       }
     } catch (error) {
       console.error('加载文档配置失败:', error)
@@ -526,6 +542,25 @@ function ChunkingConfig({ documentId }) {
         <div className="page-header">
           <h1>{t('chunkingConfig.title')}</h1>
           <p className="subtitle">{t('chunkingConfig.subtitle')}</p>
+          {documentId && documentInfo && (
+            <Alert
+              message={
+                <Space>
+                  <span>📄 当前文档:</span>
+                  <Tag color="blue">{documentInfo.fileName}</Tag>
+                  {documentInfo.fileSize && (
+                    <Tag color="green">{(documentInfo.fileSize / 1024).toFixed(2)} KB</Tag>
+                  )}
+                  {documentConfig?.extractedText && (
+                    <Tag color="purple">已提取 {documentConfig.extractedText.length} 字符</Tag>
+                  )}
+                </Space>
+              }
+              type="info"
+              showIcon
+              style={{ marginTop: 16 }}
+            />
+          )}
         </div>
 
         <Row gutter={24}>

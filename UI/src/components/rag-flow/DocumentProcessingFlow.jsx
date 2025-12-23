@@ -966,7 +966,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         subTitle: (progress?.documentId || selectedDocId) && (
                             <div style={{ marginTop: '8px' }}>
                                 <Select
-                                    style={{ width: '100%', maxWidth: '300px' }}
+                                    style={{ width: '300px', maxWidth: '300px' }}
                                     size="small"
                                     placeholder="选择分块策略"
                                     value={documentConfigs[progress?.documentId || selectedDocId]?.chunkingStrategy || undefined}
