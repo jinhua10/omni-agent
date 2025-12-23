@@ -573,9 +573,21 @@ public class SystemRAGConfigController {
             @PathVariable String documentId,
             @RequestBody ApplyTemplateRequest request) {
         try {
+            log.info("📝 收到应用模板请求: documentId={}, templateId={}", documentId, request.getTemplateId());
+
+            // 验证参数
+            if (request.getTemplateId() == null || request.getTemplateId().isEmpty()) {
+                log.error("❌ 模板ID为空: documentId={}", documentId);
+                return ApiResponse.error("模板ID不能为空");
+            }
+
             configService.applyTemplateToDocument(documentId, request.getTemplateId());
-            log.info("📋 应用策略模板到文档: doc={}, template={}", documentId, request.getTemplateId());
+            log.info("✅ 应用策略模板成功: doc={}, template={}", documentId, request.getTemplateId());
             return ApiResponse.success(null, "策略模板应用成功");
+        } catch (IllegalArgumentException e) {
+            log.error("❌ 应用策略模板失败（参数错误）: doc={}, template={}, error={}",
+                documentId, request.getTemplateId(), e.getMessage());
+            return ApiResponse.error(e.getMessage());
         } catch (Exception e) {
             log.error("❌ 应用策略模板失败: doc={}, template={}", documentId, request.getTemplateId(), e);
             return ApiResponse.error("应用失败: " + e.getMessage());

@@ -848,7 +848,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                     style={{ width: '100%', maxWidth: '300px' }}
                                     size="small"
                                     placeholder="选择文本提取方式"
-                                    value={documentConfigs[progress?.documentId || selectedDocId]?.textExtractionModel}
+                                    value={documentConfigs[progress?.documentId || selectedDocId]?.textExtractionModel || undefined}
                                     onChange={(value) => {
                                         const docId = progress?.documentId || selectedDocId;
                                         if (docId) {
@@ -873,19 +873,19 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                         </>
                                     )}
                                 >
-                                    <Option value="standard">
+                                    <Option key="standard" value="standard">
                                         <Space>
                                             <FileTextOutlined style={{ color: '#1890ff' }} />
                                             标准提取
                                         </Space>
                                     </Option>
-                                    <Option value="vision-llm">
+                                    <Option key="vision-llm" value="vision-llm">
                                         <Space>
                                             <EyeOutlined style={{ color: '#722ed1' }} />
                                             Vision LLM
                                         </Space>
                                     </Option>
-                                    <Option value="ocr">
+                                    <Option key="ocr" value="ocr">
                                         <Space>
                                             <ScanOutlined style={{ color: '#52c41a' }} />
                                             OCR识别
@@ -934,7 +934,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                     style={{ width: '100%', maxWidth: '300px' }}
                                     size="small"
                                     placeholder="选择分块策略"
-                                    value={documentConfigs[progress?.documentId || selectedDocId]?.chunkingStrategy}
+                                    value={documentConfigs[progress?.documentId || selectedDocId]?.chunkingStrategy || undefined}
                                     onChange={(value) => {
                                         const docId = progress?.documentId || selectedDocId;
                                         if (docId) {
