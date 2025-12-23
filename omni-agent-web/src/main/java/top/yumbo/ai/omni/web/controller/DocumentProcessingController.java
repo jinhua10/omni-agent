@@ -75,9 +75,8 @@ public class DocumentProcessingController {
 
                 sendProgress(emitter, 30, "正在解析文档格式...");
 
-                // TODO: 调用实际的文本提取服务
-                // String extractedText = documentProcessorManager.extractText(content, request.getModel());
-                String extractedText = simulateTextExtraction(content, request.getModel());
+                // 调用实际的文本提取服务
+                String extractedText = extractTextWithProcessor(documentId, content, request.getModel());
 
                 sendProgress(emitter, 80, "文本提取完成");
 
@@ -335,6 +334,57 @@ public class DocumentProcessingController {
     // 模拟方法（TODO: 替换为实际实现）
     private String simulateTextExtraction(byte[] content, String model) {
         return "这是模拟提取的文本内容，使用模型: " + model + "\\n文档大小: " + content.length + " 字节";
+    }
+
+    /**
+     * 使用DocumentProcessorManager提取文本
+     */
+    private String extractTextWithProcessor(String documentId, byte[] content, String model) {
+        try {
+            // 从documentId获取文件扩展名
+            String fileExtension = getFileExtension(documentId);
+
+            // 创建处理上下文
+            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
+                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+                            .fileBytes(content)
+                            .fileExtension(fileExtension)
+                            .originalFileName(documentId)
+                            .fileSize(content.length)
+                            .options(Map.of("model", model))
+                            .build();
+
+            // 调用文档处理器
+            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
+                    documentProcessorManager.processDocument(context);
+
+            if (result.isSuccess() && result.getContent() != null) {
+                log.info("✅ 文档处理成功: documentId={}, contentLength={}",
+                        documentId, result.getContent().length());
+                return result.getContent();
+            } else {
+                log.warn("⚠️ 文档处理未返回内容: documentId={}, error={}",
+                        documentId, result.getError());
+                return "文档处理失败: " + (result.getError() != null ? result.getError() : "未知错误");
+            }
+        } catch (Exception e) {
+            log.error("❌ 文档处理异常: documentId={}", documentId, e);
+            return "文档处理异常: " + e.getMessage();
+        }
+    }
+
+    /**
+     * 从文件名获取扩展名
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "";
+        }
+        int lastDot = filename.lastIndexOf('.');
+        if (lastDot > 0 && lastDot < filename.length() - 1) {
+            return filename.substring(lastDot + 1).toLowerCase();
+        }
+        return "";
     }
 
     private int simulateChunking(String text, String strategy) {

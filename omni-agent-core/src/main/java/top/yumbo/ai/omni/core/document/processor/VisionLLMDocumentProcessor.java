@@ -942,20 +942,20 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      */
     private String recognizePageWithVisionLLM(DocumentPage page, String prompt) {
         try {
+            // 检查 AIService 配置
             if (aiService == null) {
                 log.warn("⚠️ [VisionLLM] AI Service 未配置，返回占位内容");
                 return String.format("[页面 %d 的内容 - AI Service 未配置]\n包含 %d 张图片",
                         page.getPageNumber(), page.getImages().size());
             }
 
-            // 1. 将所有图片编码为 Base64
-            List<String> base64Images = new ArrayList<>();
+            // 1. 提取所有图片数据
+            List<byte[]> imagesData = new ArrayList<>();
             for (ExtractedImage image : page.getImages()) {
-                String base64 = Base64.getEncoder().encodeToString(image.getData());
-                base64Images.add(base64);
+                imagesData.add(image.getData());
             }
 
-            if (base64Images.isEmpty()) {
+            if (imagesData.isEmpty()) {
                 log.warn("⚠️ [VisionLLM] 页面 {} 没有图片", page.getPageNumber());
                 return "";
             }
@@ -963,21 +963,27 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             // 2. 构建 Vision 提示词
             String visionPrompt = buildVisionPrompt(page, prompt);
 
-            // 3. 调用 AI Service 进行图片分析 ⭐
+            // 3. 调用 AIService 进行图片分析 ⭐
             log.info("🔍 [VisionLLM] 调用 Vision API 分析页面 {}, 图片数: {}",
-                    page.getPageNumber(), base64Images.size());
+                    page.getPageNumber(), imagesData.size());
 
             try {
-                // 调用 AI Service 的 chat 方法
-                // 注意：这里需要 AI Service 支持图片输入
-                // 对于支持 Vision 的模型（如 GPT-4V、千问VL 等），可以在 prompt 中包含图片信息
-
-                String result = aiService.chat(visionPrompt);
+                // 调用 AIService 的 analyzeImages 方法
+                String result = aiService.analyzeImages(imagesData, visionPrompt);
 
                 log.info("✅ [VisionLLM] 页面 {} 分析完成，内容长度: {} chars",
                         page.getPageNumber(), result != null ? result.length() : 0);
 
                 return result != null ? result : "";
+
+            } catch (UnsupportedOperationException e) {
+                log.error("❌ [VisionLLM] 当前AI服务不支持Vision功能: {}", e.getMessage());
+
+                // 降级：返回提示信息
+                return String.format("[页面 %d - 当前AI服务不支持Vision功能]\n" +
+                        "请配置支持Vision的模型（如：qwen-vl-plus, gpt-4o等）\n" +
+                        "包含 %d 张图片",
+                        page.getPageNumber(), page.getImages().size());
 
             } catch (Exception apiEx) {
                 log.error("❌ [VisionLLM] Vision API 调用失败: {}", apiEx.getMessage());
@@ -997,6 +1003,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             return String.format("[页面 %d 识别失败: %s]", page.getPageNumber(), e.getMessage());
         }
     }
+
 
     /**
      * 构建 Vision 提示词

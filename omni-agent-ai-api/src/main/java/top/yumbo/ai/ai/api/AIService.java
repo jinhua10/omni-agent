@@ -141,6 +141,41 @@ public interface AIService {
      */
     boolean isModelAvailable(String modelName);
 
+    // ========== Vision 多模态 (Vision Multi-Modal) ==========
+
+    /**
+     * 分析单张图片（Vision LLM）
+     * @param imageData 图片数据（Base64编码或字节数组）
+     * @param prompt 提示词
+     * @return AI分析结果
+     */
+    default String analyzeImage(byte[] imageData, String prompt) {
+        throw new UnsupportedOperationException("当前AI服务不支持图片分析，请使用支持Vision的模型");
+    }
+
+    /**
+     * 分析多张图片（Vision LLM）
+     * 用于理解包含多张图片的复杂内容（如PPT幻灯片、流程图等）
+     *
+     * @param imagesData 多张图片数据列表
+     * @param prompt 提示词
+     * @return AI分析结果
+     */
+    default String analyzeImages(List<byte[]> imagesData, String prompt) {
+        throw new UnsupportedOperationException("当前AI服务不支持多图片分析，请使用支持Vision的模型");
+    }
+
+    /**
+     * 多模态对话（支持文本+图片）
+     * 用于复杂的多模态理解场景
+     *
+     * @param messages 对话历史（可能包含图片）
+     * @return AI响应
+     */
+    default AIResponse chatWithVision(List<ChatMessage> messages) {
+        throw new UnsupportedOperationException("当前AI服务不支持Vision对话，请使用支持Vision的模型");
+    }
+
     // ========== 健康检查 (Health Check) ==========
 
     /**

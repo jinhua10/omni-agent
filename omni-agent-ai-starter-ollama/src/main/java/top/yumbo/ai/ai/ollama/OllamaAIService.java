@@ -335,5 +335,164 @@ public class OllamaAIService implements AIService {
         status.put("timestamp", System.currentTimeMillis());
         return status;
     }
+
+    // ========== Vision Multi-Modal (Ollama 离线图像识别) ==========
+
+    /**
+     * 分析单张图片（Ollama Vision 模型）
+     * 支持的模型：llava, bakllava, llava-phi3, llava-llama3
+     */
+    @Override
+    public String analyzeImage(byte[] imageData, String prompt) {
+        List<byte[]> images = new ArrayList<>();
+        images.add(imageData);
+        return analyzeImages(images, prompt);
+    }
+
+    /**
+     * 分析多张图片（Ollama Vision 模型）
+     * 使用离线的 LLaVA 等多模态模型进行图像理解
+     */
+    @Override
+    public String analyzeImages(List<byte[]> imagesData, String prompt) {
+        try {
+            log.info("🔍 [Ollama Vision] 离线分析 {} 张图片", imagesData.size());
+
+            // 创建多模态消息
+            ChatMessage message = ChatMessage.userWithImages(prompt, imagesData);
+
+            // 使用chatWithVision方法
+            List<ChatMessage> messages = new ArrayList<>();
+            messages.add(message);
+
+            AIResponse response = chatWithVision(messages);
+
+            if (response.isSuccess()) {
+                log.info("✅ [Ollama Vision] 分析完成，内容长度: {} chars", response.getText().length());
+                return response.getText();
+            } else {
+                log.error("❌ [Ollama Vision] 分析失败: {}", response.getError());
+                return "[Ollama Vision分析失败: " + response.getError() + "]";
+            }
+        } catch (Exception e) {
+            log.error("❌ [Ollama Vision] 分析异常", e);
+            return "[Ollama Vision分析异常: " + e.getMessage() + "]";
+        }
+    }
+
+    /**
+     * 多模态对话（Ollama Vision 支持）
+     *
+     * Ollama API 格式：
+     * {
+     *   "model": "llava",
+     *   "messages": [
+     *     {
+     *       "role": "user",
+     *       "content": "What's in this image?",
+     *       "images": ["base64_encoded_image"]
+     *     }
+     *   ]
+     * }
+     */
+    @Override
+    public AIResponse chatWithVision(List<ChatMessage> messages) {
+        try {
+            log.debug("🎨 [Ollama Vision] 发送多模态对话请求");
+
+            String url = properties.getBaseUrl() + "/api/chat";
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", currentModel);
+            requestBody.put("stream", false);
+
+            // 转换消息格式（Ollama Vision 格式）
+            List<Map<String, Object>> ollamaMessages = new ArrayList<>();
+            for (ChatMessage msg : messages) {
+                Map<String, Object> ollamaMsg = new HashMap<>();
+                ollamaMsg.put("role", msg.getRole());
+
+                // 如果有多模态内容
+                if (msg.getContentParts() != null && !msg.getContentParts().isEmpty()) {
+                    // 提取文本内容
+                    StringBuilder textContent = new StringBuilder();
+                    List<String> base64Images = new ArrayList<>();
+
+                    for (ChatMessage.ContentPart part : msg.getContentParts()) {
+                        if ("text".equals(part.getType())) {
+                            if (textContent.length() > 0) {
+                                textContent.append(" ");
+                            }
+                            textContent.append(part.getText());
+                        } else if ("image_url".equals(part.getType())) {
+                            // 提取 base64 图片数据
+                            String imageUrl = part.getImageUrl().getUrl();
+                            if (imageUrl.startsWith("data:image/")) {
+                                // 提取 base64 部分: data:image/jpeg;base64,xxx
+                                int commaIndex = imageUrl.indexOf(',');
+                                if (commaIndex > 0) {
+                                    String base64Data = imageUrl.substring(commaIndex + 1);
+                                    base64Images.add(base64Data);
+                                }
+                            }
+                        }
+                    }
+
+                    ollamaMsg.put("content", textContent.toString());
+                    if (!base64Images.isEmpty()) {
+                        ollamaMsg.put("images", base64Images);
+                    }
+                } else {
+                    // 普通文本消息
+                    ollamaMsg.put("content", msg.getContent());
+                }
+
+                ollamaMessages.add(ollamaMsg);
+            }
+
+            requestBody.put("messages", ollamaMessages);
+
+            // 发送请求
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            log.debug("🌐 [Ollama Vision] 发送到: {}", url);
+            ResponseEntity<Map> responseEntity = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    entity,
+                    Map.class
+            );
+
+            Map<String, Object> body = responseEntity.getBody();
+            if (body == null) {
+                throw new RuntimeException("Empty response body");
+            }
+
+            // 解析 Ollama 响应格式
+            Map<String, Object> messageObj = (Map<String, Object>) body.get("message");
+            if (messageObj != null) {
+                String content = (String) messageObj.get("content");
+
+                return AIResponse.builder()
+                        .text(content)
+                        .model(currentModel)
+                        .finishReason("stop")
+                        .success(true)
+                        .build();
+            }
+
+            throw new RuntimeException("Invalid response format");
+
+        } catch (Exception e) {
+            log.error("❌ [Ollama Vision] 失败", e);
+            return AIResponse.builder()
+                    .text("")
+                    .success(false)
+                    .error(e.getMessage())
+                    .build();
+        }
+    }
 }
 

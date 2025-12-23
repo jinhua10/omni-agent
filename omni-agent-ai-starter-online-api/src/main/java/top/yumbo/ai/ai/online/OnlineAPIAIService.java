@@ -547,5 +547,116 @@ public class OnlineAPIAIService implements AIService {
                     .build();
         }
     }
+
+    // ========== Vision Multi-Modal ==========
+
+    @Override
+    public String analyzeImage(byte[] imageData, String prompt) {
+        List<byte[]> images = new ArrayList<>();
+        images.add(imageData);
+        return analyzeImages(images, prompt);
+    }
+
+    @Override
+    public String analyzeImages(List<byte[]> imagesData, String prompt) {
+        try {
+            log.info("🔍 [Vision] 分析 {} 张图片", imagesData.size());
+
+            // 创建多模态消息
+            ChatMessage message = ChatMessage.userWithImages(prompt, imagesData);
+
+            // 使用chatWithVision方法
+            List<ChatMessage> messages = new ArrayList<>();
+            messages.add(message);
+
+            AIResponse response = chatWithVision(messages);
+
+            if (response.isSuccess()) {
+                log.info("✅ [Vision] 分析完成，内容长度: {} chars", response.getText().length());
+                return response.getText();
+            } else {
+                log.error("❌ [Vision] 分析失败: {}", response.getError());
+                return "[Vision分析失败: " + response.getError() + "]";
+            }
+        } catch (Exception e) {
+            log.error("❌ [Vision] 分析异常", e);
+            return "[Vision分析异常: " + e.getMessage() + "]";
+        }
+    }
+
+    @Override
+    public AIResponse chatWithVision(List<ChatMessage> messages) {
+        try {
+            log.debug("🎨 [Vision Chat] 发送多模态对话请求");
+
+            // 构建请求体（支持多模态内容）
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", currentModel);
+            requestBody.put("max_tokens", 2000);
+            Double temp = properties.getTemperature();
+            requestBody.put("temperature", temp != null ? temp : 0.7);
+
+            // 转换消息格式（支持多模态）
+            List<Map<String, Object>> formattedMessages = new ArrayList<>();
+            for (ChatMessage msg : messages) {
+                Map<String, Object> formattedMsg = new HashMap<>();
+                formattedMsg.put("role", msg.getRole());
+
+                // 如果有多模态内容，使用contentParts
+                if (msg.getContentParts() != null && !msg.getContentParts().isEmpty()) {
+                    List<Map<String, Object>> contentArray = new ArrayList<>();
+                    for (ChatMessage.ContentPart part : msg.getContentParts()) {
+                        Map<String, Object> partMap = new HashMap<>();
+                        partMap.put("type", part.getType());
+
+                        if ("text".equals(part.getType())) {
+                            partMap.put("text", part.getText());
+                        } else if ("image_url".equals(part.getType())) {
+                            Map<String, String> imageUrlMap = new HashMap<>();
+                            imageUrlMap.put("url", part.getImageUrl().getUrl());
+                            partMap.put("image_url", imageUrlMap);
+                        }
+
+                        contentArray.add(partMap);
+                    }
+                    formattedMsg.put("content", contentArray);
+                } else {
+                    // 普通文本消息
+                    formattedMsg.put("content", msg.getContent());
+                }
+
+                formattedMessages.add(formattedMsg);
+            }
+
+            requestBody.put("messages", formattedMessages);
+
+            // 发送请求
+            HttpHeaders headers = createHeaders();
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            log.debug("🌐 [Vision Chat] 发送到: {}", getEndpoint());
+            ResponseEntity<Map> responseEntity = restTemplate.exchange(
+                    getEndpoint(),
+                    HttpMethod.POST,
+                    entity,
+                    Map.class
+            );
+
+            Map<String, Object> body = responseEntity.getBody();
+            if (body == null) {
+                throw new RuntimeException("Empty response body");
+            }
+
+            return parseResponse(body);
+
+        } catch (Exception e) {
+            log.error("❌ [Vision Chat] 失败", e);
+            return AIResponse.builder()
+                    .text("")
+                    .success(false)
+                    .error(e.getMessage())
+                    .build();
+        }
+    }
 }
 
