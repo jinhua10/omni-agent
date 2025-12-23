@@ -38,6 +38,7 @@ import java.util.Optional;
  * @see RAGOptimizationService 推荐使用的通用框架
  * @deprecated 推荐使用 {@link RAGOptimizationService}，本类保留用于向后兼容
  */
+@Deprecated
 @Slf4j
 @Service
 public class PPLStorageService {
