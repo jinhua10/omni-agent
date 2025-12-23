@@ -108,6 +108,7 @@ function TextExtractionConfig({ documentId }) {
   const loadDocumentConfig = async () => {
     if (!documentId) return
     try {
+      // ⭐ 使用旧API保持兼容
       const response = await fetch(`/api/system/rag-config/document/${documentId}`)
       const result = await response.json()
       if (result.success) {
@@ -158,7 +159,8 @@ function TextExtractionConfig({ documentId }) {
     message.info(t('textExtractionConfig.tips.autoExtractionStarted') || '开始自动提取...')
 
     try {
-      const response = await fetch(`/api/system/rag-config/document/${documentId}/extract`, {
+      // ⭐ 新API：迁移到 DocumentProcessingController
+      const response = await fetch(`/api/documents/processing/${documentId}/extract`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

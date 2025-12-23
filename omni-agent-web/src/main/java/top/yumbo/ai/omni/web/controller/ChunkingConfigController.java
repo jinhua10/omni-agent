@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import top.yumbo.ai.omni.web.model.ApiResponse;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.storage.api.model.Chunk;
 
@@ -338,27 +339,6 @@ public class ChunkingConfigController {
         private long elapsedTimeMs;
         private ChunkingStatistics statistics;
         private List<ChunkPreview> chunkPreviews;  // 前几个分块的预览
-    }
-
-    @Data
-    public static class ApiResponse<T> {
-        private boolean success;
-        private T data;
-        private String error;
-
-        public static <T> ApiResponse<T> success(T data) {
-            ApiResponse<T> response = new ApiResponse<>();
-            response.setSuccess(true);
-            response.setData(data);
-            return response;
-        }
-
-        public static <T> ApiResponse<T> error(String error) {
-            ApiResponse<T> response = new ApiResponse<>();
-            response.setSuccess(false);
-            response.setError(error);
-            return response;
-        }
     }
 }
 

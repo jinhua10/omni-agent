@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import top.yumbo.ai.omni.web.model.ApiResponse;
 
 import java.util.*;
 
@@ -295,35 +296,6 @@ public class QueryExpansionConfigController {
         private Long hitCount;
         private Long missCount;
         private Long totalRequests;
-    }
-
-    @Data
-    public static class ApiResponse<T> {
-        private Boolean success;
-        private String message;
-        private T data;
-
-        public static <T> ApiResponse<T> success(T data) {
-            ApiResponse<T> response = new ApiResponse<>();
-            response.setSuccess(true);
-            response.setData(data);
-            return response;
-        }
-
-        public static <T> ApiResponse<T> success(T data, String message) {
-            ApiResponse<T> response = new ApiResponse<>();
-            response.setSuccess(true);
-            response.setMessage(message);
-            response.setData(data);
-            return response;
-        }
-
-        public static <T> ApiResponse<T> error(String message) {
-            ApiResponse<T> response = new ApiResponse<>();
-            response.setSuccess(false);
-            response.setMessage(message);
-            return response;
-        }
     }
 }
 
