@@ -11,6 +11,8 @@ import top.yumbo.ai.omni.web.service.SystemRAGConfigService;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -40,10 +42,13 @@ public class DocumentProcessingController {
     private final top.yumbo.ai.omni.core.document.DocumentProcessorManager documentProcessorManager;
     private final top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager chunkingStrategyManager;
     private final top.yumbo.ai.storage.api.DocumentStorageService storageService;
+    private final top.yumbo.ai.omni.core.document.service.DocumentExtractionResultService extractionResultService;
 
     /**
      * 触发文本提取（流式SSE）
      * POST /api/documents/processing/{documentId}/extract
+     *
+     * 支持缓存：如果之前已提取且文件未变化，直接返回缓存结果
      */
     @PostMapping(value = "/{documentId}/extract", produces = "text/event-stream;charset=UTF-8")
     public SseEmitter extractText(
@@ -54,9 +59,47 @@ public class DocumentProcessingController {
 
         CompletableFuture.runAsync(() -> {
             try {
-                log.info("🔍 开始文本提取: documentId={}, model={}", documentId, request.getModel());
+                log.info("🔍 开始文本提取: documentId={}, model={}, forceReExtract={}",
+                        documentId, request.getModel(), request.isForceReExtract());
 
-                // 更新配置
+                // ⭐ 1. 检查缓存：如果已提取且未强制重新提取
+                if (!request.isForceReExtract()) {
+                    var cachedResult = extractionResultService.findByDocumentId(documentId);
+                    if (cachedResult.isPresent() && "COMPLETED".equals(cachedResult.get().getStatus())) {
+                        var cached = cachedResult.get();
+                        log.info("✅ 使用缓存的提取结果: documentId={}, cachedAt={}",
+                                documentId, new java.util.Date(cached.getCompletedTime()));
+
+                        sendProgress(emitter, 50, "使用缓存的提取结果...");
+                        sendTextContent(emitter, cached.getExtractedText());
+                        sendComplete(emitter, "从缓存加载完成");
+
+                        // 同步到内存配置
+                        SystemRAGConfigService.DocumentRAGConfig config = configService.getDocumentConfig(documentId);
+                        config.setExtractedText(cached.getExtractedText());
+                        config.setTextExtractionModel(cached.getExtractionModel());
+                        config.setStatus("EXTRACTED");
+                        configService.setDocumentConfig(documentId, config);
+
+                        return;
+                    }
+                }
+
+                // ⭐ 2. 创建提取记录
+                long startTime = System.currentTimeMillis();
+                var extractionResult = top.yumbo.ai.omni.core.document.model.DocumentExtractionResult.builder()
+                        .documentId(documentId)
+                        .fileName(documentId)
+                        .fileExtension(getFileExtension(documentId))
+                        .extractionModel(request.getModel())
+                        .extractionMethod(request.getModel() != null && request.getModel().contains("vision") ? "vision-llm" : "text-only")
+                        .status("EXTRACTING")
+                        .startTime(startTime)
+                        .build();
+
+                extractionResultService.save(extractionResult);
+
+                // 更新内存配置
                 SystemRAGConfigService.DocumentRAGConfig config = configService.getDocumentConfig(documentId);
                 config.setTextExtractionModel(request.getModel());
                 config.setStatus("EXTRACTING");
@@ -66,21 +109,39 @@ public class DocumentProcessingController {
                 // 发送进度：开始
                 sendProgress(emitter, 10, "正在读取文档...");
 
-                // 读取中转站文件
+                // ⭐ 3. 读取中转站文件并计算MD5
                 byte[] content = readDocumentFile(documentId);
                 if (content == null) {
+                    extractionResult.setStatus("FAILED");
+                    extractionResult.setErrorMessage("文档文件不存在");
+                    extractionResult.setCompletedTime(System.currentTimeMillis());
+                    extractionResultService.save(extractionResult);
+
                     sendError(emitter, "文档文件不存在");
                     return;
                 }
 
+                // 计算MD5
+                String md5 = calculateMd5(content);
+                extractionResult.setFileSize((long) content.length);
+                extractionResult.setFileMd5(md5);
+
                 sendProgress(emitter, 30, "正在解析文档格式...");
 
-                // 调用实际的文本提取服务
+                // ⭐ 4. 调用实际的文本提取服务
                 String extractedText = extractTextWithProcessor(documentId, content, request.getModel());
 
                 sendProgress(emitter, 80, "文本提取完成");
 
-                // 保存提取结果
+                // ⭐ 5. 保存提取结果到持久化存储
+                long completedTime = System.currentTimeMillis();
+                extractionResult.setExtractedText(extractedText);
+                extractionResult.setStatus("COMPLETED");
+                extractionResult.setCompletedTime(completedTime);
+                extractionResult.setDuration(completedTime - startTime);
+                extractionResultService.save(extractionResult);
+
+                // 同步到内存配置（保持向后兼容）
                 config.setExtractedText(extractedText);
                 config.setStatus("EXTRACTED");
                 config.setUpdatedAt(System.currentTimeMillis());
@@ -89,11 +150,26 @@ public class DocumentProcessingController {
                 // 流式发送提取的文本
                 sendTextContent(emitter, extractedText);
 
-                sendComplete(emitter, "提取完成");
-                log.info("✅ 文本提取完成: documentId={}", documentId);
+                sendComplete(emitter, "提取完成并已保存");
+                log.info("✅ 文本提取完成并持久化: documentId={}, textLength={}, duration={}ms",
+                        documentId, extractedText.length(), extractionResult.getDuration());
 
             } catch (Exception e) {
                 log.error("❌ 文本提取失败: documentId={}", documentId, e);
+
+                // 更新失败状态
+                try {
+                    var failedResult = extractionResultService.findByDocumentId(documentId);
+                    failedResult.ifPresent(result -> {
+                        result.setStatus("FAILED");
+                        result.setErrorMessage(e.getMessage());
+                        result.setCompletedTime(System.currentTimeMillis());
+                        extractionResultService.save(result);
+                    });
+                } catch (Exception saveEx) {
+                    log.error("保存失败状态失败", saveEx);
+                }
+
                 sendError(emitter, "提取失败: " + e.getMessage());
             }
         });
@@ -160,6 +236,89 @@ public class DocumentProcessingController {
 
         setupEmitterCallbacks(emitter, documentId);
         return emitter;
+    }
+
+    /**
+     * 获取文档提取结果
+     * GET /api/documents/processing/{documentId}/extraction-result
+     *
+     * @return 提取结果信息（不包含完整文本，需要调用extract接口获取）
+     */
+    @GetMapping("/{documentId}/extraction-result")
+    public ApiResponse<Map<String, Object>> getExtractionResult(@PathVariable String documentId) {
+        try {
+            var result = extractionResultService.findByDocumentId(documentId);
+
+            if (result.isEmpty()) {
+                return ApiResponse.success(Map.of(
+                        "exists", false,
+                        "message", "未找到提取记录"
+                ));
+            }
+
+            var extraction = result.get();
+            Map<String, Object> info = new HashMap<>();
+            info.put("exists", true);
+            info.put("documentId", extraction.getDocumentId());
+            info.put("fileName", extraction.getFileName());
+            info.put("fileExtension", extraction.getFileExtension());
+            info.put("fileSize", extraction.getFileSize());
+            info.put("extractionModel", extraction.getExtractionModel());
+            info.put("extractionMethod", extraction.getExtractionMethod());
+            info.put("status", extraction.getStatus());
+            info.put("completedTime", extraction.getCompletedTime());
+            info.put("duration", extraction.getDuration());
+            info.put("textLength", extraction.getExtractedText() != null ? extraction.getExtractedText().length() : 0);
+            info.put("textPreview", extraction.getSummary());
+
+            return ApiResponse.success(info);
+
+        } catch (Exception e) {
+            log.error("获取提取结果失败: documentId={}", documentId, e);
+            return ApiResponse.error("获取提取结果失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取所有提取结果列表
+     * GET /api/documents/processing/extraction-results
+     */
+    @GetMapping("/extraction-results")
+    public ApiResponse<List<Map<String, Object>>> listExtractionResults() {
+        try {
+            var results = extractionResultService.findAll();
+
+            List<Map<String, Object>> list = results.stream().map(extraction -> {
+                Map<String, Object> info = new HashMap<>();
+                info.put("documentId", extraction.getDocumentId());
+                info.put("fileName", extraction.getFileName());
+                info.put("status", extraction.getStatus());
+                info.put("completedTime", extraction.getCompletedTime());
+                info.put("textLength", extraction.getExtractedText() != null ? extraction.getExtractedText().length() : 0);
+                return info;
+            }).collect(java.util.stream.Collectors.toList());
+
+            return ApiResponse.success(list);
+
+        } catch (Exception e) {
+            log.error("获取提取结果列表失败", e);
+            return ApiResponse.error("获取提取结果列表失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 删除提取结果
+     * DELETE /api/documents/processing/{documentId}/extraction-result
+     */
+    @DeleteMapping("/{documentId}/extraction-result")
+    public ApiResponse<Void> deleteExtractionResult(@PathVariable String documentId) {
+        try {
+            extractionResultService.delete(documentId);
+            return ApiResponse.success(null, "提取结果已删除");
+        } catch (Exception e) {
+            log.error("删除提取结果失败: documentId={}", documentId, e);
+            return ApiResponse.error("删除提取结果失败: " + e.getMessage());
+        }
     }
 
     /**
@@ -387,6 +546,24 @@ public class DocumentProcessingController {
         return "";
     }
 
+    /**
+     * 计算文件MD5
+     */
+    private String calculateMd5(byte[] content) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(content);
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("计算MD5失败", e);
+            return null;
+        }
+    }
+
     private int simulateChunking(String text, String strategy) {
         return text.length() / 200; // 模拟分块数量
     }
@@ -397,6 +574,10 @@ public class DocumentProcessingController {
     public static class ExtractRequest {
         private String model;
         private Boolean streaming = true;
+        /**
+         * 是否强制重新提取（忽略缓存）
+         */
+        private boolean forceReExtract = false;
     }
 
     @Data
