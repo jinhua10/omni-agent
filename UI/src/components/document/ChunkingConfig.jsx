@@ -72,7 +72,9 @@ function ChunkingConfig({ documentId }) {
   const loadDocumentConfig = async () => {
     if (!documentId) return
     try {
-      const response = await fetch(`/api/system/rag-config/document/${documentId}`)
+      // ⭐ 对URL中的documentId进行编码
+      const encodedDocId = encodeURIComponent(documentId)
+      const response = await fetch(`/api/system/rag-config/document/${encodedDocId}`)
       const result = await response.json()
       if (result.success && result.data) {
         setDocumentConfig(result.data)

@@ -108,8 +108,10 @@ function TextExtractionConfig({ documentId }) {
   const loadDocumentConfig = async () => {
     if (!documentId) return
     try {
-      // ⭐ 使用旧API保持兼容
-      const response = await fetch(`/api/system/rag-config/document/${documentId}`)
+      // ⭐ 对URL中的documentId进行编码
+      const encodedDocId = encodeURIComponent(documentId)
+      // 使用旧API保持兼容
+      const response = await fetch(`/api/system/rag-config/document/${encodedDocId}`)
       const result = await response.json()
       if (result.success) {
         setDocumentConfig(result.data)
@@ -159,8 +161,10 @@ function TextExtractionConfig({ documentId }) {
     message.info(t('textExtractionConfig.tips.autoExtractionStarted') || '开始自动提取...')
 
     try {
-      // ⭐ 新API：迁移到 DocumentProcessingController
-      const response = await fetch(`/api/documents/processing/${documentId}/extract`, {
+      // ⭐ 对URL中的documentId进行编码
+      const encodedDocId = encodeURIComponent(documentId)
+      // 新API：迁移到 DocumentProcessingController
+      const response = await fetch(`/api/documents/processing/${encodedDocId}/extract`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

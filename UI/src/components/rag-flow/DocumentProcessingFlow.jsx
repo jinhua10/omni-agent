@@ -139,7 +139,9 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     // 更新文档配置
     const updateDocumentConfig = useCallback(async (docId, configUpdates) => {
         try {
-            const response = await fetch(`/api/system/rag-config/document/${docId}`, {
+            // ⭐ 对URL中的documentId进行编码，避免中文字符问题
+            const encodedDocId = encodeURIComponent(docId);
+            const response = await fetch(`/api/system/rag-config/document/${encodedDocId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(configUpdates)

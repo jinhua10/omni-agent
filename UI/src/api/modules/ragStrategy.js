@@ -76,7 +76,9 @@ const ragStrategyApi = {
    * @returns {Promise} 应用结果
    */
   applyTemplateToDocument: async (documentId, templateId) => {
-    const response = await axios.post(`${BASE_URL}/documents/${documentId}/apply-template`, {
+    // ⭐ 对URL中的documentId进行编码
+    const encodedDocId = encodeURIComponent(documentId);
+    const response = await axios.post(`${BASE_URL}/documents/${encodedDocId}/apply-template`, {
       templateId
     });
     return response.data;
@@ -91,7 +93,9 @@ const ragStrategyApi = {
    * @returns {Promise} 保存结果
    */
   saveCurrentAsTemplate: async (documentId, templateInfo) => {
-    const response = await axios.post(`${BASE_URL}/documents/${documentId}/save-as-template`, templateInfo);
+    // ⭐ 对URL中的documentId进行编码
+    const encodedDocId = encodeURIComponent(documentId);
+    const response = await axios.post(`${BASE_URL}/documents/${encodedDocId}/save-as-template`, templateInfo);
     return response.data;
   },
 
@@ -101,7 +105,9 @@ const ragStrategyApi = {
    * @returns {Promise} 文档配置
    */
   getDocumentConfig: async (documentId) => {
-    const response = await axios.get(`${BASE_URL}/document/${documentId}`);
+    // ⭐ 对URL中的documentId进行编码
+    const encodedDocId = encodeURIComponent(documentId);
+    const response = await axios.get(`${BASE_URL}/document/${encodedDocId}`);
     return response.data;
   },
 
@@ -111,7 +117,9 @@ const ragStrategyApi = {
    * @returns {Promise} 处理结果
    */
   startProcessing: async (documentId) => {
-    const response = await axios.post(`${BASE_URL}/documents/${documentId}/process`);
+    // ⭐ 对URL中的documentId进行编码
+    const encodedDocId = encodeURIComponent(documentId);
+    const response = await axios.post(`${BASE_URL}/documents/${encodedDocId}/process`);
     return response.data;
   }
 };
