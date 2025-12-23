@@ -1,45 +1,116 @@
 package top.yumbo.ai.omni.core.document.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.core.document.model.DocumentExtractionResult;
 import top.yumbo.ai.omni.core.document.service.DocumentExtractionResultService;
+import top.yumbo.ai.storage.api.DocumentStorageService;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 文档提取结果管理服务实现
  * (Document Extraction Result Management Service Implementation)
  *
- * <p>使用基于文件的JSON存储实现持久化</p>
+ * <p>使用 DocumentStorageService 实现持久化，支持多种存储后端</p>
+ * <p>支持的存储方式：File/MongoDB/Redis/S3/MinIO/Elasticsearch</p>
  *
  * @author OmniAgent Team
  * @since 3.0.0
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DocumentExtractionResultServiceImpl implements DocumentExtractionResultService {
 
+    private final DocumentStorageService storageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Path storageDir;
 
-    public DocumentExtractionResultServiceImpl(
-            @Value("${omni-agent.data-dir:./data}") String dataDir) {
-        this.storageDir = Paths.get(dataDir, "extraction-results");
+    /**
+     * 虚拟目录前缀（用于隔离提取结果）
+     */
+    private static final String STORAGE_PREFIX = "extraction-results/";
+
+    /**
+     * 索引文档ID（用于存储所有提取结果的ID列表）
+     */
+    private static final String INDEX_DOC_ID = "extraction-results/_index";
+
+    /**
+     * 获取存储路径
+     */
+    private String getStoragePath(String documentId) {
+        return STORAGE_PREFIX + sanitizeDocumentId(documentId) + ".json";
+    }
+
+    /**
+     * 清理文档ID，避免路径安全问题
+     */
+    private String sanitizeDocumentId(String documentId) {
+        // 替换路径分隔符和特殊字符
+        return documentId.replaceAll("[/\\\\]", "_");
+    }
+
+    /**
+     * 添加到索引
+     */
+    private synchronized void addToIndex(String documentId) {
         try {
-            Files.createDirectories(storageDir);
-            log.info("📁 文档提取结果存储目录: {}", storageDir.toAbsolutePath());
-        } catch (IOException e) {
-            log.error("创建存储目录失败", e);
-            throw new RuntimeException("初始化文档提取结果服务失败", e);
+            Set<String> index = loadIndex();
+            if (index.add(documentId)) {
+                saveIndex(index);
+            }
+        } catch (Exception e) {
+            log.warn("添加到索引失败: {}", documentId, e);
+        }
+    }
+
+    /**
+     * 从索引移除
+     */
+    private synchronized void removeFromIndex(String documentId) {
+        try {
+            Set<String> index = loadIndex();
+            if (index.remove(documentId)) {
+                saveIndex(index);
+            }
+        } catch (Exception e) {
+            log.warn("从索引移除失败: {}", documentId, e);
+        }
+    }
+
+    /**
+     * 加载索引
+     */
+    private Set<String> loadIndex() {
+        try {
+            Optional<byte[]> indexData = storageService.getDocument(INDEX_DOC_ID);
+            if (indexData.isEmpty()) {
+                return new HashSet<>();
+            }
+
+            String jsonContent = new String(indexData.get(), java.nio.charset.StandardCharsets.UTF_8);
+            String[] ids = objectMapper.readValue(jsonContent, String[].class);
+            return new HashSet<>(Arrays.asList(ids));
+        } catch (Exception e) {
+            log.warn("加载索引失败", e);
+            return new HashSet<>();
+        }
+    }
+
+    /**
+     * 保存索引
+     */
+    private void saveIndex(Set<String> index) {
+        try {
+            String jsonContent = objectMapper.writeValueAsString(index.toArray(new String[0]));
+            byte[] content = jsonContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            storageService.saveDocument(INDEX_DOC_ID, "_index.json", content);
+        } catch (Exception e) {
+            log.error("保存索引失败", e);
         }
     }
 
@@ -60,13 +131,23 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
                 result.setVersion(result.getVersion() + 1);
             }
 
-            // 保存为JSON文件
-            Path filePath = getFilePath(result.getDocumentId());
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), result);
+            // 序列化为JSON
+            String jsonContent = objectMapper.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(result);
+            byte[] content = jsonContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
-            log.info("💾 文档提取结果已保存: documentId={}, status={}, textLength={}",
+            // 保存到虚拟存储（支持多种后端）
+            String storagePath = getStoragePath(result.getDocumentId());
+            String fileName = sanitizeDocumentId(result.getDocumentId()) + ".json";
+            storageService.saveDocument(storagePath, fileName, content);
+
+            // 添加到索引
+            addToIndex(result.getDocumentId());
+
+            log.info("💾 文档提取结果已保存: documentId={}, status={}, textLength={}, storage={}",
                     result.getDocumentId(), result.getStatus(),
-                    result.getExtractedText() != null ? result.getExtractedText().length() : 0);
+                    result.getExtractedText() != null ? result.getExtractedText().length() : 0,
+                    storageService.getClass().getSimpleName());
 
             return result;
 
@@ -79,13 +160,18 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
     @Override
     public Optional<DocumentExtractionResult> findByDocumentId(String documentId) {
         try {
-            Path filePath = getFilePath(documentId);
-            if (!Files.exists(filePath)) {
+            String storagePath = getStoragePath(documentId);
+
+            // 从虚拟存储读取
+            Optional<byte[]> contentOpt = storageService.getDocument(storagePath);
+            if (contentOpt.isEmpty()) {
                 return Optional.empty();
             }
 
+            // 反序列化JSON
+            String jsonContent = new String(contentOpt.get(), java.nio.charset.StandardCharsets.UTF_8);
             DocumentExtractionResult result = objectMapper.readValue(
-                    filePath.toFile(),
+                    jsonContent,
                     DocumentExtractionResult.class
             );
             return Optional.of(result);
@@ -141,8 +227,12 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
     @Override
     public void delete(String documentId) {
         try {
-            Path filePath = getFilePath(documentId);
-            Files.deleteIfExists(filePath);
+            String storagePath = getStoragePath(documentId);
+            storageService.deleteDocument(storagePath);
+
+            // 从索引移除
+            removeFromIndex(documentId);
+
             log.info("🗑️ 文档提取结果已删除: documentId={}", documentId);
 
         } catch (Exception e) {
@@ -154,23 +244,21 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
     @Override
     public List<DocumentExtractionResult> findAll() {
         try {
-            if (!Files.exists(storageDir)) {
-                return Collections.emptyList();
-            }
+            // 从索引加载所有文档ID
+            Set<String> documentIds = loadIndex();
 
-            try (Stream<Path> paths = Files.list(storageDir)) {
-                return paths
-                        .filter(path -> path.toString().endsWith(".json"))
-                        .map(this::loadFromFile)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-            }
+            return documentIds.stream()
+                    .map(this::findByDocumentId)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
 
         } catch (Exception e) {
             log.error("❌ 获取所有文档提取结果失败", e);
             return Collections.emptyList();
         }
     }
+
 
     @Override
     public List<DocumentExtractionResult> findByStatus(String status) {
@@ -241,29 +329,6 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
         } catch (Exception e) {
             log.error("❌ 获取统计信息失败", e);
             return Collections.emptyMap();
-        }
-    }
-
-    // ========== 辅助方法 ==========
-
-    /**
-     * 获取文件路径
-     */
-    private Path getFilePath(String documentId) {
-        // 对文档ID进行编码，避免文件名非法字符
-        String safeFileName = documentId.replaceAll("[^a-zA-Z0-9._-]", "_") + ".json";
-        return storageDir.resolve(safeFileName);
-    }
-
-    /**
-     * 从文件加载
-     */
-    private DocumentExtractionResult loadFromFile(Path filePath) {
-        try {
-            return objectMapper.readValue(filePath.toFile(), DocumentExtractionResult.class);
-        } catch (Exception e) {
-            log.warn("加载文件失败: {}", filePath, e);
-            return null;
         }
     }
 }
