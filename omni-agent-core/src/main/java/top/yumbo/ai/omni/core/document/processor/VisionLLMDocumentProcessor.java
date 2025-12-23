@@ -76,7 +76,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
     private String systemPrompt;
 
     // ⭐ 批处理配置
-    @Autowired
+    @Autowired(required = false)
     private VisionLLMBatchProcessingProperties batchProcessingConfig;
 
     // ⭐ Vision LLM 线程池
@@ -1200,9 +1200,10 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      * @return 分批后的页面列表
      */
     private List<List<DocumentPage>> smartBatching(List<DocumentPage> pages) {
-        if (!batchProcessingConfig.isEnabled()) {
-            // 如果未启用智能批处理，按旧逻辑处理（固定批次大小）
-            int batchSize = batchProcessingConfig.getMaxBatchSize();
+        // 如果配置不存在或未启用智能批处理，使用默认批次大小
+        if (batchProcessingConfig == null || !batchProcessingConfig.isEnabled()) {
+            // 使用默认批次大小
+            int batchSize = (batchProcessingConfig != null) ? batchProcessingConfig.getMaxBatchSize() : 5;
             List<List<DocumentPage>> batches = new ArrayList<>();
             for (int i = 0; i < pages.size(); i += batchSize) {
                 int endIdx = Math.min(i + batchSize, pages.size());
