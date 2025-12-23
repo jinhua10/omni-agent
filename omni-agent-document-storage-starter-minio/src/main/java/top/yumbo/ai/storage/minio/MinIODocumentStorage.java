@@ -163,6 +163,78 @@ public class MinIODocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Extracted Text Storage ⭐ NEW ==========
+
+    @Override
+    public String saveExtractedText(String documentId, String text) {
+        try {
+            String key = "extracted/" + documentId + ".txt";
+            byte[] data = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+            minioClient.putObject(
+                PutObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(key)
+                    .stream(new ByteArrayInputStream(data), data.length, -1)
+                    .contentType("text/plain; charset=utf-8")
+                    .build()
+            );
+
+            log.debug("✅ Saved extracted text: {}, length={}", documentId, text.length());
+            return documentId;
+        } catch (Exception e) {
+            log.error("❌ Failed to save extracted text: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<String> getExtractedText(String documentId) {
+        try {
+            String key = "extracted/" + documentId + ".txt";
+
+            GetObjectResponse response = minioClient.getObject(
+                GetObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(key)
+                    .build()
+            );
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = response.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            response.close();
+
+            String text = outputStream.toString(java.nio.charset.StandardCharsets.UTF_8);
+            log.debug("✅ Retrieved extracted text: {}, length={}", documentId, text.length());
+            return Optional.of(text);
+        } catch (Exception e) {
+            log.debug("⚠️ Extracted text not found: {}", documentId);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteExtractedText(String documentId) {
+        try {
+            String key = "extracted/" + documentId + ".txt";
+
+            minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                    .bucket(properties.getBucketName())
+                    .object(key)
+                    .build()
+            );
+
+            log.debug("🗑️ Deleted extracted text: {}", documentId);
+        } catch (Exception e) {
+            log.error("❌ Failed to delete extracted text: {}", documentId, e);
+        }
+    }
+
     // ========== Chunk Storage ==========
 
     @Override
@@ -588,6 +660,7 @@ public class MinIODocumentStorage implements DocumentStorageService {
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
         deleteAllOptimizationData(documentId);
+        deleteExtractedText(documentId);  // ⭐ 新增
         log.info("Cleaned up all data for document: {}", documentId);
     }
 

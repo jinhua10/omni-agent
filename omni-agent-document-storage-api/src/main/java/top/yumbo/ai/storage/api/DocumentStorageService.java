@@ -47,6 +47,29 @@ public interface DocumentStorageService {
      */
     void deleteDocument(String documentId);
 
+    // ========== 提取文本存储 (Extracted Text Storage) ⭐ NEW ==========
+
+    /**
+     * 保存提取的文本
+     * @param documentId 文档ID
+     * @param text 提取的文本内容
+     * @return 存储ID
+     */
+    String saveExtractedText(String documentId, String text);
+
+    /**
+     * 获取提取的文本
+     * @param documentId 文档ID
+     * @return 提取的文本内容
+     */
+    Optional<String> getExtractedText(String documentId);
+
+    /**
+     * 删除提取的文本
+     * @param documentId 文档ID
+     */
+    void deleteExtractedText(String documentId);
+
     // ========== 文档分块存储 (Chunk Storage) ==========
 
     /**

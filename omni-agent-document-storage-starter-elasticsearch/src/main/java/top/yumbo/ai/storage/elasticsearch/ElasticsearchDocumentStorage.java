@@ -47,6 +47,7 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
     private final String imageIndex;
     private final String pplIndex;
     private final String optimizationIndex;
+    private final String extractedTextIndex;  // ⭐ 新增
 
     public ElasticsearchDocumentStorage(ElasticsearchClient client,
                                        ElasticsearchStorageProperties properties) {
@@ -58,6 +59,7 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
         this.imageIndex = properties.getIndexPrefix() + "-images";
         this.pplIndex = properties.getIndexPrefix() + "-ppl";
         this.optimizationIndex = properties.getIndexPrefix() + "-optimizations";
+        this.extractedTextIndex = properties.getIndexPrefix() + "-extracted-text";  // ⭐ 新增
 
         initIndices();
         log.info("ElasticsearchDocumentStorage initialized with prefix: {}", properties.getIndexPrefix());
@@ -69,6 +71,7 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
             createIndexIfNotExists(imageIndex);
             createIndexIfNotExists(pplIndex);
             createIndexIfNotExists(optimizationIndex);
+            createIndexIfNotExists(extractedTextIndex);  // ⭐ 新增
         } catch (Exception e) {
             log.error("Failed to initialize indices", e);
         }
@@ -499,6 +502,7 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
         deleteAllOptimizationData(documentId);
+        deleteExtractedText(documentId);  // ⭐ 新增
         log.info("Cleaned up all data for document: {}", documentId);
     }
 
@@ -626,6 +630,79 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
             log.error("Failed to delete document: {}", documentId, e);
         }
     }
+
+    // ========== Extracted Text Storage ⭐ NEW ==========
+
+    @Override
+    public String saveExtractedText(String documentId, String text) {
+        try {
+            Map<String, Object> textData = new HashMap<>();
+            textData.put("documentId", documentId);
+            textData.put("text", text);
+            textData.put("createdAt", System.currentTimeMillis());
+
+            IndexRequest<Map<String, Object>> request = IndexRequest.of(i -> i
+                .index(extractedTextIndex)
+                .id(documentId)
+                .document(textData)
+            );
+
+            IndexResponse response = client.index(request);
+
+            if (response.result() == Result.Created || response.result() == Result.Updated) {
+                log.debug("✅ Saved extracted text: {}, length={}", documentId, text.length());
+                return documentId;
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.error("❌ Failed to save extracted text: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<String> getExtractedText(String documentId) {
+        try {
+            GetRequest request = GetRequest.of(g -> g
+                .index(extractedTextIndex)
+                .id(documentId)
+            );
+
+            GetResponse<Map> response = client.get(request, Map.class);
+
+            if (response.found() && response.source() != null) {
+                String text = (String) response.source().get("text");
+                if (text != null) {
+                    log.debug("✅ Retrieved extracted text: {}, length={}", documentId, text.length());
+                    return Optional.of(text);
+                }
+            }
+
+            log.debug("⚠️ Extracted text not found: {}", documentId);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("❌ Failed to get extracted text: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteExtractedText(String documentId) {
+        try {
+            DeleteRequest request = DeleteRequest.of(d -> d
+                .index(extractedTextIndex)
+                .id(documentId)
+            );
+
+            client.delete(request);
+            log.debug("🗑️ Deleted extracted text: {}", documentId);
+        } catch (Exception e) {
+            log.error("❌ Failed to delete extracted text: {}", documentId, e);
+        }
+    }
+
+    // ========== Document Listing ==========
 
     @Override
     public List<top.yumbo.ai.storage.api.model.DocumentMetadata> listAllDocuments() {

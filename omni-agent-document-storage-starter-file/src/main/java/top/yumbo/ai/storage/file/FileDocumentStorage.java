@@ -32,16 +32,18 @@ public class FileDocumentStorage implements DocumentStorageService {
     private final Path chunksPath;
     private final Path imagesPath;
     private final Path pplPath;
-    private final Path optimizationPath;  // 新增：优化数据路径
+    private final Path optimizationPath;
     private final Path documentsPath;
+    private final Path extractedPath;  // ⭐ 新增：提取文本路径
 
     public FileDocumentStorage(String baseDirectory) {
         this.basePath = Paths.get(baseDirectory);
         this.chunksPath = basePath.resolve("chunks");
         this.imagesPath = basePath.resolve("images");
         this.pplPath = basePath.resolve("ppl");
-        this.optimizationPath = basePath.resolve("optimization");  // 新增
+        this.optimizationPath = basePath.resolve("optimization");
         this.documentsPath = basePath.resolve("documents");
+        this.extractedPath = basePath.resolve("extracted");  // ⭐ 新增
 
         initDirectories();
         log.info("FileDocumentStorage initialized at: {}", basePath.toAbsolutePath());
@@ -52,8 +54,9 @@ public class FileDocumentStorage implements DocumentStorageService {
             Files.createDirectories(chunksPath);
             Files.createDirectories(imagesPath);
             Files.createDirectories(pplPath);
-            Files.createDirectories(optimizationPath);  // 新增
+            Files.createDirectories(optimizationPath);
             Files.createDirectories(documentsPath);
+            Files.createDirectories(extractedPath);  // ⭐ 新增
         } catch (IOException e) {
             log.error("Failed to create storage directories", e);
             throw new RuntimeException("Failed to initialize file storage", e);
@@ -125,6 +128,66 @@ public class FileDocumentStorage implements DocumentStorageService {
             log.info("Successfully deleted document and all related data: {}", documentId);
         } catch (IOException e) {
             log.error("Failed to delete document: {}", documentId, e);
+        }
+    }
+
+    // ========== Extracted Text Storage ⭐ NEW ==========
+
+    @Override
+    public String saveExtractedText(String documentId, String text) {
+        try {
+            // 使用 documentId.txt 作为文件名
+            Path textFile = extractedPath.resolve(documentId + ".txt");
+
+            // 确保父目录存在
+            Path parentDir = textFile.getParent();
+            if (parentDir != null) {
+                Files.createDirectories(parentDir);
+            }
+
+            // 保存文本内容
+            Files.writeString(textFile, text, java.nio.charset.StandardCharsets.UTF_8);
+
+            log.debug("✅ Saved extracted text: {}, length={}", documentId, text.length());
+            return documentId;
+        } catch (IOException e) {
+            log.error("❌ Failed to save extracted text: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<String> getExtractedText(String documentId) {
+        try {
+            Path textFile = extractedPath.resolve(documentId + ".txt");
+
+            if (Files.exists(textFile)) {
+                String text = Files.readString(textFile, java.nio.charset.StandardCharsets.UTF_8);
+                log.debug("✅ Retrieved extracted text: {}, length={}", documentId, text.length());
+                return Optional.of(text);
+            } else {
+                log.debug("⚠️ Extracted text not found: {}", documentId);
+                return Optional.empty();
+            }
+        } catch (IOException e) {
+            log.error("❌ Failed to get extracted text: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteExtractedText(String documentId) {
+        try {
+            Path textFile = extractedPath.resolve(documentId + ".txt");
+
+            if (Files.exists(textFile)) {
+                Files.delete(textFile);
+                log.debug("🗑️ Deleted extracted text: {}", documentId);
+            } else {
+                log.debug("⚠️ Extracted text not found: {}", documentId);
+            }
+        } catch (IOException e) {
+            log.error("❌ Failed to delete extracted text: {}", documentId, e);
         }
     }
 
@@ -1092,7 +1155,8 @@ public class FileDocumentStorage implements DocumentStorageService {
         deleteChunksByDocument(documentId);
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
-        deleteAllOptimizationData(documentId);  // 新增：清理优化数据
+        deleteAllOptimizationData(documentId);
+        deleteExtractedText(documentId);  // ⭐ 新增：清理提取文本
         log.info("Cleaned up all data for document: {}", documentId);
     }
 

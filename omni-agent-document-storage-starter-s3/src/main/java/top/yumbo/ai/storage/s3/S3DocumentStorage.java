@@ -557,6 +557,78 @@ public class S3DocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Extracted Text Storage ⭐ NEW ==========
+
+    @Override
+    public String saveExtractedText(String documentId, String text) {
+        try {
+            String key = "extracted/" + documentId + ".txt";
+            byte[] data = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .contentType("text/plain; charset=utf-8")
+                    .build();
+
+            s3Client.putObject(putRequest,
+                software.amazon.awssdk.core.sync.RequestBody.fromBytes(data));
+
+            log.debug("✅ Saved extracted text: {}, length={}", documentId, text.length());
+            return documentId;
+        } catch (Exception e) {
+            log.error("❌ Failed to save extracted text: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<String> getExtractedText(String documentId) {
+        try {
+            String key = "extracted/" + documentId + ".txt";
+
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            software.amazon.awssdk.core.ResponseInputStream<?> response =
+                s3Client.getObject(getRequest);
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = response.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            response.close();
+
+            String text = outputStream.toString(java.nio.charset.StandardCharsets.UTF_8);
+            log.debug("✅ Retrieved extracted text: {}, length={}", documentId, text.length());
+            return Optional.of(text);
+        } catch (Exception e) {
+            log.debug("⚠️ Extracted text not found: {}", documentId);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteExtractedText(String documentId) {
+        try {
+            String key = "extracted/" + documentId + ".txt";
+
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+            log.debug("🗑️ Deleted extracted text: {}", documentId);
+        } catch (Exception e) {
+            log.error("❌ Failed to delete extracted text: {}", documentId, e);
+        }
+    }
+
     // ========== Document Management ==========
 
     @Override
@@ -652,6 +724,7 @@ public class S3DocumentStorage implements DocumentStorageService {
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
         deleteAllOptimizationData(documentId);
+        deleteExtractedText(documentId);  // ⭐ 新增
         log.info("Cleaned up all data for document: {}", documentId);
     }
 

@@ -110,6 +110,76 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== Extracted Text Storage ⭐ NEW ==========
+
+    @Override
+    public String saveExtractedText(String documentId, String text) {
+        try {
+            Document metadata = new Document()
+                    .append("documentId", documentId)
+                    .append("type", "extracted-text")
+                    .append("createdAt", System.currentTimeMillis());
+
+            GridFSUploadOptions options = new GridFSUploadOptions()
+                    .metadata(metadata);
+
+            // 删除旧的提取文本（如果存在）
+            deleteExtractedText(documentId);
+
+            ObjectId fileId = gridFSBucket.uploadFromStream(
+                    "extracted-" + documentId,
+                    new ByteArrayInputStream(text.getBytes(java.nio.charset.StandardCharsets.UTF_8)),
+                    options
+            );
+
+            log.debug("✅ Saved extracted text: {}, length={}", documentId, text.length());
+            return documentId;
+        } catch (Exception e) {
+            log.error("❌ Failed to save extracted text: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<String> getExtractedText(String documentId) {
+        try {
+            GridFSFile file = gridFSBucket.find(
+                    new Document("filename", "extracted-" + documentId)
+            ).first();
+
+            if (file == null) {
+                log.debug("⚠️ Extracted text not found: {}", documentId);
+                return Optional.empty();
+            }
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            gridFSBucket.downloadToStream(file.getObjectId(), outputStream);
+            String text = outputStream.toString(java.nio.charset.StandardCharsets.UTF_8);
+
+            log.debug("✅ Retrieved extracted text: {}, length={}", documentId, text.length());
+            return Optional.of(text);
+        } catch (Exception e) {
+            log.error("❌ Failed to get extracted text: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteExtractedText(String documentId) {
+        try {
+            GridFSFile file = gridFSBucket.find(
+                    new Document("filename", "extracted-" + documentId)
+            ).first();
+
+            if (file != null) {
+                gridFSBucket.delete(file.getObjectId());
+                log.debug("🗑️ Deleted extracted text: {}", documentId);
+            }
+        } catch (Exception e) {
+            log.error("❌ Failed to delete extracted text: {}", documentId, e);
+        }
+    }
+
     // ========== Chunk Storage ==========
 
     @Override
@@ -616,6 +686,7 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
         deleteAllOptimizationData(documentId);
+        deleteExtractedText(documentId);  // ⭐ 新增
         log.info("Cleaned up all data for document: {}", documentId);
     }
 

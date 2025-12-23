@@ -110,7 +110,30 @@ public class DocumentProcessingService {
         pushProgress(documentId, "EXTRACT", 20, "正在提取文本...", documentName, null);
         Thread.sleep(1500);
         String extractedText = extractText(content, docConfig.getTextExtractionModel());
-        docConfig.setExtractedText(extractedText);
+
+        // ⭐ 持久化提取文本到存储服务
+        try {
+            String savedId = storageService.saveExtractedText(documentId, extractedText);
+            if (savedId != null) {
+                log.info("✅ 已保存提取文本到存储服务: documentId={}, length={}", documentId, extractedText.length());
+            } else {
+                log.warn("⚠️ 保存提取文本失败（返回null）: documentId={}", documentId);
+            }
+        } catch (Exception e) {
+            log.error("❌ 保存提取文本失败: documentId={}", documentId, e);
+            // 继续处理，不影响整体流程
+        }
+
+        // 配置中只保存摘要（前200字符）
+        String summary = extractedText.length() > 200
+            ? extractedText.substring(0, 200) + "..."
+            : extractedText;
+        docConfig.setTextSummary(summary);
+        docConfig.setExtractedTextRef(documentId);  // 保存引用
+
+        // 为了向后兼容，暂时保留完整文本（后续可以通过迁移任务移除）
+        // docConfig.setExtractedText(extractedText);  // TODO: 数据迁移后移除
+
         docConfig.setStatus("EXTRACTED");
         ragConfigService.setDocumentConfig(documentId, docConfig);
         pushProgress(documentId, "EXTRACT", 30, "文本提取完成", documentName,
@@ -123,11 +146,13 @@ public class DocumentProcessingService {
     private void performFullRAG(String documentId, String documentName, byte[] content,
                                 SystemRAGConfigService.DocumentRAGConfig docConfig) throws InterruptedException {
         // 文本提取
-        if (docConfig.getExtractedText() == null) {
+        if (docConfig.getExtractedTextRef() == null && docConfig.getExtractedText() == null) {
             performTextExtraction(documentId, documentName, content, docConfig);
         }
 
-        String extractedText = docConfig.getExtractedText();
+        // ⭐ 使用新方式获取提取文本（优先从存储服务）
+        String extractedText = ragConfigService.getExtractedText(documentId)
+            .orElseThrow(() -> new RuntimeException("提取文本不存在"));
 
         // 阶段3: 智能分块
         pushProgress(documentId, "CHUNK", 40, "正在智能分块...", documentName, null);

@@ -1,9 +1,11 @@
 package top.yumbo.ai.omni.web.service;
 
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.web.model.RAGStrategyTemplate;
+import top.yumbo.ai.storage.api.DocumentStorageService;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SystemRAGConfigService {
+
+    private final DocumentStorageService storageService;  // ⭐ 新增
 
     // 系统配置（可持久化到数据库）
     private final SystemRAGConfig config = new SystemRAGConfig();
@@ -148,6 +153,41 @@ public class SystemRAGConfigService {
     }
 
     /**
+     * 获取提取的完整文本 ⭐
+     * 优先从存储服务获取，fallback到配置中的缓存
+     */
+    public Optional<String> getExtractedText(String documentId) {
+        DocumentRAGConfig config = getDocumentConfig(documentId);
+
+        // 1. 优先从存储服务获取（新方式）
+        if (config.getExtractedTextRef() != null) {
+            Optional<String> text = storageService.getExtractedText(documentId);
+            if (text.isPresent()) {
+                log.debug("✅ 从存储服务获取提取文本: documentId={}, length={}",
+                          documentId, text.get().length());
+                return text;
+            }
+        }
+
+        // 2. Fallback到配置中的缓存（旧方式，向后兼容）
+        if (config.getExtractedText() != null) {
+            log.debug("⚠️ 从配置缓存获取提取文本（旧方式）: documentId={}, length={}",
+                      documentId, config.getExtractedText().length());
+            return Optional.of(config.getExtractedText());
+        }
+
+        log.warn("❌ 未找到提取文本: documentId={}", documentId);
+        return Optional.empty();
+    }
+
+    /**
+     * 获取所有文档的配置状态（原方法）
+     */
+    public Map<String, DocumentRAGConfig> getAllDocumentConfigs() {
+        return new HashMap<>(documentConfigs);
+    }
+
+    /**
      * 保存策略模板
      */
     public RAGStrategyTemplate saveStrategyTemplate(RAGStrategyTemplate template) {
@@ -256,7 +296,13 @@ public class SystemRAGConfigService {
         // 分块参数
         private Map<String, Object> chunkingParams = new HashMap<>();
 
-        // 提取的文本内容（缓存）
+        // ⭐ 提取文本的摘要（前200字符，用于快速预览）
+        private String textSummary;
+
+        // ⭐ 提取文本的引用（documentId，用于从存储服务获取完整文本）
+        private String extractedTextRef;
+
+        // 提取的文本内容（缓存）⚠️ 保留用于向后兼容，新代码应使用存储服务
         private String extractedText;
 
         // 提取精度（0.0-1.0）

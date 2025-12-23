@@ -435,6 +435,7 @@ public class RedisDocumentStorage implements DocumentStorageService {
         deleteImagesByDocument(documentId);
         deletePPLData(documentId);
         deleteAllOptimizationData(documentId);
+        deleteExtractedText(documentId);  // ⭐ 新增
 
         // 删除文档元数据
         String docKey = getDocumentKey(documentId);
@@ -544,6 +545,52 @@ public class RedisDocumentStorage implements DocumentStorageService {
             log.debug("Deleted document: {}", documentId);
         } catch (Exception e) {
             log.error("Failed to delete document: {}", documentId, e);
+        }
+    }
+
+    // ========== Extracted Text Storage ⭐ NEW ==========
+
+    @Override
+    public String saveExtractedText(String documentId, String text) {
+        try {
+            String key = properties.getKeyPrefix() + "extracted:" + documentId;
+            redisTemplate.opsForValue().set(key, text);
+            log.debug("✅ Saved extracted text: {}, length={}", documentId, text.length());
+            return documentId;
+        } catch (Exception e) {
+            log.error("❌ Failed to save extracted text: {}", documentId, e);
+            return null;
+        }
+    }
+
+    @Override
+    public Optional<String> getExtractedText(String documentId) {
+        try {
+            String key = properties.getKeyPrefix() + "extracted:" + documentId;
+            Object value = redisTemplate.opsForValue().get(key);
+
+            if (value != null) {
+                String text = value.toString();
+                log.debug("✅ Retrieved extracted text: {}, length={}", documentId, text.length());
+                return Optional.of(text);
+            }
+
+            log.debug("⚠️ Extracted text not found: {}", documentId);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("❌ Failed to get extracted text: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void deleteExtractedText(String documentId) {
+        try {
+            String key = properties.getKeyPrefix() + "extracted:" + documentId;
+            redisTemplate.delete(key);
+            log.debug("🗑️ Deleted extracted text: {}", documentId);
+        } catch (Exception e) {
+            log.error("❌ Failed to delete extracted text: {}", documentId, e);
         }
     }
 
