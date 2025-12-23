@@ -219,7 +219,22 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         try {
             const result = await ragStrategyApi.getTemplates();
             if (result.success) {
-                setStrategyTemplates(result.data || []);
+                // ⭐ 映射后端字段到前端期望的格式
+                const mappedTemplates = (result.data || []).map(template => ({
+                    id: template.templateId,              // 后端：templateId → 前端：id
+                    name: template.templateName,          // 后端：templateName → 前端：name
+                    description: template.description,
+                    textExtractionModel: template.textExtractionModel,
+                    chunkingStrategy: template.chunkingStrategy,
+                    chunkingParams: template.chunkingParams,
+                    createdAt: template.createdAt,
+                    updatedAt: template.updatedAt,
+                    useCount: template.useCount,
+                    builtin: template.default,            // 后端：default → 前端：builtin
+                    default: template.default
+                }));
+                setStrategyTemplates(mappedTemplates);
+                console.log('✅ 加载策略模板成功:', mappedTemplates.length, '个');
             } else {
                 console.error('加载策略模板失败:', result.message);
             }
@@ -231,19 +246,28 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     }, []);
 
     // 删除策略模板
-    const deleteTemplate = useCallback(async (templateId) => {
-        try {
-            const result = await ragStrategyApi.deleteTemplate(templateId);
-            if (result.success) {
-                message.success('模板已删除');
-                loadTemplates(); // 重新加载列表
-            } else {
-                message.error(result.message || '删除失败');
+    const deleteTemplate = useCallback((templateId, templateName) => {
+        Modal.confirm({
+            title: '确认删除',
+            content: `确定要删除策略模板 "${templateName}" 吗？此操作不可恢复。`,
+            okText: '确认',
+            cancelText: '取消',
+            okType: 'danger',
+            onOk: async () => {
+                try {
+                    const result = await ragStrategyApi.deleteTemplate(templateId);
+                    if (result.success) {
+                        message.success('模板已删除');
+                        loadTemplates(); // 重新加载列表
+                    } else {
+                        message.error(result.message || '删除失败');
+                    }
+                } catch (error) {
+                    console.error('删除模板失败:', error);
+                    message.error('删除失败: ' + error.message);
+                }
             }
-        } catch (error) {
-            console.error('删除模板失败:', error);
-            message.error('删除失败: ' + error.message);
-        }
+        });
     }, [message, loadTemplates]);
 
     // 应用策略模板到文档
@@ -695,26 +719,37 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                             onChange={(templateId) => {
                                                 applyTemplateToDocument(doc.documentId, templateId);
                                             }}
-                                        >
-                                            {strategyTemplates.map(template => (
-                                                <Option key={template.id} value={template.id}>
-                                                    <Space>
-                                                        {template.name}
-                                                        {template.description && (
-                                                            <span style={{ fontSize: '12px', color: '#999' }}>
-                                                                ({template.description})
-                                                            </span>
-                                                        )}
+                                            optionRender={(option) => {
+                                                const template = strategyTemplates.find(t => t.id === option.value);
+                                                if (!template) return option.label;
+                                                return (
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                                        <div>
+                                                            {template.name}
+                                                            {template.description && (
+                                                                <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>
+                                                                    ({template.description})
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         {!template.builtin && (
                                                             <DeleteOutlined 
-                                                                style={{ color: '#ff4d4f', fontSize: '12px' }}
+                                                                style={{ color: '#ff4d4f', fontSize: '12px', marginLeft: 'auto' }}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    deleteTemplate(template.id);
+                                                                    deleteTemplate(template.id, template.name);
                                                                 }}
                                                             />
                                                         )}
-                                                    </Space>
+                                                    </div>
+                                                );
+                                            }}
+                                        >
+                                            {strategyTemplates
+                                                .filter(template => template && template.id) // 过滤掉null或无效数据
+                                                .map(template => (
+                                                <Option key={template.id} value={template.id}>
+                                                    {template.name}
                                                 </Option>
                                             ))}
                                         </Select>
@@ -845,7 +880,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         subTitle: (progress?.documentId || selectedDocId) && (
                             <div style={{ marginTop: '8px' }}>
                                 <Select
-                                    style={{ width: '100%', maxWidth: '300px' }}
+                                    style={{ width: '200px' }}
                                     size="small"
                                     placeholder="选择文本提取方式"
                                     value={documentConfigs[progress?.documentId || selectedDocId]?.textExtractionModel || undefined}
@@ -966,7 +1001,9 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                         </>
                                     )}
                                 >
-                                    {chunkingStrategies.map(strategy => (
+                                    {chunkingStrategies
+                                        .filter(strategy => strategy && strategy.name) // 过滤掉null或无效数据
+                                        .map(strategy => (
                                         <Option key={strategy.name} value={strategy.name}>
                                             <Space>
                                                 <span>{strategy.displayName || strategy.name}</span>
