@@ -108,11 +108,24 @@ public class SystemRAGConfigController {
             @PathVariable String documentId,
             @RequestBody SystemRAGConfigService.DocumentRAGConfig config) {
         try {
+            log.info("📝 收到更新文档配置请求: documentId=[{}]", documentId);
+            log.info("📝 配置对象: documentId={}, status={}, textExtractionModel={}, chunkingStrategy={}",
+                config.getDocumentId(), config.getStatus(),
+                config.getTextExtractionModel(), config.getChunkingStrategy());
+
+            // 确保documentId一致
+            if (config.getDocumentId() == null || config.getDocumentId().isEmpty()) {
+                config.setDocumentId(documentId);
+            }
+
+            // 确保有updatedAt
+            config.setUpdatedAt(System.currentTimeMillis());
+
             configService.setDocumentConfig(documentId, config);
             log.info("✅ 文档RAG配置更新成功: documentId={}", documentId);
             return ApiResponse.success(null, "配置更新成功");
         } catch (Exception e) {
-            log.error("❌ 更新文档RAG配置失败: documentId={}", documentId, e);
+            log.error("❌ 更新文档RAG配置失败: documentId={}, error={}", documentId, e.getMessage(), e);
             return ApiResponse.error("更新配置失败: " + e.getMessage());
         }
     }

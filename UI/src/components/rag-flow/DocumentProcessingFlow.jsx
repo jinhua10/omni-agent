@@ -139,26 +139,79 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     // 更新文档配置
     const updateDocumentConfig = useCallback(async (docId, configUpdates) => {
         try {
+            // ⭐ 确保配置已加载
+            let currentConfig = documentConfigs[docId];
+            if (!currentConfig) {
+                console.warn('⚠️ 文档配置不存在，正在加载配置...');
+                await loadDocumentConfig(docId);
+
+                // 等待状态更新后再获取
+                await new Promise(resolve => setTimeout(resolve, 100));
+                currentConfig = documentConfigs[docId];
+
+                if (!currentConfig) {
+                    console.error('❌ 无法获取文档配置，创建默认配置');
+                    // 创建默认配置
+                    currentConfig = {
+                        documentId: docId,
+                        status: 'PENDING',
+                        createdAt: Date.now(),
+                        chunkingParams: {}
+                    };
+                }
+            }
+
+            // ⭐ 深度合并配置更新（特别处理嵌套对象）
+            const fullConfig = {
+                ...currentConfig,
+                ...configUpdates,
+                documentId: docId,
+                updatedAt: Date.now(),
+                // 合并chunkingParams
+                chunkingParams: {
+                    ...(currentConfig.chunkingParams || {}),
+                    ...(configUpdates.chunkingParams || {})
+                }
+            };
+
+            console.log('📝 准备更新配置:', {
+                docId,
+                updates: configUpdates,
+                fullConfig
+            });
+
             // ⭐ 对URL中的documentId进行编码，避免中文字符问题
             const encodedDocId = encodeURIComponent(docId);
             const response = await fetch(`/api/system/rag-config/document/${encodedDocId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(configUpdates)
+                body: JSON.stringify(fullConfig)
             });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ 服务器响应错误:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
             const result = await response.json();
             if (result.success) {
-                // 重新加载配置
+                // 更新本地状态
+                setDocumentConfigs(prev => ({
+                    ...prev,
+                    [docId]: fullConfig
+                }));
+                // 重新加载配置确保同步
                 loadDocumentConfig(docId);
                 message.success('配置已保存');
             } else {
                 message.error(result.message || '保存失败');
             }
         } catch (error) {
-            console.error('更新配置失败:', error);
+            console.error('❌ 更新配置失败:', error);
             message.error('保存失败: ' + error.message);
         }
-    }, [loadDocumentConfig, message]);
+    }, [documentConfigs, loadDocumentConfig, message]);
 
     // 加载策略模板列表
     const loadTemplates = useCallback(async () => {
@@ -221,7 +274,8 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                     message.warning('请先选择文本提取方式');
                     return;
                 }
-                if (!config.chunkingStrategy || !config.chunkingStrategy.strategyName) {
+                // ⭐ 修复：chunkingStrategy是字符串
+                if (!config.chunkingStrategy) {
                     message.warning('请先选择分块策略');
                     return;
                 }
@@ -880,17 +934,16 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                     style={{ width: '100%', maxWidth: '300px' }}
                                     size="small"
                                     placeholder="选择分块策略"
-                                    value={documentConfigs[progress?.documentId || selectedDocId]?.chunkingStrategy?.strategyName}
+                                    value={documentConfigs[progress?.documentId || selectedDocId]?.chunkingStrategy}
                                     onChange={(value) => {
                                         const docId = progress?.documentId || selectedDocId;
                                         if (docId) {
                                             const strategy = chunkingStrategies.find(s => s.name === value);
                                             if (strategy) {
+                                                // ⭐ 修复：chunkingStrategy应该是字符串，chunkingParams是对象
                                                 updateDocumentConfig(docId, {
-                                                    chunkingStrategy: {
-                                                        strategyName: strategy.name,
-                                                        ...strategy.defaultParams
-                                                    }
+                                                    chunkingStrategy: strategy.name,  // 字符串
+                                                    chunkingParams: strategy.defaultParams || {}  // 对象
                                                 });
                                             }
                                         }
@@ -1202,13 +1255,13 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                     <div>
                                         <strong>✂️ 分块策略：</strong>
                                         <Tag color="green" style={{ marginLeft: 8 }}>
-                                            {documentConfigForTemplate.chunkingStrategy?.strategyName || '未配置'}
+                                            {documentConfigForTemplate.chunkingStrategy || '未配置'}
                                         </Tag>
                                     </div>
-                                    {documentConfigForTemplate.chunkingStrategy?.chunkSize && (
+                                    {documentConfigForTemplate.chunkingParams?.chunkSize && (
                                         <div style={{ fontSize: '12px', color: '#666' }}>
-                                            块大小: {documentConfigForTemplate.chunkingStrategy.chunkSize}, 
-                                            重叠: {documentConfigForTemplate.chunkingStrategy.overlap || 0}
+                                            块大小: {documentConfigForTemplate.chunkingParams.chunkSize},
+                                            重叠: {documentConfigForTemplate.chunkingParams.overlap || 0}
                                         </div>
                                     )}
                                     <div style={{ fontSize: '12px', color: '#999', marginTop: 4 }}>

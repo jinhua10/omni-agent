@@ -2,8 +2,10 @@
 
 > **问题**: 通过文档处理流程选择智能分块策略时，策略保存失败  
 > **错误**: PUT `/api/system/rag-config/document/{中文文件名}` 返回 400 Bad Request  
-> **原因**: URL中包含中文字符未进行编码  
-> **修复时间**: 2025-12-23 23:30
+> **原因**: 
+> 1. URL中包含中文字符未进行编码
+> 2. 请求体只发送部分配置，后端期望完整的配置对象
+> **修复时间**: 2025-12-23 23:40
 
 ---
 
@@ -17,10 +19,23 @@ Status: 400 Bad Request
 ```
 
 ### 根本原因
+
+#### 原因1: URL编码问题
 前端在发送API请求时，直接将包含中文字符的文件名拼接到URL中，没有进行URL编码（encodeURIComponent），导致：
 1. 中文字符在URL中传输时出现问题
 2. 后端无法正确解析 `@PathVariable` 参数
 3. 请求被拒绝返回 400 错误
+
+#### 原因2: 请求体不完整 ⭐ 新发现
+前端只发送部分配置更新：
+```javascript
+// ❌ 只发送部分字段
+updateDocumentConfig(docId, {
+    chunkingStrategy: { ... }
+});
+```
+
+但后端期望接收完整的 `DocumentRAGConfig` 对象，包括所有必需字段（如 `documentId`, `status`, `createdAt` 等）。
 
 ### 问题代码示例
 ```javascript
