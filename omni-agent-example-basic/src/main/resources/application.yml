@@ -380,6 +380,13 @@ omni-agent:
     auto-index: true                    # 自动索引
     scan-interval: 30000                # 扫描间隔（毫秒）
 
+  # ========== 归档清理任务配置 ⭐ NEW ==========
+  archive:
+    cleanup:
+      enabled: true                      # 启用定时清理任务
+      cron: "0 0 2 * * ?"               # 每天凌晨2点执行
+      retention-days: 7                  # 保留天数（超过此天数的失败归档文件将被处理）
+
   # ========== 工作流引擎配置 ⭐ NEW ==========
   workflow:
     # 存储类型：auto（自动检测）| file | sqlite | mongodb | elasticsearch

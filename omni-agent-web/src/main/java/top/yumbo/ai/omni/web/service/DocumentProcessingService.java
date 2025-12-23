@@ -2,9 +2,14 @@ package top.yumbo.ai.omni.web.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.web.websocket.DocumentProcessingWebSocketHandler;
+import top.yumbo.ai.storage.api.DocumentStorageService;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -30,6 +35,10 @@ public class DocumentProcessingService {
 
     private final DocumentProcessingWebSocketHandler webSocketHandler;
     private final SystemRAGConfigService ragConfigService;
+    private final DocumentStorageService storageService;  // ⭐ 新增：存储服务
+
+    @Value("${omni-agent.file-watcher.watch-directory:./data/documents}")
+    private String watchDirectory;  // ⭐ 新增：中转站目录
 
     /**
      * 处理文档（智能混合模式）⭐
@@ -141,6 +150,10 @@ public class DocumentProcessingService {
         Thread.sleep(1500);
         performIndexing(documentId, vectorCount);
 
+        // ⭐ 阶段7: 归档到存储服务（新增）
+        pushProgress(documentId, "ARCHIVE", 90, "正在归档文档...", documentName, null);
+        archiveDocument(documentId, documentName, content, docConfig);
+
         // 完成
         docConfig.setStatus("COMPLETED");
         ragConfigService.setDocumentConfig(documentId, docConfig);
@@ -148,6 +161,67 @@ public class DocumentProcessingService {
             Map.of("chunks", chunkCount, "vectors", vectorCount, "status", "COMPLETED"));
 
         log.info("✅ 文档处理完成: documentId={}", documentId);
+    }
+
+    /**
+     * 归档文档到存储服务并清理中转站 ⭐
+     *
+     * 包含重试机制：最多重试3次
+     */
+    private void archiveDocument(String documentId, String documentName, byte[] content,
+                                  SystemRAGConfigService.DocumentRAGConfig docConfig) {
+        final int maxRetries = 3;
+        Exception lastException = null;
+
+        // 重试机制：最多尝试3次
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                log.info("🔄 归档尝试 {}/{}: documentId={}", attempt, maxRetries, documentId);
+
+                // 保存原始文档到存储服务
+                String savedId = storageService.saveDocument(documentId, documentName, content);
+
+                if (savedId != null) {
+                    log.info("✅ 已归档到存储服务: documentId={}, path=documents/{}", documentId, documentName);
+
+                    // 删除中转站文件
+                    Path watchFile = Paths.get(watchDirectory).resolve(documentName);
+                    if (Files.exists(watchFile)) {
+                        Files.delete(watchFile);
+                        log.info("🗑️ 已清理中转站: {}", watchFile);
+                    } else {
+                        log.warn("⚠️ 中转站文件不存在: {}", watchFile);
+                    }
+
+                    // 成功，跳出重试循环
+                    return;
+                } else {
+                    log.warn("⚠️ 归档返回null (尝试 {}/{})", attempt, maxRetries);
+                    lastException = new RuntimeException("归档返回null");
+                }
+            } catch (Exception e) {
+                lastException = e;
+                log.warn("⚠️ 归档失败 (尝试 {}/{}): {}", attempt, maxRetries, e.getMessage());
+
+                // 如果不是最后一次尝试，等待后重试
+                if (attempt < maxRetries) {
+                    try {
+                        long waitTime = 1000L * attempt; // 递增等待时间：1s, 2s, 3s
+                        log.info("⏳ 等待 {}ms 后重试...", waitTime);
+                        Thread.sleep(waitTime);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        log.error("❌ 重试等待被中断", ie);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 所有重试都失败
+        log.error("❌ 归档失败（已重试{}次）: documentId={}", maxRetries, documentId, lastException);
+        // 不影响整体流程，继续标记为完成
+        // 中转站文件保留，等待定时清理任务或手动处理
     }
 
     /**
