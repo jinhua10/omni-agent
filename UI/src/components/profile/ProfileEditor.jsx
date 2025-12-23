@@ -34,6 +34,7 @@ const ProfileEditor = ({ visible, userInfo, onClose, onSuccess }) => {
       onOk={handleSubmit}
       confirmLoading={saving}
       width={600}
+      maskClosable={false}
     >
       <Form
         form={form}

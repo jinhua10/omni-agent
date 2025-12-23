@@ -729,6 +729,7 @@ function DocumentBrowser() {
         }}
         okText={t('common.confirm')}
         cancelText={t('common.cancel')}
+        maskClosable={false}
       >
         <Input
           placeholder={t('document.browse.folderNamePlaceholder')}

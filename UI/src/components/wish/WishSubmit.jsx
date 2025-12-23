@@ -50,6 +50,7 @@ const WishSubmit = ({ visible, onClose, onSuccess }) => {
       confirmLoading={submitting}
       width={600}
       className="wish-submit-modal"
+      maskClosable={false}
     >
       <Form
         form={form}

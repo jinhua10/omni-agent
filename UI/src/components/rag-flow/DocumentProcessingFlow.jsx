@@ -759,7 +759,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 <Alert
                     title={t('ragFlow.component.demoMode')}
                     description={
-                        <Space vertical style={{ width: '100%' }}>
+                        <Space orientation="vertical" style={{ width: '100%' }}>
                             <span>{t('ragFlow.component.demoModeDesc')}</span>
                             <Button
                                 type="primary"
@@ -1237,13 +1237,13 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 okText="保存"
                 cancelText="取消"
             >
-                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                <Space orientation="vertical" style={{ width: '100%' }} size="middle">
                     {/* 显示当前配置摘要 */}
                     {documentConfigForTemplate && (
                         <Alert
-                            message="当前配置"
+                            title="当前配置"
                             description={
-                                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                                <Space orientation="vertical" size="small" style={{ width: '100%' }}>
                                     <div>
                                         <strong>📄 文本提取方式：</strong>
                                         <Tag color="blue" style={{ marginLeft: 8 }}>

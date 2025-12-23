@@ -56,6 +56,7 @@ function RoleEditor(props) {
       width={700}
       okText={t('common.save')}
       cancelText={t('common.cancel')}
+      maskClosable={false}
     >
       <Form form={form} layout="vertical">
         <Form.Item
