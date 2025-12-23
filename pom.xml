@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.11</version>
+        <version>3.4.1</version>
         <relativePath/>
     </parent>
 
@@ -161,12 +161,15 @@
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
 
         <!-- 依赖版本 -->
-        <spring-boot.version>3.2.11</spring-boot.version>
+        <spring-boot.version>3.4.1</spring-boot.version>
         <lombok.version>1.18.34</lombok.version>
         <lucene.version>9.10.0</lucene.version>
         <poi.version>5.5.0</poi.version>
         <tika.version>3.2.3</tika.version>
         <jackson.version>2.15.3</jackson.version>
+
+        <!-- 安全版本覆盖 -->
+        <logback.version>1.5.19</logback.version>
 
         <!-- 控制台编码 -->
         <console.encoding>UTF-8</console.encoding>
@@ -190,6 +193,18 @@
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <!-- Logback 安全版本覆盖 (修复 CVE-2025-11226) -->
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
             </dependency>
 
             <!-- Apache Lucene -->
