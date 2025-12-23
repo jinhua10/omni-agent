@@ -358,22 +358,23 @@ storageService.deleteExtractedText("doc123.pptx");
 - deleteExtractedText: ~10-15行/实现
 - cleanupDocument更新: +1行/实现
 
-**总计**: 约 40-55行/实现 × 5个实现 = 200-275行新代码
+**总计**: 约 40-55行/实现 × 6个实现 = 240-330行新代码
 
 ### 修改文件
-1. `FileDocumentStorage.java`
-2. `MongoDBDocumentStorage.java`
-3. `MinIODocumentStorage.java`
-4. `RedisDocumentStorage.java`
-5. `S3DocumentStorage.java`
-6. `ElasticsearchDocumentStorage.java`（已存在）
+1. `DocumentStorageService.java` - API接口（新增3个方法）
+2. `FileDocumentStorage.java` - 完整实现
+3. `MongoDBDocumentStorage.java` - 完整实现
+4. `MinIODocumentStorage.java` - 完整实现
+5. `RedisDocumentStorage.java` - 完整实现
+6. `S3DocumentStorage.java` - 完整实现
+7. `ElasticsearchDocumentStorage.java` - 完整实现
 
 ---
 
-**实施完成时间**: 2025-12-23 23:18  
-**状态**: ✅ 5/6 完成  
-**编译**: ✅ BUILD SUCCESS（排除ES）  
+**实施完成时间**: 2025-12-23 23:22  
+**状态**: ✅ 6/6 全部完成  
+**编译**: ✅ BUILD SUCCESS  
 **方案B**: ✅ 全面完成
 
-**所有主要存储实现的提取文本接口已全部完成！方案B（提取文本持久化）现已全面实现！** 🎉
+**所有6个存储实现的提取文本接口已全部完成！方案B（提取文本持久化）现已全面实现！** 🎉
 
