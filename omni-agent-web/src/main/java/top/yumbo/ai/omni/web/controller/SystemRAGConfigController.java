@@ -4,8 +4,8 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import top.yumbo.ai.omni.web.model.ApiResponse;
 import top.yumbo.ai.omni.web.model.RAGStrategyTemplate;
-import top.yumbo.ai.omni.web.service.DocumentProcessingService;
 import top.yumbo.ai.omni.web.service.SystemRAGConfigService;
 
 import java.util.List;
@@ -15,7 +15,16 @@ import java.util.Map;
  * 系统RAG配置控制器
  * (System RAG Configuration Controller)
  *
- * 管理RAG流程的系统配置
+ * 职责：
+ * - 管理系统级RAG配置
+ * - 管理文档级RAG配置
+ * - 管理RAG策略模板
+ * - 提供文档处理接口（向后兼容）
+ *
+ * ⚠️ 说明：
+ * - 新的文档处理API已迁移至 DocumentProcessingController
+ * - 此控制器的处理方法保留用于向后兼容
+ * - 推荐前端逐步迁移到新API：/api/documents/processing/*
  *
  * @author OmniAgent Team
  * @since 2.0.0 (Phase 4)
@@ -27,7 +36,7 @@ import java.util.Map;
 public class SystemRAGConfigController {
 
     private final SystemRAGConfigService configService;
-    private final DocumentProcessingService processingService;  // ⭐ 新增
+    private final top.yumbo.ai.omni.web.service.DocumentProcessingService processingService;  // ⭐ 用于向后兼容
 
     /*
      * 获取系统RAG配置
@@ -686,34 +695,6 @@ public class SystemRAGConfigController {
         private Map<String, Object> chunkingParams;
     }
 
-    @Data
-    public static class ApiResponse<T> {
-        private Boolean success;
-        private String message;
-        private T data;
-
-        public static <T> ApiResponse<T> success(T data) {
-            ApiResponse<T> response = new ApiResponse<>();
-            response.setSuccess(true);
-            response.setData(data);
-            return response;
-        }
-
-        public static <T> ApiResponse<T> success(T data, String message) {
-            ApiResponse<T> response = new ApiResponse<>();
-            response.setSuccess(true);
-            response.setMessage(message);
-            response.setData(data);
-            return response;
-        }
-
-        public static <T> ApiResponse<T> error(String message) {
-            ApiResponse<T> response = new ApiResponse<>();
-            response.setSuccess(false);
-            response.setMessage(message);
-            return response;
-        }
-    }
 
     /**
      * 应用模板请求

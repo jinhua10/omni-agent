@@ -9,12 +9,6 @@ import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.web.config.FileWatcherConfig;
 import top.yumbo.ai.omni.web.model.FileChangeRecord;
 import top.yumbo.ai.omni.web.model.FileChangeRecord.ChangeType;
-import top.yumbo.ai.omni.web.util.DocumentParserUtil;
-import top.yumbo.ai.omni.web.util.FileHashUtil;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.storage.api.DocumentStorageService;
-import top.yumbo.ai.storage.api.model.Chunk;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -22,16 +16,15 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * 文件监听服务
+ * 文件监听服务（重构版）
  *
- * 新逻辑：
- * 1. 监听目录扫描未索引文件
- * 2. 处理文件：解析 → 分块 → 存储 → RAG索引
- * 3. 成功后归档到 data/storage/documents（保留目录结构）
- * 4. 失败则记录详细日志，保留在监听目录等待重试
+ * 职责简化：
+ * 1. 监听 data/documents 目录的文件变化
+ * 2. 定期触发文档注册服务扫描新文件
+ * 3. 不负责注册和处理逻辑
  *
  * @author OmniAgent Team
- * @since 3.0.0
+ * @since 3.0.0 (Refactored)
  */
 @Slf4j
 @Service
@@ -39,14 +32,7 @@ import java.util.concurrent.*;
 public class FileWatcherService {
 
     private final ConfigPersistenceService configService;
-    private final RAGService ragService;
-    private final DocumentStorageService storageService;
-    private final top.yumbo.ai.omni.core.chunking.DocumentChunkingService chunkingService;
-    private final top.yumbo.ai.omni.core.document.DocumentProcessorManager documentProcessorManager;
-    private final top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager chunkingStrategyManager;
-    private final top.yumbo.ai.omni.core.image.ImageStorageService imageStorageService;
-    private final top.yumbo.ai.omni.web.service.rag.ProcessingProgressService progressService;  // ⭐ 新增
-    private final SystemRAGConfigService ragConfigService;  // ⭐ 新增：系统RAG配置服务
+    private final DocumentRegistrationService registrationService;  // ⭐ 注册服务
 
     private WatchService watchService;
     private ExecutorService executorService;
@@ -56,8 +42,6 @@ public class FileWatcherService {
     // 文件处理记录（相对路径 -> 记录）
     private final ConcurrentHashMap<String, FileChangeRecord> processingRecords = new ConcurrentHashMap<>();
 
-    // 已归档文件缓存（相对路径 -> 归档时间）
-    private final ConcurrentHashMap<String, Long> archivedFiles = new ConcurrentHashMap<>();
 
     // 当前配置
     @Getter
@@ -141,17 +125,19 @@ public class FileWatcherService {
                 StandardWatchEventKinds.ENTRY_DELETE
         );
 
-        // 递归注册子目录
-        Files.walk(dir, 1)
-                .filter(Files::isDirectory)
-                .filter(p -> !p.equals(dir))
-                .forEach(subDir -> {
-                    try {
-                        registerWatchDirectory(subDir);
-                    } catch (IOException e) {
-                        log.error("注册子目录监听失败: {}", subDir, e);
-                    }
-                });
+        // 递归注册子目录（使用 try-with-resources 避免资源泄漏）
+        try (var pathStream = Files.walk(dir, 1)) {
+            pathStream
+                    .filter(Files::isDirectory)
+                    .filter(p -> !p.equals(dir))
+                    .forEach(subDir -> {
+                        try {
+                            registerWatchDirectory(subDir);
+                        } catch (IOException e) {
+                            log.error("注册子目录监听失败: {}", subDir, e);
+                        }
+                    });
+        }
     }
 
     /**
@@ -183,74 +169,31 @@ public class FileWatcherService {
     }
 
     /**
-     * 扫描并注册未索引的文件（定期任务）⭐ 核心方法
+     * 扫描并注册新文档（定期任务）⭐ 重构后的核心方法
      *
-     * 新逻辑：
-     * 1. 扫描文件并生成documentId
-     * 2. 注册到SystemRAGConfigService（状态：PENDING）
-     * 3. 不自动处理，由用户在UI中决定何时处理
+     * 职责简化：
+     * 1. 只负责触发注册服务
+     * 2. 不处理具体的注册逻辑
      */
     private void scanAndProcessUnindexedFiles() {
         try {
-            Path watchPath = Paths.get(currentConfig.getWatchDirectory());
-            log.info("🔍 扫描未注册文件: {}", watchPath);
+            String watchDirectory = currentConfig.getWatchDirectory();
+            log.debug("🔍 触发文档注册扫描: {}", watchDirectory);
 
-            // 递归扫描所有文件（包括子目录）
-            Files.walk(watchPath)
-                    .filter(Files::isRegularFile)
-                    .filter(path -> {
-                        String name = path.getFileName().toString();
-                        // 过滤临时文件和隐藏文件
-                        return !name.startsWith(".") && !name.startsWith("~") && !name.endsWith(".tmp");
-                    })
-                    .forEach(filePath -> {
-                        try {
-                            // 获取相对路径（用于判断是否已处理）
-                            Path relativePath = watchPath.relativize(filePath);
-                            String relativePathStr = relativePath.toString().replace('\\', '/');
+            // 委托给注册服务处理
+            int registeredCount = registrationService.scanAndRegisterDocuments(watchDirectory);
 
-                            // ⭐ 使用相对路径作为documentId（见名知意）
-                            String documentId = relativePathStr;
+            if (registeredCount > 0) {
+                log.info("✅ 扫描完成，新注册 {} 个文档", registeredCount);
+            }
 
-                            // 检查是否已注册到RAG配置服务
-                            SystemRAGConfigService.DocumentRAGConfig existingConfig =
-                                ragConfigService.getDocumentConfig(documentId);
-
-                            // 如果已经注册且不是PENDING状态，跳过
-                            if (existingConfig.getCreatedAt() > 0 &&
-                                !"PENDING".equals(existingConfig.getStatus())) {
-                                log.debug("⏭️ 文档已处理或正在处理，跳过: {}", documentId);
-                                return;
-                            }
-
-                            // 注册新文档（状态：PENDING，等待用户决定如何处理）
-                            if (existingConfig.getCreatedAt() == 0) {
-                                log.info("📝 注册新文档: {} (等待用户配置)", documentId);
-                                SystemRAGConfigService.DocumentRAGConfig newConfig =
-                                    new SystemRAGConfigService.DocumentRAGConfig();
-                                newConfig.setDocumentId(documentId);
-                                newConfig.setStatus("PENDING");
-                                newConfig.setTextExtractionModel(ragConfigService.getDefaultTextExtractionModel());
-                                newConfig.setChunkingStrategy(ragConfigService.getDefaultChunkingStrategy());
-                                newConfig.setCreatedAt(System.currentTimeMillis());
-                                newConfig.setUpdatedAt(System.currentTimeMillis());
-                                ragConfigService.setDocumentConfig(documentId, newConfig);
-                            }
-
-                        } catch (Exception e) {
-                            log.error("❌ 注册文件失败: {}", filePath, e);
-                        }
-                    });
-
-            log.info("✅ 文件扫描完成");
-
-        } catch (IOException e) {
-            log.error("❌ 扫描文件失败", e);
+        } catch (Exception e) {
+            log.error("❌ 扫描文档失败", e);
         }
     }
 
     /**
-     * 监听循环（简化版：只响应新文件创建）
+     * 监听循环（简化版）
      */
     private void watchLoop() {
         log.info("🔍 开始监听文件变化...");
@@ -291,286 +234,6 @@ public class FileWatcherService {
         log.info("🛑 文件监听循环结束");
     }
 
-
-    /**
-     * 处理新文件（完整流程：解析 → 分块 → 存储 → RAG索引 → 归档）⭐
-     */
-    private void processNewFile(Path filePath, Path relativePath) {
-        String relativePathStr = relativePath.toString().replace('\\', '/');
-        String filename = filePath.getFileName().toString();
-
-        // ⭐ 使用有意义的相对路径作为 documentId（见名知意）
-        // 例如: "报告/2024年报.pdf" 而不是 "doc_123456_报告_2024年报.pdf"
-        String documentId = relativePathStr;
-
-        // ⭐ 使用文件名作为进度追踪的标识（用户友好）
-        progressService.startProcessing(filename, filename);
-
-        // 创建处理记录
-        FileChangeRecord record = FileChangeRecord.builder()
-                .id(relativePathStr)  // ⭐ 使用相对路径作为ID，而不是UUID
-                .filePath(filePath.toString())
-                .fileName(filename)
-                .changeType(ChangeType.CREATE)
-                .changedAt(System.currentTimeMillis())
-                .processed(false)
-                .build();
-
-        processingRecords.put(relativePathStr, record);
-
-        try {
-            log.info("🔄 开始处理文件: {}", relativePathStr);
-
-
-            // ========== 步骤1: 读取文件 ==========
-            byte[] fileData = Files.readAllBytes(filePath);
-            log.info("📄 读取文件: {} bytes", fileData.length);
-            // ⭐ 更新进度：上传完成 (10%)
-            progressService.updateProgress(filename,
-                top.yumbo.ai.omni.web.model.rag.ProcessingStage.UPLOAD, 10);
-
-            // ========== 步骤2: 使用 DocumentProcessorManager 处理文档 ==========
-            String content;
-            List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> images = null;
-
-            try {
-                log.info("🔄 使用 DocumentProcessorManager 处理文档...");
-                // ⭐ 更新进度：开始提取 (20%)
-                progressService.updateProgress(filename,
-                    top.yumbo.ai.omni.web.model.rag.ProcessingStage.EXTRACT, 20);
-
-                top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
-                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
-                        .fileBytes(fileData)
-                        .fileExtension(getFileExtension(filename))
-                        .originalFileName(filename)
-                        .fileSize((long) fileData.length)
-                        .options(new HashMap<>())
-                        .build();
-
-                top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
-                    documentProcessorManager.processDocument(context);
-
-                if (result.isSuccess()) {
-                    content = result.getContent();
-                    images = result.getImages();
-                    log.info("✅ 文档处理成功: {} chars, {} images",
-                            content.length(), images != null ? images.size() : 0);
-                    // ⭐ 更新进度：提取完成 (40%)
-                    progressService.updateProgress(filename,
-                        top.yumbo.ai.omni.web.model.rag.ProcessingStage.EXTRACT, 40);
-                } else {
-                    throw new Exception("文档处理失败: " + result.getError());
-                }
-
-            } catch (Exception e) {
-                log.warn("⚠️ DocumentProcessor 失败，降级使用 DocumentParserUtil: {}", e.getMessage());
-                content = DocumentParserUtil.parseDocument(filePath.toFile());
-            }
-
-            if (content == null || content.trim().isEmpty()) {
-                throw new Exception("文档内容为空");
-            }
-
-            // ========== 步骤3: 保存原始文档到存储 ==========
-            log.info("💾 保存原始文档到存储服务...");
-            String savedDocId = storageService.saveDocument(documentId, relativePathStr, fileData);
-            if (savedDocId == null) {
-                throw new Exception("保存原始文档失败");
-            }
-
-            // ========== 步骤4: 保存提取的图片 ==========
-            if (images != null && !images.isEmpty()) {
-                log.info("🖼️ 保存提取的图片: {} 张", images.size());
-
-                // ⭐ 按页码分组图片
-                Map<Integer, List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage>> imagesByPage = new HashMap<>();
-                for (var img : images) {
-                    int pageNum = img.getPageNumber() > 0 ? img.getPageNumber() : 1;
-                    imagesByPage.computeIfAbsent(pageNum, k -> new ArrayList<>()).add(img);
-                }
-
-                int savedImageCount = 0;
-                // ⭐ 遍历每一页，为该页的图片添加序号
-                for (Map.Entry<Integer, List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage>> entry : imagesByPage.entrySet()) {
-                    int pageNum = entry.getKey();
-                    List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> pageImages = entry.getValue();
-
-                    for (int imgIndex = 0; imgIndex < pageImages.size(); imgIndex++) {
-                        var extractedImage = pageImages.get(imgIndex);
-
-                        try {
-                            // ⭐ 在 metadata 中添加图片序号
-                            Map<String, Object> metadata = extractedImage.getMetadata();
-                            if (metadata == null) {
-                                metadata = new HashMap<>();
-                            }
-                            metadata.put("imageIndex", imgIndex);  // 图片在该页的序号
-                            metadata.put("pageNumber", pageNum);   // 确保页码信息存在
-
-                            // ⭐ 使用文件名而不是 documentId
-                            String imageId = imageStorageService.saveImage(
-                                    filename,  // ⭐ 使用文件名
-                                    extractedImage.getData(),
-                                    extractedImage.getFormat(),
-                                    metadata);  // 传递包含序号的 metadata
-                            if (imageId != null) {
-                                savedImageCount++;
-                            }
-                        } catch (Exception ex) {
-                            log.warn("⚠️ 保存图片失败 (page={}, img={}): {}", pageNum, imgIndex, ex.getMessage());
-                        }
-                    }
-                }
-                log.info("✅ 图片已保存: {} 张 (共 {} 页)", savedImageCount, imagesByPage.size());
-            }
-
-            // ========== 步骤5: 智能分块 ==========
-            log.info("✂️ 智能分块...");
-            // ⭐ 更新进度：开始分块 (50%)
-            progressService.updateProgress(filename,
-                top.yumbo.ai.omni.web.model.rag.ProcessingStage.CHUNK, 50);
-
-            List<Chunk> chunks = chunkingStrategyManager.chunkWithAutoStrategy(
-                    documentId, content, filename);
-            log.info("✅ 分块完成: {} 个块", chunks.size());
-            // ⭐ 更新进度：分块完成 (60%)
-            progressService.updateProgress(filename,
-                top.yumbo.ai.omni.web.model.rag.ProcessingStage.CHUNK, 60);
-
-            // ========== 步骤6: 保存分块 ==========
-            log.info("💾 保存分块到存储...");
-            List<String> chunkIds = storageService.saveChunks(filename, chunks);
-            log.info("✅ 分块已保存: {} 个", chunkIds.size());
-
-            // ========== 步骤7: RAG索引 ==========
-            log.info("📇 索引到 RAG...");
-            // ⭐ 更新进度：开始向量化 (70%)
-            progressService.updateProgress(filename,
-                top.yumbo.ai.omni.web.model.rag.ProcessingStage.VECTORIZE, 70);
-
-            for (Chunk chunk : chunks) {
-                top.yumbo.ai.rag.api.model.Document document = top.yumbo.ai.rag.api.model.Document.builder()
-                        .id(chunk.getId())
-                        .title(filename + " (块 " + chunk.getSequence() + ")")
-                        .content(chunk.getContent())
-                        .summary("块 " + chunk.getSequence())
-                        .source("file-watcher")
-                        .type(getFileType(filename))
-                        .metadata(Map.of(
-                                "fileName", filename,
-                                "relativePath", relativePathStr,           // ⭐ 相对路径
-                                "storagePath", relativePathStr,            // ⭐ 存储路径（用于下载）
-                                "documentId", documentId,
-                                "chunkIndex", chunk.getSequence()
-                        ))
-                        .build();
-
-                ragService.indexDocument(document);
-            }
-            log.info("✅ RAG索引完成");
-            // ⭐ 更新进度：索引中 (90%)
-            progressService.updateProgress(filename,
-                top.yumbo.ai.omni.web.model.rag.ProcessingStage.INDEX, 90);
-
-            // ========== 步骤8: 归档成功，从监听目录移除 ==========
-            Files.delete(filePath);
-            log.info("🗑️ 已从监听目录移除: {}", relativePathStr);
-
-            // 标记为已归档
-            archivedFiles.put(relativePathStr, System.currentTimeMillis());
-            record.setProcessed(true);
-            record.setProcessedAt(System.currentTimeMillis());
-            record.setNote("成功归档到: " + relativePathStr);
-
-            log.info("✅ 处理完成: {}", relativePathStr);
-
-            // ⭐ 标记处理完成 (100%)
-            progressService.markCompleted(filename);
-
-        } catch (Exception e) {
-            log.error("❌ 处理失败: {} - {}", relativePathStr, e.getMessage(), e);
-            record.setProcessed(false);
-            record.setNote("失败: " + e.getMessage());
-
-            // ⭐ 标记处理失败
-            progressService.markFailed(filename,
-                top.yumbo.ai.omni.web.model.rag.ProcessingStage.INDEX,
-                e.getMessage());
-
-            // 失败的文件保留在监听目录，等待下次扫描重试
-        }
-    }
-
-    /**
-     * 获取文件扩展名
-     */
-    private String getFileExtension(String filename) {
-        int lastDot = filename.lastIndexOf('.');
-        if (lastDot > 0 && lastDot < filename.length() - 1) {
-            return filename.substring(lastDot + 1);
-        }
-        return "";
-    }
-
-    // ========== 分块策略相关 ==========
-    //
-    // ✅ 已实现：根据文档类型自动选择分块策略
-    // - DocumentChunkingService → ChunkingStrategyManager → 具体Strategy
-    // - 支持多种内置策略：固定大小、句子边界、段落、语义感知等
-    //
-    // 🔮 未来扩展：通过 marketplace 模块加载自定义算法
-    //
-    // 当前架构：
-    // FileWatcherService
-    //   → DocumentChunkingService
-    //       → ChunkingStrategyManager (管理所有策略)
-    //           ├─ FixedSizeChunkingStrategy (默认)
-    //           ├─ SentenceBoundaryChunkingStrategy
-    //           ├─ ParagraphChunkingStrategy
-    //           ├─ SemanticChunkingStrategy (TODO)
-    //           ├─ PPLChunkingStrategy (TODO - 基于困惑度)
-    //           └─ MarketplaceChunkingStrategy (TODO - 从市场加载)
-    //
-    // 扩展示例：
-    // 1. 在配置文件中指定策略：
-    //    "chunkingStrategy": "semantic"  // 强制使用语义分块
-    //
-    // 2. 从算法市场加载：
-    //    String algorithmId = currentConfig.getChunkingAlgorithmId();
-    //    if (algorithmId != null) {
-    //        chunks = marketplaceService.executeChunkingAlgorithm(
-    //            algorithmId, docId, content, fileName
-    //        );
-    //    } else {
-    //        chunks = chunkingService.chunkDocument(docId, content, fileName);
-    //    }
-
-    /**
-     * 推断文件类型
-     */
-    private String getFileType(String fileName) {
-        String lower = fileName.toLowerCase();
-        if (lower.endsWith(".pdf")) return "pdf";
-        if (lower.endsWith(".docx") || lower.endsWith(".doc")) return "word";
-        if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) return "excel";
-        if (lower.endsWith(".pptx") || lower.endsWith(".ppt")) return "powerpoint";
-        if (lower.endsWith(".txt")) return "text";
-        return "document";
-    }
-
-    /**
-     * 从文件名提取 documentId
-     */
-    private String extractDocumentId(String fileName) {
-        if (fileName.startsWith("doc_")) {
-            int idx = fileName.indexOf('_', 4);
-            if (idx > 0) {
-                return fileName.substring(0, idx);
-            }
-        }
-        return null;
-    }
 
     // ========== 公开API ==========
 

@@ -10,14 +10,18 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 文档处理服务
- * (Document Processing Service)
+ * 文档处理服务（智能混合模式）
+ * (Document Processing Service - Smart Hybrid Mode)
+ *
+ * 实现方案3：智能混合模式 ⭐
+ * - 系统配置=自动 → 自动处理 → 完成
+ * - 系统配置=手动 → PENDING → 用户介入 → 完成
  *
  * 处理文档并推送进度
  * (Process documents and push progress)
  *
  * @author OmniAgent Team
- * @since 2.0.0 (Phase 4)
+ * @since 2.0.0 (Phase 4) - Refactored for Smart Hybrid Mode
  */
 @Slf4j
 @Service
@@ -28,48 +32,58 @@ public class DocumentProcessingService {
     private final SystemRAGConfigService ragConfigService;
 
     /**
-     * 处理文档（检查配置决定是否自动执行）
+     * 处理文档（智能混合模式）⭐
+     *
+     * 根据系统配置决定处理方式：
+     * 1. 如果系统配置为"自动"，则全自动处理
+     * 2. 如果系统配置为"手动"，则等待用户配置
      */
     public CompletableFuture<Void> processDocument(String documentId, String documentName, byte[] content) {
         return CompletableFuture.runAsync(() -> {
             try {
-                log.info("📄 开始处理文档: documentId={}, name={}", documentId, documentName);
+                log.info("📄 开始处理文档（智能混合模式）: documentId={}, name={}", documentId, documentName);
+
+                // 获取系统配置
+                boolean autoTextExtraction = ragConfigService.isAutoTextExtraction();
+                boolean autoRAG = ragConfigService.isAutoRAG();
+
+                log.info("🎛️ 系统配置: 自动提取={}, 自动RAG={}", autoTextExtraction, autoRAG);
 
                 // 获取文档配置
                 SystemRAGConfigService.DocumentRAGConfig docConfig =
                     ragConfigService.getDocumentConfig(documentId);
 
-                // 阶段1: 上传
+                // 阶段1: 上传完成
                 pushProgress(documentId, "UPLOAD", 0, "文档上传完成", documentName, null);
                 Thread.sleep(500);
 
-                // 检查是否自动文本提取
-                if (ragConfigService.isAutoTextExtraction()) {
-                    // 自动文本提取
-                    performTextExtraction(documentId, documentName, content, docConfig);
-                } else {
-                    // 等待用户配置
-                    docConfig.setStatus("PENDING");
-                    ragConfigService.setDocumentConfig(documentId, docConfig);
-                    pushProgress(documentId, "EXTRACT", 10, "等待配置文本提取方式...", documentName,
-                        Map.of("status", "PENDING", "message", "请在文本提取配置中选择提取方式"));
-                    log.info("⏸️ 文档等待配置: documentId={}", documentId);
-                    return; // 暂停，等待用户配置
-                }
+                // ⭐ 智能判断：根据系统配置决定流程
+                if (autoTextExtraction && autoRAG) {
+                    // 模式A: 全自动模式
+                    log.info("🤖 全自动模式：自动提取 + 自动分块 + 自动索引");
+                    performFullRAG(documentId, documentName, content, docConfig);
 
-                // 检查是否自动RAG
-                if (!ragConfigService.isAutoRAG()) {
+                } else if (autoTextExtraction && !autoRAG) {
+                    // 模式B: 半自动模式（自动提取，手动分块）
+                    log.info("🔧 半自动模式：自动提取，等待配置分块");
+                    performTextExtraction(documentId, documentName, content, docConfig);
+
                     // 等待用户配置分块策略
                     docConfig.setStatus("EXTRACTED");
                     ragConfigService.setDocumentConfig(documentId, docConfig);
                     pushProgress(documentId, "CHUNK", 40, "等待配置分块策略...", documentName,
                         Map.of("status", "PENDING", "message", "请在分块配置中选择分块策略"));
                     log.info("⏸️ 文档等待配置分块: documentId={}", documentId);
-                    return; // 暂停，等待用户配置
-                }
 
-                // 自动执行完整流程
-                performFullRAG(documentId, documentName, content, docConfig);
+                } else {
+                    // 模式C: 完全手动模式
+                    log.info("👤 完全手动模式：等待用户配置");
+                    docConfig.setStatus("PENDING");
+                    ragConfigService.setDocumentConfig(documentId, docConfig);
+                    pushProgress(documentId, "EXTRACT", 10, "等待配置文本提取方式...", documentName,
+                        Map.of("status", "PENDING", "message", "请在文本提取配置中选择提取方式"));
+                    log.info("⏸️ 文档等待配置: documentId={}", documentId);
+                }
 
             } catch (Exception e) {
                 log.error("❌ 文档处理失败: documentId={}", documentId, e);
