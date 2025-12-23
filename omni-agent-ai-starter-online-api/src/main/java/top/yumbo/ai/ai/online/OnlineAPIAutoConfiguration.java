@@ -1,6 +1,7 @@
 package top.yumbo.ai.ai.online;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -37,12 +38,53 @@ public class OnlineAPIAutoConfiguration {
                 .build();
     }
 
+    /**
+     * 通用 AI Service（用于普通对话）
+     */
     @Bean
     @ConditionalOnMissingBean
     public AIService aiService(RestTemplate onlineApiRestTemplate, OnlineAPIProperties properties) {
         log.info("Auto-configuring OnlineAPIAIService: provider={}, model={}",
                 properties.getProvider(), properties.getDefaultModel());
         return new OnlineAPIAIService(onlineApiRestTemplate, properties);
+    }
+
+    /**
+     * Vision AI Service（专门用于图像识别）⭐
+     * 使用 vision-llm 配置
+     */
+    @Bean(name = "visionAIService")
+    @ConditionalOnProperty(prefix = "omni-agent.vision-llm", name = "enabled", havingValue = "true")
+    public AIService visionAIService(RestTemplate onlineApiRestTemplate,
+                                      @Autowired(required = false) Object visionLLMProperties) {
+        if (visionLLMProperties == null) {
+            log.warn("⚠️ Vision LLM 配置未找到，Vision 功能可能无法正常工作");
+            return null;
+        }
+
+        try {
+            // 通过反射获取 Vision LLM 配置
+            Class<?> clazz = visionLLMProperties.getClass();
+            String model = (String) clazz.getMethod("getModel").invoke(visionLLMProperties);
+            String endpoint = (String) clazz.getMethod("getEndpoint").invoke(visionLLMProperties);
+            String apiKey = (String) clazz.getMethod("getApiKey").invoke(visionLLMProperties);
+
+            // 创建专门的 Vision Properties
+            OnlineAPIProperties visionProps = new OnlineAPIProperties();
+            visionProps.setProvider("qianwen"); // Vision 通常使用千问
+            visionProps.setDefaultModel(model != null ? model : "qwen-vl-plus");
+            visionProps.setEndpoint(endpoint != null ? endpoint : "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions");
+            visionProps.setApiKey(apiKey);
+            visionProps.setTimeout(60000); // Vision 处理时间较长
+
+            log.info("✅ Auto-configuring Vision AIService: model={}, endpoint={}",
+                    visionProps.getDefaultModel(), visionProps.getEndpoint());
+
+            return new OnlineAPIAIService(onlineApiRestTemplate, visionProps);
+        } catch (Exception e) {
+            log.error("❌ 创建 Vision AI Service 失败", e);
+            return null;
+        }
     }
 }
 

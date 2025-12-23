@@ -587,7 +587,8 @@ public class OnlineAPIAIService implements AIService {
     @Override
     public AIResponse chatWithVision(List<ChatMessage> messages) {
         try {
-            log.debug("🎨 [Vision Chat] 发送多模态对话请求");
+            log.debug("🎨 [Vision Chat] 发送多模态对话请求, model: {}, endpoint: {}",
+                    currentModel, getEndpoint());
 
             // 构建请求体（支持多模态内容）
             Map<String, Object> requestBody = new HashMap<>();

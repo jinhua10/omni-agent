@@ -60,6 +60,12 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(prefix = "omni-agent.vision-llm", name = "enabled", havingValue = "true")
 public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
+    // ⭐ 使用专门的 Vision AI Service
+    @Autowired(required = false)
+    @Qualifier("visionAIService")
+    private AIService visionAIService;
+
+    // 备用：如果没有 visionAIService，使用通用 aiService
     @Autowired(required = false)
     private AIService aiService;
 
@@ -942,8 +948,11 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      */
     private String recognizePageWithVisionLLM(DocumentPage page, String prompt) {
         try {
+            // ⭐ 优先使用专门的 Vision AI Service
+            AIService serviceToUse = visionAIService != null ? visionAIService : aiService;
+
             // 检查 AIService 配置
-            if (aiService == null) {
+            if (serviceToUse == null) {
                 log.warn("⚠️ [VisionLLM] AI Service 未配置，返回占位内容");
                 return String.format("[页面 %d 的内容 - AI Service 未配置]\n包含 %d 张图片",
                         page.getPageNumber(), page.getImages().size());
@@ -964,12 +973,13 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             String visionPrompt = buildVisionPrompt(page, prompt);
 
             // 3. 调用 AIService 进行图片分析 ⭐
-            log.info("🔍 [VisionLLM] 调用 Vision API 分析页面 {}, 图片数: {}",
-                    page.getPageNumber(), imagesData.size());
+            log.info("🔍 [VisionLLM] 调用 Vision API 分析页面 {}, 图片数: {}, 使用服务: {}",
+                    page.getPageNumber(), imagesData.size(),
+                    visionAIService != null ? "visionAIService" : "aiService");
 
             try {
                 // 调用 AIService 的 analyzeImages 方法
-                String result = aiService.analyzeImages(imagesData, visionPrompt);
+                String result = serviceToUse.analyzeImages(imagesData, visionPrompt);
 
                 log.info("✅ [VisionLLM] 页面 {} 分析完成，内容长度: {} chars",
                         page.getPageNumber(), result != null ? result.length() : 0);
