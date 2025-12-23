@@ -139,16 +139,41 @@ public String saveExtractedText(String documentId, String text) {
 
 ---
 
-### 6. ElasticsearchDocumentStorage ⚠️
+### 6. ElasticsearchDocumentStorage ✅
 
-**状态**: 附件文件中已包含完整实现  
+**状态**: ✅ 编译成功  
 **索引**: `{prefix}-extracted-text`
 
-根据附件文件内容，该实现已经存在（第564-640行），包括：
-- ✅ `saveExtractedText()` 方法
-- ✅ `getExtractedText()` 方法
-- ✅ `deleteExtractedText()` 方法
-- ✅ 索引初始化逻辑
+**实现方式**:
+- 使用独立的 Elasticsearch 索引存储提取文本
+- 文档ID作为索引ID，便于查询
+- 包含元数据（documentId, createdAt）
+
+```java
+@Override
+public String saveExtractedText(String documentId, String text) {
+    Map<String, Object> textData = new HashMap<>();
+    textData.put("documentId", documentId);
+    textData.put("text", text);
+    textData.put("createdAt", System.currentTimeMillis());
+
+    IndexRequest<Map<String, Object>> request = IndexRequest.of(i -> i
+        .index(extractedTextIndex)
+        .id(documentId)
+        .document(textData)
+    );
+
+    IndexResponse response = client.index(request);
+    return response.result() == Result.Created || response.result() == Result.Updated 
+        ? documentId : null;
+}
+```
+
+**特点**:
+- ✅ 全文检索能力
+- ✅ 分布式存储
+- ✅ 高可用性
+- ✅ 自动索引管理
 
 ---
 
