@@ -51,40 +51,31 @@ public class OnlineAPIAutoConfiguration {
 
     /**
      * Vision AI Service（专门用于图像识别）⭐
-     * 使用 vision-llm 配置
+     * 使用 Spring IoC 注入 VisionLLMProperties 配置
      */
     @Bean(name = "visionAIService")
     @ConditionalOnProperty(prefix = "omni-agent.vision-llm", name = "enabled", havingValue = "true")
-    public AIService visionAIService(RestTemplate onlineApiRestTemplate,
-                                      @Autowired(required = false) Object visionLLMProperties) {
+    public AIService visionAIService(
+            RestTemplate onlineApiRestTemplate,
+            @Autowired(required = false) top.yumbo.ai.ai.api.config.VisionLLMProperties visionLLMProperties) {
+
         if (visionLLMProperties == null) {
             log.warn("⚠️ Vision LLM 配置未找到，Vision 功能可能无法正常工作");
             return null;
         }
 
-        try {
-            // 通过反射获取 Vision LLM 配置
-            Class<?> clazz = visionLLMProperties.getClass();
-            String model = (String) clazz.getMethod("getModel").invoke(visionLLMProperties);
-            String endpoint = (String) clazz.getMethod("getEndpoint").invoke(visionLLMProperties);
-            String apiKey = (String) clazz.getMethod("getApiKey").invoke(visionLLMProperties);
+        // 创建专门的 Vision Properties（使用 Spring 注入的配置）
+        OnlineAPIProperties visionProps = new OnlineAPIProperties();
+        visionProps.setProvider("qianwen"); // Vision 通常使用千问
+        visionProps.setDefaultModel(visionLLMProperties.getModel());
+        visionProps.setEndpoint(visionLLMProperties.getEndpoint());
+        visionProps.setApiKey(visionLLMProperties.getApiKey());
+        visionProps.setTimeout(60000); // Vision 处理时间较长
 
-            // 创建专门的 Vision Properties
-            OnlineAPIProperties visionProps = new OnlineAPIProperties();
-            visionProps.setProvider("qianwen"); // Vision 通常使用千问
-            visionProps.setDefaultModel(model != null ? model : "qwen-vl-plus");
-            visionProps.setEndpoint(endpoint != null ? endpoint : "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions");
-            visionProps.setApiKey(apiKey);
-            visionProps.setTimeout(60000); // Vision 处理时间较长
+        log.info("✅ Auto-configuring Vision AIService: model={}, endpoint={}",
+                visionProps.getDefaultModel(), visionProps.getEndpoint());
 
-            log.info("✅ Auto-configuring Vision AIService: model={}, endpoint={}",
-                    visionProps.getDefaultModel(), visionProps.getEndpoint());
-
-            return new OnlineAPIAIService(onlineApiRestTemplate, visionProps);
-        } catch (Exception e) {
-            log.error("❌ 创建 Vision AI Service 失败", e);
-            return null;
-        }
+        return new OnlineAPIAIService(onlineApiRestTemplate, visionProps);
     }
 }
 
