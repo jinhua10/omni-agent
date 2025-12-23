@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.config;
+package top.yumbo.ai.ai.api.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

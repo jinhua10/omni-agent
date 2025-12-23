@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.omni.core.config.VisionLLMBatchProcessingProperties;
+import top.yumbo.ai.ai.api.config.VisionLLMBatchProcessingProperties;
 import top.yumbo.ai.omni.core.document.DocumentProcessor;
 
 import java.util.*;
