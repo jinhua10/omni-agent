@@ -155,6 +155,28 @@ public class DocumentProcessingController {
                                         return;
                                     }
 
+                                    // ⭐ 检查是否为批次开始标记
+                                    if (chunk.startsWith("BATCH_START:")) {
+                                        String batchStartJson = chunk.substring("BATCH_START:".length()).trim();
+                                        log.info("🚀 [CONTROLLER] 批次开始: {}", batchStartJson);
+
+                                        emitter.send(SseEmitter.event()
+                                                .name("message")
+                                                .data("{\"type\":\"batchStart\"," + batchStartJson.substring(1)));
+                                        return;
+                                    }
+
+                                    // ⭐ 检查是否为批次结束标记
+                                    if (chunk.startsWith("BATCH_END:")) {
+                                        String batchEndJson = chunk.substring("BATCH_END:".length()).trim();
+                                        log.info("✅ [CONTROLLER] 批次完成: {}", batchEndJson);
+
+                                        emitter.send(SseEmitter.event()
+                                                .name("message")
+                                                .data("{\"type\":\"batchEnd\"," + batchEndJson.substring(1)));
+                                        return;
+                                    }
+
                                     log.info("📤 [STREAM] 发送流式内容: {} 字符", chunk.length());
 
                                     // ⭐ 使用 Jackson 进行 JSON 转义，更安全

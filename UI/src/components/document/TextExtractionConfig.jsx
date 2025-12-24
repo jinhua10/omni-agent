@@ -26,6 +26,8 @@ import {
   Input,
   Switch,
   Tooltip,
+  Collapse,
+  Dropdown,
 } from 'antd'
 import {
   FileTextOutlined,
@@ -34,7 +36,16 @@ import {
   ThunderboltOutlined,
   ThunderboltFilled,
   CheckCircleOutlined,
+  EditOutlined,
+  EyeOutlined as ViewOutlined,
+  DownloadOutlined,
+  SaveOutlined,
+  ClockCircleOutlined,
+  CheckCircleFilled,
+  LoadingOutlined,
 } from '@ant-design/icons'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/TextExtractionConfig.css'
 
@@ -91,6 +102,9 @@ function TextExtractionConfig({ documentId }) {
   const [batchInfo, setBatchInfo] = useState(null) // ⭐ 批次信息
   const [isEditing, setIsEditing] = useState(false) // ⭐ 是否为编辑模式（查看源码）
   const [activeTab, setActiveTab] = useState('preview') // ⭐ 当前标签页
+  const [batches, setBatches] = useState([]) // ⭐ 批次数据 [{index, content, status}]
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true) // ⭐ 自动保存开关
+  const [lastSaved, setLastSaved] = useState(null) // ⭐ 最后保存时间
 
   // 加载系统配置
   useEffect(() => {
@@ -99,6 +113,93 @@ function TextExtractionConfig({ documentId }) {
       loadDocumentConfig()
     }
   }, [documentId])
+
+  // ⭐ 自动保存功能：内容变化后 3 秒自动保存
+  useEffect(() => {
+    if (!autoSaveEnabled || !extractionResult || !documentId) return
+
+    const timer = setTimeout(() => {
+      saveExtractionResult()
+    }, 3000) // 3秒防抖
+
+    return () => clearTimeout(timer)
+  }, [extractionResult, autoSaveEnabled, documentId])
+
+  // ⭐ 保存提取结果
+  const saveExtractionResult = async () => {
+    if (!documentId || !extractionResult) return
+
+    try {
+      const encodedDocId = encodeURIComponent(documentId)
+      await fetch(`/api/system/rag-config/document/${encodedDocId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          extractedText: extractionResult,
+          textExtractionModel: selectedModel,
+        }),
+      })
+      setLastSaved(new Date())
+      console.log('💾 自动保存成功')
+    } catch (error) {
+      console.error('自动保存失败:', error)
+    }
+  }
+
+  // ⭐ 导出为 Markdown 文件
+  const exportAsMarkdown = () => {
+    const blob = new Blob([extractionResult], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${documentId || 'extraction'}.md`
+    link.click()
+    URL.revokeObjectURL(url)
+    message.success('已导出为 Markdown 文件')
+  }
+
+  // ⭐ 导出为 HTML 文件
+  const exportAsHTML = () => {
+    const ReactMarkdown = require('react-markdown').default
+    const { renderToString } = require('react-dom/server')
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${documentId || '文档提取结果'}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      color: #333;
+    }
+    h1, h2, h3 { margin-top: 24px; margin-bottom: 16px; }
+    h2 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+    code { background-color: #f6f8fa; padding: 2px 6px; border-radius: 3px; }
+    pre { background-color: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
+    blockquote { border-left: 4px solid #dfe2e5; padding-left: 16px; color: #6a737d; }
+    hr { border: none; height: 2px; background-color: #e1e4e8; margin: 24px 0; }
+  </style>
+</head>
+<body>
+  ${extractionResult.replace(/\n/g, '<br>').replace(/#{1,6} /g, (match) => `<h${match.length - 1}>`)}
+</body>
+</html>`
+
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${documentId || 'extraction'}.html`
+    link.click()
+    URL.revokeObjectURL(url)
+    message.success('已导出为 HTML 文件')
+  }
 
   const loadDocumentConfig = async () => {
     if (!documentId) return
@@ -154,7 +255,10 @@ function TextExtractionConfig({ documentId }) {
     setExtracting(true)
     setExtractionProgress({ status: 'processing', percent: 0 })
     setExtractionResult('') // ⭐ 清空之前的结果
+    setBatches([]) // ⭐ 清空批次
     message.info(streamingMode ? '开始流式提取...' : '开始提取...')
+
+    let currentBatchIndex = -1 // ⭐ 跟踪当前批次
 
     try {
       // ⭐ 对URL中的documentId进行编码
@@ -204,12 +308,37 @@ function TextExtractionConfig({ documentId }) {
                   message: data.message
                 })
               } else if (data.type === 'batchInfo') {
-                // ⭐ 收到批次信息
+                // ⭐ 收到批次信息，初始化批次数组
                 console.log('📦 收到批次信息:', data)
                 setBatchInfo({
                   totalBatches: data.totalBatches,
                   totalPages: data.totalPages,
                 })
+                // 初始化批次数组
+                const initialBatches = Array.from({ length: data.totalBatches }, (_, i) => ({
+                  index: i,
+                  number: i + 1,
+                  content: '',
+                  status: 'pending', // pending, processing, completed
+                }))
+                setBatches(initialBatches)
+              } else if (data.type === 'batchStart') {
+                // ⭐ 批次开始，更新当前批次索引
+                console.log('🚀 批次开始:', data)
+                currentBatchIndex = data.batchIndex
+                setBatches(prev => prev.map(b =>
+                  b.index === data.batchIndex
+                    ? { ...b, status: 'processing' }
+                    : b
+                ))
+              } else if (data.type === 'batchEnd') {
+                // ⭐ 批次完成
+                console.log('✅ 批次完成:', data)
+                setBatches(prev => prev.map(b =>
+                  b.index === data.batchIndex
+                    ? { ...b, status: 'completed' }
+                    : b
+                ))
               } else if (data.type === 'accuracy') {
                 // ⭐ 保存精度信息
                 setExtractionProgress(prev => ({
@@ -219,8 +348,18 @@ function TextExtractionConfig({ documentId }) {
                 }))
               } else if (data.type === 'content') {
                 // ⭐ 流式/非流式都实时累加显示（前端体验一致）
-                console.log('📄 累加文本内容，长度:', data.content?.length || 0, '模式:', streamingMode ? '流式' : '非流式')
-                setExtractionResult(prev => prev + (data.content || ''))
+                console.log('📄 累加文本内容，长度:', data.content?.length || 0, '模式:', streamingMode ? '流式' : '非流式', '当前批次:', currentBatchIndex)
+                const newContent = data.content || ''
+                setExtractionResult(prev => prev + newContent)
+
+                // ⭐ 同时更新对应批次的内容
+                if (currentBatchIndex >= 0) {
+                  setBatches(prev => prev.map(b =>
+                    b.index === currentBatchIndex
+                      ? { ...b, content: b.content + newContent }
+                      : b
+                  ))
+                }
               } else if (data.type === 'complete') {
                 setExtractionProgress({ 
                   status: 'success', 
@@ -450,6 +589,45 @@ function TextExtractionConfig({ documentId }) {
                   >
                     源码
                   </Button>
+                  <Divider type="vertical" />
+                  <Tooltip title={autoSaveEnabled ? '已启用自动保存' : '已禁用自动保存'}>
+                    <Switch
+                      checked={autoSaveEnabled}
+                      onChange={setAutoSaveEnabled}
+                      checkedChildren={<SaveOutlined />}
+                      unCheckedChildren={<SaveOutlined />}
+                      size="small"
+                    />
+                  </Tooltip>
+                  {lastSaved && (
+                    <Tooltip title={`上次保存: ${lastSaved.toLocaleTimeString()}`}>
+                      <Tag icon={<CheckCircleFilled />} color="success" style={{ margin: 0 }}>
+                        已保存
+                      </Tag>
+                    </Tooltip>
+                  )}
+                  <Dropdown
+                    menu={{
+                      items: [
+                        {
+                          key: 'markdown',
+                          label: '导出 Markdown',
+                          icon: <DownloadOutlined />,
+                          onClick: exportAsMarkdown,
+                        },
+                        {
+                          key: 'html',
+                          label: '导出 HTML',
+                          icon: <DownloadOutlined />,
+                          onClick: exportAsHTML,
+                        },
+                      ],
+                    }}
+                  >
+                    <Button size="small" icon={<DownloadOutlined />}>
+                      导出
+                    </Button>
+                  </Dropdown>
                 </Space>
               }
               style={{ height: '100%' }}
@@ -457,9 +635,33 @@ function TextExtractionConfig({ documentId }) {
             >
               {activeTab === 'preview' ? (
                 <div className="markdown-preview">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {extractionResult}
-                  </ReactMarkdown>
+                  {batches.length > 0 ? (
+                    // ⭐ 批次级别显示
+                    <Collapse
+                      defaultActiveKey={batches.map(b => b.index)}
+                      items={batches.map(batch => ({
+                        key: batch.index,
+                        label: (
+                          <Space>
+                            <span>批次 {batch.number}</span>
+                            {batch.status === 'pending' && <Tag color="default">等待中</Tag>}
+                            {batch.status === 'processing' && <Tag icon={<LoadingOutlined />} color="processing">处理中</Tag>}
+                            {batch.status === 'completed' && <Tag icon={<CheckCircleFilled />} color="success">已完成</Tag>}
+                          </Space>
+                        ),
+                        children: (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {batch.content || '等待内容...'}
+                          </ReactMarkdown>
+                        ),
+                      }))}
+                    />
+                  ) : (
+                    // 没有批次信息时，显示全部内容
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {extractionResult}
+                    </ReactMarkdown>
+                  )}
                 </div>
               ) : (
                 <TextArea

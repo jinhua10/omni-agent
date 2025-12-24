@@ -666,9 +666,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
                     if (drawing != null) {
                         for (org.apache.poi.xssf.usermodel.XSSFShape shape : drawing.getShapes()) {
-                            if (shape instanceof org.apache.poi.xssf.usermodel.XSSFPicture) {
-                                org.apache.poi.xssf.usermodel.XSSFPicture picture =
-                                        (org.apache.poi.xssf.usermodel.XSSFPicture) shape;
+                            if (shape instanceof org.apache.poi.xssf.usermodel.XSSFPicture picture) {
 
                                 try {
                                     org.apache.poi.xssf.usermodel.XSSFPictureData pictureData = picture.getPictureData();
@@ -1443,6 +1441,19 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             List<DocumentPage> batch = batches.get(i);
             log.debug("⚙️ 处理批次 {}/{}", i + 1, batches.size());
 
+            // ⭐ 发送批次开始标记
+            if (context != null && context.getOptions() != null) {
+                Object cb = context.getOptions().get("streamCallback");
+                if (cb instanceof java.util.function.Consumer) {
+                    @SuppressWarnings("unchecked")
+                    java.util.function.Consumer<String> callback = (java.util.function.Consumer<String>) cb;
+                    String batchMarker = String.format("BATCH_START:{\"batchIndex\":%d,\"batchNumber\":%d,\"totalBatches\":%d}\n",
+                        i, i + 1, batches.size());
+                    callback.accept(batchMarker);
+                    log.info("📤 [Sequential] 发送批次 {} 开始标记", i + 1);
+                }
+            }
+
             try {
                 // ⭐ 传递 context
                 String content = processPageBatch(batch, context);
@@ -1451,6 +1462,19 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                         .collect(Collectors.toList());
 
                 results.add(new BatchProcessingResult(i, content, images));
+
+                // ⭐ 发送批次完成标记
+                if (context != null && context.getOptions() != null) {
+                    Object cb = context.getOptions().get("streamCallback");
+                    if (cb instanceof java.util.function.Consumer) {
+                        @SuppressWarnings("unchecked")
+                        java.util.function.Consumer<String> callback = (java.util.function.Consumer<String>) cb;
+                        String batchEndMarker = String.format("BATCH_END:{\"batchIndex\":%d,\"batchNumber\":%d}\n",
+                            i, i + 1);
+                        callback.accept(batchEndMarker);
+                        log.info("✅ [Sequential] 批次 {} 完成", i + 1);
+                    }
+                }
             } catch (Exception e) {
                 log.error("❌ 批次 {} 处理失败: {}", i + 1, e.getMessage());
                 results.add(new BatchProcessingResult(i, "", Collections.emptyList()));
