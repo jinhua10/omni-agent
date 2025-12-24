@@ -176,6 +176,39 @@ public interface AIService {
         throw new UnsupportedOperationException("当前AI服务不支持Vision对话，请使用支持Vision的模型");
     }
 
+    /**
+     * 流式多模态对话（Flux 方式）
+     *
+     * <p>用于 UI 边生成边展示（例如：文档可视化解析、PPT/流程图理解）。</p>
+     * <p>默认实现：不支持（保持向后兼容）。</p>
+     *
+     * @param messages 对话历史（可能包含图片）
+     * @return Flux 流，每个元素是生成的 token 片段
+     */
+    default Flux<String> chatWithVisionFlux(List<ChatMessage> messages) {
+        throw new UnsupportedOperationException("当前AI服务不支持Vision流式对话，请使用支持Vision的模型");
+    }
+
+    /**
+     * 流式多模态对话（Flux 方式，返回累积响应）
+     *
+     * @param messages 对话历史（可能包含图片）
+     * @return Flux 流，每个元素是 AIResponse（包含累积的文本）
+     */
+    default Flux<AIResponse> chatWithVisionFluxResponse(List<ChatMessage> messages) {
+        // 默认实现：基于 chatWithVisionFlux 进行累积
+        return chatWithVisionFlux(messages)
+                .scan(
+                        AIResponse.builder().text("").success(true).build(),
+                        (acc, chunk) -> AIResponse.builder()
+                                .text((acc.getText() == null ? "" : acc.getText()) + chunk)
+                                .success(true)
+                                .build()
+                )
+                // scan 的第一个元素是初始值，过滤掉
+                .skip(1);
+    }
+
     // ========== 健康检查 (Health Check) ==========
 
     /**

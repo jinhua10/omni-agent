@@ -60,10 +60,11 @@ function AppContent() {
       const hash = window.location.hash
       // 解析 hash，例如 #/documents?view=chunking
       const path = hash.split('?')[0].replace('#/', '')
-      if (path && path !== activeMenu) {
-        console.log('Hash changed, switching menu from', activeMenu, 'to', path)
-        setActiveMenu(path)
-      }
+      setActiveMenu((prev) => {
+        if (!path || path === prev) return prev
+        console.log('Hash changed, switching menu from', prev, 'to', path)
+        return path
+      })
     }
 
     // 初始化时也检查一次
@@ -71,7 +72,7 @@ function AppContent() {
 
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [activeMenu])
+  }, [])
 
   // 监听localStorage变化
   React.useEffect(() => {
@@ -101,6 +102,13 @@ function AppContent() {
   const handleMenuClick = (key) => {
     setActiveMenu(key)
     console.log('Navigate to:', key)
+    // 同步更新 URL hash，避免 hash 监听把菜单切换“拉回”到旧页面
+    if (typeof key === 'string' && key.length > 0) {
+      const nextHash = `#/${key}`
+      if (window.location.hash !== nextHash) {
+        window.location.hash = nextHash
+      }
+    }
   }
 
   // 判断AI面板是否停靠（最大化时不算停靠）

@@ -659,5 +659,113 @@ public class OnlineAPIAIService implements AIService {
                     .build();
         }
     }
-}
 
+    @Override
+    public reactor.core.publisher.Flux<String> chatWithVisionFlux(List<ChatMessage> messages) {
+        return Flux.create(sink -> {
+            try {
+                String endpoint = getEndpoint();
+
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("model", currentModel);
+                requestBody.put("max_tokens", 2000);
+                Double temp = properties.getTemperature();
+                requestBody.put("temperature", temp != null ? temp : 0.7);
+                requestBody.put("stream", true);
+
+                // 转换消息格式（支持多模态）
+                List<Map<String, Object>> formattedMessages = new ArrayList<>();
+                for (ChatMessage msg : messages) {
+                    Map<String, Object> formattedMsg = new HashMap<>();
+                    formattedMsg.put("role", msg.getRole());
+
+                    if (msg.getContentParts() != null && !msg.getContentParts().isEmpty()) {
+                        List<Map<String, Object>> contentArray = new ArrayList<>();
+                        for (ChatMessage.ContentPart part : msg.getContentParts()) {
+                            Map<String, Object> partMap = new HashMap<>();
+                            partMap.put("type", part.getType());
+
+                            if ("text".equals(part.getType())) {
+                                partMap.put("text", part.getText());
+                            } else if ("image_url".equals(part.getType())) {
+                                Map<String, String> imageUrlMap = new HashMap<>();
+                                imageUrlMap.put("url", part.getImageUrl().getUrl());
+                                partMap.put("image_url", imageUrlMap);
+                            }
+                            contentArray.add(partMap);
+                        }
+                        formattedMsg.put("content", contentArray);
+                    } else {
+                        formattedMsg.put("content", msg.getContent());
+                    }
+
+                    formattedMessages.add(formattedMsg);
+                }
+                requestBody.put("messages", formattedMessages);
+
+                HttpHeaders headers = createHeaders();
+
+                restTemplate.execute(
+                        endpoint,
+                        HttpMethod.POST,
+                        request -> {
+                            headers.forEach((k, vs) -> vs.forEach(v -> request.getHeaders().add(k, v)));
+                            request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                            request.getBody().write(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestBody));
+                        },
+                        response -> {
+                            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                                    new java.io.InputStreamReader(response.getBody(), java.nio.charset.StandardCharsets.UTF_8))) {
+
+                                String line;
+                                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                                while ((line = reader.readLine()) != null) {
+                                    if (line.isEmpty() || line.startsWith(":")) {
+                                        continue;
+                                    }
+                                    if (!line.startsWith("data: ")) {
+                                        continue;
+                                    }
+
+                                    String data = line.substring(6).trim();
+                                    if ("[DONE]".equals(data)) {
+                                        sink.complete();
+                                        break;
+                                    }
+
+                                    try {
+                                        Map<String, Object> jsonData = mapper.readValue(data, Map.class);
+                                        List<Map<String, Object>> choices = (List<Map<String, Object>>) jsonData.get("choices");
+                                        if (choices == null || choices.isEmpty()) {
+                                            continue;
+                                        }
+                                        Map<String, Object> firstChoice = choices.get(0);
+                                        Map<String, Object> delta = (Map<String, Object>) firstChoice.get("delta");
+                                        if (delta != null) {
+                                            String content = (String) delta.get("content");
+                                            if (content != null && !content.isEmpty()) {
+                                                sink.next(content);
+                                            }
+                                        }
+
+                                        String finishReason = (String) firstChoice.get("finish_reason");
+                                        if (finishReason != null && !finishReason.isEmpty()) {
+                                            sink.complete();
+                                            break;
+                                        }
+                                    } catch (Exception parseEx) {
+                                        log.warn("[Vision Stream] Failed to parse SSE data: {}", data, parseEx);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                sink.error(e);
+                            }
+                            return null;
+                        }
+                );
+            } catch (Exception e) {
+                sink.error(e);
+            }
+        });
+    }
+}

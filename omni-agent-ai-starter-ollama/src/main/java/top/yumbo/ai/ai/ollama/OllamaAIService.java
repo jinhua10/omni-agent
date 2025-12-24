@@ -494,5 +494,104 @@ public class OllamaAIService implements AIService {
                     .build();
         }
     }
-}
 
+    @Override
+    public Flux<String> chatWithVisionFlux(List<ChatMessage> messages) {
+        return Flux.create(sink -> {
+            try {
+                String url = properties.getBaseUrl() + "/api/chat";
+
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("model", currentModel);
+                requestBody.put("stream", true);
+
+                // 转换消息格式（Ollama Vision 格式：content + images[] base64）
+                List<Map<String, Object>> ollamaMessages = new ArrayList<>();
+                for (ChatMessage msg : messages) {
+                    Map<String, Object> ollamaMsg = new HashMap<>();
+                    ollamaMsg.put("role", msg.getRole());
+
+                    if (msg.getContentParts() != null && !msg.getContentParts().isEmpty()) {
+                        StringBuilder textContent = new StringBuilder();
+                        List<String> base64Images = new ArrayList<>();
+
+                        for (ChatMessage.ContentPart part : msg.getContentParts()) {
+                            if ("text".equals(part.getType())) {
+                                if (textContent.length() > 0) {
+                                    textContent.append(" ");
+                                }
+                                textContent.append(part.getText());
+                            } else if ("image_url".equals(part.getType())) {
+                                String imageUrl = part.getImageUrl() != null ? part.getImageUrl().getUrl() : null;
+                                if (imageUrl != null && imageUrl.startsWith("data:image/")) {
+                                    int commaIndex = imageUrl.indexOf(',');
+                                    if (commaIndex > 0) {
+                                        base64Images.add(imageUrl.substring(commaIndex + 1));
+                                    }
+                                }
+                            }
+                        }
+
+                        ollamaMsg.put("content", textContent.toString());
+                        if (!base64Images.isEmpty()) {
+                            ollamaMsg.put("images", base64Images);
+                        }
+                    } else {
+                        ollamaMsg.put("content", msg.getContent());
+                    }
+
+                    ollamaMessages.add(ollamaMsg);
+                }
+                requestBody.put("messages", ollamaMessages);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                restTemplate.execute(
+                        url,
+                        HttpMethod.POST,
+                        req -> {
+                            headers.forEach((k, vs) -> vs.forEach(v -> req.getHeaders().add(k, v)));
+                            req.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                            req.getBody().write(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestBody));
+                        },
+                        resp -> {
+                            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                                    new java.io.InputStreamReader(resp.getBody(), java.nio.charset.StandardCharsets.UTF_8))) {
+                                String line;
+                                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                                while ((line = reader.readLine()) != null) {
+                                    if (line.isEmpty()) continue;
+                                    try {
+                                        Map<String, Object> json = mapper.readValue(line, Map.class);
+
+                                        Map<String, Object> messageObj = (Map<String, Object>) json.get("message");
+                                        if (messageObj != null) {
+                                            String content = (String) messageObj.get("content");
+                                            if (content != null && !content.isEmpty()) {
+                                                sink.next(content);
+                                            }
+                                        }
+
+                                        Object doneObj = json.get("done");
+                                        if (doneObj instanceof Boolean && (Boolean) doneObj) {
+                                            sink.complete();
+                                            break;
+                                        }
+                                    } catch (Exception parseEx) {
+                                        log.debug("[Ollama Vision Stream] ignore line: {}", line, parseEx);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                sink.error(e);
+                            }
+                            return null;
+                        }
+                );
+
+            } catch (Exception e) {
+                sink.error(e);
+            }
+        });
+    }
+}

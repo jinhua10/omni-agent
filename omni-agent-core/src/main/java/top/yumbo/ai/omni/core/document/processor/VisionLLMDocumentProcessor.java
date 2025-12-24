@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.ai.api.AIService;
 import top.yumbo.ai.ai.api.config.VisionLLMBatchProcessingProperties;
+import top.yumbo.ai.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.core.document.DocumentProcessor;
 
 import java.util.*;
@@ -59,6 +60,11 @@ import java.util.stream.Collectors;
 @Component
 @ConditionalOnProperty(prefix = "omni-agent.vision-llm", name = "enabled", havingValue = "true")
 public class VisionLLMDocumentProcessor implements DocumentProcessor {
+
+    /**
+     * 用于在线程内透传 ProcessingContext（支持并行 batch 时也能获取 options）
+     */
+    private final ThreadLocal<ProcessingContext> processingContextThreadLocal = new ThreadLocal<>();
 
     // ⭐ 使用专门的 Vision AI Service
     @Autowired(required = false)
@@ -111,69 +117,74 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
     @Override
     public ProcessingResult process(ProcessingContext context) throws DocumentProcessingException {
-        log.info("🔍 [VisionLLM] 开始处理文档: {}", context.getOriginalFileName());
-
-        long startTime = System.currentTimeMillis();
-
+        processingContextThreadLocal.set(context);
         try {
-            // 1. 提取文档的页面（每页包含多张图片及其位置信息）
-            List<DocumentPage> pages = extractPages(context);
-            log.info("📄 [VisionLLM] 提取了 {} 个页面/幻灯片", pages.size());
+            log.info("🔍 [VisionLLM] 开始处理文档: {}", context.getOriginalFileName());
 
-            // ⭐ 2. 智能分批：根据上下文大小预判断
-            List<List<DocumentPage>> batches = smartBatching(pages);
-            log.info("📦 [VisionLLM] 智能分批完成: {} 个批次", batches.size());
-            for (int i = 0; i < batches.size(); i++) {
-                log.debug("📦 [VisionLLM] 批次 #{}: {} 个页面", i + 1, batches.get(i).size());
+            long startTime = System.currentTimeMillis();
+
+            try {
+                // 1. 提取文档的页面（每页包含多张图片及其位置信息）
+                List<DocumentPage> pages = extractPages(context);
+                log.info("📄 [VisionLLM] 提取了 {} 个页面/幻灯片", pages.size());
+
+                // ⭐ 2. 智能分批：根据上下文大小预判断
+                List<List<DocumentPage>> batches = smartBatching(pages);
+                log.info("📦 [VisionLLM] 智能分批完成: {} 个批次", batches.size());
+                for (int i = 0; i < batches.size(); i++) {
+                    log.debug("📦 [VisionLLM] 批次 #{}: {} 个页面", i + 1, batches.get(i).size());
+                }
+
+                // ⭐ 3. 并行处理所有批次
+                List<BatchProcessingResult> batchResults;
+                if (visionLlmExecutor != null && batches.size() > 1) {
+                    // 使用线程池并行处理
+                    batchResults = processPageBatchesInParallel(batches);
+                } else {
+                    // 串行处理（无线程池或只有一个批次）
+                    batchResults = processPageBatchesSequentially(batches);
+                }
+
+                // 4. 合并结果
+                StringBuilder allContent = new StringBuilder();
+                List<ExtractedImage> allImages = new ArrayList<>();
+
+                // 按批次顺序合并（保持页面顺序）
+                for (BatchProcessingResult batchResult : batchResults) {
+                    allContent.append(batchResult.getContent()).append("\n\n");
+                    allImages.addAll(batchResult.getImages());
+                }
+
+                // 5. 构建元数据
+                Map<String, Object> metadata = new HashMap<>();
+                metadata.put("pageCount", pages.size());
+                metadata.put("totalImages", allImages.size());
+                metadata.put("processor", "VisionLLM");
+                metadata.put("model", visionModel);
+                metadata.put("batchCount", batches.size());
+                metadata.put("parallelProcessing", visionLlmExecutor != null && batches.size() > 1);
+                metadata.put("originalExtension", context.getFileExtension());
+
+                long processingTime = System.currentTimeMillis() - startTime;
+
+                log.info("✅ [VisionLLM] 处理完成: 耗时={}ms, 批次数={}, 内容长度={}, 图片数={}",
+                        processingTime, batches.size(), allContent.length(), allImages.size());
+
+                return ProcessingResult.builder()
+                        .success(true)
+                        .content(allContent.toString())
+                        .metadata(metadata)
+                        .images(allImages)
+                        .processingTimeMs(processingTime)
+                        .processorName(getName())
+                        .build();
+
+            } catch (Exception e) {
+                log.error("❌ [VisionLLM] 处理失败: {}", e.getMessage(), e);
+                throw new DocumentProcessingException("Vision LLM 处理失败", e);
             }
-
-            // ⭐ 3. 并行处理所有批次
-            List<BatchProcessingResult> batchResults;
-            if (visionLlmExecutor != null && batches.size() > 1) {
-                // 使用线程池并行处理
-                batchResults = processPageBatchesInParallel(batches);
-            } else {
-                // 串行处理（无线程池或只有一个批次）
-                batchResults = processPageBatchesSequentially(batches);
-            }
-
-            // 4. 合并结果
-            StringBuilder allContent = new StringBuilder();
-            List<ExtractedImage> allImages = new ArrayList<>();
-
-            // 按批次顺序合并（保持页面顺序）
-            for (BatchProcessingResult batchResult : batchResults) {
-                allContent.append(batchResult.getContent()).append("\n\n");
-                allImages.addAll(batchResult.getImages());
-            }
-
-            // 5. 构建元数据
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put("pageCount", pages.size());
-            metadata.put("totalImages", allImages.size());
-            metadata.put("processor", "VisionLLM");
-            metadata.put("model", visionModel);
-            metadata.put("batchCount", batches.size());
-            metadata.put("parallelProcessing", visionLlmExecutor != null && batches.size() > 1);
-            metadata.put("originalExtension", context.getFileExtension());
-
-            long processingTime = System.currentTimeMillis() - startTime;
-
-            log.info("✅ [VisionLLM] 处理完成: 耗时={}ms, 批次数={}, 内容长度={}, 图片数={}",
-                    processingTime, batches.size(), allContent.length(), allImages.size());
-
-            return ProcessingResult.builder()
-                    .success(true)
-                    .content(allContent.toString())
-                    .metadata(metadata)
-                    .images(allImages)
-                    .processingTimeMs(processingTime)
-                    .processorName(getName())
-                    .build();
-
-        } catch (Exception e) {
-            log.error("❌ [VisionLLM] 处理失败: {}", e.getMessage(), e);
-            throw new DocumentProcessingException("Vision LLM 处理失败", e);
+        } finally {
+            processingContextThreadLocal.remove();
         }
     }
 
@@ -882,7 +893,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             String pagePrompt = buildPagePrompt(page);
 
             // 调用 Vision LLM 分析整页
-            String pageContent = recognizePageWithVisionLLM(page, pagePrompt);
+            String pageContent = recognizePageWithVisionLLM(page, pagePrompt, this.processingContextThreadLocal.get());
 
             if (pageContent != null && !pageContent.isEmpty()) {
                 batchContent.append("=== 页面 ").append(page.getPageNumber()).append(" ===\n");
@@ -946,12 +957,10 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      * @param prompt 提示词
      * @return 识别的文本内容
      */
-    private String recognizePageWithVisionLLM(DocumentPage page, String prompt) {
+    private String recognizePageWithVisionLLM(DocumentPage page, String prompt, ProcessingContext context) {
         try {
-            // ⭐ 优先使用专门的 Vision AI Service
             AIService serviceToUse = visionAIService != null ? visionAIService : aiService;
 
-            // 检查 AIService 配置
             if (serviceToUse == null) {
                 log.warn("⚠️ [VisionLLM] AI Service 未配置，返回占位内容");
                 return String.format("[页面 %d 的内容 - AI Service 未配置]\n包含 %d 张图片",
@@ -972,13 +981,54 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             // 2. 构建 Vision 提示词
             String visionPrompt = buildVisionPrompt(page, prompt);
 
-            // 3. 调用 AIService 进行图片分析 ⭐
+            // 2.1 检查是否需要流式输出
+            java.util.function.Consumer<String> streamCallback = null;
+            boolean streamingEnabled = false;
+            if (context != null && context.getOptions() != null) {
+                Object cb = context.getOptions().get("streamCallback");
+                if (cb instanceof java.util.function.Consumer) {
+                    //noinspection unchecked
+                    streamCallback = (java.util.function.Consumer<String>) cb;
+                }
+                Object streaming = context.getOptions().get("streaming");
+                if (streaming instanceof Boolean) {
+                    streamingEnabled = (Boolean) streaming;
+                }
+            }
+
+            // 3. 调用 AIService 进行图片分析
             log.info("🔍 [VisionLLM] 调用 Vision API 分析页面 {}, 图片数: {}, 使用服务: {}",
                     page.getPageNumber(), imagesData.size(),
                     visionAIService != null ? "visionAIService" : "aiService");
 
+            // ⭐ 真正流式：优先使用 chatWithVisionFlux
+            final java.util.function.Consumer<String> finalStreamCallback = streamCallback;
+            final boolean finalStreamingEnabled = streamingEnabled;
+
+            if (finalStreamingEnabled && finalStreamCallback != null) {
+                List<top.yumbo.ai.ai.api.model.ChatMessage> visionMessages = new ArrayList<>();
+                visionMessages.add(ChatMessage.userWithImages(visionPrompt, imagesData));
+
+                StringBuilder acc = new StringBuilder();
+
+                finalStreamCallback.accept("\n=== 页面 " + page.getPageNumber() + " ===\n");
+
+                serviceToUse.chatWithVisionFlux(visionMessages)
+                        .doOnNext(token -> {
+                            acc.append(token);
+                            finalStreamCallback.accept(token);
+                        })
+                        .doOnError(err -> finalStreamCallback.accept("\n[Vision分析失败: " + err.getMessage() + "]\n"))
+                        .blockLast();
+
+                String result = acc.toString();
+                log.info("✅ [VisionLLM] 页面 {} (stream) 分析完成，内容长度: {} chars",
+                        page.getPageNumber(), result.length());
+                return result;
+            }
+
+            // 非流式：保持原逻辑
             try {
-                // 调用 AIService 的 analyzeImages 方法
                 String result = serviceToUse.analyzeImages(imagesData, visionPrompt);
 
                 log.info("✅ [VisionLLM] 页面 {} 分析完成，内容长度: {} chars",
@@ -989,23 +1039,21 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             } catch (UnsupportedOperationException e) {
                 log.error("❌ [VisionLLM] 当前AI服务不支持Vision功能: {}", e.getMessage());
 
-                // 降级：返回提示信息
                 return String.format("[页面 %d - 当前AI服务不支持Vision功能]\n" +
-                        "请配置支持Vision的模型（如：qwen-vl-plus, gpt-4o等）\n" +
-                        "包含 %d 张图片",
+                                "请配置支持Vision的模型（如：qwen-vl-plus, gpt-4o等）\n" +
+                                "包含 %d 张图片",
                         page.getPageNumber(), page.getImages().size());
 
             } catch (Exception apiEx) {
                 log.error("❌ [VisionLLM] Vision API 调用失败: {}", apiEx.getMessage());
 
-                // 降级：返回基本信息
                 return String.format("[页面 %d - Vision API 调用失败: %s]\n包含 %d 张图片\n图片格式: %s",
                         page.getPageNumber(),
                         apiEx.getMessage(),
                         page.getImages().size(),
                         page.getImages().stream()
-                            .map(ExtractedImage::getFormat)
-                            .collect(java.util.stream.Collectors.joining(", ")));
+                                .map(ExtractedImage::getFormat)
+                                .collect(java.util.stream.Collectors.joining(", ")));
             }
 
         } catch (Exception e) {
@@ -1236,7 +1284,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             batches.add(currentBatch);
         }
 
-        log.debug("📦 [Smart Batching] 智能分批完成 - 总页面: {}, 批次数: {}, 平均每批: {:.1f} 页",
+        log.debug("📦 [Smart Batching] 智能分批完成 - 总页面: {}, 批次数: {}, 平均每批: {} 页",
                 pages.size(), batches.size(), (double) pages.size() / batches.size());
 
         return batches;

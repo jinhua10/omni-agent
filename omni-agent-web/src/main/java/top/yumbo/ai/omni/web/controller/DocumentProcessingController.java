@@ -128,8 +128,32 @@ public class DocumentProcessingController {
 
                 sendProgress(emitter, 30, "正在解析文档格式...");
 
-                // ⭐ 4. 调用实际的文本提取服务
-                String extractedText = extractTextWithProcessor(documentId, content, request.getModel());
+                // ⭐ 4. 调用实际的文本提取服务（支持真正 streaming）
+                String extractedText;
+                if (Boolean.TRUE.equals(request.getStreaming())) {
+                    sendProgress(emitter, 35, "正在实时提取文本...");
+                    extractedText = extractTextWithProcessorStreaming(
+                            documentId,
+                            content,
+                            request.getModel(),
+                            chunk -> {
+                                try {
+                                    // 直接把增量内容发给前端（不做 500 字符二次切分，避免延迟）
+                                    String safe = (chunk == null ? "" : chunk)
+                                            .replace("\\", "\\\\")
+                                            .replace("\"", "\\\"")
+                                            .replace("\n", "\\n");
+                                    emitter.send(SseEmitter.event()
+                                            .name("message")
+                                            .data("{\"type\":\"content\",\"content\":\"" + safe + "\"}"));
+                                } catch (Exception sendEx) {
+                                    log.error("发送流式内容失败", sendEx);
+                                }
+                            }
+                    );
+                } else {
+                    extractedText = extractTextWithProcessor(documentId, content, request.getModel());
+                }
 
                 sendProgress(emitter, 80, "文本提取完成");
 
@@ -147,8 +171,10 @@ public class DocumentProcessingController {
                 config.setUpdatedAt(System.currentTimeMillis());
                 configService.setDocumentConfig(documentId, config);
 
-                // 流式发送提取的文本
-                sendTextContent(emitter, extractedText);
+                // 非 streaming 模式才在这里统一发送
+                if (!Boolean.TRUE.equals(request.getStreaming())) {
+                    sendTextContent(emitter, extractedText);
+                }
 
                 sendComplete(emitter, "提取完成并已保存");
                 log.info("✅ 文本提取完成并持久化: documentId={}, textLength={}, duration={}ms",
@@ -529,6 +555,43 @@ public class DocumentProcessingController {
         } catch (Exception e) {
             log.error("❌ 文档处理异常: documentId={}", documentId, e);
             return "文档处理异常: " + e.getMessage();
+        }
+    }
+
+    /**
+     * 使用DocumentProcessorManager提取文本（支持 streaming SSE）
+     */
+    private String extractTextWithProcessorStreaming(String documentId,
+                                                    byte[] content,
+                                                    String model,
+                                                    java.util.function.Consumer<String> streamCallback) {
+        try {
+            String fileExtension = getFileExtension(documentId);
+
+            Map<String, Object> options = new HashMap<>();
+            options.put("model", model);
+            options.put("streaming", true);
+            if (streamCallback != null) {
+                // VisionLLMDocumentProcessor 会读取该回调并增量输出
+                options.put("streamCallback", streamCallback);
+            }
+
+            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
+                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+                            .fileBytes(content)
+                            .fileExtension(fileExtension)
+                            .originalFileName(documentId)
+                            .fileSize(content.length)
+                            .options(options)
+                            .build();
+
+            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
+                    documentProcessorManager.processDocument(context);
+
+            return result.isSuccess() && result.getContent() != null ? result.getContent() : "";
+        } catch (Exception e) {
+            log.error("❌ 文档处理失败(Streaming): documentId={}", documentId, e);
+            return "";
         }
     }
 
