@@ -427,6 +427,8 @@ export default {
     copySuccess: '复制成功',
     stopGeneration: '停止生成',
     generationStopped: '生成已停止',
+    generating: '生成中...',
+    answer: 'AI 回答',
     
     // 模式切换 (Mode Toggle)
     mode: {

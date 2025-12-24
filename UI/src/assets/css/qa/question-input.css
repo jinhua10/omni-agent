@@ -12,6 +12,7 @@
   padding: 16px;
   background: #ffffff;
   border-top: 1px solid #e8e8e8;
+  flex-shrink: 0;
 }
 
 .question-input__container {

@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react'
-import { Button, Space, Tooltip } from 'antd'
+import { Button, Space, Tooltip, Collapse } from 'antd'
 import { LikeOutlined, DislikeOutlined, CopyOutlined, LikeFilled, DislikeFilled } from '@ant-design/icons'
 import StreamingAnswer from './StreamingAnswer'
 import MarkdownRenderer from './MarkdownRenderer'
@@ -17,6 +17,8 @@ import DocumentReferences from './DocumentReferences'
 import SessionInfoDisplay from './SessionInfoDisplay'
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/qa/answer-card.css'
+
+const { Panel } = Collapse
 
 /**
  * 答案卡片组件
@@ -26,6 +28,7 @@ function AnswerCard(props) {
   const { t } = useLanguage()
   const [feedback, setFeedback] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   const handleLike = () => {
     const newFeedback = feedback === 'like' ? null : 'like'
@@ -60,7 +63,27 @@ function AnswerCard(props) {
       </div>
 
       <div className="answer-card__content">
-        <div className="answer-card__text">
+        <Collapse 
+          activeKey={collapsed ? [] : ['1']} 
+          onChange={() => setCollapsed(!collapsed)}
+          bordered={false}
+          className="answer-card__collapse"
+        >
+          <Panel 
+            header={
+              <div className="answer-card__header">
+                <span className="answer-card__header-title">
+                  {answer.streaming ? t('qa.generating') : t('qa.answer')}
+                </span>
+                <span className="answer-card__header-time">
+                  {new Date(answer.timestamp).toLocaleTimeString()}
+                </span>
+              </div>
+            } 
+            key="1"
+            className="answer-card__panel"
+          >
+            <div className="answer-card__text">
           {answer.thinking ? (
             <div className="answer-card__thinking">
               <div className="answer-card__thinking-dots">
@@ -131,10 +154,6 @@ function AnswerCard(props) {
 
         {!answer.streaming && (
           <div className="answer-card__footer">
-            <div className="answer-card__time">
-              {new Date(answer.timestamp).toLocaleTimeString()}
-            </div>
-
             <Space className="answer-card__actions">
               <Tooltip title={t('qa.feedback.like')}>
                 <Button
@@ -165,6 +184,8 @@ function AnswerCard(props) {
             </Space>
           </div>
         )}
+          </Panel>
+        </Collapse>
       </div>
     </div>
   )

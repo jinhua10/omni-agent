@@ -270,3 +270,48 @@
   }
 }
 
+/* ============================================================================
+   折叠面板 (Collapse Panel)
+   ============================================================================ */
+.answer-card__collapse {
+  background: transparent !important;
+}
+
+.answer-card__collapse .ant-collapse-item {
+  border: none !important;
+}
+
+.answer-card__collapse .ant-collapse-header {
+  padding: 8px 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+.answer-card__collapse .ant-collapse-content {
+  border: none !important;
+  background: transparent !important;
+}
+
+.answer-card__collapse .ant-collapse-content-box {
+  padding: 0 !important;
+}
+
+.answer-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.answer-card__header-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #667eea;
+}
+
+.answer-card__header-time {
+  font-size: 12px;
+  color: #999;
+  margin-left: auto;
+  padding-left: 16px;
+}

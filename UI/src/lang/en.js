@@ -432,6 +432,8 @@ export default {
     copySuccess: 'Copied successfully',
     stopGeneration: 'Stop Generating',
     generationStopped: 'Generation Stopped',
+    generating: 'Generating...',
+    answer: 'AI Answer',
     
     // Mode Toggle
     mode: {

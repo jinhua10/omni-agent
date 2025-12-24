@@ -14,6 +14,7 @@
   flex-direction: column;
   background: #ffffff;
   border-left: 1px solid #e8e8e8;
+  overflow: hidden; /* 容器本身不滚动 */
 }
 
 /* ============================================================================
@@ -26,6 +27,7 @@
   align-items: center;
   gap: 8px;
   background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  flex-shrink: 0; /* 头部固定不缩小 */
 }
 
 .similar-questions__icon {
@@ -46,7 +48,27 @@
 .similar-questions__content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 12px;
+  min-height: 0; /* 重要：允许flex子元素收缩 */
+}
+
+/* 自定义滚动条 */
+.similar-questions__content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.similar-questions__content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.similar-questions__content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.similar-questions__content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 /* 空状态 (Empty State) */
