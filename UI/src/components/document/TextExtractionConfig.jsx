@@ -602,14 +602,19 @@ function TextExtractionConfig({ documentId }) {
           </Card>
         </div>
 
-        {/* 右侧：如果有文档ID且有提取结果，显示提取结果；否则显示模型说明 */}
-        {documentId && extractionResult ? (
+        {/* 右侧：如果有文档ID且（有提取结果或有批次），显示提取结果；否则显示模型说明 */}
+        {documentId && (extractionResult || batches.length > 0 || extracting) ? (
           <div className="preview-panel">
             <Card 
               title={
                 <Space>
                   <span>📄 提取结果</span>
-                  <Tag color="blue">{extractionResult.length} 字符</Tag>
+                  <Tag color="blue">
+                    {batches.length > 0 && !isMerged
+                      ? `${batches.reduce((sum, b) => sum + b.content.length, 0)} 字符`
+                      : `${extractionResult.length} 字符`
+                    }
+                  </Tag>
                   {extractionProgress?.accuracy && (
                     <Tag color="green">精度: {(extractionProgress.accuracy * 100).toFixed(1)}%</Tag>
                   )}
@@ -695,11 +700,11 @@ function TextExtractionConfig({ documentId }) {
             >
               {activeTab === 'preview' ? (
                 <div className="markdown-preview">
-                  {batches.length > 0 ? (
+                  {batches.length > 0 && !isMerged ? (
                     // ⭐ 批次级别显示（固定高度，滚动查看）
                     <Collapse
                       className="batch-collapse-panel"
-                      defaultActiveKey={batches.map(b => b.index)}
+                      activeKey={batches.map(b => b.index)}
                       items={batches.map(batch => ({
                         key: batch.index,
                         label: (
@@ -718,15 +723,19 @@ function TextExtractionConfig({ documentId }) {
                       }))}
                     />
                   ) : (
-                    // 没有批次信息时，显示全部内容
+                    // 没有批次信息时，或已合并后，显示全部内容
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {extractionResult}
+                      {extractionResult || '等待提取...'}
                     </ReactMarkdown>
                   )}
                 </div>
               ) : (
                 <TextArea
-                  value={extractionResult}
+                  value={
+                    batches.length > 0 && !isMerged
+                      ? batches.sort((a, b) => a.index - b.index).map(b => b.content).join('\n\n')
+                      : extractionResult
+                  }
                   onChange={(e) => setExtractionResult(e.target.value)}
                   style={{
                     height: '100%',

@@ -908,20 +908,15 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
     private String processPageBatch(List<DocumentPage> pages, ProcessingContext context, int batchIndex) {
         StringBuilder batchContent = new StringBuilder();
 
-        // ⭐ 将批次索引添加到 context 的 options 中
-        if (context != null && context.getOptions() != null) {
-            context.getOptions().put("currentBatchIndex", batchIndex);
-        }
-
         for (DocumentPage page : pages) {
-            log.info("🔍 [VisionLLM] 处理第 {} 页，包含 {} 张图片",
-                    page.getPageNumber(), page.getImages().size());
+            log.info("🔍 [VisionLLM] 处理第 {} 页，包含 {} 张图片，批次 {}",
+                    page.getPageNumber(), page.getImages().size(), batchIndex);
 
             // 构建该页的提示词
             String pagePrompt = buildPagePrompt(page);
 
-            // 调用 Vision LLM 分析整页（传递 context 而不是从 ThreadLocal 获取）
-            String pageContent = recognizePageWithVisionLLM(page, pagePrompt, context);
+            // ⭐ 调用 Vision LLM 分析整页，直接传递 batchIndex
+            String pageContent = recognizePageWithVisionLLM(page, pagePrompt, context, batchIndex);
 
             if (pageContent != null && !pageContent.isEmpty()) {
                 // ⭐ 非流式模式下，每页处理完也立即通过回调发送（分批显示）
@@ -1006,7 +1001,16 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      * @param prompt 提示词
      * @return 识别的文本内容
      */
-    private String recognizePageWithVisionLLM(DocumentPage page, String prompt, ProcessingContext context) {
+    /**
+     * 使用 Vision LLM 识别页面内容
+     *
+     * @param page 文档页面
+     * @param prompt 提示词
+     * @param context 处理上下文
+     * @param batchIndex 批次索引
+     * @return 识别的文本内容
+     */
+    private String recognizePageWithVisionLLM(DocumentPage page, String prompt, ProcessingContext context, int batchIndex) {
         try {
             AIService serviceToUse = visionAIService != null ? visionAIService : aiService;
 
@@ -1059,17 +1063,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             final boolean finalStreamingEnabled = streamingEnabled;
 
             if (finalStreamingEnabled && finalStreamCallback != null) {
-                log.info("🚀 [VisionLLM] 启动流式处理，页面 {}", page.getPageNumber());
-
-                // ⭐ 获取批次索引
-                int currentBatchIndex = -1;
-                if (context != null && context.getOptions() != null) {
-                    Object batchIndexObj = context.getOptions().get("currentBatchIndex");
-                    if (batchIndexObj instanceof Integer) {
-                        currentBatchIndex = (Integer) batchIndexObj;
-                    }
-                }
-                final int batchIndex = currentBatchIndex;
+                log.info("🚀 [VisionLLM] 启动流式处理，页面 {}, 批次 {}", page.getPageNumber(), batchIndex);
 
                 List<top.yumbo.ai.ai.api.model.ChatMessage> visionMessages = new ArrayList<>();
                 visionMessages.add(ChatMessage.userWithImages(visionPrompt, imagesData));
