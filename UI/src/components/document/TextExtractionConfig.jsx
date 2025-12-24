@@ -99,6 +99,8 @@ function TextExtractionConfig({ documentId }) {
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true) // ⭐ 自动保存开关
   const [lastSaved, setLastSaved] = useState(null) // ⭐ 最后保存时间
   const [isMerged, setIsMerged] = useState(false) // ⭐ 是否已合并批次
+  const [livePreview, setLivePreview] = useState(false) // ⭐ 实时Markdown预览开关（默认关闭以提升性能）
+  const [renderMode, setRenderMode] = useState('text') // ⭐ 渲染模式: 'text' | 'markdown'
 
   // 加载系统配置
   useEffect(() => {
@@ -274,6 +276,7 @@ function TextExtractionConfig({ documentId }) {
     setExtractionProgress({ status: 'processing', percent: 0 })
     setExtractionResult('') // ⭐ 清空之前的结果
     setBatches([]) // ⭐ 清空批次
+    setRenderMode('text') // ⭐ 提取时强制使用文本模式提升性能
     message.info(streamingMode ? t('textExtractionConfig.extraction.streamingStart') : t('textExtractionConfig.extraction.batchStart'))
 
     let currentBatchIndex = -1 // ⭐ 跟踪当前批次
@@ -406,6 +409,10 @@ function TextExtractionConfig({ documentId }) {
                   percent: 100,
                   accuracy: data.accuracy || 0.85
                 })
+                // ⭐ 提取完成后，如果用户开启了实时预览，自动切换到Markdown模式
+                if (livePreview) {
+                  setRenderMode('markdown')
+                }
                 message.success(streamingMode ? t('textExtractionConfig.extraction.streamingComplete') : t('textExtractionConfig.extraction.batchComplete'))
               }
             } catch (e) {
@@ -634,6 +641,32 @@ function TextExtractionConfig({ documentId }) {
                     {t('textExtractionConfig.preview.source')}
                   </Button>
                   <Divider type="vertical" />
+                  {/* ⭐ 渲染模式切换 */}
+                  {activeTab === 'preview' && (
+                    <>
+                      <Tooltip title={renderMode === 'markdown' ? '切换到文本模式（更流畅）' : '切换到Markdown预览'}>
+                        <Button
+                          type={renderMode === 'markdown' ? 'primary' : 'default'}
+                          size="small"
+                          onClick={() => setRenderMode(renderMode === 'markdown' ? 'text' : 'markdown')}
+                          disabled={extracting && !livePreview}
+                        >
+                          {renderMode === 'markdown' ? '📝 Markdown' : '📄 文本'}
+                        </Button>
+                      </Tooltip>
+                      <Tooltip title="提取时启用实时Markdown预览（可能影响性能）">
+                        <Switch
+                          checked={livePreview}
+                          onChange={setLivePreview}
+                          checkedChildren="实时预览"
+                          unCheckedChildren="完成后预览"
+                          size="small"
+                          disabled={extracting}
+                        />
+                      </Tooltip>
+                      <Divider type="vertical" />
+                    </>
+                  )}
                   <Tooltip title={autoSaveEnabled ? t('textExtractionConfig.autoSave.enabled') : t('textExtractionConfig.autoSave.disabled')}>
                     <Switch
                       checked={autoSaveEnabled}
@@ -678,8 +711,20 @@ function TextExtractionConfig({ documentId }) {
             >
               {activeTab === 'preview' ? (
                 <div className="markdown-preview markdown-preview-container">
-                  {batches.length > 0 && !isMerged ? (
-                    // ⭐ 批次级别显示（使用BatchContentViewer组件）
+                  {renderMode === 'text' || (extracting && !livePreview) ? (
+                    // ⭐ 文本模式：使用TextArea，性能更好，适合流式输出
+                    <TextArea
+                      value={
+                        batches.length > 0 && !isMerged
+                          ? batches.sort((a, b) => a.index - b.index).map(b => b.content).join('\n\n')
+                          : extractionResult || t('textExtractionConfig.batches.waiting')
+                      }
+                      readOnly
+                      className="source-editor source-editor-textarea"
+                      style={{ minHeight: '500px', fontFamily: 'monospace' }}
+                    />
+                  ) : batches.length > 0 && !isMerged ? (
+                    // ⭐ Markdown模式：批次级别显示（使用BatchContentViewer组件）
                     <BatchContentViewer
                       batches={batches}
                       onMerge={mergeBatches}
@@ -689,7 +734,7 @@ function TextExtractionConfig({ documentId }) {
                       showExpandButton={true}
                     />
                   ) : (
-                    // 没有批次信息时，或已合并后，显示全部内容
+                    // ⭐ Markdown模式：没有批次信息时，或已合并后，显示全部内容
                     <MarkdownRenderer
                       content={extractionResult || t('textExtractionConfig.batches.waiting')}
                     />

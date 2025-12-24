@@ -1,12 +1,19 @@
 package top.yumbo.ai.omni.web.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.MapType;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.web.model.RAGStrategyTemplate;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,6 +35,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SystemRAGConfigService {
 
     private final DocumentStorageService storageService;  // ⭐ 新增
+    private final ObjectMapper objectMapper = new ObjectMapper();  // JSON序列化
+
+    @Value("${omni.rag.config.persistence.path:./data/config/rag-configs.json}")
+    private String configPersistencePath;
 
     // 系统配置（可持久化到数据库）
     private final SystemRAGConfig config = new SystemRAGConfig();
@@ -37,6 +48,52 @@ public class SystemRAGConfigService {
 
     // ⭐ 策略模板存储
     private final Map<String, RAGStrategyTemplate> strategyTemplates = new ConcurrentHashMap<>();
+
+    /**
+     * 应用启动时加载持久化配置
+     */
+    @PostConstruct
+    public void loadPersistedConfigs() {
+        try {
+            File configFile = new File(configPersistencePath);
+            if (configFile.exists()) {
+                MapType mapType = objectMapper.getTypeFactory()
+                    .constructMapType(HashMap.class, String.class, DocumentRAGConfig.class);
+                Map<String, DocumentRAGConfig> loadedConfigs = objectMapper.readValue(configFile, mapType);
+                documentConfigs.putAll(loadedConfigs);
+                log.info("✅ 已加载 {} 个文档配置", loadedConfigs.size());
+            } else {
+                log.info("ℹ️ 配置文件不存在，将使用空配置: {}", configPersistencePath);
+            }
+        } catch (IOException e) {
+            log.error("❌ 加载持久化配置失败: {}", configPersistencePath, e);
+        }
+    }
+
+    /**
+     * 应用关闭时保存配置
+     */
+    @PreDestroy
+    public void savePersistedConfigs() {
+        persistConfigs();
+    }
+
+    /**
+     * 持久化配置到文件
+     */
+    private void persistConfigs() {
+        try {
+            File configFile = new File(configPersistencePath);
+            // 确保父目录存在
+            if (configFile.getParentFile() != null) {
+                configFile.getParentFile().mkdirs();
+            }
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(configFile, documentConfigs);
+            log.debug("💾 已保存 {} 个文档配置到: {}", documentConfigs.size(), configPersistencePath);
+        } catch (IOException e) {
+            log.error("❌ 持久化配置失败: {}", configPersistencePath, e);
+        }
+    }
 
     /**
      * 获取系统RAG配置
@@ -124,8 +181,11 @@ public class SystemRAGConfigService {
      */
     public void setDocumentConfig(String documentId, DocumentRAGConfig docConfig) {
         docConfig.setDocumentId(documentId);
+        docConfig.setUpdatedAt(System.currentTimeMillis());  // 更新时间戳
         documentConfigs.put(documentId, docConfig);
         log.info("📝 文档配置更新: documentId={}, config={}", documentId, docConfig);
+        // ⭐ 实时持久化（避免数据丢失）
+        persistConfigs();
     }
 
     /**

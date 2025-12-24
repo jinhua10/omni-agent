@@ -62,6 +62,26 @@
 /* 预览面板 */
 .text-extraction-config .preview-panel {
   background: #fff;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ⭐ 性能优化：文本区域使用硬件加速 */
+.text-extraction-config .source-editor-textarea {
+  will-change: contents;
+  transform: translateZ(0);
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+/* ⭐ 性能优化：Markdown预览容器 */
+.text-extraction-config .markdown-preview-container {
+  transform: translateZ(0);
+  will-change: scroll-position;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  max-height: calc(100vh - 300px);
 }
 
 .text-extraction-config .model-info-card {

@@ -735,10 +735,11 @@ function ChunkingConfig({ documentId }) {
               <div className="preview-input">
                 <h3>{t('chunkingConfig.preview.inputText')}</h3>
                 <TextArea
-                  rows={6}
+                  rows={15}
                   placeholder={t('chunkingConfig.preview.inputPlaceholder')}
                   value={previewText}
                   onChange={(e) => setPreviewText(e.target.value)}
+                  style={{ minHeight: '400px' }}
                 />
               </div>
 

@@ -91,6 +91,14 @@ public class SystemRAGConfigController {
             @PathVariable String documentId) {
         try {
             SystemRAGConfigService.DocumentRAGConfig config = configService.getDocumentConfig(documentId);
+            
+            // ⭐ 如果有提取文本引用，从存储服务加载完整文本（用于前端显示）
+            if (config.getExtractedTextRef() != null && config.getExtractedText() == null) {
+                configService.getExtractedText(documentId).ifPresent(config::setExtractedText);
+                log.debug("📄 加载提取文本到响应中: documentId={}, length={}", 
+                         documentId, config.getExtractedText() != null ? config.getExtractedText().length() : 0);
+            }
+            
             log.info("📄 获取文档RAG配置: documentId={}", documentId);
             return ApiResponse.success(config);
         } catch (Exception e) {
