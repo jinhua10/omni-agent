@@ -13,6 +13,8 @@
   flex-direction: column;
   height: 100%;
   background: #ffffff;
+  position: relative;
+  overflow: hidden; /* 防止内容溢出 */
 }
 
 /* ============================================================================
@@ -25,6 +27,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-shrink: 0; /* 防止被压缩 */
+  background: #ffffff;
+  z-index: 10; /* 确保在上层 */
+  min-height: 56px; /* 确保最小高度 */
 }
 
 .chat-box__toolbar-left,
@@ -32,6 +38,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap; /* 小屏幕时允许换行 */
 }
 
 .chat-box__history-btn {
@@ -101,10 +108,32 @@
 .chat-box__messages {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: 0; /* 重要：允许flex子元素收缩 */
+}
+
+/* 自定义滚动条样式 */
+.chat-box__messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-box__messages::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.chat-box__messages::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.chat-box__messages::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 /* 空状态 (Empty State) */
@@ -132,6 +161,7 @@
    ============================================================================ */
 .chat-box__message {
   animation: messageSlideIn 0.3s ease-out;
+  flex-shrink: 0; /* 防止消息被压缩 */
 }
 
 @keyframes messageSlideIn {
@@ -221,6 +251,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
+  flex-shrink: 0;
 }
 
 .chat-box__loading-dots {
@@ -263,6 +294,7 @@
   justify-content: center;
   padding: 12px 0;
   animation: fadeIn 0.3s ease-out;
+  flex-shrink: 0;
 }
 
 @keyframes fadeIn {
@@ -294,6 +326,16 @@
    响应式样式 (Responsive Styles)
    ============================================================================ */
 @media (max-width: 768px) {
+  .chat-box__toolbar {
+    padding: 8px 12px;
+    min-height: auto;
+  }
+
+  .chat-box__toolbar-left,
+  .chat-box__toolbar-right {
+    gap: 6px;
+  }
+
   .chat-box__messages {
     padding: 12px;
     gap: 12px;
@@ -308,6 +350,38 @@
   .chat-box__question-text {
     padding: 10px 12px;
     font-size: 14px;
+  }
+
+  .chat-box__kb-mode {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .chat-box__kb-mode-group {
+    width: 100%;
+  }
+
+  .chat-box__role-select {
+    width: 100%;
+  }
+}
+
+/* ============================================================================
+   打印样式 (Print Styles)
+   ============================================================================ */
+@media print {
+  .chat-box__toolbar {
+    display: none;
+  }
+
+  .chat-box__messages {
+    overflow: visible;
+    height: auto;
+  }
+
+  .chat-box__stop-btn-wrapper {
+    display: none;
   }
 }
 

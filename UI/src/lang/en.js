@@ -28,6 +28,20 @@ export default {
     back: 'Back',
     next: 'Next',
     prev: 'Previous',
+    
+    // Batch related
+    batch: {
+      batch: 'Batch',
+      waiting: 'Waiting',
+      processing: 'Processing',
+      completed: 'Completed',
+      mergeBatches: 'Merge Batches',
+      expandAll: 'Expand All',
+      collapseAll: 'Collapse All',
+      total: 'Total',
+      characters: 'characters',
+      noContent: 'No content',
+    },
     finish: 'Finish',
     loading: 'Loading...',
     success: 'Success',

@@ -32,6 +32,20 @@ export default {
     copyFailed: '复制失败',
     copied: '已复制',
     copyCode: '复制代码',
+    
+    // 批次相关 (Batch related)
+    batch: {
+      batch: '批次',
+      waiting: '等待中',
+      processing: '处理中',
+      completed: '已完成',
+      mergeBatches: '合并批次',
+      expandAll: '全部展开',
+      collapseAll: '全部收起',
+      total: '总计',
+      characters: '字符',
+      noContent: '暂无内容',
+    },
     warning: '警告',
     info: '提示',
     upload: '上传',

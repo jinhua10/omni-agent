@@ -26,7 +26,6 @@ import {
   Input,
   Switch,
   Tooltip,
-  Collapse,
   Dropdown,
 } from 'antd'
 import {
@@ -40,14 +39,10 @@ import {
   EyeOutlined as ViewOutlined,
   DownloadOutlined,
   SaveOutlined,
-  ClockCircleOutlined,
   CheckCircleFilled,
-  LoadingOutlined,
-  MergeCellsOutlined,
-  ExpandOutlined,
-  ShrinkOutlined,
 } from '@ant-design/icons'
 import MarkdownRenderer from '../common/MarkdownRenderer'
+import BatchContentViewer from '../common/BatchContentViewer'
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/TextExtractionConfig.css'
 
@@ -104,7 +99,6 @@ function TextExtractionConfig({ documentId }) {
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true) // ⭐ 自动保存开关
   const [lastSaved, setLastSaved] = useState(null) // ⭐ 最后保存时间
   const [isMerged, setIsMerged] = useState(false) // ⭐ 是否已合并批次
-  const [expandedBatches, setExpandedBatches] = useState([]) // ⭐ 展开的批次索引列表
 
   // 加载系统配置
   useEffect(() => {
@@ -346,8 +340,7 @@ function TextExtractionConfig({ documentId }) {
                   status: 'pending', // pending, processing, completed
                 }))
                 setBatches(initialBatches)
-                // ⭐ 默认展开所有批次（用户可以手动收起）
-                setExpandedBatches(initialBatches.map(b => b.index))
+
               } else if (data.type === 'batchStart') {
                 // ⭐ 批次开始，更新当前批次索引
                 console.log('🚀 Batch started:', data)
@@ -624,38 +617,6 @@ function TextExtractionConfig({ documentId }) {
               }
               extra={
                 <Space>
-                  {batches.length > 0 && !isMerged && (
-                    <>
-                      {batches.every(b => b.status === 'completed') && (
-                        <Button
-                          type="primary"
-                          icon={<MergeCellsOutlined />}
-                          onClick={mergeBatches}
-                          size="small"
-                        >
-                          {t('textExtractionConfig.batches.mergeBatches')}
-                        </Button>
-                      )}
-                      <Tooltip title={expandedBatches.length === batches.length ? t('textExtractionConfig.batches.collapseAll') : t('textExtractionConfig.batches.expandAll')}>
-                        <Button
-                          icon={expandedBatches.length === batches.length ? <ShrinkOutlined /> : <ExpandOutlined />}
-                          onClick={() => {
-                            if (expandedBatches.length === batches.length) {
-                              // 全部收起
-                              setExpandedBatches([])
-                            } else {
-                              // 全部展开
-                              setExpandedBatches(batches.map(b => b.index))
-                            }
-                          }}
-                          size="small"
-                        >
-                          {expandedBatches.length === batches.length ? t('textExtractionConfig.batches.collapseAll') : t('textExtractionConfig.batches.expandAll')}
-                        </Button>
-                      </Tooltip>
-                      <Divider type="vertical" />
-                    </>
-                  )}
                   <Button
                     type={activeTab === 'preview' ? 'primary' : 'default'}
                     icon={<ViewOutlined />}
@@ -718,30 +679,14 @@ function TextExtractionConfig({ documentId }) {
               {activeTab === 'preview' ? (
                 <div className="markdown-preview markdown-preview-container">
                   {batches.length > 0 && !isMerged ? (
-                    // ⭐ 批次级别显示（固定高度，滚动查看，用户可收起/展开）
-                    <Collapse
-                      className="batch-collapse-panel"
-                      activeKey={expandedBatches}
-                      onChange={(keys) => {
-                        console.log('📂 Batch expand status changed:', keys)
-                        setExpandedBatches(keys)
-                      }}
-                      items={batches.map(batch => ({
-                        key: batch.index,
-                        label: (
-                          <Space>
-                            <span>{t('textExtractionConfig.batches.batch')} {batch.number}</span>
-                            {batch.status === 'pending' && <Tag color="default">{t('textExtractionConfig.batches.waiting')}</Tag>}
-                            {batch.status === 'processing' && <Tag icon={<LoadingOutlined />} color="processing">{t('textExtractionConfig.batches.processing')}</Tag>}
-                            {batch.status === 'completed' && <Tag icon={<CheckCircleFilled />} color="success">{t('textExtractionConfig.batches.completed')}</Tag>}
-                          </Space>
-                        ),
-                        children: (
-                          <MarkdownRenderer
-                            content={batch.content || t('textExtractionConfig.batches.waiting')}
-                          />
-                        ),
-                      }))}
+                    // ⭐ 批次级别显示（使用BatchContentViewer组件）
+                    <BatchContentViewer
+                      batches={batches}
+                      onMerge={mergeBatches}
+                      autoExpand={true}
+                      emptyText={t('textExtractionConfig.batches.waiting')}
+                      showMergeButton={true}
+                      showExpandButton={true}
                     />
                   ) : (
                     // 没有批次信息时，或已合并后，显示全部内容
