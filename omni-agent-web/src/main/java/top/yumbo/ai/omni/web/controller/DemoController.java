@@ -897,13 +897,18 @@ public class DemoController {
     @GetMapping(value = "/qa/stream/dual-track", produces = "text/event-stream")
     public SseEmitter dualTrackStream(
             @RequestParam String question,
+            @RequestParam String userId,
             @RequestParam(defaultValue = "none") String knowledgeMode,
             @RequestParam(required = false) String roleName) {
 
-        log.info("🚂 双轨流式问答: question={}, mode={}, role={}", question, knowledgeMode, roleName);
+        log.info("🚂 双轨流式问答: question={}, userId={}, mode={}, role={}", 
+                question, userId, knowledgeMode, roleName);
 
         // 创建 SseEmitter，超时时间 5 分钟
         SseEmitter emitter = new SseEmitter(300000L);
+        
+        // 用于收集完整答案以保存历史
+        StringBuilder fullAnswerBuilder = new StringBuilder();
 
         // 使用线程池异步处理
         executorService.submit(() -> {
@@ -913,7 +918,7 @@ public class DemoController {
 
                 if (!isDualTrack) {
                     // === 单轨模式（仅LLM） ===
-                    handleSingleTrack(emitter, question);
+                    handleSingleTrack(emitter, question, fullAnswerBuilder);
                 } else {
                     // === 双轨模式 ===
                     // 1. 检索参考文档
@@ -926,12 +931,15 @@ public class DemoController {
                     // 2. 并行生成双轨回答
                     if ("role".equals(knowledgeMode)) {
                         // 角色模式：左轨RAG+LLM，右轨角色专业回答
-                        handleRoleMode(emitter, question, roleName, references);
+                        handleRoleMode(emitter, question, roleName, references, fullAnswerBuilder);
                     } else {
                         // RAG模式：左轨RAG+LLM，右轨HOPE智能系统
-                        handleRagMode(emitter, question, references);
+                        handleRagMode(emitter, question, references, fullAnswerBuilder);
                     }
                 }
+                
+                // 保存对话历史
+                saveConversationHistory(userId, question, fullAnswerBuilder.toString());
 
             } catch (Exception e) {
                 log.error("❌ 双轨流式问答失败", e);
@@ -948,7 +956,7 @@ public class DemoController {
     /**
      * 处理单轨模式（仅LLM）
      */
-    private void handleSingleTrack(SseEmitter emitter, String question) {
+    private void handleSingleTrack(SseEmitter emitter, String question, StringBuilder fullAnswerBuilder) {
         log.info("🚂 单轨模式：纯LLM");
 
         List<ChatMessage> messages = List.of(
@@ -962,6 +970,7 @@ public class DemoController {
                 .doOnNext(token -> {
                     try {
                         sendToken(emitter, "llm", token);
+                        fullAnswerBuilder.append(token);
                     } catch (Exception e) {
                         log.error("❌ 发送LLM token失败: {}", e.getMessage());
                     }
@@ -974,7 +983,7 @@ public class DemoController {
     /**
      * 处理RAG模式：左轨RAG+LLM，右轨HOPE智能系统（并行执行）
      */
-    private void handleRagMode(SseEmitter emitter, String question, List<SearchResult> references) {
+    private void handleRagMode(SseEmitter emitter, String question, List<SearchResult> references, StringBuilder fullAnswerBuilder) {
         log.info("🚂 双轨模式：RAG + HOPE智能系统（并行执行）");
 
         // CountDownLatch用于等待两个轨道都完成
@@ -1112,7 +1121,7 @@ public class DemoController {
     /**
      * 处理角色模式：左轨RAG+LLM，右轨角色专业回答（并行执行）
      */
-    private void handleRoleMode(SseEmitter emitter, String question, String roleName, List<SearchResult> references) {
+    private void handleRoleMode(SseEmitter emitter, String question, String roleName, List<SearchResult> references, StringBuilder fullAnswerBuilder) {
         log.info("🚂 双轨模式：RAG + 角色知识库 (role={})（并行执行）", roleName);
 
         // 获取角色信息
@@ -1481,5 +1490,168 @@ public class DemoController {
     @Data
     public static class BatchIndexRequest {
         private List<Document> documents;
+    }
+
+    // ============================================================================
+    // 用户管理和对话历史相关接口
+    // ============================================================================
+
+    /**
+     * 存储对话历史
+     */
+    private final Map<String, List<ConversationHistory>> conversationHistoryMap = 
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * 获取用户ID
+     * 基于客户端IP生成唯一用户ID
+     * GET /api/system/user-id
+     */
+    @GetMapping("/system/user-id")
+    public Map<String, Object> getUserId(jakarta.servlet.http.HttpServletRequest request) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 获取客户端IP（支持代理）
+            String clientIp = getClientIp(request);
+            
+            // 生成用户ID（使用IP作为基础）
+            String userId = generateUserId(clientIp);
+
+            result.put("userId", userId);
+            result.put("userInfo", Map.of(
+                    "ip", clientIp,
+                    "createdAt", System.currentTimeMillis()
+            ));
+            result.put("status", "success");
+
+            log.info("🆔 Generated user ID: {} for IP: {}", userId, clientIp);
+        } catch (Exception e) {
+            log.error("❌ Failed to generate user ID", e);
+            result.put("status", "error");
+            result.put("error", e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * 保存对话历史
+     */
+    private void saveConversationHistory(String userId, String question, String answer) {
+        ConversationHistory history = new ConversationHistory();
+        history.setQuestion(question);
+        history.setAnswer(answer);
+        history.setTimestamp(System.currentTimeMillis());
+        history.setUserId(userId);
+
+        conversationHistoryMap.computeIfAbsent(userId, k -> new java.util.ArrayList<>()).add(history);
+        
+        log.info("💾 Saved conversation for user: {}, total: {}", 
+                userId, conversationHistoryMap.get(userId).size());
+    }
+
+    /**
+     * 获取对话历史
+     * GET /api/qa/history
+     */
+    @GetMapping("/qa/history")
+    public Map<String, Object> getConversationHistory(
+            @RequestParam String userId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(required = false) String keyword) {
+
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            List<ConversationHistory> userHistory = conversationHistoryMap.getOrDefault(userId, new java.util.ArrayList<>());
+
+            // 过滤关键词
+            List<ConversationHistory> filtered = userHistory;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String lowerKeyword = keyword.toLowerCase();
+                filtered = userHistory.stream()
+                        .filter(h -> h.getQuestion().toLowerCase().contains(lowerKeyword) ||
+                                    (h.getAnswer() != null && h.getAnswer().toLowerCase().contains(lowerKeyword)))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+
+            // 降序排序（最新的在前）
+            filtered.sort((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
+
+            // 分页
+            int total = filtered.size();
+            int start = (page - 1) * pageSize;
+            int end = Math.min(start + pageSize, total);
+
+            List<ConversationHistory> pageData = start < total ? 
+                    filtered.subList(start, end) : new java.util.ArrayList<>();
+
+            result.put("list", pageData);
+            result.put("total", total);
+            result.put("page", page);
+            result.put("pageSize", pageSize);
+            result.put("hasMore", end < total);
+            result.put("status", "success");
+
+            log.info("📜 Retrieved {} conversation history items for user: {}", pageData.size(), userId);
+
+        } catch (Exception e) {
+            log.error("❌ Failed to get conversation history", e);
+            result.put("status", "error");
+            result.put("error", e.getMessage());
+            result.put("list", new java.util.ArrayList<>());
+        }
+
+        return result;
+    }
+
+    /**
+     * 获取客户端真实IP
+     */
+    private String getClientIp(jakarta.servlet.http.HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // 如果有多个IP，取第一个
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
+    }
+
+    /**
+     * 生成用户ID
+     * 使用IP地址的哈希值生成用户ID
+     */
+    private String generateUserId(String ip) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            byte[] hashBytes = md.digest(ip.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return "user_" + sb.toString().substring(0, 16);
+        } catch (Exception e) {
+            // 降级方案：使用IP直接编码
+            return "user_" + ip.replace(".", "_").replace(":", "_");
+        }
+    }
+
+    /**
+     * 对话历史实体类
+     */
+    @Data
+    public static class ConversationHistory {
+        private String userId;
+        private String question;
+        private String answer;
+        private long timestamp;
     }
 }

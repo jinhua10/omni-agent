@@ -9,6 +9,7 @@
  */
 
 import { request, SSE_BASE_URL } from '../index'
+import { getUserId } from '../../utils/userManager'
 
 const qaApi = {
   /**
@@ -19,9 +20,11 @@ const qaApi = {
    * @param {boolean} params.useKnowledgeBase - 是否使用知识库 RAG（可选，默认 true）
    * @returns {Promise} 回答结果
    */
-  ask(params) {
+  async ask(params) {
+    const userId = await getUserId()
     return request.post('/qa/ask', {
       ...params,
+      userId,
       useKnowledgeBase: params.useKnowledgeBase !== undefined ? params.useKnowledgeBase : true
     })
   },
@@ -58,13 +61,16 @@ const qaApi = {
    */
   async askStreaming(params, onChunk) {
     try {
+      const userId = await getUserId()
       console.log('🚀 Starting dual-track streaming Q&A:', params.question)
+      console.log('👤 User ID:', userId)
       console.log('📝 Knowledge Mode:', params.knowledgeMode)
       console.log('👤 Role Name:', params.roleName)
 
       // 构建查询参数
       const queryParams = new URLSearchParams({
         question: params.question,
+        userId: userId,
         knowledgeMode: params.knowledgeMode || 'rag',
         roleName: params.roleName || 'general'
       })
@@ -219,10 +225,12 @@ const qaApi = {
    * @param {Object} params - 查询参数 / Query parameters
    * @param {number} params.page - 页码 / Page number
    * @param {number} params.pageSize - 每页条数 / Items per page
+   * @param {string} params.keyword - 搜索关键词 / Search keyword
    * @returns {Promise} 历史记录 / History records
    */
-  getHistory(params) {
-    return request.get('/qa/history', params)
+  async getHistory(params) {
+    const userId = await getUserId()
+    return request.get('/qa/history', { ...params, userId })
   },
 
   /**

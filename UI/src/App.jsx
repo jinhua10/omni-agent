@@ -29,6 +29,7 @@ import { ServiceMarket } from './components/service'
 import { UserProfile } from './components/profile'
 import { AdminPanel } from './components/admin'
 import { WorkflowMarket, WorkflowBuilder } from './components/workflow'
+import { initializeUserId } from './utils/userManager'
 import './assets/css/main.css'
 import './assets/css/error-boundary.css'
 
@@ -96,6 +97,15 @@ function AppContent() {
       window.removeEventListener('storage', handleStorageChange)
       clearInterval(interval)
     }
+  }, [])
+
+  // 初始化用户ID
+  React.useEffect(() => {
+    initializeUserId().then(userId => {
+      console.log('✅ 用户ID已初始化:', userId)
+    }).catch(error => {
+      console.error('❌ 用户ID初始化失败:', error)
+    })
   }, [])
 
   // 菜单点击处理 / Menu click handler
