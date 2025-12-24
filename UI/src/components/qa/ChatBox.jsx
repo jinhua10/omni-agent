@@ -45,14 +45,32 @@ function ChatBox(props) {
   } = props
   const { t } = useLanguage()
   const messagesEndRef = useRef(null)
+  const toolbarRef = useRef(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // 监听滚动，添加阴影效果
+  useEffect(() => {
+    const handleScroll = () => {
+      if (toolbarRef.current) {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+        if (scrollTop > 10) {
+          toolbarRef.current.classList.add('scrolled')
+        } else {
+          toolbarRef.current.classList.remove('scrolled')
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
     <div className="chat-box">
-      <div className="chat-box__toolbar">
+      <div className="chat-box__toolbar" ref={toolbarRef}>
         <div className="chat-box__toolbar-left">
           <Button
             icon={<HistoryOutlined />}
