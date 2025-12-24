@@ -10,11 +10,39 @@ import java.util.Optional;
  * 问题分类器持久化接口
  * (Question Classifier Persistence Interface)
  *
- * <p>所有持久化实现必须实现此接口</p>
- * <p>支持多种后端: Memory, H2, SQLite, Redis, MongoDB, Elasticsearch</p>
+ * <h3>职责范围 (Responsibilities)</h3>
+ * <p>本接口用于持久化<strong>系统配置和元数据</strong>，专门管理问题分类器的配置信息</p>
+ *
+ * <h3>适用场景 (Use Cases)</h3>
+ * <ul>
+ *   <li>✅ 存储问题类型配置（结构化小数据）</li>
+ *   <li>✅ 管理关键词和模式规则</li>
+ *   <li>✅ 版本管理和变更历史</li>
+ *   <li>✅ 数据量小（KB级别），访问频繁</li>
+ * </ul>
+ *
+ * <h3>不适用场景 (Not For)</h3>
+ * <ul>
+ *   <li>❌ 大文件存储（请使用 {@link top.yumbo.ai.storage.api.DocumentStorageService}）</li>
+ *   <li>❌ 二进制内容（请使用 DocumentStorageService）</li>
+ *   <li>❌ 用户业务数据（请使用 DocumentStorageService）</li>
+ * </ul>
+ *
+ * <h3>支持的后端 (Supported Backends)</h3>
+ * <p>Memory, H2, SQLite, Redis, MongoDB, Elasticsearch</p>
+ *
+ * <h3>与 Storage 层的区别 (vs Storage Layer)</h3>
+ * <table border="1">
+ *   <tr><th>特性</th><th>Persistence (本接口)</th><th>Storage</th></tr>
+ *   <tr><td>数据类型</td><td>结构化配置</td><td>非结构化内容</td></tr>
+ *   <tr><td>数据量</td><td>小（KB）</td><td>大（MB-GB）</td></tr>
+ *   <tr><td>用途</td><td>系统配置</td><td>业务数据</td></tr>
+ *   <tr><td>类比</td><td>图书馆"目录"</td><td>图书馆"书架"</td></tr>
+ * </table>
  *
  * @author OmniAgent Team
  * @since 1.0.0
+ * @see top.yumbo.ai.storage.api.DocumentStorageService 文档和内容存储服务
  */
 public interface QuestionClassifierPersistence {
 

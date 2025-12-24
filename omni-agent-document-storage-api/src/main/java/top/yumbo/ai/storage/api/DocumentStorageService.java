@@ -15,11 +15,40 @@ import java.util.Optional;
  * 文档存储服务接口
  * (Document Storage Service Interface)
  *
- * <p>用于存储文档分块、图像、RAG优化数据等大文件/非结构化数据</p>
- * <p>支持多种后端: File, MongoDB, S3, MinIO, Redis, Elasticsearch</p>
+ * <h3>职责范围 (Responsibilities)</h3>
+ * <p>本接口用于存储<strong>业务数据和内容</strong>，管理文档、图像、文本等大文件和非结构化数据</p>
+ *
+ * <h3>适用场景 (Use Cases)</h3>
+ * <ul>
+ *   <li>✅ 存储原始文档文件（PDF, PPT, Word等）</li>
+ *   <li>✅ 保存提取的文本内容（可能很大）</li>
+ *   <li>✅ 管理文档分块和图像</li>
+ *   <li>✅ 存储RAG优化分析数据</li>
+ *   <li>✅ 数据量大（MB-GB级别），简单CRUD</li>
+ * </ul>
+ *
+ * <h3>不适用场景 (Not For)</h3>
+ * <ul>
+ *   <li>❌ 系统配置管理（请使用 {@link top.yumbo.ai.persistence.api.QuestionClassifierPersistence}）</li>
+ *   <li>❌ 规则和元数据（请使用 Persistence API）</li>
+ *   <li>❌ 需要复杂查询的结构化数据（请使用 Persistence API）</li>
+ * </ul>
+ *
+ * <h3>支持的后端 (Supported Backends)</h3>
+ * <p>File, MongoDB, S3, MinIO, Redis, Elasticsearch</p>
+ *
+ * <h3>与 Persistence 层的区别 (vs Persistence Layer)</h3>
+ * <table border="1">
+ *   <tr><th>特性</th><th>Storage (本接口)</th><th>Persistence</th></tr>
+ *   <tr><td>数据类型</td><td>非结构化内容</td><td>结构化配置</td></tr>
+ *   <tr><td>数据量</td><td>大（MB-GB）</td><td>小（KB）</td></tr>
+ *   <tr><td>用途</td><td>业务数据</td><td>系统配置</td></tr>
+ *   <tr><td>类比</td><td>图书馆"书架"</td><td>图书馆"目录"</td></tr>
+ * </table>
  *
  * @author OmniAgent Team
  * @since 1.0.0
+ * @see top.yumbo.ai.persistence.api.QuestionClassifierPersistence 配置和元数据持久化服务
  */
 public interface DocumentStorageService {
 
