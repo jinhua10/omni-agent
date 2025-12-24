@@ -1635,6 +1635,7 @@ export default {
 
     // 导出 (Export)
     export: {
+      label: '导出',
       markdown: '导出 Markdown',
       html: '导出 HTML',
       successMarkdown: '已导出为 Markdown 文件',

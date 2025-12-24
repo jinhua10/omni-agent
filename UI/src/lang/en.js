@@ -1623,6 +1623,7 @@ export default {
 
     // 导出 (Export)
     export: {
+      label: 'Export',
       markdown: 'Export Markdown',
       html: 'Export HTML',
       successMarkdown: 'Exported as Markdown file',

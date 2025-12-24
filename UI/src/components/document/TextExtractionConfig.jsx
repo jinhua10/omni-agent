@@ -714,7 +714,7 @@ function TextExtractionConfig({ documentId }) {
                     }}
                   >
                     <Button size="small" icon={<DownloadOutlined />}>
-                      导出
+                      {t('textExtractionConfig.export.label')}
                     </Button>
                   </Dropdown>
                 </Space>
