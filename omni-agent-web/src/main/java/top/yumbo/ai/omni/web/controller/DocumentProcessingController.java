@@ -177,19 +177,42 @@ public class DocumentProcessingController {
                                         return;
                                     }
 
+                                    // ⭐ 检查是否为批次内容标记（格式：BATCH_CONTENT:index:content）
+                                    if (chunk.startsWith("BATCH_CONTENT:")) {
+                                        int firstColon = chunk.indexOf(':', 14); // "BATCH_CONTENT:".length() = 14
+                                        if (firstColon > 0) {
+                                            String batchIndexStr = chunk.substring(14, firstColon);
+                                            String batchContent = chunk.substring(firstColon + 1);
+
+                                            log.info("📤 [STREAM] 发送批次 {} 的流式内容: {} 字符", batchIndexStr, batchContent.length());
+
+                                            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                                            java.util.Map<String, Object> payload = new java.util.HashMap<>();
+                                            payload.put("type", "content");
+                                            payload.put("batchIndex", Integer.parseInt(batchIndexStr));
+                                            payload.put("content", batchContent);
+
+                                            String jsonPayload = mapper.writeValueAsString(payload);
+                                            emitter.send(SseEmitter.event()
+                                                    .name("message")
+                                                    .data(jsonPayload));
+                                            return;
+                                        }
+                                    }
+
+                                    // ⭐ 普通内容处理
                                     log.info("📤 [STREAM] 发送流式内容: {} 字符", chunk.length());
 
-                                    // ⭐ 使用 Jackson 进行 JSON 转义，更安全
-                                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                                    java.util.Map<String, Object> payload = new java.util.HashMap<>();
-                                    payload.put("type", "content");
-                                    payload.put("content", chunk);
+                                    com.fasterxml.jackson.databind.ObjectMapper mapper2 = new com.fasterxml.jackson.databind.ObjectMapper();
+                                    java.util.Map<String, Object> payload2 = new java.util.HashMap<>();
+                                    payload2.put("type", "content");
+                                    payload2.put("content", chunk);
 
-                                    String jsonPayload = mapper.writeValueAsString(payload);
+                                    String jsonPayload2 = mapper2.writeValueAsString(payload2);
 
                                     emitter.send(SseEmitter.event()
                                             .name("message")
-                                            .data(jsonPayload));
+                                            .data(jsonPayload2));
 
                                     log.info("✅ [STREAM] 成功发送流式内容");
                                 } catch (Exception sendEx) {

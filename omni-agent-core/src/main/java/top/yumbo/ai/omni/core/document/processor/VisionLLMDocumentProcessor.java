@@ -902,10 +902,16 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      *
      * @param pages 页面列表
      * @param context 处理上下文（用于获取回调）
+     * @param batchIndex 批次索引
      * @return 这批页面的文本内容
      */
-    private String processPageBatch(List<DocumentPage> pages, ProcessingContext context) {
+    private String processPageBatch(List<DocumentPage> pages, ProcessingContext context, int batchIndex) {
         StringBuilder batchContent = new StringBuilder();
+
+        // ⭐ 将批次索引添加到 context 的 options 中
+        if (context != null && context.getOptions() != null) {
+            context.getOptions().put("currentBatchIndex", batchIndex);
+        }
 
         for (DocumentPage page : pages) {
             log.info("🔍 [VisionLLM] 处理第 {} 页，包含 {} 张图片",
@@ -929,11 +935,11 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                         if (cb instanceof java.util.function.Consumer) {
                             @SuppressWarnings("unchecked")
                             java.util.function.Consumer<String> callback = (java.util.function.Consumer<String>) cb;
-                            // ⭐ 使用 Markdown 格式的页面标记
+                            // ⭐ 使用 BATCH_CONTENT 格式，包含批次索引
                             String pageHeader = String.format("\n\n---\n\n## 📄 页面 %d\n\n", page.getPageNumber());
-                            callback.accept(pageHeader);
-                            callback.accept(pageContent);
-                            callback.accept("\n\n");
+                            callback.accept("BATCH_CONTENT:" + batchIndex + ":" + pageHeader);
+                            callback.accept("BATCH_CONTENT:" + batchIndex + ":" + pageContent);
+                            callback.accept("BATCH_CONTENT:" + batchIndex + ":\n\n");
                         }
                     }
                 }
@@ -1055,29 +1061,39 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             if (finalStreamingEnabled && finalStreamCallback != null) {
                 log.info("🚀 [VisionLLM] 启动流式处理，页面 {}", page.getPageNumber());
 
+                // ⭐ 获取批次索引
+                int currentBatchIndex = -1;
+                if (context != null && context.getOptions() != null) {
+                    Object batchIndexObj = context.getOptions().get("currentBatchIndex");
+                    if (batchIndexObj instanceof Integer) {
+                        currentBatchIndex = (Integer) batchIndexObj;
+                    }
+                }
+                final int batchIndex = currentBatchIndex;
+
                 List<top.yumbo.ai.ai.api.model.ChatMessage> visionMessages = new ArrayList<>();
                 visionMessages.add(ChatMessage.userWithImages(visionPrompt, imagesData));
 
                 StringBuilder acc = new StringBuilder();
 
-                // ⭐ 发送页面开始标记（Markdown 格式）
+                // ⭐ 发送页面开始标记（使用 BATCH_CONTENT 格式）
                 String pageHeader = String.format("\n\n---\n\n## 📄 页面 %d\n\n", page.getPageNumber());
-                log.info("📤 [VisionLLM] 发送页面标记: 页面 {}", page.getPageNumber());
-                finalStreamCallback.accept(pageHeader);
+                log.info("📤 [VisionLLM] 发送页面标记: 页面 {}, 批次 {}", page.getPageNumber(), batchIndex);
+                finalStreamCallback.accept("BATCH_CONTENT:" + batchIndex + ":" + pageHeader);
 
                 log.info("🔄 [VisionLLM] 开始调用 chatWithVisionFlux");
                 serviceToUse.chatWithVisionFlux(visionMessages)
                         .doOnNext(token -> {
-                            log.info("📥 [VisionLLM] 收到 token: {} 字符", token.length());
+                            log.info("📥 [VisionLLM] 收到 token: {} 字符，批次 {}", token.length(), batchIndex);
                             acc.append(token);
-                            // ⭐ 直接发送 token，不添加额外标记（保持 Markdown 语法完整）
-                            finalStreamCallback.accept(token);
+                            // ⭐ 使用 BATCH_CONTENT 格式发送 token
+                            finalStreamCallback.accept("BATCH_CONTENT:" + batchIndex + ":" + token);
                         })
                         .doOnError(err -> {
                             log.error("❌ [VisionLLM] Vision 分析失败: {}", err.getMessage(), err);
                             String errorMsg = String.format("\n\n> ⚠️ **页面 %d 分析失败**: %s\n\n",
                                 page.getPageNumber(), err.getMessage());
-                            finalStreamCallback.accept(errorMsg);
+                            finalStreamCallback.accept("BATCH_CONTENT:" + batchIndex + ":" + errorMsg);
                         })
                         .doOnComplete(() -> log.info("✅ [VisionLLM] Flux 完成"))
                         .blockLast();
@@ -1387,8 +1403,8 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                         }
                     }
 
-                    // ⭐ 直接传递 context，不依赖 ThreadLocal
-                    String content = processPageBatch(batch, context);
+                    // ⭐ 直接传递 context 和批次索引，不依赖 ThreadLocal
+                    String content = processPageBatch(batch, context, batchIndex);
                     List<ExtractedImage> images = batch.stream()
                             .flatMap(page -> page.getImages().stream())
                             .collect(Collectors.toList());
@@ -1478,8 +1494,8 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             }
 
             try {
-                // ⭐ 传递 context
-                String content = processPageBatch(batch, context);
+                // ⭐ 传递 context 和批次索引
+                String content = processPageBatch(batch, context, i);
                 List<ExtractedImage> images = batch.stream()
                         .flatMap(page -> page.getImages().stream())
                         .collect(Collectors.toList());

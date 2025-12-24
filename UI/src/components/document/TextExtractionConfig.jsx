@@ -374,14 +374,19 @@ function TextExtractionConfig({ documentId }) {
                 }))
               } else if (data.type === 'content') {
                 // ⭐ 流式/非流式都实时累加显示（前端体验一致）
-                console.log('📄 累加文本内容，长度:', data.content?.length || 0, '模式:', streamingMode ? '流式' : '非流式', '当前批次:', currentBatchIndex)
                 const newContent = data.content || ''
+                // ⭐ 优先使用消息中的 batchIndex，解决并行处理时的混乱问题
+                const batchIdx = typeof data.batchIndex === 'number' ? data.batchIndex : currentBatchIndex
+
+                console.log('📄 累加文本内容，长度:', newContent.length, '模式:', streamingMode ? '流式' : '非流式', '批次索引:', batchIdx)
+
+                // 累加到总内容
                 setExtractionResult(prev => prev + newContent)
 
-                // ⭐ 同时更新对应批次的内容
-                if (currentBatchIndex >= 0) {
+                // ⭐ 同时更新对应批次的内容（使用消息中的 batchIndex）
+                if (batchIdx >= 0) {
                   setBatches(prev => prev.map(b =>
-                    b.index === currentBatchIndex
+                    b.index === batchIdx
                       ? { ...b, content: b.content + newContent }
                       : b
                   ))
