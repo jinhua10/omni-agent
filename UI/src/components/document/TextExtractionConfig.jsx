@@ -470,7 +470,7 @@ function TextExtractionConfig({ documentId }) {
         {/* 左侧：配置面板 */}
         <div className="config-panel">
           <Card title={documentId ? `${t('textExtractionConfig.documentTitle')} - ${documentId}` : t('textExtractionConfig.title')}>
-            <Space vertical style={{ width: '100%' }} size="large">
+            <Space vertical size="large" className="vertical-space">
               {documentId && extractionProgress && (
                 <Alert
                   title={
@@ -513,13 +513,12 @@ function TextExtractionConfig({ documentId }) {
                 <Select
                   value={selectedModel}
                   onChange={handleModelChange}
-                  style={{ width: '100%' }}
                   size="large"
                 >
                   {Object.entries(EXTRACTION_MODELS).map(([key, model]) => (
                     <Option key={key} value={key}>
                       <Space>
-                        <span style={{ color: model.color }}>{model.icon}</span>
+                        <span className={`model-icon-${key}`}>{model.icon}</span>
                         <span>{language === 'zh' ? model.name : model.nameEn}</span>
                       </Space>
                     </Option>
@@ -532,7 +531,7 @@ function TextExtractionConfig({ documentId }) {
                 <div className="streaming-mode-selector">
                   <Space align="center" className="streaming-mode-selector-space">
                     <Space>
-                      <ThunderboltFilled style={{ color: streamingMode ? '#1890ff' : '#8c8c8c' }} />
+                      <ThunderboltFilled className={streamingMode ? 'streaming-icon-active' : 'streaming-icon-inactive'} />
                       <span className="config-label">
                         {streamingMode ? t('textExtractionConfig.streamingMode.streamingMode') : t('textExtractionConfig.streamingMode.batchOutput')}
                       </span>
@@ -559,10 +558,10 @@ function TextExtractionConfig({ documentId }) {
               {systemConfig && (
                 <div className="system-config">
                   <Divider />
-                  <Space vertical style={{ width: '100%' }}>
+                  <Space vertical className="full-width-space">
                     <div className="config-item">
                       <Space>
-                        <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                        <CheckCircleOutlined className="config-check-icon" />
                         <span>{t('textExtractionConfig.labels.defaultModel')}:</span>
                         <Tag color={currentModel.color}>
                           {language === 'zh' ? currentModel.name : currentModel.nameEn}
@@ -717,7 +716,7 @@ function TextExtractionConfig({ documentId }) {
               className="preview-panel"
             >
               {activeTab === 'preview' ? (
-                <div className="markdown-preview" style={{ minHeight: '600px' }}>
+                <div className="markdown-preview markdown-preview-container">
                   {batches.length > 0 && !isMerged ? (
                     // ⭐ 批次级别显示（固定高度，滚动查看，用户可收起/展开）
                     <Collapse
@@ -759,17 +758,8 @@ function TextExtractionConfig({ documentId }) {
                       : extractionResult
                   }
                   onChange={(e) => setExtractionResult(e.target.value)}
-                  style={{
-                    minHeight: '600px',
-                    height: '100%',
-                    fontFamily: 'monospace',
-                    fontSize: '13px',
-                    lineHeight: '1.6',
-                    border: 'none',
-                    resize: 'vertical'
-                  }}
                   placeholder={t('textExtractionConfig.preview.sourcePlaceholder')}
-                  className="source-editor"
+                  className="source-editor source-editor-textarea"
                 />
               )}
             </Card>
@@ -784,12 +774,9 @@ function TextExtractionConfig({ documentId }) {
               </Space>
             }
             variant="borderless"
-            className="model-info-card"
-            style={{
-              borderLeft: `4px solid ${currentModel.color}`,
-            }}
+            className={`model-info-card model-card-border-${selectedModel}`}
           >
-            <Space vertical size="large" style={{ width: '100%' }}>
+            <Space vertical size="large" className="full-width-space">
               {/* 模型描述 */}
               <div className="model-description">
                 <h4>{t('textExtractionConfig.labels.modelDescription')}</h4>

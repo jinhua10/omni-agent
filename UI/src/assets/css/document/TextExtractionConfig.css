@@ -270,6 +270,77 @@
   background: #666;
 }
 
+/* Space 垂直布局样式 */
+.text-extraction-config .vertical-space {
+  width: 100%;
+}
+
+/* Select 下拉框样式 */
+.text-extraction-config .model-selector .ant-select {
+  width: 100%;
+}
+
+/* 模型选项中的图标颜色 */
+.text-extraction-config .model-icon-standard {
+  color: #1890ff;
+}
+
+.text-extraction-config .model-icon-vision-llm {
+  color: #722ed1;
+}
+
+.text-extraction-config .model-icon-ocr {
+  color: #52c41a;
+}
+
+/* 流式模式图标 */
+.text-extraction-config .streaming-icon-active {
+  color: #1890ff;
+}
+
+.text-extraction-config .streaming-icon-inactive {
+  color: #8c8c8c;
+}
+
+/* 系统配置图标 */
+.text-extraction-config .config-check-icon {
+  color: #52c41a;
+}
+
+/* Markdown 预览区域最小高度 */
+.text-extraction-config .markdown-preview-container {
+  min-height: 600px;
+}
+
+/* 源码编辑器样式 */
+.text-extraction-config .source-editor-textarea {
+  min-height: 600px;
+  height: 100%;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  border: none;
+  resize: vertical;
+}
+
+/* 模型信息卡片左边框 - 不同颜色 */
+.text-extraction-config .model-card-border-standard {
+  border-left: 4px solid #1890ff;
+}
+
+.text-extraction-config .model-card-border-vision-llm {
+  border-left: 4px solid #722ed1;
+}
+
+.text-extraction-config .model-card-border-ocr {
+  border-left: 4px solid #52c41a;
+}
+
+/* Space 嵌套样式 */
+.text-extraction-config .full-width-space {
+  width: 100%;
+}
+
 .text-extraction-config .markdown-preview pre code {
   display: inline;
   max-width: auto;
