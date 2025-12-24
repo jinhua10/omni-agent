@@ -44,6 +44,8 @@ import {
   CheckCircleFilled,
   LoadingOutlined,
   MergeCellsOutlined,
+  ExpandOutlined,
+  ShrinkOutlined,
 } from '@ant-design/icons'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -107,6 +109,7 @@ function TextExtractionConfig({ documentId }) {
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true) // ⭐ 自动保存开关
   const [lastSaved, setLastSaved] = useState(null) // ⭐ 最后保存时间
   const [isMerged, setIsMerged] = useState(false) // ⭐ 是否已合并批次
+  const [expandedBatches, setExpandedBatches] = useState([]) // ⭐ 展开的批次索引列表
 
   // 加载系统配置
   useEffect(() => {
@@ -348,6 +351,8 @@ function TextExtractionConfig({ documentId }) {
                   status: 'pending', // pending, processing, completed
                 }))
                 setBatches(initialBatches)
+                // ⭐ 默认展开所有批次（用户可以手动收起）
+                setExpandedBatches(initialBatches.map(b => b.index))
               } else if (data.type === 'batchStart') {
                 // ⭐ 批次开始，更新当前批次索引
                 console.log('🚀 批次开始:', data)
@@ -625,16 +630,35 @@ function TextExtractionConfig({ documentId }) {
               }
               extra={
                 <Space>
-                  {batches.length > 0 && batches.every(b => b.status === 'completed') && !isMerged && (
+                  {batches.length > 0 && !isMerged && (
                     <>
-                      <Button
-                        type="primary"
-                        icon={<MergeCellsOutlined />}
-                        onClick={mergeBatches}
-                        size="small"
-                      >
-                        合并批次
-                      </Button>
+                      {batches.every(b => b.status === 'completed') && (
+                        <Button
+                          type="primary"
+                          icon={<MergeCellsOutlined />}
+                          onClick={mergeBatches}
+                          size="small"
+                        >
+                          合并批次
+                        </Button>
+                      )}
+                      <Tooltip title={expandedBatches.length === batches.length ? '全部收起' : '全部展开'}>
+                        <Button
+                          icon={expandedBatches.length === batches.length ? <ShrinkOutlined /> : <ExpandOutlined />}
+                          onClick={() => {
+                            if (expandedBatches.length === batches.length) {
+                              // 全部收起
+                              setExpandedBatches([])
+                            } else {
+                              // 全部展开
+                              setExpandedBatches(batches.map(b => b.index))
+                            }
+                          }}
+                          size="small"
+                        >
+                          {expandedBatches.length === batches.length ? '收起' : '展开'}
+                        </Button>
+                      </Tooltip>
                       <Divider type="vertical" />
                     </>
                   )}
@@ -701,10 +725,14 @@ function TextExtractionConfig({ documentId }) {
               {activeTab === 'preview' ? (
                 <div className="markdown-preview">
                   {batches.length > 0 && !isMerged ? (
-                    // ⭐ 批次级别显示（固定高度，滚动查看）
+                    // ⭐ 批次级别显示（固定高度，滚动查看，用户可收起/展开）
                     <Collapse
                       className="batch-collapse-panel"
-                      activeKey={batches.map(b => b.index)}
+                      activeKey={expandedBatches}
+                      onChange={(keys) => {
+                        console.log('📂 批次展开状态变化:', keys)
+                        setExpandedBatches(keys)
+                      }}
                       items={batches.map(batch => ({
                         key: batch.index,
                         label: (
