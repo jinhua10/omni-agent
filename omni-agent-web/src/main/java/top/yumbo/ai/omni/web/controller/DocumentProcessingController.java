@@ -143,6 +143,18 @@ public class DocumentProcessingController {
                                         return;
                                     }
 
+                                    // ⭐ 检查是否为批次信息（特殊标记）
+                                    if (chunk.startsWith("BATCH_INFO:")) {
+                                        String batchInfoJson = chunk.substring("BATCH_INFO:".length()).trim();
+                                        log.info("📦 [CONTROLLER] 收到批次信息: {}", batchInfoJson);
+
+                                        // 直接发送 batchInfo 类型的消息
+                                        emitter.send(SseEmitter.event()
+                                                .name("message")
+                                                .data("{\"type\":\"batchInfo\"," + batchInfoJson.substring(1)));
+                                        return;
+                                    }
+
                                     log.info("📤 [STREAM] 发送流式内容: {} 字符", chunk.length());
 
                                     // ⭐ 使用 Jackson 进行 JSON 转义，更安全

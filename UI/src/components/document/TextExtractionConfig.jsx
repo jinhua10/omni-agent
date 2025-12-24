@@ -88,6 +88,9 @@ function TextExtractionConfig({ documentId }) {
   const [extractionProgress, setExtractionProgress] = useState(null)
   const [extractionResult, setExtractionResult] = useState('')
   const [streamingMode, setStreamingMode] = useState(true) // ⭐ 新增：流式/非流式开关
+  const [batchInfo, setBatchInfo] = useState(null) // ⭐ 批次信息
+  const [isEditing, setIsEditing] = useState(false) // ⭐ 是否为编辑模式（查看源码）
+  const [activeTab, setActiveTab] = useState('preview') // ⭐ 当前标签页
 
   // 加载系统配置
   useEffect(() => {
@@ -199,6 +202,13 @@ function TextExtractionConfig({ documentId }) {
                   status: 'processing',
                   percent: data.percent || 0,
                   message: data.message
+                })
+              } else if (data.type === 'batchInfo') {
+                // ⭐ 收到批次信息
+                console.log('📦 收到批次信息:', data)
+                setBatchInfo({
+                  totalBatches: data.totalBatches,
+                  totalPages: data.totalPages,
                 })
               } else if (data.type === 'accuracy') {
                 // ⭐ 保存精度信息
@@ -417,24 +427,55 @@ function TextExtractionConfig({ documentId }) {
                   {extractionProgress?.accuracy && (
                     <Tag color="green">精度: {(extractionProgress.accuracy * 100).toFixed(1)}%</Tag>
                   )}
+                  {batchInfo && (
+                    <Tag color="purple">{batchInfo.totalPages} 页 / {batchInfo.totalBatches} 批</Tag>
+                  )}
+                </Space>
+              }
+              extra={
+                <Space>
+                  <Button
+                    type={activeTab === 'preview' ? 'primary' : 'default'}
+                    icon={<ViewOutlined />}
+                    onClick={() => setActiveTab('preview')}
+                    size="small"
+                  >
+                    预览
+                  </Button>
+                  <Button
+                    type={activeTab === 'source' ? 'primary' : 'default'}
+                    icon={<EditOutlined />}
+                    onClick={() => setActiveTab('source')}
+                    size="small"
+                  >
+                    源码
+                  </Button>
                 </Space>
               }
               style={{ height: '100%' }}
-              bodyStyle={{ height: 'calc(100% - 57px)', padding: 0 }}
+              bodyStyle={{ height: 'calc(100% - 57px)', padding: activeTab === 'preview' ? '20px' : 0, overflow: 'auto' }}
             >
-              <TextArea
-                value={extractionResult}
-                readOnly
-                style={{ 
-                  height: '100%',
-                  fontFamily: 'monospace',
-                  fontSize: '13px',
-                  lineHeight: '1.6',
-                  border: 'none',
-                  resize: 'none'
-                }}
-                placeholder="提取的文本内容将显示在这里..."
-              />
+              {activeTab === 'preview' ? (
+                <div className="markdown-preview">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {extractionResult}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <TextArea
+                  value={extractionResult}
+                  onChange={(e) => setExtractionResult(e.target.value)}
+                  style={{
+                    height: '100%',
+                    fontFamily: 'monospace',
+                    fontSize: '13px',
+                    lineHeight: '1.6',
+                    border: 'none',
+                    resize: 'none'
+                  }}
+                  placeholder="提取的 Markdown 源码将显示在这里..."
+                />
+              )}
             </Card>
           </div>
         ) : (

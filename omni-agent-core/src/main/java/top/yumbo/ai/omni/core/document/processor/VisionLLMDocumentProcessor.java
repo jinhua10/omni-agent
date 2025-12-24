@@ -135,11 +135,36 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                     log.debug("📦 [VisionLLM] 批次 #{}: {} 个页面", i + 1, batches.get(i).size());
                 }
 
-                // ⭐ 3. 并行处理所有批次
+                // ⭐ 2.1 检查是否为流式模式，并发送批次信息
+                boolean isStreamingMode = context != null
+                    && context.getOptions() != null
+                    && Boolean.TRUE.equals(context.getOptions().get("streaming"));
+
+                if (isStreamingMode && context.getOptions().get("streamCallback") instanceof java.util.function.Consumer) {
+                    @SuppressWarnings("unchecked")
+                    java.util.function.Consumer<String> callback =
+                        (java.util.function.Consumer<String>) context.getOptions().get("streamCallback");
+
+                    // ⭐ 发送批次信息（特殊标记 + JSON）
+                    String batchInfo = String.format(
+                        "BATCH_INFO:{\"totalBatches\":%d,\"totalPages\":%d}\n",
+                        batches.size(), pages.size()
+                    );
+                    callback.accept(batchInfo);
+                    log.info("📤 [VisionLLM] 已发送批次信息: {} 批次, {} 页面", batches.size(), pages.size());
+                }
+
+                // ⭐ 3. 处理所有批次
                 List<BatchProcessingResult> batchResults;
-                // ⭐ 为了解决 ThreadLocal 在子线程中无法访问的问题，直接传递 context
-                if (visionLlmExecutor != null && batches.size() > 1) {
-                    // 使用线程池并行处理
+
+
+                // ⭐ 流式模式必须串行处理，确保输出顺序正确，避免内容混乱
+                if (isStreamingMode) {
+                    log.info("🔄 [VisionLLM] 流式模式：使用串行处理确保输出顺序");
+                    batchResults = processPageBatchesSequentially(batches, context);
+                } else if (visionLlmExecutor != null && batches.size() > 1) {
+                    // 非流式模式才使用并行处理
+                    log.info("🚀 [VisionLLM] 非流式模式：使用并行处理提升速度");
                     batchResults = processPageBatchesInParallel(batches, context);
                 } else {
                     // 串行处理（无线程池或只有一个批次）
@@ -909,14 +934,17 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                         if (cb instanceof java.util.function.Consumer) {
                             @SuppressWarnings("unchecked")
                             java.util.function.Consumer<String> callback = (java.util.function.Consumer<String>) cb;
-                            // 发送页级分隔和内容
-                            callback.accept("\n=== 页面 " + page.getPageNumber() + " ===\n");
+                            // ⭐ 使用 Markdown 格式的页面标记
+                            String pageHeader = String.format("\n\n---\n\n## 📄 页面 %d\n\n", page.getPageNumber());
+                            callback.accept(pageHeader);
                             callback.accept(pageContent);
+                            callback.accept("\n\n");
                         }
                     }
                 }
 
-                batchContent.append("=== 页面 ").append(page.getPageNumber()).append(" ===\n");
+                // ⭐ 累积内容时也使用 Markdown 格式
+                batchContent.append("\n\n---\n\n## 📄 页面 ").append(page.getPageNumber()).append("\n\n");
                 batchContent.append(pageContent).append("\n\n");
 
                 // ⭐ 将 Vision LLM 的分析结果保存到每张图片的 metadata 中
@@ -1037,19 +1065,24 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
                 StringBuilder acc = new StringBuilder();
 
-                log.info("📤 [VisionLLM] 发送页面分隔符");
-                finalStreamCallback.accept("\n=== 页面 " + page.getPageNumber() + " ===\n");
+                // ⭐ 发送页面开始标记（Markdown 格式）
+                String pageHeader = String.format("\n\n---\n\n## 📄 页面 %d\n\n", page.getPageNumber());
+                log.info("📤 [VisionLLM] 发送页面标记: 页面 {}", page.getPageNumber());
+                finalStreamCallback.accept(pageHeader);
 
                 log.info("🔄 [VisionLLM] 开始调用 chatWithVisionFlux");
                 serviceToUse.chatWithVisionFlux(visionMessages)
                         .doOnNext(token -> {
                             log.info("📥 [VisionLLM] 收到 token: {} 字符", token.length());
                             acc.append(token);
+                            // ⭐ 直接发送 token，不添加额外标记（保持 Markdown 语法完整）
                             finalStreamCallback.accept(token);
                         })
                         .doOnError(err -> {
                             log.error("❌ [VisionLLM] Vision 分析失败: {}", err.getMessage(), err);
-                            finalStreamCallback.accept("\n[Vision分析失败: " + err.getMessage() + "]\n");
+                            String errorMsg = String.format("\n\n> ⚠️ **页面 %d 分析失败**: %s\n\n",
+                                page.getPageNumber(), err.getMessage());
+                            finalStreamCallback.accept(errorMsg);
                         })
                         .doOnComplete(() -> log.info("✅ [VisionLLM] Flux 完成"))
                         .blockLast();
