@@ -186,6 +186,9 @@ function QAPanel() {
                   // 完成
                   lastMessage.streaming = false
                   lastMessage.sessionId = data.sessionId
+                  // 清除 EventSource 引用
+                  setCurrentEventSource(null)
+                  setLoading(false)
                   break
 
                 case 'error':
@@ -193,6 +196,9 @@ function QAPanel() {
                   lastMessage.type = 'error'
                   lastMessage.content = data.error || t('qa.error.failed')
                   lastMessage.streaming = false
+                  // 清除 EventSource 引用
+                  setCurrentEventSource(null)
+                  setLoading(false)
                   break
 
                 default:
@@ -212,9 +218,10 @@ function QAPanel() {
       )
 
 
-      // 保存 EventSource 引用以便停止生成 / Save EventSource reference for stopping
-      if (result && result.eventSource) {
+      // 保存流式控制对象以便停止生成 / Save streaming control object for stopping
+      if (result) {
         setCurrentEventSource(result.eventSource)
+        console.log('💾 Saved EventSource reference for stopping')
       }
 
       // 获取相似问题 / Get similar questions
@@ -243,7 +250,7 @@ function QAPanel() {
       })
     } finally {
       setLoading(false)
-      setCurrentEventSource(null)
+      // 不在这里清除 eventSource，让它在 complete 或 stop 时自然清除
     }
   }
 
@@ -331,6 +338,8 @@ function QAPanel() {
    * Stop generation
    */
   const handleStopGeneration = () => {
+    console.log('🛑 handleStopGeneration called, currentEventSource:', currentEventSource)
+    
     if (currentEventSource) {
       console.log('🛑 Stopping generation...')
       currentEventSource.close()
@@ -345,9 +354,12 @@ function QAPanel() {
         if (lastMessage && lastMessage.streaming) {
           lastMessage.streaming = false
           lastMessage.stopped = true
+          console.log('✅ Message marked as stopped')
         }
         return newMessages
       })
+    } else {
+      console.warn('⚠️ No active EventSource to stop')
     }
   }
 

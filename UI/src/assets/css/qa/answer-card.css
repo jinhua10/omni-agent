@@ -275,16 +275,34 @@
    ============================================================================ */
 .answer-card__collapse {
   background: transparent !important;
+  width: 100%;
 }
 
 .answer-card__collapse .ant-collapse-item {
   border: none !important;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.answer-card__collapse .ant-collapse-item:hover {
+  background: #f0f2f5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .answer-card__collapse .ant-collapse-header {
-  padding: 8px 0 !important;
+  padding: 12px 16px !important;
   background: transparent !important;
   border-radius: 0 !important;
+  align-items: center !important;
+}
+
+.answer-card__collapse .ant-collapse-header .ant-collapse-arrow {
+  font-size: 12px !important;
+  color: #667eea !important;
+  transition: transform 0.3s ease;
 }
 
 .answer-card__collapse .ant-collapse-content {
@@ -293,7 +311,7 @@
 }
 
 .answer-card__collapse .ant-collapse-content-box {
-  padding: 0 !important;
+  padding: 0 16px 12px 16px !important;
 }
 
 .answer-card__header {
@@ -301,17 +319,39 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  gap: 12px;
 }
 
 .answer-card__header-title {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: #667eea;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.answer-card__header-title::before {
+  content: '🤖';
+  font-size: 16px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .answer-card__header-time {
   font-size: 12px;
   color: #999;
-  margin-left: auto;
-  padding-left: 16px;
+  font-weight: 400;
+  white-space: nowrap;
+  background: rgba(102, 126, 234, 0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
 }
