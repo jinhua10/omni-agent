@@ -34,9 +34,25 @@ import java.util.Map;
  *   <li>QueryService - 智能问答</li>
  * </ul>
  *
+ * <p><strong>⚠️ 已过时 (Deprecated)</strong></p>
+ * <p>此控制器已被拆分为多个专门的控制器，请使用以下新控制器：</p>
+ * <ul>
+ *   <li>{@link HealthController} - 健康检查</li>
+ *   <li>RAGManagementController - RAG 管理（即将实现）</li>
+ *   <li>AIServiceController - AI 服务（即将实现）</li>
+ *   <li>QAController - 智能问答（即将实现）</li>
+ *   <li>HOPEController - HOPE 知识架构（即将实现）</li>
+ *   <li>RoleController - 角色知识库（即将实现）</li>
+ *   <li>SystemController - 系统配置（即将实现）</li>
+ * </ul>
+ *
+ * <p>详细的重构方案请参阅: docs/DEMO_CONTROLLER_REFACTORING.md</p>
+ *
  * @author Jinhua Yu
  * @since 1.0.0
+ * @deprecated 已拆分为多个专门的控制器，请使用新的控制器。此类将在未来版本中移除。
  */
+@Deprecated
 @Slf4j
 @RestController
 @RequestMapping("/api")
