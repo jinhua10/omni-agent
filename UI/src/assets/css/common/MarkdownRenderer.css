@@ -1,0 +1,310 @@
+/**
+ * Markdown渲染器样式
+ * (Markdown Renderer Styles)
+ */
+
+.markdown-renderer {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  color: #333;
+  word-wrap: break-word;
+}
+
+/* ============================================================================
+ * 标题样式 (Heading Styles)
+ * ============================================================================ */
+.markdown-renderer .markdown-h1,
+.markdown-renderer .markdown-h2,
+.markdown-renderer .markdown-h3,
+.markdown-renderer .markdown-h4,
+.markdown-renderer .markdown-h5,
+.markdown-renderer .markdown-h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1a1a1a;
+}
+
+.markdown-renderer .markdown-h1 {
+  font-size: 2em;
+  border-bottom: 2px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.markdown-renderer .markdown-h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.markdown-renderer .markdown-h3 {
+  font-size: 1.25em;
+}
+
+.markdown-renderer .markdown-h4 {
+  font-size: 1.1em;
+}
+
+.markdown-renderer .markdown-h5 {
+  font-size: 1em;
+}
+
+.markdown-renderer .markdown-h6 {
+  font-size: 0.9em;
+  color: #6a737d;
+}
+
+/* ============================================================================
+ * 段落和文本样式 (Paragraph and Text Styles)
+ * ============================================================================ */
+.markdown-renderer .markdown-p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.markdown-renderer .markdown-link {
+  color: #0366d6;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.markdown-renderer .markdown-link:hover {
+  color: #0256c5;
+  text-decoration: underline;
+}
+
+/* ============================================================================
+ * 列表样式 (List Styles)
+ * ============================================================================ */
+.markdown-renderer .markdown-ul,
+.markdown-renderer .markdown-ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-left: 2em;
+}
+
+.markdown-renderer .markdown-li {
+  margin-top: 0.25em;
+}
+
+.markdown-renderer .markdown-li > .markdown-p {
+  margin-bottom: 0.25em;
+}
+
+/* ============================================================================
+ * 引用样式 (Blockquote Styles)
+ * ============================================================================ */
+.markdown-renderer .markdown-blockquote {
+  margin: 0 0 16px 0;
+  padding: 0 1em;
+  color: #6a737d;
+  border-left: 4px solid #dfe2e5;
+  background-color: #f6f8fa;
+}
+
+.markdown-renderer .markdown-blockquote > :first-child {
+  margin-top: 0;
+}
+
+.markdown-renderer .markdown-blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================================================
+ * 内联代码样式 (Inline Code Styles)
+ * ============================================================================ */
+.markdown-renderer .inline-code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: rgba(175, 184, 193, 0.2);
+  border-radius: 3px;
+  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  color: #e83e8c;
+  border: 1px solid rgba(175, 184, 193, 0.3);
+}
+
+/* ============================================================================
+ * 代码块样式 (Code Block Styles)
+ * ============================================================================ */
+.markdown-renderer .markdown-code-block-wrapper {
+  margin: 16px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e1e4e8;
+  background: #1e1e1e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.markdown-renderer .markdown-code-block-wrapper:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.markdown-renderer .markdown-code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3e3e3e;
+}
+
+.markdown-renderer .code-language {
+  font-size: 12px;
+  color: #858585;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  letter-spacing: 0.5px;
+}
+
+.markdown-renderer .code-copy-button {
+  color: #858585 !important;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 2px 8px;
+  height: auto;
+}
+
+.markdown-renderer .code-copy-button:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.markdown-renderer .code-copy-button .anticon {
+  font-size: 12px;
+}
+
+/* 代码块滚动条样式 */
+.markdown-renderer .markdown-code-block-wrapper pre {
+  margin: 0 !important;
+}
+
+.markdown-renderer .markdown-code-block-wrapper pre::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.markdown-renderer .markdown-code-block-wrapper pre::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+.markdown-renderer .markdown-code-block-wrapper pre::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.markdown-renderer .markdown-code-block-wrapper pre::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* ============================================================================
+ * 表格样式 (Table Styles)
+ * ============================================================================ */
+.markdown-renderer .markdown-table-wrapper {
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.markdown-renderer .markdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+.markdown-renderer .markdown-th,
+.markdown-renderer .markdown-td {
+  padding: 8px 12px;
+  border: 1px solid #dfe2e5;
+  text-align: left;
+}
+
+.markdown-renderer .markdown-th {
+  font-weight: 600;
+  background-color: #f6f8fa;
+  color: #24292e;
+}
+
+.markdown-renderer .markdown-td {
+  background-color: #fff;
+}
+
+.markdown-renderer .markdown-table tr:hover .markdown-td {
+  background-color: #f6f8fa;
+}
+
+/* ============================================================================
+ * 图片样式 (Image Styles)
+ * ============================================================================ */
+.markdown-renderer .markdown-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================================
+ * 分割线样式 (Horizontal Rule Styles)
+ * ============================================================================ */
+.markdown-renderer .markdown-hr {
+  height: 2px;
+  padding: 0;
+  margin: 24px 0;
+  background-color: #e1e4e8;
+  border: 0;
+}
+
+/* ============================================================================
+ * 响应式设计 (Responsive Design)
+ * ============================================================================ */
+@media (max-width: 768px) {
+  .markdown-renderer .markdown-h1 {
+    font-size: 1.6em;
+  }
+
+  .markdown-renderer .markdown-h2 {
+    font-size: 1.3em;
+  }
+
+  .markdown-renderer .markdown-h3 {
+    font-size: 1.1em;
+  }
+
+  .markdown-renderer .markdown-table-wrapper {
+    font-size: 12px;
+  }
+
+  .markdown-renderer .markdown-th,
+  .markdown-renderer .markdown-td {
+    padding: 6px 8px;
+  }
+}
+
+/* ============================================================================
+ * 打印样式 (Print Styles)
+ * ============================================================================ */
+@media print {
+  .markdown-renderer .markdown-code-block-header {
+    background: #fff;
+    border-bottom: 1px solid #000;
+  }
+
+  .markdown-renderer .code-copy-button {
+    display: none;
+  }
+
+  .markdown-renderer .markdown-code-block-wrapper {
+    border: 1px solid #000;
+    background: #fff;
+  }
+
+  .markdown-renderer .markdown-link {
+    color: #000;
+    text-decoration: underline;
+  }
+}

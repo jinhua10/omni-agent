@@ -28,6 +28,10 @@ export default {
     loading: '加载中...',
     success: '成功',
     error: '错误',
+    copySuccess: '复制成功',
+    copyFailed: '复制失败',
+    copied: '已复制',
+    copyCode: '复制代码',
     warning: '警告',
     info: '提示',
     upload: '上传',
@@ -1595,6 +1599,7 @@ export default {
 
     // 流式模式 (Streaming Mode)
     streamingMode: {
+      streamingMode: '流式输出',
       label: '流式输出',
       batchOutput: '批量输出',
       streamingTip: '实时显示提取内容，减少等待时间，适合PPT、PDF等大文档',

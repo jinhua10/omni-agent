@@ -47,17 +47,12 @@ import {
   ExpandOutlined,
   ShrinkOutlined,
 } from '@ant-design/icons'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import MarkdownRenderer from '../common/MarkdownRenderer'
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/TextExtractionConfig.css'
 
 const { Option } = Select
 const { TextArea } = Input
-
-/**
- * 文本提取模型配置
- */
 const EXTRACTION_MODELS = {
   standard: {
     name: '标准提取',
@@ -722,7 +717,7 @@ function TextExtractionConfig({ documentId }) {
               className="preview-panel"
             >
               {activeTab === 'preview' ? (
-                <div className="markdown-preview">
+                <div className="markdown-preview" style={{ minHeight: '600px' }}>
                   {batches.length > 0 && !isMerged ? (
                     // ⭐ 批次级别显示（固定高度，滚动查看，用户可收起/展开）
                     <Collapse
@@ -743,17 +738,17 @@ function TextExtractionConfig({ documentId }) {
                           </Space>
                         ),
                         children: (
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {batch.content || t('textExtractionConfig.batches.waiting')}
-                          </ReactMarkdown>
+                          <MarkdownRenderer
+                            content={batch.content || t('textExtractionConfig.batches.waiting')}
+                          />
                         ),
                       }))}
                     />
                   ) : (
                     // 没有批次信息时，或已合并后，显示全部内容
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {extractionResult || t('textExtractionConfig.batches.waiting')}
-                    </ReactMarkdown>
+                    <MarkdownRenderer
+                      content={extractionResult || t('textExtractionConfig.batches.waiting')}
+                    />
                   )}
                 </div>
               ) : (
@@ -765,12 +760,13 @@ function TextExtractionConfig({ documentId }) {
                   }
                   onChange={(e) => setExtractionResult(e.target.value)}
                   style={{
+                    minHeight: '600px',
                     height: '100%',
                     fontFamily: 'monospace',
                     fontSize: '13px',
                     lineHeight: '1.6',
                     border: 'none',
-                    resize: 'none'
+                    resize: 'vertical'
                   }}
                   placeholder={t('textExtractionConfig.preview.sourcePlaceholder')}
                   className="source-editor"

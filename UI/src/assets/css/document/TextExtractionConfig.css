@@ -198,6 +198,78 @@
   border-radius: 6px;
 }
 
+/* 代码块包装器样式 */
+.text-extraction-config .code-block-wrapper {
+  margin: 16px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e1e4e8;
+  background: #1e1e1e;
+}
+
+.text-extraction-config .code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3e3e3e;
+}
+
+.text-extraction-config .code-language {
+  font-size: 12px;
+  color: #858585;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+}
+
+.text-extraction-config .copy-button {
+  color: #858585 !important;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.text-extraction-config .copy-button:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.text-extraction-config .copy-button .anticon {
+  font-size: 12px;
+}
+
+/* 内联代码样式优化 */
+.text-extraction-config .markdown-preview code:not(pre code) {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: rgba(175, 184, 193, 0.2);
+  border-radius: 3px;
+  font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  color: #e83e8c;
+  border: 1px solid rgba(175, 184, 193, 0.3);
+}
+
+/* 代码块滚动条样式 */
+.text-extraction-config .code-block-wrapper pre::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.text-extraction-config .code-block-wrapper pre::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+.text-extraction-config .code-block-wrapper pre::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.text-extraction-config .code-block-wrapper pre::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
 .text-extraction-config .markdown-preview pre code {
   display: inline;
   max-width: auto;

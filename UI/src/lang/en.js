@@ -10,6 +10,10 @@ export default {
   // Common
   // ============================================================================
   common: {
+    copySuccess: 'Copy successful',
+    copyFailed: 'Copy failed',
+    copied: 'Copied',
+    copyCode: 'Copy code',
     confirm: 'Confirm',
     cancel: 'Cancel',
     save: 'Save',
@@ -1583,6 +1587,7 @@ export default {
 
     // 流式模式 (Streaming Mode)
     streamingMode: {
+      streamingMode: 'Streaming Output',
       label: 'Streaming Output',
       batchOutput: 'Batch Output',
       streamingTip: 'Display extracted content in real-time, reducing waiting time, suitable for large documents like PPTs, PDFs',
