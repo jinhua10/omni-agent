@@ -138,16 +138,28 @@ public class DocumentProcessingController {
                             request.getModel(),
                             chunk -> {
                                 try {
-                                    // 直接把增量内容发给前端（不做 500 字符二次切分，避免延迟）
-                                    String safe = (chunk == null ? "" : chunk)
-                                            .replace("\\", "\\\\")
-                                            .replace("\"", "\\\"")
-                                            .replace("\n", "\\n");
+                                    if (chunk == null || chunk.isEmpty()) {
+                                        log.warn("⚠️ 收到空内容，跳过发送");
+                                        return;
+                                    }
+
+                                    log.info("📤 [STREAM] 发送流式内容: {} 字符", chunk.length());
+
+                                    // ⭐ 使用 Jackson 进行 JSON 转义，更安全
+                                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                                    java.util.Map<String, Object> payload = new java.util.HashMap<>();
+                                    payload.put("type", "content");
+                                    payload.put("content", chunk);
+
+                                    String jsonPayload = mapper.writeValueAsString(payload);
+
                                     emitter.send(SseEmitter.event()
                                             .name("message")
-                                            .data("{\"type\":\"content\",\"content\":\"" + safe + "\"}"));
+                                            .data(jsonPayload));
+
+                                    log.info("✅ [STREAM] 成功发送流式内容");
                                 } catch (Exception sendEx) {
-                                    log.error("发送流式内容失败", sendEx);
+                                    log.error("❌ [STREAM] 发送流式内容失败: {}", sendEx.getMessage(), sendEx);
                                 }
                             }
                     );
@@ -424,6 +436,46 @@ public class DocumentProcessingController {
             log.error("❌ 重建文档失败: documentId={}", documentId, e);
             return ApiResponse.error("重建失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 测试 SSE 流式输出（用于调试）
+     * GET /api/documents/processing/test-streaming
+     */
+    @GetMapping(value = "/test-streaming", produces = "text/event-stream;charset=UTF-8")
+    public SseEmitter testStreaming() {
+        SseEmitter emitter = new SseEmitter(60 * 1000L);
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                for (int i = 1; i <= 10; i++) {
+                    Thread.sleep(500);
+
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    java.util.Map<String, Object> payload = new java.util.HashMap<>();
+                    payload.put("type", "content");
+                    payload.put("content", "第 " + i + " 条测试消息\n");
+
+                    String jsonPayload = mapper.writeValueAsString(payload);
+                    emitter.send(SseEmitter.event().name("message").data(jsonPayload));
+
+                    log.info("📤 发送测试消息 {}/10", i);
+                }
+
+                java.util.Map<String, Object> completePayload = new java.util.HashMap<>();
+                completePayload.put("type", "complete");
+                completePayload.put("message", "测试完成");
+                emitter.send(SseEmitter.event().name("message")
+                        .data(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(completePayload)));
+                emitter.complete();
+
+            } catch (Exception e) {
+                log.error("测试流式输出失败", e);
+                emitter.completeWithError(e);
+            }
+        });
+
+        return emitter;
     }
 
     // ========== 辅助方法 ==========

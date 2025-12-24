@@ -137,12 +137,13 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
                 // ⭐ 3. 并行处理所有批次
                 List<BatchProcessingResult> batchResults;
+                // ⭐ 为了解决 ThreadLocal 在子线程中无法访问的问题，直接传递 context
                 if (visionLlmExecutor != null && batches.size() > 1) {
                     // 使用线程池并行处理
-                    batchResults = processPageBatchesInParallel(batches);
+                    batchResults = processPageBatchesInParallel(batches, context);
                 } else {
                     // 串行处理（无线程池或只有一个批次）
-                    batchResults = processPageBatchesSequentially(batches);
+                    batchResults = processPageBatchesSequentially(batches, context);
                 }
 
                 // 4. 合并结果
@@ -880,9 +881,10 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      * 处理一批页面
      *
      * @param pages 页面列表
+     * @param context 处理上下文（用于获取回调）
      * @return 这批页面的文本内容
      */
-    private String processPageBatch(List<DocumentPage> pages) {
+    private String processPageBatch(List<DocumentPage> pages, ProcessingContext context) {
         StringBuilder batchContent = new StringBuilder();
 
         for (DocumentPage page : pages) {
@@ -892,10 +894,28 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             // 构建该页的提示词
             String pagePrompt = buildPagePrompt(page);
 
-            // 调用 Vision LLM 分析整页
-            String pageContent = recognizePageWithVisionLLM(page, pagePrompt, this.processingContextThreadLocal.get());
+            // 调用 Vision LLM 分析整页（传递 context 而不是从 ThreadLocal 获取）
+            String pageContent = recognizePageWithVisionLLM(page, pagePrompt, context);
 
             if (pageContent != null && !pageContent.isEmpty()) {
+                // ⭐ 非流式模式下，每页处理完也立即通过回调发送（分批显示）
+                if (context != null && context.getOptions() != null) {
+                    Object streamingObj = context.getOptions().get("streaming");
+                    boolean isStreaming = streamingObj instanceof Boolean && (Boolean) streamingObj;
+
+                    // 只有非流式模式才在这里发送（流式已在 recognizePageWithVisionLLM 内发送）
+                    if (!isStreaming) {
+                        Object cb = context.getOptions().get("streamCallback");
+                        if (cb instanceof java.util.function.Consumer) {
+                            @SuppressWarnings("unchecked")
+                            java.util.function.Consumer<String> callback = (java.util.function.Consumer<String>) cb;
+                            // 发送页级分隔和内容
+                            callback.accept("\n=== 页面 " + page.getPageNumber() + " ===\n");
+                            callback.accept(pageContent);
+                        }
+                    }
+                }
+
                 batchContent.append("=== 页面 ").append(page.getPageNumber()).append(" ===\n");
                 batchContent.append(pageContent).append("\n\n");
 
@@ -989,16 +1009,20 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                 if (cb instanceof java.util.function.Consumer) {
                     //noinspection unchecked
                     streamCallback = (java.util.function.Consumer<String>) cb;
+                    log.info("✅ [VisionLLM] 检测到流式回调");
                 }
                 Object streaming = context.getOptions().get("streaming");
                 if (streaming instanceof Boolean) {
                     streamingEnabled = (Boolean) streaming;
+                    log.info("✅ [VisionLLM] 流式模式: {}", streamingEnabled);
                 }
+            } else {
+                log.warn("⚠️ [VisionLLM] context 或 options 为空");
             }
 
             // 3. 调用 AIService 进行图片分析
-            log.info("🔍 [VisionLLM] 调用 Vision API 分析页面 {}, 图片数: {}, 使用服务: {}",
-                    page.getPageNumber(), imagesData.size(),
+            log.info("🔍 [VisionLLM] 调用 Vision API 分析页面 {}, 图片数: {}, 流式模式: {}, 回调存在: {}, 使用服务: {}",
+                    page.getPageNumber(), imagesData.size(), streamingEnabled, streamCallback != null,
                     visionAIService != null ? "visionAIService" : "aiService");
 
             // ⭐ 真正流式：优先使用 chatWithVisionFlux
@@ -1006,19 +1030,28 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             final boolean finalStreamingEnabled = streamingEnabled;
 
             if (finalStreamingEnabled && finalStreamCallback != null) {
+                log.info("🚀 [VisionLLM] 启动流式处理，页面 {}", page.getPageNumber());
+
                 List<top.yumbo.ai.ai.api.model.ChatMessage> visionMessages = new ArrayList<>();
                 visionMessages.add(ChatMessage.userWithImages(visionPrompt, imagesData));
 
                 StringBuilder acc = new StringBuilder();
 
+                log.info("📤 [VisionLLM] 发送页面分隔符");
                 finalStreamCallback.accept("\n=== 页面 " + page.getPageNumber() + " ===\n");
 
+                log.info("🔄 [VisionLLM] 开始调用 chatWithVisionFlux");
                 serviceToUse.chatWithVisionFlux(visionMessages)
                         .doOnNext(token -> {
+                            log.info("📥 [VisionLLM] 收到 token: {} 字符", token.length());
                             acc.append(token);
                             finalStreamCallback.accept(token);
                         })
-                        .doOnError(err -> finalStreamCallback.accept("\n[Vision分析失败: " + err.getMessage() + "]\n"))
+                        .doOnError(err -> {
+                            log.error("❌ [VisionLLM] Vision 分析失败: {}", err.getMessage(), err);
+                            finalStreamCallback.accept("\n[Vision分析失败: " + err.getMessage() + "]\n");
+                        })
+                        .doOnComplete(() -> log.info("✅ [VisionLLM] Flux 完成"))
                         .blockLast();
 
                 String result = acc.toString();
@@ -1295,9 +1328,10 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      * ⭐ 核心优化：并行处理，大幅提升速度
      *
      * @param batches 所有批次
+     * @param context 处理上下文（用于获取回调）
      * @return 批处理结果列表
      */
-    private List<BatchProcessingResult> processPageBatchesInParallel(List<List<DocumentPage>> batches) {
+    private List<BatchProcessingResult> processPageBatchesInParallel(List<List<DocumentPage>> batches, ProcessingContext context) {
         log.info("🚀 [Parallel Processing] 开始并行处理 {} 个批次", batches.size());
         long startTime = System.currentTimeMillis();
 
@@ -1312,7 +1346,8 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                     log.debug("⚙️ [Thread: {}] 开始处理批次 #{}",
                         Thread.currentThread().getName(), batchIndex + 1);
 
-                    String content = processPageBatch(batch);
+                    // ⭐ 直接传递 context，不依赖 ThreadLocal
+                    String content = processPageBatch(batch, context);
                     List<ExtractedImage> images = batch.stream()
                             .flatMap(page -> page.getImages().stream())
                             .collect(Collectors.toList());
@@ -1330,6 +1365,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
             futures.add(future);
         }
+
 
         // 等待所有批次完成
         try {
@@ -1361,9 +1397,10 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      * 串行处理多个批次
      *
      * @param batches 所有批次
+     * @param context 处理上下文（用于获取回调）
      * @return 批处理结果列表
      */
-    private List<BatchProcessingResult> processPageBatchesSequentially(List<List<DocumentPage>> batches) {
+    private List<BatchProcessingResult> processPageBatchesSequentially(List<List<DocumentPage>> batches, ProcessingContext context) {
         log.info("🔄 [Sequential Processing] 开始串行处理 {} 个批次", batches.size());
         long startTime = System.currentTimeMillis();
 
@@ -1374,7 +1411,8 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             log.debug("⚙️ 处理批次 {}/{}", i + 1, batches.size());
 
             try {
-                String content = processPageBatch(batch);
+                // ⭐ 传递 context
+                String content = processPageBatch(batch, context);
                 List<ExtractedImage> images = batch.stream()
                         .flatMap(page -> page.getImages().stream())
                         .collect(Collectors.toList());

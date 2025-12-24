@@ -24,12 +24,15 @@ import {
   Spin,
   App,
   Input,
+  Switch,
+  Tooltip,
 } from 'antd'
 import {
   FileTextOutlined,
   EyeOutlined,
   ScanOutlined,
   ThunderboltOutlined,
+  ThunderboltFilled,
   CheckCircleOutlined,
 } from '@ant-design/icons'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -84,6 +87,7 @@ function TextExtractionConfig({ documentId }) {
   const [extracting, setExtracting] = useState(false)
   const [extractionProgress, setExtractionProgress] = useState(null)
   const [extractionResult, setExtractionResult] = useState('')
+  const [streamingMode, setStreamingMode] = useState(true) // ⭐ 新增：流式/非流式开关
 
   // 加载系统配置
   useEffect(() => {
@@ -140,13 +144,14 @@ function TextExtractionConfig({ documentId }) {
     setSelectedModel(value)
   }
 
-  // 自动提取处理（流式）
+  // 自动提取处理（支持流式/非流式）
   const handleAutoExtract = async () => {
     if (!documentId || extracting) return
     
     setExtracting(true)
     setExtractionProgress({ status: 'processing', percent: 0 })
-    message.info(t('textExtractionConfig.tips.autoExtractionStarted') || '开始自动提取...')
+    setExtractionResult('') // ⭐ 清空之前的结果
+    message.info(streamingMode ? '开始流式提取...' : '开始提取...')
 
     try {
       // ⭐ 对URL中的documentId进行编码
@@ -157,7 +162,7 @@ function TextExtractionConfig({ documentId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: selectedModel,
-          streaming: true
+          streaming: streamingMode  // ⭐ 使用开关控制
         }),
       })
 
@@ -203,7 +208,8 @@ function TextExtractionConfig({ documentId }) {
                   message: data.message
                 }))
               } else if (data.type === 'content') {
-                console.log('📄 累加文本内容，长度:', data.content?.length || 0)
+                // ⭐ 流式/非流式都实时累加显示（前端体验一致）
+                console.log('📄 累加文本内容，长度:', data.content?.length || 0, '模式:', streamingMode ? '流式' : '非流式')
                 setExtractionResult(prev => prev + (data.content || ''))
               } else if (data.type === 'complete') {
                 setExtractionProgress({ 
@@ -211,7 +217,7 @@ function TextExtractionConfig({ documentId }) {
                   percent: 100,
                   accuracy: data.accuracy || 0.85
                 })
-                message.success(t('textExtractionConfig.tips.extractionComplete') || '提取完成')
+                message.success(streamingMode ? '流式提取完成' : '提取完成')
               }
             } catch (e) {
               console.error('解析SSE数据失败:', e, '原始行:', trimmedLine)
@@ -324,6 +330,34 @@ function TextExtractionConfig({ documentId }) {
                   ))}
                 </Select>
               </div>
+
+              {/* ⭐ 流式/非流式开关 */}
+              {documentId && (
+                <div className="streaming-mode-selector">
+                  <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+                    <Space>
+                      <ThunderboltFilled style={{ color: streamingMode ? '#1890ff' : '#8c8c8c' }} />
+                      <span className="config-label">
+                        {streamingMode ? '流式输出' : '批量输出'}
+                      </span>
+                    </Space>
+                    <Tooltip title={streamingMode ? '实时显示提取内容，适合大文档' : '批量显示提取内容，适合小文档'}>
+                      <Switch
+                        checked={streamingMode}
+                        onChange={setStreamingMode}
+                        disabled={extracting}
+                        checkedChildren="流式"
+                        unCheckedChildren="批量"
+                      />
+                    </Tooltip>
+                  </Space>
+                  <div style={{ marginTop: 8, fontSize: 12, color: '#8c8c8c' }}>
+                    {streamingMode
+                      ? '💡 边提取边显示，减少等待时间，适合PPT、PDF等大文档'
+                      : '💡 提取完成后统一显示，适合TXT、Markdown等小文档'}
+                  </div>
+                </div>
+              )}
 
               {/* 系统配置选项 */}
               {systemConfig && (

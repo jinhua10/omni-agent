@@ -44,6 +44,21 @@
   margin-top: 24px;
 }
 
+/* 流式模式选择器 */
+.text-extraction-config .streaming-mode-selector {
+  padding: 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  margin-top: 16px;
+  transition: all 0.3s ease;
+}
+
+.text-extraction-config .streaming-mode-selector:hover {
+  border-color: #7dd3fc;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);
+}
+
 /* 预览面板 */
 .text-extraction-config .preview-panel {
   background: #fff;
