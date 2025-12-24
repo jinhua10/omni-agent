@@ -9,7 +9,10 @@ import top.yumbo.ai.ai.api.model.AIRequest;
 import top.yumbo.ai.ai.api.model.AIResponse;
 import top.yumbo.ai.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.web.dto.ApiDtos.*;
+import top.yumbo.ai.omni.web.util.ContextBuilder;
 import top.yumbo.ai.omni.web.util.JsonUtil;
+import top.yumbo.ai.rag.api.RAGService;
+import top.yumbo.ai.rag.api.model.SearchResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +42,7 @@ import java.util.Map;
 public class AIServiceController {
 
     private final AIService aiService;
+    private final RAGService ragService;
 
     /**
      * AI 简单对话
@@ -295,6 +299,49 @@ public class AIServiceController {
             result.put("models", aiService.listModels());
         } catch (Exception e) {
             log.error("获取模型列表失败", e);
+            result.put("status", "error");
+            result.put("error", e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * RAG + AI 组合查询
+     * 先用 RAG 检索相关文档，再用 AI 生成答案
+     *
+     * @param request RAG 对话请求
+     * @return 查询结果
+     */
+    @PostMapping("/rag-chat")
+    public Map<String, Object> ragChat(@RequestBody RagChatRequest request) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 1. 使用 RAG 检索相关文档
+            List<SearchResult> searchResults = ragService.searchByText(
+                    request.getQuestion(),
+                    request.getTopK() != null ? request.getTopK() : 5
+            );
+
+            // 2. 构建上下文
+            String context = ContextBuilder.buildContext(searchResults);
+            String prompt = String.format(
+                    "基于以下参考信息回答问题：\n\n%s\n\n问题：%s",
+                    context, request.getQuestion()
+            );
+
+            // 3. 使用 AI 生成答案
+            String answer = aiService.chat(prompt);
+
+            result.put("status", "success");
+            result.put("question", request.getQuestion());
+            result.put("answer", answer);
+            result.put("sources", searchResults);
+            result.put("model", aiService.getCurrentModel());
+            log.info("✅ RAG+AI 组合查询完成: question={}", request.getQuestion());
+        } catch (Exception e) {
+            log.error("❌ RAG+AI 组合查询失败", e);
             result.put("status", "error");
             result.put("error", e.getMessage());
         }

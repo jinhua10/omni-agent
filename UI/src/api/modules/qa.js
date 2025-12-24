@@ -79,9 +79,9 @@ const qaApi = {
         queryParams.append('sessionId', params.hopeSessionId)
       }
 
-      // 使用单端点双轨流式接口
+      // 使用单端点双轨流式接口（已迁移到 AdvancedQAController v2.0）
       // 注意：EventSource 不能使用 Vite 代理，需要直接指向后端
-      const eventSourceUrl = `${SSE_BASE_URL}/qa/stream/dual-track?${queryParams}`
+      const eventSourceUrl = `${SSE_BASE_URL}/qa/advanced/dual-track/stream?${queryParams}`
       console.log('📡 Connecting to dual-track SSE:', eventSourceUrl)
 
       // ⭐ 创建 EventSource 连接（withCredentials 确保正确处理跨域）
