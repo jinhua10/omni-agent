@@ -487,7 +487,7 @@ function TextExtractionConfig({ documentId }) {
                     <div>
                       {extractionProgress.message || `进度: ${extractionProgress.percent}%`}
                       {extractionProgress.accuracy && (
-                        <div style={{ marginTop: 8, fontSize: 16, fontWeight: 'bold', color: '#52c41a' }}>
+                        <div className="accuracy-display">
                           📊 {t('textExtractionConfig.progress.accuracy')}: {(extractionProgress.accuracy * 100).toFixed(1)}%
                         </div>
                       )}
@@ -535,7 +535,7 @@ function TextExtractionConfig({ documentId }) {
               {/* ⭐ 流式/非流式开关 */}
               {documentId && (
                 <div className="streaming-mode-selector">
-                  <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+                  <Space align="center" className="streaming-mode-selector-space">
                     <Space>
                       <ThunderboltFilled style={{ color: streamingMode ? '#1890ff' : '#8c8c8c' }} />
                       <span className="config-label">
@@ -552,7 +552,7 @@ function TextExtractionConfig({ documentId }) {
                       />
                     </Tooltip>
                   </Space>
-                  <div style={{ marginTop: 8, fontSize: 12, color: '#8c8c8c' }}>
+                  <div className="streaming-mode-description">
                     {streamingMode
                       ? `💡 ${t('textExtractionConfig.streamingMode.streamingTip')}`
                       : `💡 ${t('textExtractionConfig.streamingMode.batchTip')}`}
@@ -690,7 +690,7 @@ function TextExtractionConfig({ documentId }) {
                   </Tooltip>
                   {lastSaved && (
                     <Tooltip title={`${t('textExtractionConfig.autoSave.lastSaved')}: ${lastSaved.toLocaleTimeString()}`}>
-                      <Tag icon={<CheckCircleFilled />} color="success" style={{ margin: 0 }}>
+                      <Tag icon={<CheckCircleFilled />} color="success" className="tag-no-margin">
                         {t('textExtractionConfig.autoSave.saved')}
                       </Tag>
                     </Tooltip>
@@ -719,8 +719,7 @@ function TextExtractionConfig({ documentId }) {
                   </Dropdown>
                 </Space>
               }
-              style={{ height: '100%' }}
-              bodyStyle={{ height: 'calc(100% - 57px)', padding: activeTab === 'preview' ? '20px' : 0, overflow: 'auto' }}
+              className="preview-panel"
             >
               {activeTab === 'preview' ? (
                 <div className="markdown-preview">
@@ -774,6 +773,7 @@ function TextExtractionConfig({ documentId }) {
                     resize: 'none'
                   }}
                   placeholder={t('textExtractionConfig.preview.sourcePlaceholder')}
+                  className="source-editor"
                 />
               )}
             </Card>

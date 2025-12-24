@@ -81,6 +81,61 @@
   line-height: 1.6;
 }
 
+/* Alert 样式 */
+.text-extraction-config .progress-info {
+  font-size: 12px;
+}
+
+.text-extraction-config .accuracy-display {
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #52c41a;
+}
+
+/* Tag 样式 */
+.text-extraction-config .tag-no-margin {
+  margin: 0;
+}
+
+/* 源码编辑器样式 */
+.text-extraction-config .source-editor {
+  height: 100%;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  border: none;
+  resize: none;
+}
+
+/* 流式模式选择器布局 */
+.text-extraction-config .streaming-mode-selector-space {
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* Collapse 面板样式 */
+.text-extraction-config .preview-panel .ant-tabs-content {
+  height: calc(100% - 57px);
+}
+
+.text-extraction-config .preview-panel .ant-tabs-tabpane[data-node-key="preview"] {
+  padding: 20px;
+  overflow: auto;
+}
+
+.text-extraction-config .preview-panel .ant-tabs-tabpane[data-node-key="source"] {
+  height: 100%;
+  overflow: auto;
+}
+
+/* 模型描述样式 */
+.text-extraction-config .streaming-mode-description {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
 /* 响应式设计 */
 @media (max-width: 1200px) {
   .text-extraction-config .config-layout {
