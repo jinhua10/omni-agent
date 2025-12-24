@@ -192,4 +192,30 @@
   background-color: #f6f8fa;
 }
 
+/* ⭐ 批次面板固定高度 */
+.text-extraction-config .batch-collapse-panel .ant-collapse-content-box {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 滚动条样式优化 */
+.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar {
+  width: 8px;
+}
+
+.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
 

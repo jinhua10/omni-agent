@@ -43,6 +43,7 @@ import {
   ClockCircleOutlined,
   CheckCircleFilled,
   LoadingOutlined,
+  MergeCellsOutlined,
 } from '@ant-design/icons'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -105,6 +106,7 @@ function TextExtractionConfig({ documentId }) {
   const [batches, setBatches] = useState([]) // ⭐ 批次数据 [{index, content, status}]
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true) // ⭐ 自动保存开关
   const [lastSaved, setLastSaved] = useState(null) // ⭐ 最后保存时间
+  const [isMerged, setIsMerged] = useState(false) // ⭐ 是否已合并批次
 
   // 加载系统配置
   useEffect(() => {
@@ -200,6 +202,30 @@ function TextExtractionConfig({ documentId }) {
     URL.revokeObjectURL(url)
     message.success('已导出为 HTML 文件')
   }
+
+  // ⭐ 合并所有批次内容
+  const mergeBatches = () => {
+    const mergedContent = batches
+      .sort((a, b) => a.index - b.index) // 按索引排序
+      .map(b => b.content)
+      .join('\n\n')
+
+    setExtractionResult(mergedContent)
+    setIsMerged(true)
+    setBatches([]) // 清空批次，切换到合并视图
+    message.success('批次已合并为完整文档')
+  }
+
+  // ⭐ 检查是否所有批次都已完成
+  useEffect(() => {
+    if (batches.length > 0 && batches.every(b => b.status === 'completed') && !isMerged) {
+      // 所有批次完成后，提示用户可以合并
+      message.info({
+        content: '所有批次已完成，您可以合并查看完整文档',
+        duration: 5,
+      })
+    }
+  }, [batches, isMerged])
 
   const loadDocumentConfig = async () => {
     if (!documentId) return
@@ -573,6 +599,19 @@ function TextExtractionConfig({ documentId }) {
               }
               extra={
                 <Space>
+                  {batches.length > 0 && batches.every(b => b.status === 'completed') && !isMerged && (
+                    <>
+                      <Button
+                        type="primary"
+                        icon={<MergeCellsOutlined />}
+                        onClick={mergeBatches}
+                        size="small"
+                      >
+                        合并批次
+                      </Button>
+                      <Divider type="vertical" />
+                    </>
+                  )}
                   <Button
                     type={activeTab === 'preview' ? 'primary' : 'default'}
                     icon={<ViewOutlined />}
@@ -636,8 +675,9 @@ function TextExtractionConfig({ documentId }) {
               {activeTab === 'preview' ? (
                 <div className="markdown-preview">
                   {batches.length > 0 ? (
-                    // ⭐ 批次级别显示
+                    // ⭐ 批次级别显示（固定高度，滚动查看）
                     <Collapse
+                      className="batch-collapse-panel"
                       defaultActiveKey={batches.map(b => b.index)}
                       items={batches.map(batch => ({
                         key: batch.index,

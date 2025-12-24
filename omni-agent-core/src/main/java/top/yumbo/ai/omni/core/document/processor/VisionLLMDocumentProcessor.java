@@ -157,17 +157,14 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                 // ⭐ 3. 处理所有批次
                 List<BatchProcessingResult> batchResults;
 
-
-                // ⭐ 流式模式必须串行处理，确保输出顺序正确，避免内容混乱
-                if (isStreamingMode) {
-                    log.info("🔄 [VisionLLM] 流式模式：使用串行处理确保输出顺序");
-                    batchResults = processPageBatchesSequentially(batches, context);
-                } else if (visionLlmExecutor != null && batches.size() > 1) {
-                    // 非流式模式才使用并行处理
-                    log.info("🚀 [VisionLLM] 非流式模式：使用并行处理提升速度");
+                // ⭐ 优先使用并行处理提升速度，批次标记确保前端按批次正确显示
+                if (visionLlmExecutor != null && batches.size() > 1) {
+                    // 使用线程池并行处理
+                    log.info("🚀 [VisionLLM] 并行处理 {} 个批次（支持批次级别显示）", batches.size());
                     batchResults = processPageBatchesInParallel(batches, context);
                 } else {
                     // 串行处理（无线程池或只有一个批次）
+                    log.info("🔄 [VisionLLM] 串行处理 {} 个批次", batches.size());
                     batchResults = processPageBatchesSequentially(batches, context);
                 }
 
@@ -1377,11 +1374,37 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                     log.debug("⚙️ [Thread: {}] 开始处理批次 #{}",
                         Thread.currentThread().getName(), batchIndex + 1);
 
+                    // ⭐ 发送批次开始标记
+                    if (context != null && context.getOptions() != null) {
+                        Object cb = context.getOptions().get("streamCallback");
+                        if (cb instanceof java.util.function.Consumer) {
+                            @SuppressWarnings("unchecked")
+                            java.util.function.Consumer<String> callback = (java.util.function.Consumer<String>) cb;
+                            String batchMarker = String.format("BATCH_START:{\"batchIndex\":%d,\"batchNumber\":%d,\"totalBatches\":%d}\n",
+                                batchIndex, batchIndex + 1, batches.size());
+                            callback.accept(batchMarker);
+                            log.info("📤 [Parallel] 批次 {} 开始", batchIndex + 1);
+                        }
+                    }
+
                     // ⭐ 直接传递 context，不依赖 ThreadLocal
                     String content = processPageBatch(batch, context);
                     List<ExtractedImage> images = batch.stream()
                             .flatMap(page -> page.getImages().stream())
                             .collect(Collectors.toList());
+
+                    // ⭐ 发送批次结束标记
+                    if (context != null && context.getOptions() != null) {
+                        Object cb = context.getOptions().get("streamCallback");
+                        if (cb instanceof java.util.function.Consumer) {
+                            @SuppressWarnings("unchecked")
+                            java.util.function.Consumer<String> callback = (java.util.function.Consumer<String>) cb;
+                            String batchEndMarker = String.format("BATCH_END:{\"batchIndex\":%d,\"batchNumber\":%d}\n",
+                                batchIndex, batchIndex + 1);
+                            callback.accept(batchEndMarker);
+                            log.info("✅ [Parallel] 批次 {} 完成", batchIndex + 1);
+                        }
+                    }
 
                     log.debug("✅ [Thread: {}] 批次 #{} 处理完成",
                         Thread.currentThread().getName(), batchIndex + 1);
