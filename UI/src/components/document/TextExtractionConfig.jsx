@@ -145,9 +145,9 @@ function TextExtractionConfig({ documentId }) {
         }),
       })
       setLastSaved(new Date())
-      console.log('💾 自动保存成功')
+      console.log(t('textExtractionConfig.extraction.autoSaveSuccess'))
     } catch (error) {
-      console.error('自动保存失败:', error)
+      console.error(t('textExtractionConfig.extraction.autoSaveFailed'), ':', error)
     }
   }
 
@@ -160,7 +160,7 @@ function TextExtractionConfig({ documentId }) {
     link.download = `${documentId || 'extraction'}.md`
     link.click()
     URL.revokeObjectURL(url)
-    message.success('已导出为 Markdown 文件')
+    message.success(t('textExtractionConfig.export.successMarkdown'))
   }
 
   // ⭐ 导出为 HTML 文件
@@ -173,7 +173,7 @@ function TextExtractionConfig({ documentId }) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${documentId || '文档提取结果'}</title>
+  <title>${documentId || t('textExtractionConfig.export.documentResult')}</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -203,7 +203,7 @@ function TextExtractionConfig({ documentId }) {
     link.download = `${documentId || 'extraction'}.html`
     link.click()
     URL.revokeObjectURL(url)
-    message.success('已导出为 HTML 文件')
+    message.success(t('textExtractionConfig.export.successHTML'))
   }
 
   // ⭐ 合并所有批次内容
@@ -216,7 +216,7 @@ function TextExtractionConfig({ documentId }) {
     setExtractionResult(mergedContent)
     setIsMerged(true)
     setBatches([]) // 清空批次，切换到合并视图
-    message.success('批次已合并为完整文档')
+    message.success(t('textExtractionConfig.batches.mergeSuccess'))
   }
 
   // ⭐ 检查是否所有批次都已完成
@@ -224,7 +224,7 @@ function TextExtractionConfig({ documentId }) {
     if (batches.length > 0 && batches.every(b => b.status === 'completed') && !isMerged) {
       // 所有批次完成后，提示用户可以合并
       message.info({
-        content: '所有批次已完成，您可以合并查看完整文档',
+        content: t('textExtractionConfig.batches.allCompletedTip'),
         duration: 5,
       })
     }
@@ -250,11 +250,11 @@ function TextExtractionConfig({ documentId }) {
             percent: 100,
             accuracy: result.data.extractionAccuracy || 0.85
           })
-          console.log('📄 加载已保存的提取内容:', result.data.extractedText.length, '字符')
+          console.log(t('textExtractionConfig.extraction.loadedExtractedContent'), ':', result.data.extractedText.length, t('textExtractionConfig.extraction.characters'))
         }
       }
     } catch (error) {
-      console.error('加载文档配置失败:', error)
+      console.error('Failed to load document config:', error)
     }
   }
 
@@ -269,7 +269,7 @@ function TextExtractionConfig({ documentId }) {
         }
       }
     } catch (error) {
-      console.error('加载系统配置失败:', error)
+      console.error('Failed to load system config:', error)
     }
   }
 
@@ -285,7 +285,7 @@ function TextExtractionConfig({ documentId }) {
     setExtractionProgress({ status: 'processing', percent: 0 })
     setExtractionResult('') // ⭐ 清空之前的结果
     setBatches([]) // ⭐ 清空批次
-    message.info(streamingMode ? '开始流式提取...' : '开始提取...')
+    message.info(streamingMode ? t('textExtractionConfig.extraction.streamingStart') : t('textExtractionConfig.extraction.batchStart'))
 
     let currentBatchIndex = -1 // ⭐ 跟踪当前批次
 
@@ -303,7 +303,7 @@ function TextExtractionConfig({ documentId }) {
       })
 
       if (!response.ok) {
-        throw new Error('提取请求失败')
+        throw new Error('Extraction request failed')
       }
 
       // 处理流式响应
@@ -328,7 +328,7 @@ function TextExtractionConfig({ documentId }) {
               const jsonStr = trimmedLine.startsWith('data: ') ? trimmedLine.slice(6) : trimmedLine.slice(5)
               const data = JSON.parse(jsonStr)
               
-              console.log('📥 收到SSE事件:', data.type, data)
+              console.log('📥 SSE event received:', data.type, data)
               
               if (data.type === 'progress') {
                 setExtractionProgress({
@@ -338,7 +338,7 @@ function TextExtractionConfig({ documentId }) {
                 })
               } else if (data.type === 'batchInfo') {
                 // ⭐ 收到批次信息，初始化批次数组
-                console.log('📦 收到批次信息:', data)
+                console.log('📦 Batch info received:', data)
                 setBatchInfo({
                   totalBatches: data.totalBatches,
                   totalPages: data.totalPages,
@@ -355,7 +355,7 @@ function TextExtractionConfig({ documentId }) {
                 setExpandedBatches(initialBatches.map(b => b.index))
               } else if (data.type === 'batchStart') {
                 // ⭐ 批次开始，更新当前批次索引
-                console.log('🚀 批次开始:', data)
+                console.log('🚀 Batch started:', data)
                 currentBatchIndex = data.batchIndex
                 setBatches(prev => prev.map(b =>
                   b.index === data.batchIndex
@@ -364,7 +364,7 @@ function TextExtractionConfig({ documentId }) {
                 ))
               } else if (data.type === 'batchEnd') {
                 // ⭐ 批次完成
-                console.log('✅ 批次完成:', data)
+                console.log('✅ Batch completed:', data)
                 setBatches(prev => prev.map(b =>
                   b.index === data.batchIndex
                     ? { ...b, status: 'completed' }
@@ -383,13 +383,13 @@ function TextExtractionConfig({ documentId }) {
                 // ⭐ 优先使用消息中的 batchIndex，解决并行处理时的混乱问题
                 const batchIdx = typeof data.batchIndex === 'number' ? data.batchIndex : currentBatchIndex
 
-                console.log('📄 累加文本内容:', {
-                  长度: newContent.length,
-                  模式: streamingMode ? '流式' : '非流式',
-                  批次索引: batchIdx,
-                  消息中的索引: data.batchIndex,
-                  全局索引: currentBatchIndex,
-                  内容预览: newContent.substring(0, 50)
+                console.log('📄 Text content accumulated:', {
+                  length: newContent.length,
+                  mode: streamingMode ? 'streaming' : 'batch',
+                  batchIndex: batchIdx,
+                  indexInMessage: data.batchIndex,
+                  globalIndex: currentBatchIndex,
+                  contentPreview: newContent.substring(0, 50)
                 })
 
                 // ⭐ 只更新对应批次的内容（不再累加到 extractionResult，避免并行混乱）
@@ -400,10 +400,10 @@ function TextExtractionConfig({ documentId }) {
                         ? { ...b, content: b.content + newContent }
                         : b
                     )
-                    console.log('📊 批次状态更新:', updated.map(b => ({
-                      批次: b.number,
-                      状态: b.status,
-                      内容长度: b.content.length
+                    console.log('📊 Batch status updated:', updated.map(b => ({
+                      batch: b.number,
+                      status: b.status,
+                      contentLength: b.content.length
                     })))
                     return updated
                   })
@@ -418,16 +418,16 @@ function TextExtractionConfig({ documentId }) {
                   percent: 100,
                   accuracy: data.accuracy || 0.85
                 })
-                message.success(streamingMode ? '流式提取完成' : '提取完成')
+                message.success(streamingMode ? t('textExtractionConfig.extraction.streamingComplete') : t('textExtractionConfig.extraction.batchComplete'))
               }
             } catch (e) {
-              console.error('解析SSE数据失败:', e, '原始行:', trimmedLine)
+              console.error('Failed to parse SSE data:', e, 'Original line:', trimmedLine)
             }
           }
         }
       }
     } catch (error) {
-      console.error('自动提取失败:', error)
+      console.error('Auto extraction failed:', error)
       setExtractionProgress({ status: 'error', percent: 0 })
       message.error(t('textExtractionConfig.tips.extractionFailed') || '提取失败')
     } finally {
@@ -460,7 +460,7 @@ function TextExtractionConfig({ documentId }) {
         }
       }
     } catch (error) {
-      console.error('操作失败:', error)
+      console.error('Operation failed:', error)
       message.error(t('textExtractionConfig.tips.operationFailed'))
     } finally {
       setLoading(false)
@@ -479,16 +479,16 @@ function TextExtractionConfig({ documentId }) {
               {documentId && extractionProgress && (
                 <Alert
                   title={
-                    extractionProgress.status === 'processing' ? '正在提取文本...' : 
-                    extractionProgress.status === 'success' ? '✅ 提取完成' : 
-                    '❌ 提取失败'
+                    extractionProgress.status === 'processing' ? t('textExtractionConfig.progress.extracting') : 
+                    extractionProgress.status === 'success' ? t('textExtractionConfig.progress.completed') : 
+                    t('textExtractionConfig.progress.failed')
                   }
                   description={
                     <div>
                       {extractionProgress.message || `进度: ${extractionProgress.percent}%`}
                       {extractionProgress.accuracy && (
                         <div style={{ marginTop: 8, fontSize: 16, fontWeight: 'bold', color: '#52c41a' }}>
-                          📊 提取精度: {(extractionProgress.accuracy * 100).toFixed(1)}%
+                          📊 {t('textExtractionConfig.progress.accuracy')}: {(extractionProgress.accuracy * 100).toFixed(1)}%
                         </div>
                       )}
                     </div>
@@ -539,10 +539,10 @@ function TextExtractionConfig({ documentId }) {
                     <Space>
                       <ThunderboltFilled style={{ color: streamingMode ? '#1890ff' : '#8c8c8c' }} />
                       <span className="config-label">
-                        {streamingMode ? '流式输出' : '批量输出'}
+                        {streamingMode ? t('textExtractionConfig.streamingMode.streamingMode') : t('textExtractionConfig.streamingMode.batchOutput')}
                       </span>
                     </Space>
-                    <Tooltip title={streamingMode ? '实时显示提取内容，适合大文档' : '批量显示提取内容，适合小文档'}>
+                    <Tooltip title={streamingMode ? t('textExtractionConfig.streamingMode.streamingTip') : t('textExtractionConfig.streamingMode.batchTip')}>
                       <Switch
                         checked={streamingMode}
                         onChange={setStreamingMode}
@@ -554,8 +554,8 @@ function TextExtractionConfig({ documentId }) {
                   </Space>
                   <div style={{ marginTop: 8, fontSize: 12, color: '#8c8c8c' }}>
                     {streamingMode
-                      ? '💡 边提取边显示，减少等待时间，适合PPT、PDF等大文档'
-                      : '💡 提取完成后统一显示，适合TXT、Markdown等小文档'}
+                      ? `💡 ${t('textExtractionConfig.streamingMode.streamingTip')}`
+                      : `💡 ${t('textExtractionConfig.streamingMode.batchTip')}`}
                   </div>
                 </div>
               )}
@@ -588,7 +588,7 @@ function TextExtractionConfig({ documentId }) {
                     disabled={extracting}
                     size="large"
                   >
-                    {documentId ? (extracting ? '提取中...' : t('textExtractionConfig.buttons.startExtraction')) : t('textExtractionConfig.buttons.applyConfig')}
+                    {documentId ? (extracting ? t('textExtractionConfig.buttons.extractionInProgress') : t('textExtractionConfig.buttons.startExtraction')) : t('textExtractionConfig.buttons.applyConfig')}
                   </Button>
                   <Button onClick={loadSystemConfig} size="large" disabled={extracting}>
                     {t('textExtractionConfig.buttons.reset')}
@@ -613,18 +613,18 @@ function TextExtractionConfig({ documentId }) {
             <Card 
               title={
                 <Space>
-                  <span>📄 提取结果</span>
+                  <span>📄 {t('textExtractionConfig.batches.title')}</span>
                   <Tag color="blue">
                     {batches.length > 0 && !isMerged
-                      ? `${batches.reduce((sum, b) => sum + b.content.length, 0)} 字符`
-                      : `${extractionResult.length} 字符`
+                      ? `${batches.reduce((sum, b) => sum + b.content.length, 0)} ${t('textExtractionConfig.progress.characters')}`
+                      : `${extractionResult.length} ${t('textExtractionConfig.progress.characters')}`
                     }
                   </Tag>
                   {extractionProgress?.accuracy && (
-                    <Tag color="green">精度: {(extractionProgress.accuracy * 100).toFixed(1)}%</Tag>
+                    <Tag color="green">{t('textExtractionConfig.progress.accuracy')}: {(extractionProgress.accuracy * 100).toFixed(1)}%</Tag>
                   )}
                   {batchInfo && (
-                    <Tag color="purple">{batchInfo.totalPages} 页 / {batchInfo.totalBatches} 批</Tag>
+                    <Tag color="purple">{batchInfo.totalPages} {t('textExtractionConfig.progress.pages')} / {batchInfo.totalBatches} {t('textExtractionConfig.progress.batches')}</Tag>
                   )}
                 </Space>
               }
@@ -639,10 +639,10 @@ function TextExtractionConfig({ documentId }) {
                           onClick={mergeBatches}
                           size="small"
                         >
-                          合并批次
+                          {t('textExtractionConfig.batches.mergeBatches')}
                         </Button>
                       )}
-                      <Tooltip title={expandedBatches.length === batches.length ? '全部收起' : '全部展开'}>
+                      <Tooltip title={expandedBatches.length === batches.length ? t('textExtractionConfig.batches.collapseAll') : t('textExtractionConfig.batches.expandAll')}>
                         <Button
                           icon={expandedBatches.length === batches.length ? <ShrinkOutlined /> : <ExpandOutlined />}
                           onClick={() => {
@@ -656,7 +656,7 @@ function TextExtractionConfig({ documentId }) {
                           }}
                           size="small"
                         >
-                          {expandedBatches.length === batches.length ? '收起' : '展开'}
+                          {expandedBatches.length === batches.length ? t('textExtractionConfig.batches.collapseAll') : t('textExtractionConfig.batches.expandAll')}
                         </Button>
                       </Tooltip>
                       <Divider type="vertical" />
@@ -668,7 +668,7 @@ function TextExtractionConfig({ documentId }) {
                     onClick={() => setActiveTab('preview')}
                     size="small"
                   >
-                    预览
+                    {t('textExtractionConfig.preview.title')}
                   </Button>
                   <Button
                     type={activeTab === 'source' ? 'primary' : 'default'}
@@ -676,10 +676,10 @@ function TextExtractionConfig({ documentId }) {
                     onClick={() => setActiveTab('source')}
                     size="small"
                   >
-                    源码
+                    {t('textExtractionConfig.preview.source')}
                   </Button>
                   <Divider type="vertical" />
-                  <Tooltip title={autoSaveEnabled ? '已启用自动保存' : '已禁用自动保存'}>
+                  <Tooltip title={autoSaveEnabled ? t('textExtractionConfig.autoSave.enabled') : t('textExtractionConfig.autoSave.disabled')}>
                     <Switch
                       checked={autoSaveEnabled}
                       onChange={setAutoSaveEnabled}
@@ -689,9 +689,9 @@ function TextExtractionConfig({ documentId }) {
                     />
                   </Tooltip>
                   {lastSaved && (
-                    <Tooltip title={`上次保存: ${lastSaved.toLocaleTimeString()}`}>
+                    <Tooltip title={`${t('textExtractionConfig.autoSave.lastSaved')}: ${lastSaved.toLocaleTimeString()}`}>
                       <Tag icon={<CheckCircleFilled />} color="success" style={{ margin: 0 }}>
-                        已保存
+                        {t('textExtractionConfig.autoSave.saved')}
                       </Tag>
                     </Tooltip>
                   )}
@@ -700,13 +700,13 @@ function TextExtractionConfig({ documentId }) {
                       items: [
                         {
                           key: 'markdown',
-                          label: '导出 Markdown',
+                          label: t('textExtractionConfig.export.markdown'),
                           icon: <DownloadOutlined />,
                           onClick: exportAsMarkdown,
                         },
                         {
                           key: 'html',
-                          label: '导出 HTML',
+                          label: t('textExtractionConfig.export.html'),
                           icon: <DownloadOutlined />,
                           onClick: exportAsHTML,
                         },
@@ -730,22 +730,22 @@ function TextExtractionConfig({ documentId }) {
                       className="batch-collapse-panel"
                       activeKey={expandedBatches}
                       onChange={(keys) => {
-                        console.log('📂 批次展开状态变化:', keys)
+                        console.log('📂 Batch expand status changed:', keys)
                         setExpandedBatches(keys)
                       }}
                       items={batches.map(batch => ({
                         key: batch.index,
                         label: (
                           <Space>
-                            <span>批次 {batch.number}</span>
-                            {batch.status === 'pending' && <Tag color="default">等待中</Tag>}
-                            {batch.status === 'processing' && <Tag icon={<LoadingOutlined />} color="processing">处理中</Tag>}
-                            {batch.status === 'completed' && <Tag icon={<CheckCircleFilled />} color="success">已完成</Tag>}
+                            <span>{t('textExtractionConfig.batches.batch')} {batch.number}</span>
+                            {batch.status === 'pending' && <Tag color="default">{t('textExtractionConfig.batches.waiting')}</Tag>}
+                            {batch.status === 'processing' && <Tag icon={<LoadingOutlined />} color="processing">{t('textExtractionConfig.batches.processing')}</Tag>}
+                            {batch.status === 'completed' && <Tag icon={<CheckCircleFilled />} color="success">{t('textExtractionConfig.batches.completed')}</Tag>}
                           </Space>
                         ),
                         children: (
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {batch.content || '等待内容...'}
+                            {batch.content || t('textExtractionConfig.batches.waiting')}
                           </ReactMarkdown>
                         ),
                       }))}
@@ -753,7 +753,7 @@ function TextExtractionConfig({ documentId }) {
                   ) : (
                     // 没有批次信息时，或已合并后，显示全部内容
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {extractionResult || '等待提取...'}
+                      {extractionResult || t('textExtractionConfig.batches.waiting')}
                     </ReactMarkdown>
                   )}
                 </div>
@@ -773,7 +773,7 @@ function TextExtractionConfig({ documentId }) {
                     border: 'none',
                     resize: 'none'
                   }}
-                  placeholder="提取的 Markdown 源码将显示在这里..."
+                  placeholder={t('textExtractionConfig.preview.sourcePlaceholder')}
                 />
               )}
             </Card>

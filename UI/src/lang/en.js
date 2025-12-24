@@ -1545,6 +1545,7 @@ export default {
     // Buttons
     buttons: {
       startExtraction: 'Start Extraction',
+      extractionInProgress: 'Extracting...',
       applyConfig: 'Apply Configuration',
       reset: 'Reset',
       backToFlow: 'Back to Flow View',
@@ -1578,6 +1579,81 @@ export default {
         resource: '💾 Medium',
         language: '🌍 Multilingual (Chinese, English, Japanese, Korean, etc.)',
       },
+    },
+
+    // 流式模式 (Streaming Mode)
+    streamingMode: {
+      label: 'Streaming Output',
+      batchOutput: 'Batch Output',
+      streamingTip: 'Display extracted content in real-time, reducing waiting time, suitable for large documents like PPTs, PDFs',
+      batchTip: 'Display all content at once after extraction, suitable for small documents like TXT, Markdown',
+    },
+
+    // 提取进度 (Extraction Progress)
+    progress: {
+      extracting: 'Extracting text...',
+      completed: '✅ Extraction completed',
+      failed: '❌ Extraction failed',
+      accuracy: 'Extraction accuracy',
+      characters: 'characters',
+      pages: 'pages',
+      batches: 'batches',
+    },
+
+    // 批次 (Batches)
+    batches: {
+      title: 'Extraction Results',
+      batch: 'Batch',
+      waiting: 'Waiting',
+      processing: 'Processing',
+      completed: 'Completed',
+      mergeBatches: 'Merge Batches',
+      mergeSuccess: 'Batches merged into complete document',
+      expandAll: 'Expand All',
+      collapseAll: 'Collapse All',
+      allCompletedTip: 'All batches completed, you can merge to view the complete document',
+    },
+
+    // 预览/源码 (Preview/Source)
+    preview: {
+      title: 'Preview',
+      source: 'Source',
+      sourcePlaceholder: 'Extracted Markdown source code will be displayed here...',
+    },
+
+    // 导出 (Export)
+    export: {
+      markdown: 'Export Markdown',
+      html: 'Export HTML',
+      successMarkdown: 'Exported as Markdown file',
+      successHTML: 'Exported as HTML file',
+      documentResult: 'Document Extraction Result',
+    },
+
+    // 自动保存 (Auto Save)
+    autoSave: {
+      enabled: 'Auto save enabled',
+      disabled: 'Auto save disabled',
+      saved: 'Saved',
+      lastSaved: 'Last saved',
+    },
+
+    // 提取相关 (Extraction)
+    extraction: {
+      streamingStart: 'Starting streaming extraction...',
+      batchStart: 'Starting extraction...',
+      streamingComplete: 'Streaming extraction completed',
+      batchComplete: 'Extraction completed',
+      autoSaveSuccess: '💾 Auto save successful',
+      autoSaveFailed: 'Auto save failed',
+      loadedExtractedContent: '📄 Loaded saved extracted content',
+      characters: 'characters',
+    },
+
+    // 提取开关 (Extraction Toggle)
+    toggleExtraction: {
+      startTextExtraction: 'Start Text Extraction',
+      textExtractionInProgress: 'Text extraction in progress...',
     },
   },
 

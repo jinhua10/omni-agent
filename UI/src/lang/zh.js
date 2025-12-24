@@ -1557,6 +1557,7 @@ export default {
     // 按钮
     buttons: {
       startExtraction: '开始提取',
+      extractionInProgress: '提取中...',
       applyConfig: '应用配置',
       reset: '重置',
       backToFlow: '返回流程视图',
@@ -1590,6 +1591,81 @@ export default {
         resource: '💾 中等',
         language: '🌍 多语言（中英日韩等）',
       },
+    },
+
+    // 流式模式 (Streaming Mode)
+    streamingMode: {
+      label: '流式输出',
+      batchOutput: '批量输出',
+      streamingTip: '实时显示提取内容，减少等待时间，适合PPT、PDF等大文档',
+      batchTip: '提取完成后统一显示，适合TXT、Markdown等小文档',
+    },
+
+    // 提取进度 (Extraction Progress)
+    progress: {
+      extracting: '正在提取文本...',
+      completed: '✅ 提取完成',
+      failed: '❌ 提取失败',
+      accuracy: '提取精度',
+      characters: '字符',
+      pages: '页',
+      batches: '批',
+    },
+
+    // 批次 (Batches)
+    batches: {
+      title: '提取结果',
+      batch: '批次',
+      waiting: '等待中',
+      processing: '处理中',
+      completed: '已完成',
+      mergeBatches: '合并批次',
+      mergeSuccess: '批次已合并为完整文档',
+      expandAll: '全部展开',
+      collapseAll: '全部收起',
+      allCompletedTip: '所有批次已完成，您可以合并查看完整文档',
+    },
+
+    // 预览/源码 (Preview/Source)
+    preview: {
+      title: '预览',
+      source: '源码',
+      sourcePlaceholder: '提取的 Markdown 源码将显示在这里...',
+    },
+
+    // 导出 (Export)
+    export: {
+      markdown: '导出 Markdown',
+      html: '导出 HTML',
+      successMarkdown: '已导出为 Markdown 文件',
+      successHTML: '已导出为 HTML 文件',
+      documentResult: '文档提取结果',
+    },
+
+    // 自动保存 (Auto Save)
+    autoSave: {
+      enabled: '已启用自动保存',
+      disabled: '已禁用自动保存',
+      saved: '已保存',
+      lastSaved: '上次保存',
+    },
+
+    // 提取相关 (Extraction)
+    extraction: {
+      streamingStart: '开始流式提取...',
+      batchStart: '开始提取...',
+      streamingComplete: '流式提取完成',
+      batchComplete: '提取完成',
+      autoSaveSuccess: '💾 自动保存成功',
+      autoSaveFailed: '自动保存失败',
+      loadedExtractedContent: '📄 加载已保存的提取内容',
+      characters: '字符',
+    },
+
+    // 提取开关 (Extraction Toggle)
+    toggleExtraction: {
+      startTextExtraction: '开始文本提取',
+      textExtractionInProgress: '文本提取进行中...',
     },
   },
 
