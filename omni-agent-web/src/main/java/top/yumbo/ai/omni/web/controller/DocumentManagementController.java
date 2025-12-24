@@ -213,6 +213,81 @@ public class DocumentManagementController {
     }
 
     /**
+     * 获取文档详情
+     * GET /api/documents/{documentId}
+     */
+    @GetMapping("/{documentId}")
+    public Map<String, Object> getDocumentDetails(@PathVariable String documentId) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            log.info("获取文档详情请求: {}", documentId);
+
+            // 尝试从RAG查找文档
+            List<SearchResult> searchResults = ragService.searchByText(documentId, 10);
+            Document doc = null;
+
+            // 如果是文件路径，尝试查找匹配的文档
+            for (SearchResult sr : searchResults) {
+                Document d = sr.getDocument();
+                if (d != null && d.getTitle() != null && d.getTitle().equals(documentId)) {
+                    doc = d;
+                    break;
+                }
+            }
+
+            // 如果没找到，使用第一个结果
+            if (doc == null && !searchResults.isEmpty() && searchResults.get(0).getDocument() != null) {
+                doc = searchResults.get(0).getDocument();
+            }
+
+            if (doc != null) {
+                result.put("success", true);
+                result.put("documentId", doc.getId());
+                result.put("fileName", doc.getTitle());
+                
+                // 从metadata中获取mimeType
+                if (doc.getMetadata() != null && doc.getMetadata().containsKey("mimeType")) {
+                    result.put("mimeType", doc.getMetadata().get("mimeType"));
+                } else {
+                    result.put("mimeType", doc.getType());
+                }
+                
+                // 使用createdAt时间戳
+                result.put("uploadTime", doc.getCreatedAt());
+
+                // 获取文件大小
+                try {
+                    Path filePath = FileStorageUtil.findFileByName(doc.getTitle());
+                    if (filePath != null && Files.exists(filePath)) {
+                        result.put("fileSize", Files.size(filePath));
+                    }
+                } catch (Exception e) {
+                    log.warn("无法获取文件大小: {}", doc.getTitle(), e);
+                }
+
+                // 获取提取的文本长度 (使用content字段)
+                if (doc.getContent() != null) {
+                    result.put("extractedLength", doc.getContent().length());
+                }
+
+                log.info("文档详情获取成功: {}", doc.getTitle());
+            } else {
+                result.put("success", false);
+                result.put("message", "文档不存在");
+                log.warn("文档不存在: {}", documentId);
+            }
+
+        } catch (Exception e) {
+            log.error("获取文档详情失败: {}", documentId, e);
+            result.put("success", false);
+            result.put("message", "获取文档详情失败: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
      * 下载文档
      * GET /api/documents/download
      */

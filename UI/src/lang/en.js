@@ -28,6 +28,10 @@ export default {
     back: 'Back',
     next: 'Next',
     prev: 'Previous',
+    characters: 'characters',
+    fileSize: 'File Size',
+    fileType: 'File Type',
+    uploadTime: 'Upload Time',
     
     // Batch related
     batch: {
@@ -349,6 +353,7 @@ export default {
       // AI Analysis
       addToAIPanel: 'Add to AI Analysis',
       removeFromAIPanel: 'Remove from AI Analysis',
+      chunkingConfig: 'Chunking Config',
       batchAddToAI: 'Batch Add to AI',
       addToAIPanelSuccess: 'Added {count} file(s) to AI analysis panel',
       removeFromAIPanelSuccess: 'Removed {name} from AI analysis panel',
@@ -1414,6 +1419,8 @@ export default {
     // Page Titles
     title: 'Chunking Strategy Configuration',
     subtitle: 'Interactive configuration and real-time preview of document chunking strategies',
+    currentDocument: 'Current Document',
+    extractedLength: 'Extracted Text',
 
     // Strategy List
     strategyList: {
@@ -1517,6 +1524,8 @@ export default {
       inputRequired: 'Please input text to chunk',
       selectStrategyRequired: 'Please select a chunking strategy',
       parameterInvalid: 'Invalid parameter value',
+      noDocumentSelected: 'No document selected',
+      selectDocumentFirst: 'Please select a document from the list or browser first',
     },
 
     // Action Buttons

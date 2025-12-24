@@ -583,7 +583,18 @@ function DocumentBrowser() {
                   }}
                 />
               </Tooltip>
-
+              <Tooltip title={t('document.browse.chunkingConfig')}>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<FilterOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    // 跳转到分块配置页面
+                    window.location.hash = `#/documents?view=chunking&docId=${encodeURIComponent(record.path)}`
+                  }}
+                />
+              </Tooltip>
             </>
           )}
           <Tooltip title={t('document.browse.delete')}>

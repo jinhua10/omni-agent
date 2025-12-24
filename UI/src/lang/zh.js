@@ -32,6 +32,10 @@ export default {
     copyFailed: '复制失败',
     copied: '已复制',
     copyCode: '复制代码',
+    characters: '字符',
+    fileSize: '文件大小',
+    fileType: '文件类型',
+    uploadTime: '上传时间',
     
     // 批次相关 (Batch related)
     batch: {
@@ -314,6 +318,7 @@ export default {
       // AI分析 / AI Analysis
       addToAIPanel: '加入AI分析',
       removeFromAIPanel: '移出AI分析',
+      chunkingConfig: '分块配置',
       batchAddToAI: '批量加入AI分析',
       addToAIPanelSuccess: '已添加 {count} 个文件到AI分析面板',
       removeFromAIPanelSuccess: '已将 {name} 移出AI分析面板',
@@ -1426,6 +1431,8 @@ export default {
     // 页面标题 (Page Titles)
     title: '分块策略配置',
     subtitle: '交互式配置和实时预览文档分块策略',
+    currentDocument: '当前文档',
+    extractedLength: '已提取文本',
 
     // 策略列表 (Strategy List)
     strategyList: {
@@ -1529,6 +1536,8 @@ export default {
       inputRequired: '请输入要分块的文本',
       selectStrategyRequired: '请选择分块策略',
       parameterInvalid: '参数值无效',
+      noDocumentSelected: '未选择文档',
+      selectDocumentFirst: '请先从文档列表或浏览器中选择一个文档',
     },
 
     // 操作按钮 (Action Buttons)

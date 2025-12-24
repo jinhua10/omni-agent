@@ -49,6 +49,11 @@ function ChunkingConfig({ documentId }) {
   const [form] = Form.useForm()
   const { message } = App.useApp() // ⭐ 使用App钩子获取message API
 
+  // 添加调试日志
+  useEffect(() => {
+    console.log('🔍 ChunkingConfig received documentId:', documentId)
+  }, [documentId])
+
   // 状态管理
   const [loading, setLoading] = useState(false)
   const [strategies, setStrategies] = useState([])
@@ -95,9 +100,17 @@ function ChunkingConfig({ documentId }) {
       // 加载文档详情（文件名等信息）
       const docResponse = await fetch(`/api/documents/${encodedDocId}`)
       const docResult = await docResponse.json()
-      if (docResult.success && docResult.data) {
-        setDocumentInfo(docResult.data)
-        console.log('📋 加载文档信息:', docResult.data.fileName)
+      if (docResult.success) {
+        // 后端直接返回文档信息字段，不是嵌套在data中
+        const info = {
+          fileName: docResult.fileName,
+          fileSize: docResult.fileSize,
+          mimeType: docResult.mimeType,
+          uploadTime: docResult.uploadTime,
+          extractedLength: docResult.extractedLength
+        }
+        setDocumentInfo(info)
+        console.log('📋 加载文档信息:', info.fileName)
       }
     } catch (error) {
       console.error('加载文档配置失败:', error)
@@ -542,21 +555,61 @@ function ChunkingConfig({ documentId }) {
         <div className="page-header">
           <h1>{t('chunkingConfig.title')}</h1>
           <p className="subtitle">{t('chunkingConfig.subtitle')}</p>
+          
+          {/* 文档信息卡片 */}
           {documentId && documentInfo && (
-            <Alert
-              message={
-                <Space>
-                  <span>📄 当前文档:</span>
-                  <Tag color="blue">{documentInfo.fileName}</Tag>
+            <Card
+              size="small"
+              style={{ marginTop: 16, background: '#f0f5ff', borderColor: '#adc6ff' }}
+              bodyStyle={{ padding: '12px 16px' }}
+            >
+              <Space direction="vertical" style={{ width: '100%' }} size="small">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: '#1890ff' }}>
+                    📄 {t('chunkingConfig.currentDocument')}
+                  </span>
+                  <Tag color="blue" style={{ fontSize: 14 }}>{documentInfo.fileName}</Tag>
+                </div>
+                
+                <Space size="large" wrap>
                   {documentInfo.fileSize && (
-                    <Tag color="green">{(documentInfo.fileSize / 1024).toFixed(2)} KB</Tag>
+                    <Space size={4}>
+                      <span style={{ color: '#666' }}>{t('common.fileSize')}:</span>
+                      <Tag color="green">{(documentInfo.fileSize / 1024).toFixed(2)} KB</Tag>
+                    </Space>
                   )}
+                  
+                  {documentInfo.mimeType && (
+                    <Space size={4}>
+                      <span style={{ color: '#666' }}>{t('common.fileType')}:</span>
+                      <Tag color="cyan">{documentInfo.mimeType}</Tag>
+                    </Space>
+                  )}
+                  
                   {documentConfig?.extractedText && (
-                    <Tag color="purple">已提取 {documentConfig.extractedText.length} 字符</Tag>
+                    <Space size={4}>
+                      <span style={{ color: '#666' }}>{t('chunkingConfig.extractedLength')}:</span>
+                      <Tag color="purple">{documentConfig.extractedText.length} {t('common.characters')}</Tag>
+                    </Space>
+                  )}
+                  
+                  {documentInfo.uploadTime && (
+                    <Space size={4}>
+                      <span style={{ color: '#666' }}>{t('common.uploadTime')}:</span>
+                      <Tag color="orange">{new Date(documentInfo.uploadTime).toLocaleString()}</Tag>
+                    </Space>
                   )}
                 </Space>
-              }
-              type="info"
+              </Space>
+            </Card>
+          )}
+          
+          {/* 无文档时的提示 */}
+          {!documentId && (
+            <Alert
+              message={t('chunkingConfig.message.noDocumentSelected')}
+              description={t('chunkingConfig.message.selectDocumentFirst')}
+              type="warning"
               showIcon
               style={{ marginTop: 16 }}
             />

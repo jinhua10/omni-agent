@@ -65,6 +65,12 @@ function DocumentManagement() {
   // ⭐ 当前正在处理的文档ID（用于流程视图）
   const [processingDocumentId, setProcessingDocumentId] = useState(urlParams.docId || null)
 
+  // 添加调试日志
+  useEffect(() => {
+    console.log('📌 DocumentManagement - processingDocumentId:', processingDocumentId)
+    console.log('📌 DocumentManagement - viewMode:', viewMode)
+  }, [processingDocumentId, viewMode])
+
   // 监听URL变化
   useEffect(() => {
     const handleHashChange = () => {
