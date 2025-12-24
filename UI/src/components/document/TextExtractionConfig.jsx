@@ -378,18 +378,34 @@ function TextExtractionConfig({ documentId }) {
                 // ⭐ 优先使用消息中的 batchIndex，解决并行处理时的混乱问题
                 const batchIdx = typeof data.batchIndex === 'number' ? data.batchIndex : currentBatchIndex
 
-                console.log('📄 累加文本内容，长度:', newContent.length, '模式:', streamingMode ? '流式' : '非流式', '批次索引:', batchIdx)
+                console.log('📄 累加文本内容:', {
+                  长度: newContent.length,
+                  模式: streamingMode ? '流式' : '非流式',
+                  批次索引: batchIdx,
+                  消息中的索引: data.batchIndex,
+                  全局索引: currentBatchIndex,
+                  内容预览: newContent.substring(0, 50)
+                })
 
-                // 累加到总内容
-                setExtractionResult(prev => prev + newContent)
-
-                // ⭐ 同时更新对应批次的内容（使用消息中的 batchIndex）
+                // ⭐ 只更新对应批次的内容（不再累加到 extractionResult，避免并行混乱）
                 if (batchIdx >= 0) {
-                  setBatches(prev => prev.map(b =>
-                    b.index === batchIdx
-                      ? { ...b, content: b.content + newContent }
-                      : b
-                  ))
+                  setBatches(prev => {
+                    const updated = prev.map(b =>
+                      b.index === batchIdx
+                        ? { ...b, content: b.content + newContent }
+                        : b
+                    )
+                    console.log('📊 批次状态更新:', updated.map(b => ({
+                      批次: b.number,
+                      状态: b.status,
+                      内容长度: b.content.length
+                    })))
+                    return updated
+                  })
+                } else {
+                  // 如果没有批次信息（旧协议），才累加到总内容
+                  console.warn('⚠️ 未找到批次索引，使用旧协议')
+                  setExtractionResult(prev => prev + newContent)
                 }
               } else if (data.type === 'complete') {
                 setExtractionProgress({ 
