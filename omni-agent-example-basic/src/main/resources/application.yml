@@ -260,7 +260,34 @@ omni-agent:
       max-retries: 3       # 最大重试次数
       stream-enabled: true # 启用流式响应
 
-  # 5. 分块策略配置 (Chunking Strategy) ⭐
+  # 5. Embedding 配置 (Text Embedding) ⭐
+  embedding:
+    # ONNX 本地向量化服务（默认禁用）
+    onnx:
+      # 是否启用 ONNX Embedding 服务
+      enabled: false
+
+      # ONNX 模型文件路径
+      # 推荐模型：
+      # - bge-base-zh-v1.5 (中文，768维，~400MB) - 推荐
+      # - bge-m3 (多语言，1024维，~2GB)
+      # - bge-large-zh (中文，1024维，~1.3GB)
+      # - text2vec-base-chinese (中文，768维，~400MB)
+      #
+      # 模型下载：
+      # 方式1: huggingface-cli download BAAI/bge-base-zh-v1.5 --local-dir ./models/bge-base-zh-v1.5
+      # 方式2: git clone https://www.modelscope.cn/BAAI/bge-base-zh-v1.5.git ./models/bge-base-zh-v1.5
+      model-path: ./models/bge-base-zh-v1.5/model.onnx
+
+      # 最大序列长度
+      # bge-base-zh-v1.5: 512
+      # bge-m3: 8192
+      max-sequence-length: 512
+
+      # 批处理大小（批量向量化时使用）
+      batch-size: 32
+
+  # 6. 分块策略配置 (Chunking Strategy) ⭐
   chunking:
     # 默认策略：auto（自动选择）、fixed_size（固定大小）、semantic（语义）、ppl（困惑度）
     default-strategy: ppl
@@ -291,7 +318,7 @@ omni-agent:
       max-chunk-size: 1000
       similarity-threshold: 0.75
 
-  # 6. Vision LLM 配置（图片转文字）⭐
+  # 7. Vision LLM 配置（图片转文字）⭐
   vision-llm:
     # 是否启用图片提取功能
     enabled: true

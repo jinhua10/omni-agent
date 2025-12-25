@@ -97,6 +97,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Embedding Starter - ONNX 本地向量化（可选，默认禁用） -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-ai-starter-onnx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- ========== 工作流引擎 ⭐ NEW ========== -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
