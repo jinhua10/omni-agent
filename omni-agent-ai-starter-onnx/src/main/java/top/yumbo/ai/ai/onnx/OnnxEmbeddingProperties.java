@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @since 1.0.0
  */
 @Data
-@ConfigurationProperties(prefix = "embedding.onnx")
+@ConfigurationProperties(prefix = "omni-agent.embedding.onnx")
 public class OnnxEmbeddingProperties {
 
     /**
@@ -27,7 +27,7 @@ public class OnnxEmbeddingProperties {
      * 2. 绝对路径：/data/models/bge-base-zh/model.onnx
      * 3. classpath：models/bge-base-zh/model.onnx
      */
-    private String modelPath = "./models/bge-base-zh-v1.5/model.onnx";
+    private String modelPath = "./models/bge-base-zh/model.onnx";
 
     /**
      * 最大序列长度

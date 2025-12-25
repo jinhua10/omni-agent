@@ -19,7 +19,7 @@ import top.yumbo.ai.ai.api.EmbeddingService;
 @Slf4j
 @Configuration
 @ConditionalOnClass(ai.onnxruntime.OrtEnvironment.class)
-@ConditionalOnProperty(prefix = "embedding.onnx", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "omni-agent.embedding.onnx", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(OnnxEmbeddingProperties.class)
 public class OnnxEmbeddingAutoConfiguration {
 
