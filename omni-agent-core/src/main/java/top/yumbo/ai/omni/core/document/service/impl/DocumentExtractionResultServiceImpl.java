@@ -32,12 +32,12 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
     /**
      * 虚拟目录前缀（用于隔离提取结果）
      */
-    private static final String STORAGE_PREFIX = "extraction-results/";
+    private static final String STORAGE_PREFIX = "extracted/";
 
     /**
      * 索引文档ID（用于存储所有提取结果的ID列表）
      */
-    private static final String INDEX_DOC_ID = "extraction-results/_index";
+    private static final String INDEX_DOC_ID = "extracted/_index";
 
     /**
      * 获取存储路径
@@ -137,8 +137,8 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
             byte[] content = jsonContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
             // 保存到虚拟存储（支持多种后端）
-            // ⭐ 使用 extraction-results/ 前缀作为 filename，让 FileDocumentStorage 路由到 extraction-results/ 目录
-            String fileName = getStoragePath(result.getDocumentId());  // "extraction-results/xxx.json"
+            // ⭐ 使用 extracted/ 前缀作为 filename，让 FileDocumentStorage 路由到 extracted/ 目录
+            String fileName = getStoragePath(result.getDocumentId());  // "extracted/xxx.json"
             String documentId = result.getDocumentId();  // 文档ID用于标识
             storageService.saveDocument(documentId, fileName, content);
 
@@ -161,8 +161,8 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
     @Override
     public Optional<DocumentExtractionResult> findByDocumentId(String documentId) {
         try {
-            // ⭐ 使用 extraction-results/ 前缀作为路径，让 FileDocumentStorage 从 extraction-results/ 目录读取
-            String storagePath = getStoragePath(documentId);  // "extraction-results/xxx.json"
+            // ⭐ 使用 extracted/ 前缀作为路径，让 FileDocumentStorage 从 extracted/ 目录读取
+            String storagePath = getStoragePath(documentId);  // "extracted/xxx.json"
 
             // 从虚拟存储读取
             Optional<byte[]> contentOpt = storageService.getDocument(storagePath);

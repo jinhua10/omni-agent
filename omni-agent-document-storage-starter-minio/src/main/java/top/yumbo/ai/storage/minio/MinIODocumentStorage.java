@@ -168,7 +168,7 @@ public class MinIODocumentStorage implements DocumentStorageService {
     @Override
     public String saveExtractedText(String documentId, String text) {
         try {
-            String key = "extraction-results/" + documentId + ".txt";
+            String key = "extracted/" + documentId + ".txt";
             byte[] data = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
             minioClient.putObject(
@@ -191,7 +191,7 @@ public class MinIODocumentStorage implements DocumentStorageService {
     @Override
     public Optional<String> getExtractedText(String documentId) {
         try {
-            String key = "extraction-results/" + documentId + ".txt";
+            String key = "extracted/" + documentId + ".txt";
 
             GetObjectResponse response = minioClient.getObject(
                 GetObjectArgs.builder()
@@ -220,7 +220,7 @@ public class MinIODocumentStorage implements DocumentStorageService {
     @Override
     public void deleteExtractedText(String documentId) {
         try {
-            String key = "extraction-results/" + documentId + ".txt";
+            String key = "extracted/" + documentId + ".txt";
 
             minioClient.removeObject(
                 RemoveObjectArgs.builder()

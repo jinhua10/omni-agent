@@ -72,9 +72,9 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path targetPath;
             String actualFilename;
 
-            if (filename.startsWith("extraction-results/")) {
-                // 提取结果保存到 extraction-results/ 目录
-                actualFilename = filename.substring("extraction-results/".length());
+            if (filename.startsWith("extracted/")) {
+                // 提取结果保存到 extracted/ 目录
+                actualFilename = filename.substring("extracted/".length());
                 targetPath = extractedPath;
             } else {
                 // 默认保存到 documents/ 目录
@@ -110,9 +110,9 @@ public class FileDocumentStorage implements DocumentStorageService {
             Path targetPath;
             String actualFilename;
 
-            if (documentId.startsWith("extraction-results/")) {
-                // 从 extraction-results/ 目录读取
-                actualFilename = documentId.substring("extraction-results/".length());
+            if (documentId.startsWith("extracted/")) {
+                // 从 extracted/ 目录读取
+                actualFilename = documentId.substring("extracted/".length());
                 targetPath = extractedPath;
             } else {
                 // 从 documents/ 目录读取
@@ -129,7 +129,13 @@ public class FileDocumentStorage implements DocumentStorageService {
             }
 
             // 如果指定路径不存在，尝试遍历查找（兼容旧版本）
-            Path[] files = Files.walk(targetPath, 20)
+            // ⭐ 先检查目录是否存在，避免 NoSuchFileException
+            if (!Files.exists(targetPath)) {
+                log.debug("Target directory does not exist: {}", targetPath);
+                return Optional.empty();
+            }
+
+            Path[] files = Files.walk(targetPath, 10)
                     .filter(Files::isRegularFile)
                     .filter(p -> p.getFileName().toString().contains(actualFilename))
                     .toArray(Path[]::new);
