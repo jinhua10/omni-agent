@@ -36,23 +36,6 @@ spring:
 # 步骤6️⃣ AI对话 (AI Service)
 #   ↓ 使用检索结果进行智能对话
 # ========================================
-
-# ========== PPL ONNX 配置（用于步骤3️⃣分块） ⭐ ==========
-ppl:
-  onnx:
-    # 启用 ONNX PPL 服务
-    enabled: true
-
-    # ONNX 模型路径（BGE-base-zh）
-    model-path: ./models/bge-base-zh/model.onnx
-
-    # Tokenizer 路径
-    tokenizer-path: ./models/bge-base-zh
-
-    # 缓存配置
-    use-cache: true          # 启用缓存
-    cache-size: 1000         # 缓存大小
-    cache-ttl: 3600          # 缓存过期时间（秒）
 # ========== OmniAgent 核心配置（按处理流程顺序）==========
 omni-agent:
 
@@ -255,7 +238,7 @@ omni-agent:
   chunking:
     # 默认策略：auto（自动选择）、fixed_size（固定大小）、semantic（语义）、ppl（困惑度）
     default-strategy: ppl
-
+    # ========== PPL ONNX 配置（用于步骤3️⃣分块） ⭐ ==========
     # PPL 困惑度分块策略配置
     ppl:
       # 模式选择：simplified（简化版，快速）、onnx（ONNX版，精确）、auto（自动选择）
@@ -270,6 +253,20 @@ omni-agent:
 
       # 困惑度阈值（0.0-1.0，值越高越严格）
       threshold: 0.3
+      onnx:
+        # 启用 ONNX PPL 服务
+        enabled: true
+
+        # ONNX 模型路径（BGE-base-zh）
+        model-path: ./models/bge-base-zh/model.onnx
+
+        # Tokenizer 路径
+        tokenizer-path: ./models/bge-base-zh
+
+        # 缓存配置
+        use-cache: true          # 启用缓存
+        cache-size: 1000         # 缓存大小
+        cache-ttl: 3600          # 缓存过期时间（秒）
 
     # 固定大小分块策略配置（备用）
     fixed-size:
