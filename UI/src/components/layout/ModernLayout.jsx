@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Layout, Menu, Button, Drawer, Dropdown, Modal, Checkbox } from 'antd';
+import { Layout, Menu, Button, Drawer, Dropdown, Modal, Checkbox, Tooltip } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -28,6 +28,7 @@ import {
   BgColorsOutlined,
   AppstoreOutlined,
   ClearOutlined,
+  GithubOutlined,
 } from '@ant-design/icons';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -269,6 +270,40 @@ function ModernLayout({ children, activeKey, onMenuChange }) {
           </div>
 
           <div className="modern-layout__header-right">
+            {/* GitHub 链接 */}
+            <Tooltip title="GitHub - omni-agent">
+              <a
+                href="https://github.com/jinhua10/omni-agent"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <Button
+                  type="text"
+                  icon={<GithubOutlined style={{ fontSize: '16px' }} />}
+                />
+              </a>
+            </Tooltip>
+
+            {/* Gitee 链接 */}
+            <Tooltip title="码云 Gitee - omni-agent">
+              <a
+                href="https://gitee.com/gnnu/omni-agent"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <Button
+                  type="text"
+                  icon={
+                    <svg viewBox="0 0 1024 1024" width="16" height="16" fill="currentColor" style={{ verticalAlign: '-0.125em' }}>
+                      <path d="M512 1024C229.222 1024 0 794.778 0 512S229.222 0 512 0s512 229.222 512 512-229.222 512-512 512z m259.149-568.883h-290.74a25.293 25.293 0 0 0-25.292 25.293l-0.026 63.206c0 13.952 11.315 25.293 25.267 25.293h177.024c13.978 0 25.293 11.315 25.293 25.267v12.646a75.853 75.853 0 0 1-75.853 75.853h-240.23a25.293 25.293 0 0 1-25.267-25.293V417.203a75.853 75.853 0 0 1 75.827-75.853h353.946a25.293 25.293 0 0 0 25.267-25.292l0.077-63.207a25.293 25.293 0 0 0-25.268-25.293H417.152a189.62 189.62 0 0 0-189.62 189.645V771.15c0 13.977 11.316 25.293 25.294 25.293h372.94a170.65 170.65 0 0 0 170.65-170.65V480.384a25.293 25.293 0 0 0-25.293-25.267z"/>
+                    </svg>
+                  }
+                />
+              </a>
+            </Tooltip>
+
             {/* 清除缓存按钮 / Clear cache button */}
             <Button
               type="text"

@@ -98,6 +98,7 @@
         <!-- AI Starters (AI Service Starters) -->
         <module>omni-agent-ai-starter-ollama</module>
         <module>omni-agent-ai-starter-online-api</module>
+        <module>omni-agent-ai-starter-onnx</module>
 
         <!-- 应用示例 (Application Examples) -->
         <module>omni-agent-example-basic</module>
