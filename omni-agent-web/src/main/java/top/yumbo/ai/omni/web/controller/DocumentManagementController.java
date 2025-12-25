@@ -516,7 +516,20 @@ public class DocumentManagementController {
             Files.write(targetFile, fileData);
             log.info("✅ 文档已写入待处理目录: {}", targetFile);
 
-            // 4. 生成文档ID（使用文件名）
+            // ⭐ 4. 从存储服务中删除原文档（避免重复处理冲突）
+            try {
+                boolean deleted = storageService.deleteFile(virtualPath);
+                if (deleted) {
+                    log.info("🗑️ 已从存储服务删除原文档: {}", virtualPath);
+                } else {
+                    log.warn("⚠️ 删除原文档失败（可能已不存在）: {}", virtualPath);
+                }
+            } catch (Exception deleteEx) {
+                log.warn("⚠️ 删除原文档时出错（继续处理）: {}", virtualPath, deleteEx);
+                // 不影响主流程，继续处理
+            }
+
+            // 5. 生成文档ID（使用文件名）
             String documentId = fileName;
 
             result.put("success", true);

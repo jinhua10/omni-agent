@@ -69,6 +69,8 @@ COMPLETED (100%) → 处理完成
     ↓
 写入到 data/documents 临时目录
     ↓
+从 storage 中删除原文档 ⭐ (避免索引冲突)
+    ↓
 重新显示在流程视图中
     ↓
 可以重新配置并处理
@@ -251,7 +253,18 @@ if (Files.exists(targetFile)) {
 
 Files.write(targetFile, fileData);
 
-// 4. 返回文档ID供前端使用
+// 4. 从存储服务中删除原文档 ⭐ (避免索引冲突)
+try {
+    boolean deleted = storageService.deleteFile(virtualPath);
+    if (deleted) {
+        log.info("🗑️ 已从存储服务删除原文档: {}", virtualPath);
+    }
+} catch (Exception deleteEx) {
+    log.warn("⚠️ 删除原文档时出错（继续处理）: {}", virtualPath, deleteEx);
+    // 不影响主流程，继续处理
+}
+
+// 5. 返回文档ID供前端使用
 result.put("documentId", documentId);
 result.put("fileName", fileName);
 ```
@@ -260,6 +273,7 @@ result.put("fileName", fileName);
 - ✅ 使用虚拟路径系统，支持多种存储后端（File/MinIO/S3/MongoDB/Elasticsearch）
 - ✅ 不是"复制"操作，而是从storage读取后写入临时目录
 - ✅ 自动处理文件名冲突（生成_1、_2等后缀）
+- ✅ 从storage删除原文档，避免重复索引冲突 ⭐
 - ✅ 详细的日志记录便于调试
 
 ---
