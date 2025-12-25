@@ -111,18 +111,48 @@
 
 /* 文档信息卡片 */
 .chunking-config-container .document-info-card {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
+  border-color: #667eea;
+  border-radius: 10px;
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.chunking-config-container .document-info-card:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2) !important;
-  transform: translateY(-1px);
+.chunking-config-container .document-info-card .ant-card-body {
+  padding: 10px 12px;
 }
 
-.chunking-config-container .document-info-card .ant-tag {
+.chunking-config-container .document-info-space {
+  width: 100%;
+  gap: 4px;
+}
+
+.chunking-config-container .document-info-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.chunking-config-container .document-info-filename {
+  fontSize: 14px;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.chunking-config-container .document-info-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   font-size: 12px;
-  padding: 1px 8px;
-  border-radius: 4px;
+}
+
+.chunking-config-container .document-info-tag {
+  margin: 0;
+  fontSize: 12px;
 }
 
 /* 预览卡片 */
@@ -484,9 +514,54 @@
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-.chunking-config-container .ant-btn-primary:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+.chunking-config-container .document-info-card:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
   transform: translateY(-1px);
+}
+
+/* 无文档提示 */
+.chunking-config-container .no-document-alert {
+  margin-top: 16px;
+}
+
+/* 策略选择器 */
+.chunking-config-container .strategy-select {
+  width: 100%;
+}
+
+.chunking-config-container .strategy-description-alert {
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+/* 参数输入框 */
+.chunking-config-container .param-input {
+  width: 100%;
+}
+
+/* 分隔线 */
+.chunking-config-container .section-divider {
+  margin: 12px 0;
+}
+
+/* 对比模式 */
+.chunking-config-container .comparison-mode-space {
+  width: 100%;
+}
+
+.chunking-config-container .comparison-select {
+  width: 100%;
+}
+
+/* 步骤导航按钮 */
+.chunking-config-container .step-navigation-space {
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* 预览输入区域 */
+.chunking-config-container .preview-textarea {
+  min-height: 400px;
 }
 
 .chunking-config-container .ant-btn:not(.ant-btn-primary):not(.ant-btn-link) {

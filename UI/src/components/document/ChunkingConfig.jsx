@@ -398,7 +398,7 @@ function ChunkingConfig({ documentId }) {
               </Space>
             }
           >
-            <InputNumber min={100} max={10000} step={100} style={{ width: '100%' }} />
+            <InputNumber min={100} max={10000} step={100} className="param-input" />
           </Form.Item>
         )}
 
@@ -414,7 +414,7 @@ function ChunkingConfig({ documentId }) {
               </Space>
             }
           >
-            <InputNumber min={0} max={1000} step={50} style={{ width: '100%' }} />
+            <InputNumber min={0} max={1000} step={50} className="param-input" />
           </Form.Item>
         )}
 
@@ -430,7 +430,7 @@ function ChunkingConfig({ documentId }) {
               </Space>
             }
           >
-            <InputNumber min={50} max={5000} step={50} style={{ width: '100%' }} />
+            <InputNumber min={50} max={5000} step={50} className="param-input" />
           </Form.Item>
         )}
 
@@ -446,7 +446,7 @@ function ChunkingConfig({ documentId }) {
               </Space>
             }
           >
-            <InputNumber min={100} max={20000} step={100} style={{ width: '100%' }} />
+            <InputNumber min={100} max={20000} step={100} className="param-input" />
           </Form.Item>
         )}
 
@@ -462,7 +462,7 @@ function ChunkingConfig({ documentId }) {
               </Space>
             }
           >
-            <InputNumber min={0} max={1} step={0.1} style={{ width: '100%' }} />
+            <InputNumber min={0} max={1} step={0.1} className="param-input" />
           </Form.Item>
         )}
 
@@ -478,7 +478,7 @@ function ChunkingConfig({ documentId }) {
               </Space>
             }
           >
-            <InputNumber min={0} max={100} step={1} style={{ width: '100%' }} />
+            <InputNumber min={0} max={100} step={1} className="param-input" />
           </Form.Item>
         )}
 
@@ -668,39 +668,29 @@ function ChunkingConfig({ documentId }) {
             <Card
               size="small"
               className="document-info-card"
-              style={{
-                marginTop: 12,
-                marginBottom: 16,
-                background: 'linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%)',
-                borderColor: '#667eea',
-                borderRadius: '10px',
-                border: '2px solid rgba(102, 126, 234, 0.3)',
-                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.1)'
-              }}
-              bodyStyle={{ padding: '10px 12px' }}
             >
-              <Space direction="vertical" style={{ width: '100%' }} size={4}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#667eea' }}>
+              <Space direction="vertical" className="document-info-space">
+                <div className="document-info-header">
+                  <span className="document-info-filename">
                     📄 {documentInfo.fileName}
                   </span>
                 </div>
                 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, fontSize: 12 }}>
+                <div className="document-info-tags">
                   {documentInfo.fileSize && (
-                    <Tag color="green" style={{ margin: 0, fontSize: 12 }}>
+                    <Tag color="green" className="document-info-tag">
                       {(documentInfo.fileSize / 1024).toFixed(1)} KB
                     </Tag>
                   )}
                   
                   {documentInfo.mimeType && (
-                    <Tag color="cyan" style={{ margin: 0, fontSize: 12 }}>
+                    <Tag color="cyan" className="document-info-tag">
                       {documentInfo.mimeType.split('/')[1]?.toUpperCase() || documentInfo.mimeType}
                     </Tag>
                   )}
                   
                   {documentConfig?.extractedText && (
-                    <Tag color="purple" style={{ margin: 0, fontSize: 12 }}>
+                    <Tag color="purple" className="document-info-tag">
                       {documentConfig.extractedText.length} {t('common.characters')}
                     </Tag>
                   )}
@@ -716,7 +706,7 @@ function ChunkingConfig({ documentId }) {
               description={t('chunkingConfig.message.selectDocumentFirst')}
               type="warning"
               showIcon
-              style={{ marginTop: 16 }}
+              className="no-document-alert"
             />
           )}
         </div>
@@ -736,7 +726,7 @@ function ChunkingConfig({ documentId }) {
               {/* 策略选择 */}
               <div className="strategy-selector">
                 <Select
-                  style={{ width: '100%' }}
+                  className="strategy-select"
                   placeholder={t('chunkingConfig.strategyList.selectStrategy')}
                   value={currentStrategy?.name}
                   onChange={(value) => {
@@ -759,16 +749,16 @@ function ChunkingConfig({ documentId }) {
                     description={getStrategyDescription(currentStrategy.name)}
                     type="info"
                     showIcon
-                    style={{ marginTop: 12, fontSize: '13px' }}
+                    className="strategy-description-alert"
                   />
                 )}
               </div>
 
-              <Divider style={{ margin: '12px 0' }} />
+              <Divider className="section-divider" />
 
               {/* 参数配置 */}
               <div className="params-config">
-                <h3 style={{ marginBottom: 12 }}>{t('chunkingConfig.params.title')}</h3>
+                <h3>{t('chunkingConfig.params.title')}</h3>
                 {renderParamsForm()}
               </div>
 
@@ -776,7 +766,7 @@ function ChunkingConfig({ documentId }) {
 
               {/* 对比模式 */}
               <div className="comparison-mode">
-                <Space vertical style={{ width: '100%' }} size="small">
+                <Space vertical className="comparison-mode-space" size="small">
                   <Space size="small">
                     <SwapOutlined />
                     <span>{t('chunkingConfig.comparison.title')}</span>
@@ -791,7 +781,7 @@ function ChunkingConfig({ documentId }) {
                     <>
                       <Select
                         mode="multiple"
-                        style={{ width: '100%' }}
+                        className="comparison-select"
                         placeholder={t('chunkingConfig.comparison.selectStrategies')}
                         value={comparisonStrategies}
                         onChange={setComparisonStrategies}
@@ -819,9 +809,9 @@ function ChunkingConfig({ documentId }) {
               {/* ⭐ 步骤导航按钮 - 放在配置面板底部 */}
               {documentId && (
                 <>
-                  <Divider style={{ margin: '12px 0' }} />
+                  <Divider className="section-divider" />
                   <div className="step-navigation-buttons">
-                    <Space style={{ width: '100%', justifyContent: 'space-between' }} size="small">
+                    <Space className="step-navigation-space" size="small">
                       <Button
                         icon={<ArrowLeftOutlined />}
                         onClick={handlePreviousStep}
@@ -872,7 +862,7 @@ function ChunkingConfig({ documentId }) {
                   placeholder={t('chunkingConfig.preview.inputPlaceholder')}
                   value={previewText}
                   onChange={(e) => setPreviewText(e.target.value)}
-                  style={{ minHeight: '400px' }}
+                  className="preview-textarea"
                 />
               </div>
 

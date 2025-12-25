@@ -508,10 +508,10 @@ function TextExtractionConfig({ documentId }) {
               {documentId && extractionProgress && (
                 <Alert
                   description={
-                    <div style={{ fontSize: '13px' }}>
+                    <div className="alert-description">
                       {extractionProgress.message || `进度: ${extractionProgress.percent}%`}
                       {extractionProgress.accuracy && (
-                        <span style={{ marginLeft: 12 }}>
+                        <span className="accuracy-info">
                           📊 {t('textExtractionConfig.progress.accuracy')}: {(extractionProgress.accuracy * 100).toFixed(1)}%
                         </span>
                       )}
@@ -519,7 +519,7 @@ function TextExtractionConfig({ documentId }) {
                   }
                   type={extractionProgress.status === 'processing' ? 'info' : extractionProgress.status === 'success' ? 'success' : 'error'}
                   showIcon
-                  style={{ marginBottom: 8 }}
+                  className="extraction-alert"
                 />
               )}
               {documentId && !extractionProgress ? (
@@ -527,14 +527,14 @@ function TextExtractionConfig({ documentId }) {
                   description={t('textExtractionConfig.alerts.documentConfigDesc').replace('{docId}', documentId)}
                   type="warning"
                   showIcon
-                  style={{ marginBottom: 8, fontSize: '13px' }}
+                  className="extraction-alert small-text"
                 />
               ) : !documentId && (
                 <Alert
                   description={t('textExtractionConfig.alerts.systemConfigDesc')}
                   type="info"
                   showIcon
-                  style={{ marginBottom: 8, fontSize: '13px' }}
+                  className="extraction-alert small-text"
                 />
               )}
 
@@ -559,10 +559,10 @@ function TextExtractionConfig({ documentId }) {
               {/* ⭐ 流式/非流式开关 */}
               {documentId && (
                 <div className="streaming-mode-selector">
-                  <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+                  <Space align="center" className="streaming-mode-space">
                     <Space align="center" size="small">
                       <ThunderboltFilled className={streamingMode ? 'streaming-icon-active' : 'streaming-icon-inactive'} />
-                      <span style={{ fontSize: '13px', fontWeight: 500 }}>
+                      <span className="streaming-mode-text">
                         {streamingMode ? t('textExtractionConfig.streamingMode.streamingMode') : t('textExtractionConfig.streamingMode.batchOutput')}
                       </span>
                     </Space>
@@ -602,8 +602,8 @@ function TextExtractionConfig({ documentId }) {
               {/* ⭐ 步骤导航按钮 - 提取完成后显示 */}
               {documentId && extractionResult && extractionProgress?.status === 'success' && (
                 <>
-                  <Divider style={{ margin: '12px 0' }} />
-                  <Space style={{ width: '100%', justifyContent: 'space-between' }} size="small">
+                  <Divider className="section-divider" />
+                  <Space className="step-navigation-space" size="small">
                     <Button
                       icon={<ReloadOutlined />}
                       onClick={handleReExtract}
@@ -745,8 +745,7 @@ function TextExtractionConfig({ documentId }) {
                           : extractionResult || t('textExtractionConfig.batches.waiting')
                       }
                       readOnly
-                      className="source-editor source-editor-textarea"
-                      style={{ minHeight: '500px', fontFamily: 'monospace' }}
+                      className="source-editor source-editor-textarea readonly-textarea"
                     />
                   ) : batches.length > 0 && !isMerged ? (
                     // ⭐ Markdown模式：批次级别显示（使用BatchContentViewer组件）
