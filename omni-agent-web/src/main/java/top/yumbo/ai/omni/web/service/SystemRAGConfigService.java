@@ -40,6 +40,9 @@ public class SystemRAGConfigService {
     @Value("${omni.rag.config.persistence.path:./data/config/rag-configs.json}")
     private String configPersistencePath;
 
+    @Value("${omni.rag.template.persistence.path:./data/config/rag-templates.json}")
+    private String templatePersistencePath;  // ⭐ 模板持久化路径
+
     // 系统配置（可持久化到数据库）
     private final SystemRAGConfig config = new SystemRAGConfig();
 
@@ -54,6 +57,7 @@ public class SystemRAGConfigService {
      */
     @PostConstruct
     public void loadPersistedConfigs() {
+        // ⭐ 加载文档配置
         try {
             File configFile = new File(configPersistencePath);
             if (configFile.exists()) {
@@ -68,6 +72,22 @@ public class SystemRAGConfigService {
         } catch (IOException e) {
             log.error("❌ 加载持久化配置失败: {}", configPersistencePath, e);
         }
+
+        // ⭐ 加载策略模板
+        try {
+            File templateFile = new File(templatePersistencePath);
+            if (templateFile.exists()) {
+                MapType mapType = objectMapper.getTypeFactory()
+                    .constructMapType(HashMap.class, String.class, RAGStrategyTemplate.class);
+                Map<String, RAGStrategyTemplate> loadedTemplates = objectMapper.readValue(templateFile, mapType);
+                strategyTemplates.putAll(loadedTemplates);
+                log.info("✅ 已加载 {} 个策略模板", loadedTemplates.size());
+            } else {
+                log.info("ℹ️ 模板文件不存在，将使用空模板: {}", templatePersistencePath);
+            }
+        } catch (IOException e) {
+            log.error("❌ 加载策略模板失败: {}", templatePersistencePath, e);
+        }
     }
 
     /**
@@ -76,6 +96,7 @@ public class SystemRAGConfigService {
     @PreDestroy
     public void savePersistedConfigs() {
         persistConfigs();
+        persistTemplates();  // ⭐ 保存模板
     }
 
     /**
@@ -92,6 +113,23 @@ public class SystemRAGConfigService {
             log.debug("💾 已保存 {} 个文档配置到: {}", documentConfigs.size(), configPersistencePath);
         } catch (IOException e) {
             log.error("❌ 持久化配置失败: {}", configPersistencePath, e);
+        }
+    }
+
+    /**
+     * 持久化模板到文件 ⭐
+     */
+    private void persistTemplates() {
+        try {
+            File templateFile = new File(templatePersistencePath);
+            // 确保父目录存在
+            if (templateFile.getParentFile() != null) {
+                templateFile.getParentFile().mkdirs();
+            }
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(templateFile, strategyTemplates);
+            log.debug("💾 已保存 {} 个策略模板到: {}", strategyTemplates.size(), templatePersistencePath);
+        } catch (IOException e) {
+            log.error("❌ 持久化模板失败: {}", templatePersistencePath, e);
         }
     }
 
@@ -261,6 +299,10 @@ public class SystemRAGConfigService {
 
         strategyTemplates.put(template.getTemplateId(), template);
         log.info("💾 保存策略模板: {} - {}", template.getTemplateId(), template.getTemplateName());
+
+        // ⭐ 立即持久化到磁盘
+        persistTemplates();
+
         return template;
     }
 
@@ -284,6 +326,9 @@ public class SystemRAGConfigService {
     public void deleteStrategyTemplate(String templateId) {
         strategyTemplates.remove(templateId);
         log.info("🗑️ 删除策略模板: {}", templateId);
+
+        // ⭐ 立即持久化到磁盘
+        persistTemplates();
     }
 
     /**
