@@ -94,6 +94,8 @@ function TextExtractionConfig({ documentId }) {
   const [extracting, setExtracting] = useState(false)
   const [extractionProgress, setExtractionProgress] = useState(null)
   const [extractionResult, setExtractionResult] = useState('')
+  const [originalExtractionResult, setOriginalExtractionResult] = useState('') // ⭐ 保存原始提取结果用于重置
+  const [shouldSaveOriginal, setShouldSaveOriginal] = useState(false) // ⭐ 标志是否需要保存原始结果
   const [streamingMode, setStreamingMode] = useState(true) // ⭐ 新增：流式/非流式开关
   const [batchInfo, setBatchInfo] = useState(null) // ⭐ 批次信息
   const [isEditing, setIsEditing] = useState(false) // ⭐ 是否为编辑模式（查看源码）
@@ -200,36 +202,6 @@ function TextExtractionConfig({ documentId }) {
     message.success(t('textExtractionConfig.export.successHTML'))
   }
 
-  // ⭐ 跳转到下一步（分块配置）
-  const handleNextStep = async () => {
-    if (!documentId) return
-
-    try {
-      const encodedDocId = encodeURIComponent(documentId)
-      const response = await fetch(`/api/documents/processing/${encodedDocId}/step/next`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        message.success(t('chunkingConfig.navigation.returnToExtraction'))
-        // 跳转到分块配置页面
-        window.location.hash = `#/documents/chunking?docId=${documentId}`
-      } else {
-        message.error(result.message || t('chunkingConfig.navigation.returnFailed'))
-      }
-    } catch (error) {
-      console.error('跳转下一步失败:', error)
-      message.error(t('chunkingConfig.navigation.returnFailed') + ': ' + error.message)
-    }
-  }
-
-  // ⭐ 重新提取
-  const handleReExtract = () => {
-    handleAutoExtract()
-  }
-
   // ⭐ 合并所有批次内容
   const mergeBatches = () => {
     const mergedContent = batches
@@ -238,10 +210,19 @@ function TextExtractionConfig({ documentId }) {
       .join('\n\n')
 
     setExtractionResult(mergedContent)
+    setOriginalExtractionResult(mergedContent) // ⭐ 保存原始结果
     setIsMerged(true)
     setBatches([]) // 清空批次，切换到合并视图
     message.success(t('textExtractionConfig.batches.mergeSuccess'))
   }
+
+  // ⭐ 当提取完成时保存原始结果
+  useEffect(() => {
+    if (shouldSaveOriginal && extractionResult) {
+      setOriginalExtractionResult(extractionResult)
+      setShouldSaveOriginal(false)
+    }
+  }, [shouldSaveOriginal, extractionResult])
 
   // ⭐ 检查是否所有批次都已完成
   useEffect(() => {
@@ -269,6 +250,7 @@ function TextExtractionConfig({ documentId }) {
         // ⭐ 如果已经有提取的内容，直接显示
         if (result.data.extractedText) {
           setExtractionResult(result.data.extractedText)
+          setOriginalExtractionResult(result.data.extractedText) // ⭐ 保存原始结果
           setExtractionProgress({ 
             status: 'success', 
             percent: 100,
@@ -299,6 +281,26 @@ function TextExtractionConfig({ documentId }) {
 
   const handleModelChange = (value) => {
     setSelectedModel(value)
+  }
+
+  // ⭐ 重置到原始提取结果
+  const handleReset = () => {
+    if (originalExtractionResult) {
+      setExtractionResult(originalExtractionResult)
+      message.success(t('textExtractionConfig.buttons.resetSuccess') || '已重置到原始提取结果')
+    } else {
+      message.warning(t('textExtractionConfig.buttons.noOriginalResult') || '没有可重置的原始结果')
+    }
+  }
+
+  // ⭐ 返回文档流程图
+  const handleBackToFlow = () => {
+    window.location.hash = `#/documents?view=flow&docId=${encodeURIComponent(documentId)}`
+  }
+
+  // ⭐ 下一步：跳转到分块配置
+  const handleNextStep = () => {
+    window.location.hash = `#/documents?view=chunking&docId=${encodeURIComponent(documentId)}`
   }
 
   // 自动提取处理（支持流式/非流式）
@@ -445,6 +447,8 @@ function TextExtractionConfig({ documentId }) {
                   percent: 100,
                   accuracy: data.accuracy || 0.85
                 })
+                // ⭐ 提取完成后标记需要保存原始结果
+                setShouldSaveOriginal(true)
                 // ⭐ 提取完成后，自动切换到 Markdown 模式以获得更好的视觉效果
                 setRenderMode('markdown')
                 message.success(streamingMode ? t('textExtractionConfig.extraction.streamingComplete') : t('textExtractionConfig.extraction.batchComplete'))
@@ -577,40 +581,58 @@ function TextExtractionConfig({ documentId }) {
               )}
 
               {/* 操作按钮 */}
-              <Space size="small">
-                <Button
-                  type="primary"
-                  icon={<ThunderboltOutlined />}
-                  onClick={handleApply}
-                  loading={loading || extracting}
-                  disabled={extracting}
-                >
-                  {documentId ? (extracting ? t('textExtractionConfig.buttons.extractionInProgress') : t('textExtractionConfig.buttons.startExtraction')) : t('textExtractionConfig.buttons.applyConfig')}
-                </Button>
-                <Button onClick={loadSystemConfig} disabled={extracting}>
-                  {t('textExtractionConfig.buttons.reset')}
-                </Button>
-                {documentId && (
+              <Space size="middle" wrap style={{ marginTop: 8 }}>
+                {/* 提取按钮 - 开始提取和重新提取使用同一个按钮 */}
+                {documentId ? (
                   <Button
-                    onClick={() => window.location.hash = '#/documents?view=flow&docId=' + documentId}
+                    type="primary"
+                    icon={extractionResult ? <ReloadOutlined /> : <ThunderboltOutlined />}
+                    onClick={handleAutoExtract}
+                    loading={extracting}
+                    disabled={extracting}
                   >
-                    {t('textExtractionConfig.buttons.backToFlow')}
+                    {extracting 
+                      ? t('textExtractionConfig.buttons.extractionInProgress') 
+                      : (extractionResult 
+                          ? t('textExtractionConfig.buttons.reExtract') 
+                          : t('textExtractionConfig.buttons.startExtraction')
+                        )
+                    }
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    icon={<ThunderboltOutlined />}
+                    onClick={handleApply}
+                    loading={loading}
+                  >
+                    {t('textExtractionConfig.buttons.applyConfig')}
+                  </Button>
+                )}
+
+                {/* 重置按钮 - 只在有原始结果时显示 */}
+                {documentId && originalExtractionResult && (
+                  <Button 
+                    onClick={handleReset} 
+                    disabled={extracting}
+                  >
+                    {t('textExtractionConfig.buttons.reset')}
                   </Button>
                 )}
               </Space>
 
-              {/* ⭐ 步骤导航按钮 - 提取完成后显示 */}
-              {documentId && extractionResult && extractionProgress?.status === 'success' && (
-                <>
-                  <Divider className="section-divider" />
-                  <Space className="step-navigation-space" size="small">
-                    <Button
-                      icon={<ReloadOutlined />}
-                      onClick={handleReExtract}
-                      disabled={extracting}
-                    >
-                      {t('textExtractionConfig.buttons.reExtract')}
-                    </Button>
+              {/* 步骤导航按钮 - 上一步和下一步并排 */}
+              {documentId && (
+                <Space size="middle" style={{ marginTop: 12 }}>
+                  <Button
+                    icon={<ArrowLeftOutlined />}
+                    onClick={handleBackToFlow}
+                  >
+                    {t('textExtractionConfig.buttons.previousStep')}
+                  </Button>
+
+                  {/* 下一步 - 只在提取成功后显示 */}
+                  {extractionResult && extractionProgress?.status === 'success' && (
                     <Button
                       type="primary"
                       icon={<ArrowRightOutlined />}
@@ -619,8 +641,8 @@ function TextExtractionConfig({ documentId }) {
                     >
                       {t('textExtractionConfig.buttons.nextStep')}
                     </Button>
-                  </Space>
-                </>
+                  )}
+                </Space>
               )}
             </Space>
           </Card>

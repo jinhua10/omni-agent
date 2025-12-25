@@ -326,29 +326,10 @@ function ChunkingConfig({ documentId }) {
   }
 
   // ⭐ 返回上一步（文本提取）
-  const handlePreviousStep = async () => {
+  const handlePreviousStep = () => {
     if (!documentId) return
-
-    try {
-      const encodedDocId = encodeURIComponent(documentId)
-      const response = await fetch(`/api/documents/processing/${encodedDocId}/step/goto`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step: 'TEXT_EXTRACTION' }),
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        message.success(t('chunkingConfig.navigation.returnSuccess'))
-        // 跳转到文本提取页面
-        window.location.hash = `#/documents/extract?docId=${documentId}`
-      } else {
-        message.error(result.message || t('chunkingConfig.navigation.returnFailed'))
-      }
-    } catch (error) {
-      console.error('返回上一步失败:', error)
-      message.error(t('chunkingConfig.navigation.returnFailed') + ': ' + error.message)
-    }
+    // 直接跳转到文本提取页面，不调用后台API
+    window.location.hash = `#/documents?view=textExtraction&docId=${encodeURIComponent(documentId)}`
   }
 
   // ⭐ 执行分块并索引
