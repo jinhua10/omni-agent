@@ -31,8 +31,7 @@ import {
   Breadcrumb,
   Dropdown,
   Tooltip,
-  Tag,
-  message as antdMessage
+  Tag
 } from 'antd'
 import {
   FolderOutlined,
@@ -153,11 +152,11 @@ function DocumentBrowser() {
         setItems(response.data.items || [])
         setCurrentPath(response.data.path || '')
       } else {
-        antdMessage.error(t('document.browse.loadFailed'))
+        message.error(t('document.browse.loadFailed'))
       }
     } catch (error) {
       console.error('Failed to load directory:', error)
-      antdMessage.error(t('document.browse.loadFailed'))
+      message.error(t('document.browse.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -218,10 +217,10 @@ function DocumentBrowser() {
     try {
       const url = `/api/documents/browse/download?path=${encodeURIComponent(item.path)}`
       window.open(url, '_blank')
-      antdMessage.success(t('document.browse.downloadStarted'))
+      message.success(t('document.browse.downloadStarted'))
     } catch (error) {
       console.error('Failed to download:', error)
-      antdMessage.error(t('document.browse.downloadFailed'))
+      message.error(t('document.browse.downloadFailed'))
     }
   }, [t])
 
@@ -244,15 +243,15 @@ function DocumentBrowser() {
           })
 
           if (response.data && response.data.success) {
-            antdMessage.success(t('document.browse.deleteSuccess'))
+            message.success(t('document.browse.deleteSuccess'))
             loadDirectory(currentPath) // 刷新当前目录 / Refresh current directory
             loadStats() // 刷新统计信息 / Refresh statistics
           } else {
-            antdMessage.error(response.data.message || t('document.browse.deleteFailed'))
+            message.error(response.data.message || t('document.browse.deleteFailed'))
           }
         } catch (error) {
           console.error('Failed to delete:', error)
-          antdMessage.error(t('document.browse.deleteFailed'))
+          message.error(t('document.browse.deleteFailed'))
         }
       }
     })
@@ -286,7 +285,7 @@ function DocumentBrowser() {
     const fileItems = files.filter(file => file.type === 'file')
 
     if (fileItems.length === 0) {
-      antdMessage.warning(t('document.browse.noFilesSelected'))
+      message.warning(t('document.browse.noFilesSelected'))
       return
     }
 
@@ -310,14 +309,14 @@ function DocumentBrowser() {
       if (isInPanel) {
         // 已在面板中，移除
         removeDocFromAIAnalysis(docId)
-        antdMessage.success(
+        message.success(
           t('document.browse.removeFromAIPanelSuccess', { name: file.name })
             .replace('{name}', file.name)
         )
       } else {
         // 不在面板中，添加
         addDocToAIAnalysis(docData)
-        antdMessage.success(
+        message.success(
           t('document.browse.addToAIPanelSuccess', { count: 1 })
             .replace('{count}', '1')
         )
@@ -333,7 +332,7 @@ function DocumentBrowser() {
    */
   const handleCreateFolder = useCallback(async () => {
     if (!newFolderName.trim()) {
-      antdMessage.warning(t('document.browse.folderNameRequired'))
+      message.warning(t('document.browse.folderNameRequired'))
       return
     }
 
@@ -345,17 +344,17 @@ function DocumentBrowser() {
       })
 
       if (response.data && response.data.success) {
-        antdMessage.success(t('document.browse.createFolderSuccess'))
+        message.success(t('document.browse.createFolderSuccess'))
         setCreateFolderVisible(false)
         setNewFolderName('')
         loadDirectory(currentPath)
         loadStats()
       } else {
-        antdMessage.error(response.data.message || t('document.browse.createFolderFailed'))
+        message.error(response.data.message || t('document.browse.createFolderFailed'))
       }
     } catch (error) {
       console.error('Failed to create folder:', error)
-      antdMessage.error(t('document.browse.createFolderFailed'))
+      message.error(t('document.browse.createFolderFailed'))
     }
   }, [currentPath, newFolderName, loadDirectory, loadStats, t])
 
@@ -376,7 +375,7 @@ function DocumentBrowser() {
    */
   const handleAddToFlowView = useCallback(async (item) => {
     try {
-      antdMessage.loading({ content: t('document.browse.addingToFlow'), key: 'addToFlow' })
+      message.loading(t('document.browse.addingToFlow'))
 
       // 调用后端API：从storage复制到documents临时目录
       const response = await axios.post('/api/documents/copy-to-pending', {
@@ -385,28 +384,19 @@ function DocumentBrowser() {
       })
 
       if (response.data && response.data.success) {
-        antdMessage.success({
-          content: t('document.browse.addToFlowSuccess'),
-          key: 'addToFlow'
-        })
+        message.success(t('document.browse.addToFlowSuccess'))
 
         // 跳转到流程视图，并传递文档ID
         const documentId = response.data.documentId || item.name
         window.location.hash = `#/documents?view=flow&docId=${encodeURIComponent(documentId)}`
       } else {
-        antdMessage.error({
-          content: response.data.message || t('document.browse.addToFlowFailed'),
-          key: 'addToFlow'
-        })
+        message.error(response.data.message || t('document.browse.addToFlowFailed'))
       }
     } catch (error) {
       console.error('Failed to add to flow view:', error)
-      antdMessage.error({
-        content: t('document.browse.addToFlowFailed'),
-        key: 'addToFlow'
-      })
+      message.error(t('document.browse.addToFlowFailed'))
     }
-  }, [t])
+  }, [t, message])
 
   // ============================================================================
   // 面包屑导航 / Breadcrumb navigation
@@ -471,7 +461,7 @@ function DocumentBrowser() {
    */
   const handleBatchAddToAI = useCallback(() => {
     if (selectedItems.length === 0) {
-      antdMessage.warning(t('document.browse.noFilesSelected'))
+      message.warning(t('document.browse.noFilesSelected'))
       return
     }
 
