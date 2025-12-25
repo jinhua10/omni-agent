@@ -84,46 +84,23 @@ public class DocumentProcessingService {
                 docConfig.setChunkingStrategy(chunkingStrategy);
                 docConfig.setChunkingParams(chunkingParams);
 
-                // 阶段1: 上传完成
+                // 推送进度：上传完成
                 pushProgress(documentId, "UPLOAD", 0, "文档上传完成", documentName, null);
-                Thread.sleep(500);
 
-                // 阶段2: 文本提取 ⭐
-                performTextExtraction(documentId, documentName, content, docConfig);
+                // 推送进度：开始提取
+                pushProgress(documentId, "EXTRACT", 20, "正在提取文本...", documentName, null);
 
-                // ⭐ 使用存储服务获取提取文本
-                String extractedText = ragConfigService.getExtractedText(documentId)
-                    .orElseThrow(() -> new RuntimeException("文本提取失败"));
-
-                // 阶段3: 智能分块 ⭐
-                pushProgress(documentId, "CHUNK", 40, "正在智能分块...", documentName, null);
-                Thread.sleep(2000);
-                int chunkCount = performChunking(extractedText, docConfig);
-                docConfig.setStatus("CHUNKED");
-                ragConfigService.setDocumentConfig(documentId, docConfig);
-
-                // 阶段4: 向量化
-                pushProgress(documentId, "VECTORIZE", 60, "正在向量化...", documentName,
-                    Map.of("chunks", chunkCount));
-                int vectorCount = performVectorization(documentId, chunkCount);  // ⭐ 传递 documentId
-                docConfig.setStatus("VECTORIZING");
-                ragConfigService.setDocumentConfig(documentId, docConfig);
-
-                // 阶段5: 建立索引
-                pushProgress(documentId, "INDEX", 80, "正在建立索引...", documentName,
-                    Map.of("chunks", chunkCount, "vectors", vectorCount));
-                Thread.sleep(1500);
-                performIndexing(documentId, vectorCount);
-
-                // 阶段6: 归档
-                pushProgress(documentId, "ARCHIVE", 90, "正在归档文档...", documentName, null);
-                archiveDocument(documentId, documentName, content, docConfig);
+                // ⭐ 调用核心处理方法
+                RAGProcessingResult result = performFullRAGCore(documentId, documentName, content, docConfig);
 
                 // 完成
                 docConfig.setStatus("COMPLETED");
                 ragConfigService.setDocumentConfig(documentId, docConfig);
+
                 pushProgress(documentId, "COMPLETED", 100, "处理完成！", documentName,
-                    Map.of("chunks", chunkCount, "vectors", vectorCount, "status", "COMPLETED"));
+                    Map.of("chunks", result.getChunkCount(),
+                           "vectors", result.getVectorCount(),
+                           "status", "COMPLETED"));
 
                 log.info("✅ 手动文档处理完成: documentId={}", documentId);
 
@@ -236,55 +213,33 @@ public class DocumentProcessingService {
     }
 
     /**
-     * 执行完整RAG流程（模拟实现）⚠️
+     * 执行完整RAG流程（自动模式）⭐
      *
-     * 注意：此方法为模拟实现，包含 Thread.sleep() 延迟
-     * - 向量化和索引部分是模拟的
-     * - 仅用于演示完整流程
-     * TODO: 实现真正的向量化和索引功能后，重命名为 performFullRAG
+     * 注意：此方法用于自动模式（系统配置为全自动时）
+     * - 调用统一的核心处理方法 performFullRAGCore
+     * - 包含进度推送和状态更新
      */
     private void performFullRAGSimulated(String documentId, String documentName, byte[] content,
-                                SystemRAGConfigService.DocumentRAGConfig docConfig) throws InterruptedException {
-        // 文本提取
-        if (docConfig.getExtractedTextRef() == null && docConfig.getExtractedText() == null) {
-            performTextExtraction(documentId, documentName, content, docConfig);
-        }
+                                SystemRAGConfigService.DocumentRAGConfig docConfig) throws Exception {
 
-        // ⭐ 使用新方式获取提取文本（优先从存储服务）
-        String extractedText = ragConfigService.getExtractedText(documentId)
-            .orElseThrow(() -> new RuntimeException("提取文本不存在"));
+        log.info("🤖 自动模式处理文档: documentId={}", documentId);
 
-        // 阶段3: 智能分块
-        pushProgress(documentId, "CHUNK", 40, "正在智能分块...", documentName, null);
-        Thread.sleep(2000);
-        int chunkCount = performChunking(extractedText, docConfig);
-        docConfig.setStatus("CHUNKED");
-        ragConfigService.setDocumentConfig(documentId, docConfig);
+        // 推送进度：开始提取
+        pushProgress(documentId, "EXTRACT", 20, "正在提取文本...", documentName, null);
 
-        // 阶段4: 向量化
-        pushProgress(documentId, "VECTORIZE", 60, "正在向量化...", documentName,
-            Map.of("chunks", chunkCount));
-        int vectorCount = performVectorization(documentId, chunkCount);  // ⭐ 传递 documentId
-        docConfig.setStatus("VECTORIZING");
-        ragConfigService.setDocumentConfig(documentId, docConfig);
-
-        // 阶段5: 建立索引
-        pushProgress(documentId, "INDEX", 80, "正在建立索引...", documentName,
-            Map.of("chunks", chunkCount, "vectors", vectorCount));
-        Thread.sleep(1500);
-        performIndexing(documentId, vectorCount);
-
-        // ⭐ 阶段7: 归档到存储服务（新增）
-        pushProgress(documentId, "ARCHIVE", 90, "正在归档文档...", documentName, null);
-        archiveDocument(documentId, documentName, content, docConfig);
+        // ⭐ 调用核心处理方法
+        RAGProcessingResult result = performFullRAGCore(documentId, documentName, content, docConfig);
 
         // 完成
         docConfig.setStatus("COMPLETED");
         ragConfigService.setDocumentConfig(documentId, docConfig);
-        pushProgress(documentId, "COMPLETED", 100, "处理完成！", documentName,
-            Map.of("chunks", chunkCount, "vectors", vectorCount, "status", "COMPLETED"));
 
-        log.info("✅ 文档处理完成: documentId={}", documentId);
+        pushProgress(documentId, "COMPLETED", 100, "处理完成！", documentName,
+            Map.of("chunks", result.getChunkCount(),
+                   "vectors", result.getVectorCount(),
+                   "status", "COMPLETED"));
+
+        log.info("✅ 自动模式文档处理完成: documentId={}", documentId);
     }
 
     /**
@@ -569,6 +524,56 @@ public class DocumentProcessingService {
     }
 
     /**
+     * 核心RAG处理流程（真实实现）⭐
+     *
+     * 提取的统一核心处理逻辑，避免代码重复
+     *
+     * @param documentId 文档ID
+     * @param documentName 文档名称
+     * @param content 文档内容
+     * @param docConfig 文档配置
+     * @return 处理结果（包含分块数和向量数）
+     * @throws Exception 处理失败时抛出异常
+     */
+    private RAGProcessingResult performFullRAGCore(
+            String documentId,
+            String documentName,
+            byte[] content,
+            SystemRAGConfigService.DocumentRAGConfig docConfig) throws Exception {
+
+        log.info("🚀 开始核心RAG流程: documentId={}, model={}, strategy={}",
+                documentId, docConfig.getTextExtractionModel(), docConfig.getChunkingStrategy());
+
+        // 阶段1: 文本提取 ⭐
+        performTextExtraction(documentId, documentName, content, docConfig);
+
+        // 获取提取的文本
+        String extractedText = ragConfigService.getExtractedText(documentId)
+                .orElseThrow(() -> new RuntimeException("文本提取失败"));
+
+        // 阶段2: 智能分块 ⭐
+        int chunkCount = performChunking(extractedText, docConfig);
+        docConfig.setStatus("CHUNKED");
+        ragConfigService.setDocumentConfig(documentId, docConfig);
+
+        // 阶段3: 向量化 ⭐
+        int vectorCount = performVectorization(documentId, chunkCount);
+        docConfig.setStatus("VECTORIZING");
+        ragConfigService.setDocumentConfig(documentId, docConfig);
+
+        // 阶段4: 建立索引 ⭐（已在向量化中完成）
+        performIndexing(documentId, vectorCount);
+
+        // 阶段5: 归档 ⭐
+        archiveDocument(documentId, documentName, content, docConfig);
+
+        log.info("✅ 核心RAG流程完成: documentId={}, chunks={}, vectors={}",
+                documentId, chunkCount, vectorCount);
+
+        return new RAGProcessingResult(chunkCount, vectorCount);
+    }
+
+    /**
      * 执行索引（真实实现）⭐
      *
      * 注意：索引已在 performVectorization 中完成
@@ -577,6 +582,18 @@ public class DocumentProcessingService {
     private void performIndexing(String documentId, int vectorCount) {
         log.info("📊 索引已完成: documentId={}, {} 个向量已索引", documentId, vectorCount);
         // 索引操作已在 performVectorization() 中通过 ragService.indexDocuments() 完成
+    }
+
+    /**
+     * RAG 处理结果
+     */
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    public static class RAGProcessingResult {
+        /** 分块数量 */
+        private int chunkCount;
+        /** 向量总维度数 */
+        private int vectorCount;
     }
 }
 
