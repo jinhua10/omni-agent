@@ -102,27 +102,72 @@ function ChunkingConfig({ documentId }) {
       }
       
       // 加载文档详情（文件名等信息）
-      const docResponse = await fetch(`/api/documents/${encodedDocId}`)
-      const docResult = await docResponse.json()
-      console.log('📄 文档API返回:', docResult)
+      try {
+        const docResponse = await fetch(`/api/documents/${encodedDocId}`)
+        console.log('📡 文档API响应状态:', docResponse.status, docResponse.statusText)
 
-      if (docResult.success) {
-        // 尝试从data字段获取，如果没有则直接从根获取
-        const docData = docResult.data || docResult
-        const info = {
-          fileName: docData.fileName || docData.name,
-          fileSize: docData.fileSize || docData.size,
-          mimeType: docData.mimeType || docData.type,
-          uploadTime: docData.uploadTime || docData.createdAt,
-          extractedLength: docData.extractedLength
+        if (!docResponse.ok) {
+          console.error('❌ 文档API HTTP错误:', docResponse.status)
+          // 即使API失败，也显示基本信息
+          setDocumentInfo({
+            fileName: documentId,
+            fileSize: null,
+            mimeType: null,
+            uploadTime: null,
+            extractedLength: null
+          })
+          return
         }
-        console.log('✅ 设置文档信息:', info)
-        setDocumentInfo(info)
-      } else {
-        console.error('❌ 文档API返回失败:', docResult.message)
+
+        const docResult = await docResponse.json()
+        console.log('📄 文档API返回:', docResult)
+
+        if (docResult.success) {
+          // 尝试从data字段获取，如果没有则直接从根获取
+          const docData = docResult.data || docResult
+          const info = {
+            fileName: docData.fileName || docData.name || documentId,
+            fileSize: docData.fileSize || docData.size,
+            mimeType: docData.mimeType || docData.type,
+            uploadTime: docData.uploadTime || docData.createdAt,
+            extractedLength: docData.extractedLength
+          }
+          console.log('✅ 设置文档信息:', info)
+          setDocumentInfo(info)
+        } else {
+          console.error('❌ 文档API返回失败:', docResult.message)
+          // 即使API失败，也显示基本信息
+          setDocumentInfo({
+            fileName: documentId,
+            fileSize: null,
+            mimeType: null,
+            uploadTime: null,
+            extractedLength: null
+          })
+        }
+      } catch (docError) {
+        console.error('❌ 加载文档信息失败:', docError)
+        // 捕获文档API的错误，仍然显示基本信息
+        setDocumentInfo({
+          fileName: documentId,
+          fileSize: null,
+          mimeType: null,
+          uploadTime: null,
+          extractedLength: null
+        })
       }
     } catch (error) {
       console.error('❌ 加载文档配置失败:', error)
+      // 即使整体失败，也尝试显示基本信息
+      if (documentId) {
+        setDocumentInfo({
+          fileName: documentId,
+          fileSize: null,
+          mimeType: null,
+          uploadTime: null,
+          extractedLength: null
+        })
+      }
     }
   }
 
@@ -675,48 +720,42 @@ function ChunkingConfig({ documentId }) {
               size="small"
               className="document-info-card"
             >
-              {documentInfo ? (
-                <Space direction="vertical" className="document-info-space">
-                  <div className="document-info-header">
-                    <span className="document-info-filename">
-                      📄 {documentInfo.fileName}
-                    </span>
-                  </div>
+              <Space direction="vertical" className="document-info-space">
+                <div className="document-info-header">
+                  <span className="document-info-filename">
+                    📄 {documentInfo?.fileName || documentId}
+                  </span>
+                  {!documentInfo && (
+                    <Tag color="orange" style={{ marginLeft: 8 }}>加载中...</Tag>
+                  )}
+                </div>
 
-                  <div className="document-info-tags">
-                    {documentInfo.fileSize && (
-                      <Tag color="green" className="document-info-tag">
-                        {(documentInfo.fileSize / 1024).toFixed(1)} KB
-                      </Tag>
-                    )}
+                <div className="document-info-tags">
+                  {documentInfo?.fileSize && (
+                    <Tag color="green" className="document-info-tag">
+                      {(documentInfo.fileSize / 1024).toFixed(1)} KB
+                    </Tag>
+                  )}
 
-                    {documentInfo.mimeType && (
-                      <Tag color="cyan" className="document-info-tag">
-                        {documentInfo.mimeType.split('/')[1]?.toUpperCase() || documentInfo.mimeType}
-                      </Tag>
-                    )}
+                  {documentInfo?.mimeType && (
+                    <Tag color="cyan" className="document-info-tag">
+                      {documentInfo.mimeType.split('/')[1]?.toUpperCase() || documentInfo.mimeType}
+                    </Tag>
+                  )}
 
-                    {documentConfig?.extractedText && (
-                      <Tag color="purple" className="document-info-tag">
-                        {documentConfig.extractedText.length} {t('common.characters')}
-                      </Tag>
-                    )}
-                  </div>
-                </Space>
-              ) : (
-                <Space direction="vertical" className="document-info-space">
-                  <div className="document-info-header">
-                    <span className="document-info-filename">
-                      📄 正在加载文档信息...
-                    </span>
-                  </div>
-                  <div className="document-info-tags">
+                  {documentConfig?.extractedText && (
+                    <Tag color="purple" className="document-info-tag">
+                      {documentConfig.extractedText.length} {t('common.characters')}
+                    </Tag>
+                  )}
+
+                  {!documentInfo?.fileSize && !documentInfo?.mimeType && documentInfo && (
                     <Tag color="blue" className="document-info-tag">
                       文档ID: {documentId}
                     </Tag>
-                  </div>
-                </Space>
-              )}
+                  )}
+                </div>
+              </Space>
             </Card>
           )}
           
