@@ -388,9 +388,9 @@ omni-agent:
 
 ## 📖 详细文档
 
-- [RAG_WITHOUT_EMBEDDING.md](RAG_WITHOUT_EMBEDDING.md) - 不使用向量模型的完整指南
-- [RAG_COMPARISON_GUIDE.md](RAG_COMPARISON_GUIDE.md) - 向量检索 vs 全文检索详细对比
-- [README_RAG_EXAMPLE.md](../../../omni-agent-example-basic/README_RAG_EXAMPLE.md) - 代码示例说明
+- [RAG_WITHOUT_EMBEDDING.md](./RAG_WITHOUT_EMBEDDING.md) - 不使用向量模型的完整指南
+- [RAG_COMPARISON_GUIDE.md](./RAG_COMPARISON_GUIDE.md) - 向量检索 vs 全文检索详细对比
+- [README_RAG_EXAMPLE.md](../omni-agent-example-basic/README_RAG_EXAMPLE.md) - 代码示例说明
 
 ---
 
