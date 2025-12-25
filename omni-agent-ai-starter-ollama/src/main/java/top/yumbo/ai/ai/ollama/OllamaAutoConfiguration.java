@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import top.yumbo.ai.ai.api.AIService;
 
@@ -35,9 +36,13 @@ public class OllamaAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(name = "ollamaRestTemplate")
     public RestTemplate ollamaRestTemplate(OllamaProperties properties) {
+        // 配置请求工厂以设置超时
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofMillis(properties.getTimeout()));
+        requestFactory.setReadTimeout(Duration.ofMillis(properties.getTimeout()));
+
         return new RestTemplateBuilder()
-                .setConnectTimeout(Duration.ofMillis(properties.getTimeout()))
-                .setReadTimeout(Duration.ofMillis(properties.getTimeout()))
+                .requestFactory(() -> requestFactory)
                 .build();
     }
 

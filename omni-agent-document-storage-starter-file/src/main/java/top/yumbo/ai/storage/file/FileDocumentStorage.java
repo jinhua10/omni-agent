@@ -68,10 +68,24 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveDocument(String documentId, String filename, byte[] fileData) {
         try {
-            // 使用原文件名直接保存（保留相对路径中的目录结构）⭐
+            // 根据文件名前缀判断保存路径 ⭐
+            Path targetPath;
+            String actualFilename;
+
+            if (filename.startsWith("extraction-results/")) {
+                // 提取结果保存到 extraction-results/ 目录
+                actualFilename = filename.substring("extraction-results/".length());
+                targetPath = extractedPath;
+            } else {
+                // 默认保存到 documents/ 目录
+                actualFilename = filename;
+                targetPath = documentsPath;
+            }
+
+            // 使用原文件名直接保存（保留相对路径中的目录结构）
             // 例如: filename = "设计图/架构图.pptx"
             //      保存为: documents/设计图/架构图.pptx
-            Path documentFile = documentsPath.resolve(filename);
+            Path documentFile = targetPath.resolve(actualFilename);
 
             // 确保父目录存在
             Path parentDir = documentFile.getParent();
@@ -81,7 +95,7 @@ public class FileDocumentStorage implements DocumentStorageService {
 
             Files.write(documentFile, fileData);
 
-            log.debug("Saved document: {}", filename);
+            log.debug("Saved document: {} to {}", actualFilename, targetPath.getFileName());
             return documentId;
         } catch (IOException e) {
             log.error("Failed to save document: {}", filename, e);
@@ -92,17 +106,41 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<byte[]> getDocument(String documentId) {
         try {
-            // 由于使用原文件名直接存储，需要通过其他方式查找
-            // 这里简化处理：遍历查找
-            Path[] files = Files.walk(documentsPath, 10)
+            // 判断是从哪个目录读取 ⭐
+            Path targetPath;
+            String actualFilename;
+
+            if (documentId.startsWith("extraction-results/")) {
+                // 从 extraction-results/ 目录读取
+                actualFilename = documentId.substring("extraction-results/".length());
+                targetPath = extractedPath;
+            } else {
+                // 从 documents/ 目录读取
+                actualFilename = documentId;
+                targetPath = documentsPath;
+            }
+
+            // 直接读取指定文件
+            Path documentFile = targetPath.resolve(actualFilename);
+            if (Files.exists(documentFile)) {
+                byte[] data = Files.readAllBytes(documentFile);
+                log.debug("Read document: {} from {}", actualFilename, targetPath.getFileName());
+                return Optional.of(data);
+            }
+
+            // 如果指定路径不存在，尝试遍历查找（兼容旧版本）
+            Path[] files = Files.walk(targetPath, 20)
                     .filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().contains(actualFilename))
                     .toArray(Path[]::new);
 
             if (files.length > 0) {
-                // 返回第一个找到的文件（需要更好的查找机制）
                 byte[] data = Files.readAllBytes(files[0]);
+                log.debug("Found document by search: {}", files[0]);
                 return Optional.of(data);
             }
+
+            log.debug("Document not found: {}", documentId);
             return Optional.empty();
         } catch (IOException e) {
             log.error("Failed to get document: {}", documentId, e);

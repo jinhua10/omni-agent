@@ -740,6 +740,53 @@ public class DocumentProcessingController {
         return text.length() / 200; // 模拟分块数量
     }
 
+    /**
+     * 获取文档提取状态
+     * GET /api/documents/processing/{documentId}/extraction-status
+     *
+     * 返回：
+     * - extracted: 是否已提取
+     * - content: 提取的文本内容（如果已提取）
+     * - model: 使用的提取模型
+     * - extractedAt: 提取时间
+     */
+    @GetMapping("/{documentId}/extraction-status")
+    public ApiResponse<Map<String, Object>> getExtractionStatus(@PathVariable String documentId) {
+        try {
+            log.info("📄 检查文档提取状态: documentId={}", documentId);
+
+            // 从持久化存储查询提取结果
+            var extractionResult = extractionResultService.findByDocumentId(documentId);
+
+            Map<String, Object> status = new HashMap<>();
+
+            if (extractionResult.isPresent() && "COMPLETED".equals(extractionResult.get().getStatus())) {
+                var result = extractionResult.get();
+                status.put("extracted", true);
+                status.put("content", result.getExtractedText());
+                status.put("model", result.getExtractionModel());
+                status.put("extractedAt", result.getCompletedTime());
+                status.put("fileSize", result.getFileSize());
+                status.put("textLength", result.getExtractedText() != null ? result.getExtractedText().length() : 0);
+                status.put("pageCount", result.getPageCount());
+                status.put("imageCount", result.getImageCount());
+                status.put("duration", result.getDuration());
+
+                log.info("✅ 文档已提取: documentId={}, textLength={}, model={}",
+                        documentId, status.get("textLength"), status.get("model"));
+            } else {
+                status.put("extracted", false);
+                status.put("content", null);
+                log.info("❌ 文档未提取或提取未完成: documentId={}", documentId);
+            }
+
+            return ApiResponse.success(status);
+        } catch (Exception e) {
+            log.error("获取文档提取状态失败: documentId={}", documentId, e);
+            return ApiResponse.error("获取提取状态失败: " + e.getMessage());
+        }
+    }
+
     // ========== 请求对象 ==========
 
     @Data

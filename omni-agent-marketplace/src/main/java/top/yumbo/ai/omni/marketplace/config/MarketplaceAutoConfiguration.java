@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import top.yumbo.ai.omni.common.http.HttpClientAdapter;
 import top.yumbo.ai.omni.common.http.RestTemplateAdapter;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
@@ -31,9 +32,13 @@ public class MarketplaceAutoConfiguration {
     public HttpClientAdapter httpClientAdapter() {
         log.info("Creating default RestTemplate-based HttpClientAdapter for marketplace");
 
+        // 配置请求工厂以设置超时
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(30));
+        requestFactory.setReadTimeout(Duration.ofSeconds(30));
+
         RestTemplate restTemplate = new RestTemplateBuilder()
-                .setConnectTimeout(Duration.ofSeconds(30))
-                .setReadTimeout(Duration.ofSeconds(30))
+                .requestFactory(() -> requestFactory)
                 .build();
 
         return new RestTemplateAdapter(restTemplate);

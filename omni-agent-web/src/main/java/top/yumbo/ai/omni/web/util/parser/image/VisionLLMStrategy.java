@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import top.yumbo.ai.omni.common.http.HttpClientAdapter;
 import top.yumbo.ai.omni.common.http.RestTemplateAdapter;
@@ -117,9 +119,13 @@ public class VisionLLMStrategy implements ImageContentExtractorStrategy {
 
         // 如果没有提供 httpClientAdapter，则使用默认的 RestTemplate
         if (httpClientAdapter == null) {
+            // 创建并配置 ClientHttpRequestFactory（直接方式，避免使用过时的 API）
+            SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+            requestFactory.setConnectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT));
+            requestFactory.setReadTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT));
+
             this.restTemplate = new RestTemplateBuilder()
-                    .setConnectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                    .setReadTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
+                    .requestFactory(() -> requestFactory)
                     .build();
             this.httpClientAdapter = new RestTemplateAdapter(this.restTemplate);
         } else {

@@ -137,9 +137,10 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
             byte[] content = jsonContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
             // 保存到虚拟存储（支持多种后端）
-            String storagePath = getStoragePath(result.getDocumentId());
-            String fileName = sanitizeDocumentId(result.getDocumentId()) + ".json";
-            storageService.saveDocument(storagePath, fileName, content);
+            // ⭐ 使用 extraction-results/ 前缀作为 filename，让 FileDocumentStorage 路由到 extraction-results/ 目录
+            String fileName = getStoragePath(result.getDocumentId());  // "extraction-results/xxx.json"
+            String documentId = result.getDocumentId();  // 文档ID用于标识
+            storageService.saveDocument(documentId, fileName, content);
 
             // 添加到索引
             addToIndex(result.getDocumentId());
@@ -160,11 +161,13 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
     @Override
     public Optional<DocumentExtractionResult> findByDocumentId(String documentId) {
         try {
-            String storagePath = getStoragePath(documentId);
+            // ⭐ 使用 extraction-results/ 前缀作为路径，让 FileDocumentStorage 从 extraction-results/ 目录读取
+            String storagePath = getStoragePath(documentId);  // "extraction-results/xxx.json"
 
             // 从虚拟存储读取
             Optional<byte[]> contentOpt = storageService.getDocument(storagePath);
             if (contentOpt.isEmpty()) {
+                log.debug("未找到文档提取结果: documentId={}, path={}", documentId, storagePath);
                 return Optional.empty();
             }
 
@@ -174,6 +177,9 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
                     jsonContent,
                     DocumentExtractionResult.class
             );
+
+            log.debug("成功读取文档提取结果: documentId={}, textLength={}",
+                    documentId, result.getExtractedText() != null ? result.getExtractedText().length() : 0);
             return Optional.of(result);
 
         } catch (Exception e) {
