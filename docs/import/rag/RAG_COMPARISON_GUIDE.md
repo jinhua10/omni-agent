@@ -248,5 +248,5 @@ omni-agent:
 - [Apache Lucene 官方文档](https://lucene.apache.org/)
 - [BM25 算法详解](https://en.wikipedia.org/wiki/Okapi_BM25)
 - [Elasticsearch 文本搜索](https://www.elastic.co/guide/en/elasticsearch/reference/current/full-text-queries.html)
-- [RAG_WITHOUT_EMBEDDING.md](./RAG_WITHOUT_EMBEDDING.md) - 详细实现指南
+- [RAG_WITHOUT_EMBEDDING.md](RAG_WITHOUT_EMBEDDING.md) - 详细实现指南
 

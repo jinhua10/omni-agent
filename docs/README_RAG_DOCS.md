@@ -3,7 +3,7 @@
 ## 📚 核心概念文档
 
 ### 1. EmbeddingService、RAGService 和 PPL 的关系
-**文件**: [RAG_CORE_CONCEPTS.md](./RAG_CORE_CONCEPTS.md)
+**文件**: [RAG_CORE_CONCEPTS.md](./import/rag/RAG_CORE_CONCEPTS.md)
 
 **内容摘要**:
 - EmbeddingService（向量生成服务）的作用
@@ -20,7 +20,7 @@
 ---
 
 ### 2. 不使用向量模型实现 RAG
-**文件**: [RAG_WITHOUT_EMBEDDING.md](./RAG_WITHOUT_EMBEDDING.md) ⭐ **推荐**
+**文件**: [RAG_WITHOUT_EMBEDDING.md](./import/rag/RAG_WITHOUT_EMBEDDING.md) ⭐ **推荐**
 
 **内容摘要**:
 - ✅ **完全可以不用向量模型！**
@@ -44,7 +44,7 @@
 ---
 
 ### 3. 向量检索 vs 全文检索对比指南
-**文件**: [RAG_COMPARISON_GUIDE.md](./RAG_COMPARISON_GUIDE.md) ⭐⭐ **强烈推荐**
+**文件**: [RAG_COMPARISON_GUIDE.md](./import/rag/RAG_COMPARISON_GUIDE.md) ⭐⭐ **强烈推荐**
 
 **内容摘要**:
 - 📊 全维度对比表格（18个维度）
@@ -145,16 +145,16 @@ ragExample.runVectorSearchExamples();
 ### 我想...
 
 #### 快速开始，不想配置向量模型
-👉 [RAG_WITHOUT_EMBEDDING.md - 快速开始](./RAG_WITHOUT_EMBEDDING.md#🚀-快速开始不使用向量的-rag)
+👉 [RAG_WITHOUT_EMBEDDING.md - 快速开始](./import/rag/RAG_WITHOUT_EMBEDDING.md#🚀-快速开始不使用向量的-rag)
 
 #### 了解向量检索和全文检索的区别
-👉 [RAG_COMPARISON_GUIDE.md - 快速对比表](./RAG_COMPARISON_GUIDE.md#📊-快速对比表)
+👉 [RAG_COMPARISON_GUIDE.md - 快速对比表](./import/rag/RAG_COMPARISON_GUIDE.md#📊-快速对比表)
 
 #### 选择合适的技术方案
-👉 [RAG_COMPARISON_GUIDE.md - 使用场景推荐](./RAG_COMPARISON_GUIDE.md#🎯-使用场景推荐)
+👉 [RAG_COMPARISON_GUIDE.md - 使用场景推荐](./import/rag/RAG_COMPARISON_GUIDE.md#🎯-使用场景推荐)
 
 #### 了解性能和成本
-👉 [RAG_COMPARISON_GUIDE.md - 成本对比](./RAG_COMPARISON_GUIDE.md#💰-成本对比10万条文档768维向量)
+👉 [RAG_COMPARISON_GUIDE.md - 成本对比](./import/rag/RAG_COMPARISON_GUIDE.md#💰-成本对比10万条文档768维向量)
 
 #### 看实际代码示例
 👉 [RAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/RAGExample.java)
@@ -162,8 +162,6 @@ ragExample.runVectorSearchExamples();
 #### 配置生产环境
 👉 [application-text-only-rag.yml](./application-text-only-rag.yml)
 
-#### 了解重构前的实现
-👉 [BATCH_MERGE_FIX.md - 重构前实现](import/BATCH_MERGE_FIX.md#🔧-重构前的实现old-目录)
 
 ---
 
@@ -172,11 +170,11 @@ ragExample.runVectorSearchExamples();
 ### 初学者路径
 
 1. **第一步：理解基本概念**
-   - 阅读 [BATCH_MERGE_FIX.md](import/BATCH_MERGE_FIX.md)
+   - 阅读 [RAG_CORE_CONCEPTS.md](./import/rag/RAG_CORE_CONCEPTS.md)
    - 了解 EmbeddingService 和 RAGService 的区别
 
 2. **第二步：快速上手**
-   - 阅读 [RAG_WITHOUT_EMBEDDING.md](./RAG_WITHOUT_EMBEDDING.md)
+   - 阅读 [RAG_WITHOUT_EMBEDDING.md](./import/rag/RAG_WITHOUT_EMBEDDING.md)
    - 按照快速开始指南配置 Lucene
    - 运行 [RAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/RAGExample.java)
 
@@ -185,7 +183,7 @@ ragExample.runVectorSearchExamples();
    - 根据实际需求调整配置
 
 4. **第四步：评估是否需要向量检索**
-   - 阅读 [RAG_COMPARISON_GUIDE.md](./RAG_COMPARISON_GUIDE.md)
+   - 阅读 [RAG_COMPARISON_GUIDE.md](./import/rag/RAG_COMPARISON_GUIDE.md)
    - 对比性能和成本
    - 做出技术选型决策
 
@@ -194,7 +192,7 @@ ragExample.runVectorSearchExamples();
 ### 架构师路径
 
 1. **第一步：全局对比**
-   - 重点阅读 [RAG_COMPARISON_GUIDE.md](./RAG_COMPARISON_GUIDE.md)
+   - 重点阅读 [RAG_COMPARISON_GUIDE.md](./import/rag/RAG_COMPARISON_GUIDE.md)
    - 理解各方案的优劣势
 
 2. **第二步：评估需求**
@@ -218,7 +216,7 @@ ragExample.runVectorSearchExamples();
 
 **A**: 不一定！对于关键词明确的场景（如专业术语、代码搜索），全文检索效果**更好**。
 
-参考: [RAG_COMPARISON_GUIDE.md - 准确率对比](./RAG_COMPARISON_GUIDE.md#准确率对比)
+参考: [RAG_COMPARISON_GUIDE.md - 准确率对比](./import/rag/RAG_COMPARISON_GUIDE.md#准确率对比)
 
 ---
 
@@ -229,7 +227,7 @@ ragExample.runVectorSearchExamples();
 - 内容推荐（相似度匹配）
 - 跨语言搜索
 
-参考: [RAG_COMPARISON_GUIDE.md - 使用场景](./RAG_COMPARISON_GUIDE.md#✅-推荐使用向量检索的场景)
+参考: [RAG_COMPARISON_GUIDE.md - 使用场景](./import/rag/RAG_COMPARISON_GUIDE.md#✅-推荐使用向量检索的场景)
 
 ---
 
@@ -265,7 +263,7 @@ Query vectorQuery = Query.builder()
 | QPS | 300 | 22 | **14倍** |
 | 内存占用 | 100MB | 1.8GB | **18倍** |
 
-参考: [RAG_COMPARISON_GUIDE.md - 性能测试](./RAG_COMPARISON_GUIDE.md#查询性能)
+参考: [RAG_COMPARISON_GUIDE.md - 性能测试](./import/rag/RAG_COMPARISON_GUIDE.md#查询性能)
 
 ---
 
@@ -281,7 +279,7 @@ Query vectorQuery = Query.builder()
 文档量 > 100,000 条？ → 向量检索或混合
 ```
 
-参考: [RAG_COMPARISON_GUIDE.md - 实施建议](./RAG_COMPARISON_GUIDE.md#🚀-实施建议)
+参考: [RAG_COMPARISON_GUIDE.md - 实施建议](./import/rag/RAG_COMPARISON_GUIDE.md#🚀-实施建议)
 
 ---
 
@@ -295,8 +293,8 @@ Query vectorQuery = Query.builder()
 
 ### 向量检索（高级）
 
-- ONNX Runtime 实现: [BATCH_MERGE_FIX.md](import/BATCH_MERGE_FIX.md#🔧-重构前的实现old-目录)
-- 混合检索策略: [RAG_COMPARISON_GUIDE.md](./RAG_COMPARISON_GUIDE.md#🎨-混合方案推荐)
+- ONNX Runtime 实现: 
+- 混合检索策略: [RAG_COMPARISON_GUIDE.md](./import/rag/RAG_COMPARISON_GUIDE.md#🎨-混合方案推荐)
 
 ---
 
