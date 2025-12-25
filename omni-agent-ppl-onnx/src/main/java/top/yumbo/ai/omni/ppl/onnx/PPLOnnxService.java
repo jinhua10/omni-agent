@@ -27,22 +27,22 @@ import java.util.*;
  */
 @Slf4j
 @Service
-@ConditionalOnProperty(prefix = "ppl.onnx", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "omni-agent.chunking.ppl.onnx", name = "enabled", havingValue = "true")
 public class PPLOnnxService {
 
-    @Value("${ppl.onnx.model-path}")
+    @Value("${omni-agent.chunking.ppl.onnx.model-path}")
     private String modelPath;
 
-    @Value("${ppl.onnx.tokenizer-path}")
+    @Value("${omni-agent.chunking.ppl.onnx.tokenizer-path}")
     private String tokenizerPath;
 
-    @Value("${ppl.onnx.use-cache:true}")
+    @Value("${omni-agent.chunking.ppl.onnx.use-cache:true}")
     private boolean useCache;
 
-    @Value("${ppl.onnx.cache-size:1000}")
+    @Value("${omni-agent.chunking.ppl.onnx.cache-size:1000}")
     private int cacheSize;
 
-    @Value("${ppl.onnx.cache-ttl:3600}")
+    @Value("${omni-agent.chunking.ppl.onnx.cache-ttl:3600}")
     private int cacheTtl;
 
     // ONNX Runtime 组件
