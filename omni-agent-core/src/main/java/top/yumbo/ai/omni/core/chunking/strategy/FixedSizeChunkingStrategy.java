@@ -33,8 +33,8 @@ public class FixedSizeChunkingStrategy implements ChunkingStrategy {
         }
 
         // 从参数获取配置
-        int chunkSize = getParam(params, "chunkSize", DEFAULT_CHUNK_SIZE);
-        int overlapSize = getParam(params, "overlapSize", DEFAULT_OVERLAP_SIZE);
+        int chunkSize = ChunkingParamUtils.getParam(params, "chunkSize", DEFAULT_CHUNK_SIZE);
+        int overlapSize = ChunkingParamUtils.getParam(params, "overlapSize", DEFAULT_OVERLAP_SIZE);
 
         int contentLength = content.length();
         int position = 0;
@@ -96,14 +96,6 @@ public class FixedSizeChunkingStrategy implements ChunkingStrategy {
         params.put("chunkSize", DEFAULT_CHUNK_SIZE);
         params.put("overlapSize", DEFAULT_OVERLAP_SIZE);
         return params;
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T getParam(Map<String, Object> params, String key, T defaultValue) {
-        if (params == null || !params.containsKey(key)) {
-            return defaultValue;
-        }
-        return (T) params.get(key);
     }
 }
 

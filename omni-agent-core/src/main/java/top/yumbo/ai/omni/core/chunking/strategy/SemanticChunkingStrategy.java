@@ -46,9 +46,9 @@ public class SemanticChunkingStrategy implements ChunkingStrategy {
             return chunks;
         }
 
-        int minChunkSize = getParam(params, "minChunkSize", DEFAULT_MIN_CHUNK_SIZE);
-        int maxChunkSize = getParam(params, "maxChunkSize", DEFAULT_MAX_CHUNK_SIZE);
-        double threshold = getParam(params, "similarityThreshold", DEFAULT_SIMILARITY_THRESHOLD);
+        int minChunkSize = ChunkingParamUtils.getParam(params, "minChunkSize", DEFAULT_MIN_CHUNK_SIZE);
+        int maxChunkSize = ChunkingParamUtils.getParam(params, "maxChunkSize", DEFAULT_MAX_CHUNK_SIZE);
+        double threshold = ChunkingParamUtils.getParam(params, "similarityThreshold", DEFAULT_SIMILARITY_THRESHOLD);
 
         // 1. 按段落分割
         List<Paragraph> paragraphs = splitIntoParagraphs(content);
@@ -317,13 +317,6 @@ public class SemanticChunkingStrategy implements ChunkingStrategy {
         return count > 0 ? sum / count : 0.0;
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> T getParam(Map<String, Object> params, String key, T defaultValue) {
-        if (params == null || !params.containsKey(key)) {
-            return defaultValue;
-        }
-        return (T) params.get(key);
-    }
 
     /**
      * 段落数据结构

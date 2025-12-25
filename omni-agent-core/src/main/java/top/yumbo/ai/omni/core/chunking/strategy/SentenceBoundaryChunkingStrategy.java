@@ -31,7 +31,7 @@ public class SentenceBoundaryChunkingStrategy implements ChunkingStrategy {
             return chunks;
         }
 
-        int targetSize = getParam(params, "targetSize", DEFAULT_TARGET_SIZE);
+        int targetSize = ChunkingParamUtils.getParam(params, "targetSize", DEFAULT_TARGET_SIZE);
 
         // 按句子分割
         List<String> sentences = splitIntoSentences(content);
@@ -137,14 +137,6 @@ public class SentenceBoundaryChunkingStrategy implements ChunkingStrategy {
             count++;
         }
         return Math.max(1, count);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T getParam(Map<String, Object> params, String key, T defaultValue) {
-        if (params == null || !params.containsKey(key)) {
-            return defaultValue;
-        }
-        return (T) params.get(key);
     }
 }
 

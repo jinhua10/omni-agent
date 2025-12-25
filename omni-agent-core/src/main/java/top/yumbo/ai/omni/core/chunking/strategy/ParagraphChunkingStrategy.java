@@ -28,7 +28,7 @@ public class ParagraphChunkingStrategy implements ChunkingStrategy {
             return chunks;
         }
 
-        int maxParagraphs = getParam(params, "maxParagraphsPerChunk", DEFAULT_MAX_PARAGRAPHS_PER_CHUNK);
+        int maxParagraphs = ChunkingParamUtils.getParam(params, "maxParagraphsPerChunk", DEFAULT_MAX_PARAGRAPHS_PER_CHUNK);
 
         // 按段落分割（双换行符）
         String[] paragraphs = content.split("\\n\\s*\\n");
@@ -113,14 +113,6 @@ public class ParagraphChunkingStrategy implements ChunkingStrategy {
         Map<String, Object> params = new HashMap<>();
         params.put("maxParagraphsPerChunk", DEFAULT_MAX_PARAGRAPHS_PER_CHUNK);
         return params;
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T getParam(Map<String, Object> params, String key, T defaultValue) {
-        if (params == null || !params.containsKey(key)) {
-            return defaultValue;
-        }
-        return (T) params.get(key);
     }
 }
 

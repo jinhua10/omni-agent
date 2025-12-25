@@ -113,9 +113,9 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
                                                      Map<String, Object> params) {
         List<Chunk> chunks = new ArrayList<>();
 
-        int minChunkSize = getParam(params, "minChunkSize", DEFAULT_MIN_CHUNK_SIZE);
-        int maxChunkSize = getParam(params, "maxChunkSize", DEFAULT_MAX_CHUNK_SIZE);
-        double threshold = getParam(params, "threshold", DEFAULT_THRESHOLD);
+        int minChunkSize = ChunkingParamUtils.getParam(params, "minChunkSize", DEFAULT_MIN_CHUNK_SIZE);
+        int maxChunkSize = ChunkingParamUtils.getParam(params, "maxChunkSize", DEFAULT_MAX_CHUNK_SIZE);
+        double threshold = ChunkingParamUtils.getParam(params, "threshold", DEFAULT_THRESHOLD);
 
         // 1. 按句子分割
         List<Sentence> sentences = splitIntoSentences(content);
@@ -358,13 +358,6 @@ public class PPLChunkingStrategy implements ChunkingStrategy {
         return count > 0 ? sum / count : 0.0;
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> T getParam(Map<String, Object> params, String key, T defaultValue) {
-        if (params == null || !params.containsKey(key)) {
-            return defaultValue;
-        }
-        return (T) params.get(key);
-    }
 
     /**
      * 句子数据结构

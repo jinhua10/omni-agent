@@ -285,7 +285,7 @@ omni-agent:
     # ONNX 本地向量化服务（默认禁用）
     onnx:
       # 是否启用 ONNX Embedding 服务
-      enabled: false
+      enabled: true
 
       # ONNX 模型文件路径
       # 推荐模型：
