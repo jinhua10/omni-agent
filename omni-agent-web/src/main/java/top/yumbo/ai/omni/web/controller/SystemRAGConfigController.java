@@ -640,6 +640,8 @@ public class SystemRAGConfigController {
     /**
      * 开始处理文档（使用当前配置）
      * POST /api/system/rag-config/documents/{documentId}/process
+     *
+     * ⭐ 手动触发：强制执行完整流程，不受系统自动配置影响
      */
     @PostMapping("/documents/{documentId}/process")
     public ApiResponse<Void> startProcessing(@PathVariable String documentId) {
@@ -674,8 +676,15 @@ public class SystemRAGConfigController {
                 return ApiResponse.error("读取文件失败: " + e.getMessage());
             }
             
-            // 触发处理流程
-            processingService.processDocument(documentId, documentId, content)
+            // ⭐ 强制执行完整处理流程（手动触发模式）
+            processingService.processDocumentManually(
+                documentId,
+                documentId,
+                content,
+                config.getTextExtractionModel(),
+                config.getChunkingStrategy(),
+                config.getChunkingParams()
+            )
                 .thenAccept(result -> {
                     config.setStatus("COMPLETED");
                     config.setUpdatedAt(System.currentTimeMillis());
@@ -691,7 +700,8 @@ public class SystemRAGConfigController {
                     return null;
                 });
             
-            log.info("🚀 开始处理文档: documentId={}", documentId);
+            log.info("🚀 手动触发文档处理: documentId={}, model={}, strategy={}",
+                    documentId, config.getTextExtractionModel(), config.getChunkingStrategy());
             return ApiResponse.success(null, "文档处理已启动");
         } catch (Exception e) {
             log.error("❌ 启动文档处理失败: documentId={}", documentId, e);

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.web.websocket.DocumentProcessingWebSocketHandler;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 
@@ -36,9 +37,98 @@ public class DocumentProcessingService {
     private final DocumentProcessingWebSocketHandler webSocketHandler;
     private final SystemRAGConfigService ragConfigService;
     private final DocumentStorageService storageService;  // ⭐ 新增：存储服务
+    private final DocumentProcessorManager documentProcessorManager;  // ⭐ 新增：文档处理管理器
 
     @Value("${omni-agent.file-watcher.watch-directory:./data/documents}")
     private String watchDirectory;  // ⭐ 新增：中转站目录
+
+    /**
+     * 手动处理文档（强制执行完整流程）⭐
+     *
+     * 用于用户手动点击"开始处理"按钮时触发
+     * 无视系统自动配置，直接使用指定的模型和策略进行处理
+     *
+     * @param documentId 文档ID
+     * @param documentName 文档名称
+     * @param content 文档内容
+     * @param extractionModel 文本提取模型
+     * @param chunkingStrategy 分块策略
+     * @param chunkingParams 分块参数
+     */
+    public CompletableFuture<Void> processDocumentManually(
+            String documentId,
+            String documentName,
+            byte[] content,
+            String extractionModel,
+            String chunkingStrategy,
+            Map<String, Object> chunkingParams) {
+
+        return CompletableFuture.runAsync(() -> {
+            try {
+                log.info("🎯 手动处理文档: documentId={}, model={}, strategy={}",
+                        documentId, extractionModel, chunkingStrategy);
+
+                // 获取文档配置
+                SystemRAGConfigService.DocumentRAGConfig docConfig =
+                    ragConfigService.getDocumentConfig(documentId);
+
+                // 强制设置配置（使用传入的参数）
+                docConfig.setTextExtractionModel(extractionModel);
+                docConfig.setChunkingStrategy(chunkingStrategy);
+                docConfig.setChunkingParams(chunkingParams);
+
+                // 阶段1: 上传完成
+                pushProgress(documentId, "UPLOAD", 0, "文档上传完成", documentName, null);
+                Thread.sleep(500);
+
+                // 阶段2: 文本提取 ⭐
+                performTextExtraction(documentId, documentName, content, docConfig);
+
+                // ⭐ 使用存储服务获取提取文本
+                String extractedText = ragConfigService.getExtractedText(documentId)
+                    .orElseThrow(() -> new RuntimeException("文本提取失败"));
+
+                // 阶段3: 智能分块 ⭐
+                pushProgress(documentId, "CHUNK", 40, "正在智能分块...", documentName, null);
+                Thread.sleep(2000);
+                int chunkCount = performChunking(extractedText, docConfig);
+                docConfig.setStatus("CHUNKED");
+                ragConfigService.setDocumentConfig(documentId, docConfig);
+
+                // 阶段4: 向量化
+                pushProgress(documentId, "VECTORIZE", 60, "正在向量化...", documentName,
+                    Map.of("chunks", chunkCount));
+                Thread.sleep(2000);
+                int vectorCount = performVectorization(chunkCount);
+                docConfig.setStatus("VECTORIZING");
+                ragConfigService.setDocumentConfig(documentId, docConfig);
+
+                // 阶段5: 建立索引
+                pushProgress(documentId, "INDEX", 80, "正在建立索引...", documentName,
+                    Map.of("chunks", chunkCount, "vectors", vectorCount));
+                Thread.sleep(1500);
+                performIndexing(documentId, vectorCount);
+
+                // 阶段6: 归档
+                pushProgress(documentId, "ARCHIVE", 90, "正在归档文档...", documentName, null);
+                archiveDocument(documentId, documentName, content, docConfig);
+
+                // 完成
+                docConfig.setStatus("COMPLETED");
+                ragConfigService.setDocumentConfig(documentId, docConfig);
+                pushProgress(documentId, "COMPLETED", 100, "处理完成！", documentName,
+                    Map.of("chunks", chunkCount, "vectors", vectorCount, "status", "COMPLETED"));
+
+                log.info("✅ 手动文档处理完成: documentId={}", documentId);
+
+            } catch (Exception e) {
+                log.error("❌ 手动文档处理失败: documentId={}", documentId, e);
+                pushProgress(documentId, "FAILED", 0, "处理失败: " + e.getMessage(),
+                    null, Map.of("status", "FAILED", "error", e.getMessage()));
+                throw new RuntimeException("文档处理失败", e);
+            }
+        });
+    }
 
     /**
      * 处理文档（智能混合模式）⭐
@@ -109,7 +199,8 @@ public class DocumentProcessingService {
                                        SystemRAGConfigService.DocumentRAGConfig docConfig) throws InterruptedException {
         pushProgress(documentId, "EXTRACT", 20, "正在提取文本...", documentName, null);
         Thread.sleep(1500);
-        String extractedText = extractText(content, docConfig.getTextExtractionModel());
+        // ⭐ 传递文档名称以提取文件扩展名
+        String extractedText = extractText(content, docConfig.getTextExtractionModel(), documentName);
 
         // ⭐ 持久化提取文本到存储服务
         try {
@@ -270,31 +361,66 @@ public class DocumentProcessingService {
         webSocketHandler.broadcastProgress(documentId, progress);
     }
 
-    /**
-     * 提取文本（模拟）
-     */
-    private String extractText(byte[] content) {
-        return extractText(content, "standard");
-    }
 
     /**
-     * 提取文本（支持不同模型）
+     * 提取文本（支持不同模型）⭐ 真实实现
      */
-    private String extractText(byte[] content, String model) {
-        log.debug("📝 提取文本: {} bytes, model={}", content.length, model);
-        // TODO: 实际实现应该根据model调用不同的提取服务
-        // standard - 标准文本提取
-        // vision-llm - Vision LLM提取（用于图片、PPT等）
-        // ocr - OCR提取
-        return "模拟提取的文本内容...";
+    private String extractText(byte[] content, String model, String documentName) {
+        log.info("📝 提取文本: {} bytes, model={}, file={}", content.length, model, documentName);
+
+        // 如果是 standard 模型，使用简单的文本提取
+        if ("standard".equals(model)) {
+            try {
+                return new String(content, java.nio.charset.StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                log.error("❌ Standard 文本提取失败", e);
+                return "Standard 文本提取失败: " + e.getMessage();
+            }
+        }
+
+        // ⭐ 提取文件扩展名
+        String fileExtension = "txt";  // 默认
+        if (documentName != null && documentName.contains(".")) {
+            fileExtension = documentName.substring(documentName.lastIndexOf(".") + 1);
+        }
+
+        // vision-llm, ocr 等需要调用DocumentProcessorManager
+        try {
+            // ⭐ 构建处理上下文
+            Map<String, Object> options = new HashMap<>();
+            options.put("model", model);  // ⭐ 传递请求的模型
+
+            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
+                top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+                    .fileBytes(content)              // ⭐ 使用 fileBytes
+                    .originalFileName(documentName)  // ⭐ 使用真实文件名
+                    .fileExtension(fileExtension)    // ⭐ 使用提取的扩展名
+                    .fileSize((long) content.length) // ⭐ 文件大小
+                    .options(options)                // ⭐ 处理选项
+                    .build();
+
+            // ⭐ 真正调用文档处理器进行提取
+            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
+                documentProcessorManager.processDocument(context);
+
+            String extractedText = result.getContent();
+
+            if (extractedText == null || extractedText.isEmpty()) {
+                log.warn("⚠️ 提取文本为空，使用默认文本");
+                return "提取文本为空";
+            }
+
+            log.info("✅ 文本提取成功: {} 字符, model={}, processor={}",
+                    extractedText.length(), model, result.getProcessorName());
+            return extractedText;
+
+        } catch (Exception e) {
+            log.error("❌ 文本提取失败: model={}, file={}", model, documentName, e);
+            // 返回错误信息而不是模拟文本
+            return "文本提取失败: " + e.getMessage();
+        }
     }
 
-    /**
-     * 执行分块（模拟）
-     */
-    private int performChunking(String text) {
-        return performChunking(text, null);
-    }
 
     /**
      * 执行分块（支持配置）
