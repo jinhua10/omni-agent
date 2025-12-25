@@ -23,11 +23,11 @@ import java.util.concurrent.CompletableFuture;
 /**
  * 文档处理服务（智能混合模式）
  * (Document Processing Service - Smart Hybrid Mode)
- *
+ * <p>
  * 实现方案3：智能混合模式 ⭐
  * - 系统配置=自动 → 自动处理 → 完成
  * - 系统配置=手动 → PENDING → 用户介入 → 完成
- *
+ * <p>
  * 处理文档并推送进度
  * (Process documents and push progress)
  *
@@ -72,16 +72,16 @@ public class DocumentProcessingService {
 
     /**
      * 手动处理文档（强制执行完整流程）⭐
-     *
+     * <p>
      * 用于用户手动点击"开始处理"按钮时触发
      * 无视系统自动配置，直接使用指定的模型和策略进行处理
      *
-     * @param documentId 文档ID
-     * @param documentName 文档名称
-     * @param content 文档内容
-     * @param extractionModel 文本提取模型
+     * @param documentId       文档ID
+     * @param documentName     文档名称
+     * @param content          文档内容
+     * @param extractionModel  文本提取模型
      * @param chunkingStrategy 分块策略
-     * @param chunkingParams 分块参数
+     * @param chunkingParams   分块参数
      */
     public CompletableFuture<Void> processDocumentManually(
             String documentId,
@@ -98,7 +98,7 @@ public class DocumentProcessingService {
 
                 // 获取文档配置
                 SystemRAGConfigService.DocumentRAGConfig docConfig =
-                    ragConfigService.getDocumentConfig(documentId);
+                        ragConfigService.getDocumentConfig(documentId);
 
                 // 强制设置配置（使用传入的参数）
                 docConfig.setTextExtractionModel(extractionModel);
@@ -119,16 +119,16 @@ public class DocumentProcessingService {
                 ragConfigService.setDocumentConfig(documentId, docConfig);
 
                 pushProgress(documentId, "COMPLETED", 100, "处理完成！", documentName,
-                    Map.of("chunks", result.getChunkCount(),
-                           "vectors", result.getVectorCount(),
-                           "status", "COMPLETED"));
+                        Map.of("chunks", result.getChunkCount(),
+                                "vectors", result.getVectorCount(),
+                                "status", "COMPLETED"));
 
                 log.info("✅ 手动文档处理完成: documentId={}", documentId);
 
             } catch (Exception e) {
                 log.error("❌ 手动文档处理失败: documentId={}", documentId, e);
                 pushProgress(documentId, "FAILED", 0, "处理失败: " + e.getMessage(),
-                    null, Map.of("status", "FAILED", "error", e.getMessage()));
+                        null, Map.of("status", "FAILED", "error", e.getMessage()));
                 throw new RuntimeException("文档处理失败", e);
             }
         });
@@ -136,7 +136,7 @@ public class DocumentProcessingService {
 
     /**
      * 处理文档（智能混合模式）⭐
-     *
+     * <p>
      * 根据系统配置决定处理方式：
      * 1. 如果系统配置为"自动"，则全自动处理
      * 2. 如果系统配置为"手动"，则等待用户配置
@@ -154,7 +154,7 @@ public class DocumentProcessingService {
 
                 // 获取文档配置
                 SystemRAGConfigService.DocumentRAGConfig docConfig =
-                    ragConfigService.getDocumentConfig(documentId);
+                        ragConfigService.getDocumentConfig(documentId);
 
                 // 阶段1: 上传完成
                 pushProgress(documentId, "UPLOAD", 0, "文档上传完成", documentName, null);
@@ -175,7 +175,7 @@ public class DocumentProcessingService {
                     docConfig.setStatus("EXTRACTED");
                     ragConfigService.setDocumentConfig(documentId, docConfig);
                     pushProgress(documentId, "CHUNK", 40, "等待配置分块策略...", documentName,
-                        Map.of("status", "PENDING", "message", "请在分块配置中选择分块策略"));
+                            Map.of("status", "PENDING", "message", "请在分块配置中选择分块策略"));
                     log.info("⏸️ 文档等待配置分块: documentId={}", documentId);
 
                 } else {
@@ -184,14 +184,14 @@ public class DocumentProcessingService {
                     docConfig.setStatus("PENDING");
                     ragConfigService.setDocumentConfig(documentId, docConfig);
                     pushProgress(documentId, "EXTRACT", 10, "等待配置文本提取方式...", documentName,
-                        Map.of("status", "PENDING", "message", "请在文本提取配置中选择提取方式"));
+                            Map.of("status", "PENDING", "message", "请在文本提取配置中选择提取方式"));
                     log.info("⏸️ 文档等待配置: documentId={}", documentId);
                 }
 
             } catch (Exception e) {
                 log.error("❌ 文档处理失败: documentId={}", documentId, e);
                 pushProgress(documentId, "FAILED", 0, "处理失败: " + e.getMessage(),
-                    null, Map.of("status", "FAILED", "error", e.getMessage()));
+                        null, Map.of("status", "FAILED", "error", e.getMessage()));
             }
         });
     }
@@ -219,8 +219,8 @@ public class DocumentProcessingService {
 
         // 配置中只保存摘要（前200字符）
         String summary = extractedText.length() > 200
-            ? extractedText.substring(0, 200) + "..."
-            : extractedText;
+                ? extractedText.substring(0, 200) + "..."
+                : extractedText;
         docConfig.setTextSummary(summary);
         docConfig.setExtractedTextRef(documentId);  // 保存引用
 
@@ -228,18 +228,18 @@ public class DocumentProcessingService {
         docConfig.setStatus("EXTRACTED");
         ragConfigService.setDocumentConfig(documentId, docConfig);
         pushProgress(documentId, "EXTRACT", 30, "文本提取完成", documentName,
-            Map.of("extractedLength", extractedText.length()));
+                Map.of("extractedLength", extractedText.length()));
     }
 
     /**
      * 执行完整RAG流程（自动模式）⭐
-     *
+     * <p>
      * 注意：此方法用于自动模式（系统配置为全自动时）
      * - 调用统一的核心处理方法 performFullRAGCore
      * - 包含进度推送和状态更新
      */
     private void performFullRAGSimulated(String documentId, String documentName, byte[] content,
-                                SystemRAGConfigService.DocumentRAGConfig docConfig) throws Exception {
+                                         SystemRAGConfigService.DocumentRAGConfig docConfig) throws Exception {
 
         log.info("🤖 自动模式处理文档: documentId={}", documentId);
 
@@ -254,20 +254,20 @@ public class DocumentProcessingService {
         ragConfigService.setDocumentConfig(documentId, docConfig);
 
         pushProgress(documentId, "COMPLETED", 100, "处理完成！", documentName,
-            Map.of("chunks", result.getChunkCount(),
-                   "vectors", result.getVectorCount(),
-                   "status", "COMPLETED"));
+                Map.of("chunks", result.getChunkCount(),
+                        "vectors", result.getVectorCount(),
+                        "status", "COMPLETED"));
 
         log.info("✅ 自动模式文档处理完成: documentId={}", documentId);
     }
 
     /**
      * 归档文档到存储服务并清理中转站 ⭐
-     *
+     * <p>
      * 包含重试机制：最多重试3次
      */
     private void archiveDocument(String documentId, String documentName, byte[] content,
-                                  SystemRAGConfigService.DocumentRAGConfig docConfig) {
+                                 SystemRAGConfigService.DocumentRAGConfig docConfig) {
         final int maxRetries = 3;
         Exception lastException = null;
 
@@ -375,20 +375,20 @@ public class DocumentProcessingService {
             // 注意：不设置 streaming=true 和 streamCallback，因为流程视图不需要实时输出
 
             top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
-                top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
-                    .fileBytes(content)              // ⭐ 使用 fileBytes
-                    .originalFileName(documentName)  // ⭐ 使用真实文件名
-                    .fileExtension(fileExtension)    // ⭐ 使用提取的扩展名
-                    .fileSize((long) content.length) // ⭐ 文件大小
-                    .options(options)                // ⭐ 处理选项（包含分批配置）
-                    .build();
+                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+                            .fileBytes(content)              // ⭐ 使用 fileBytes
+                            .originalFileName(documentName)  // ⭐ 使用真实文件名
+                            .fileExtension(fileExtension)    // ⭐ 使用提取的扩展名
+                            .fileSize((long) content.length) // ⭐ 文件大小
+                            .options(options)                // ⭐ 处理选项（包含分批配置）
+                            .build();
 
             // ⭐ 真正调用文档处理器进行提取（支持分批并行）
             log.info("🚀 [流程视图] 开始分批并行处理: model={}, file={}, batchSize={}",
                     model, documentName, options.get("batchSize"));
 
             top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
-                documentProcessorManager.processDocument(context);
+                    documentProcessorManager.processDocument(context);
 
             String extractedText = result.getContent();
 
@@ -462,8 +462,8 @@ public class DocumentProcessingService {
             for (int i = 0; i < Math.min(chunks.size(), 3); i++) {
                 var chunk = chunks.get(i);
                 String preview = chunk.getContent().length() > 100
-                    ? chunk.getContent().substring(0, 100) + "..."
-                    : chunk.getContent();
+                        ? chunk.getContent().substring(0, 100) + "..."
+                        : chunk.getContent();
                 log.debug("📦 分块 #{}: id={}, size={} 字符, preview: {}",
                         i + 1, chunk.getId(), chunk.getContent().length(), preview);
             }
@@ -505,8 +505,8 @@ public class DocumentProcessingService {
 
             // ⭐ 2. 批量生成向量
             List<String> texts = chunks.stream()
-                .map(top.yumbo.ai.storage.api.model.Chunk::getContent)
-                .collect(java.util.stream.Collectors.toList());
+                    .map(top.yumbo.ai.storage.api.model.Chunk::getContent)
+                    .collect(java.util.stream.Collectors.toList());
 
             List<float[]> embeddings = embeddingService.embedBatch(texts);
 
@@ -521,11 +521,11 @@ public class DocumentProcessingService {
                 float[] embedding = embeddings.get(i);
 
                 var ragDoc = top.yumbo.ai.rag.api.model.Document.builder()
-                    .id(chunk.getId())
-                    .content(chunk.getContent())
-                    .embedding(embedding)
-                    .metadata(new java.util.HashMap<>())
-                    .build();
+                        .id(chunk.getId())
+                        .content(chunk.getContent())
+                        .embedding(embedding)
+                        .metadata(new java.util.HashMap<>())
+                        .build();
 
                 // 添加元数据
                 ragDoc.getMetadata().put("documentId", documentId);
@@ -552,13 +552,13 @@ public class DocumentProcessingService {
 
     /**
      * 核心RAG处理流程（真实实现）⭐
-     *
+     * <p>
      * 提取的统一核心处理逻辑，避免代码重复
      *
-     * @param documentId 文档ID
+     * @param documentId   文档ID
      * @param documentName 文档名称
-     * @param content 文档内容
-     * @param docConfig 文档配置
+     * @param content      文档内容
+     * @param docConfig    文档配置
      * @return 处理结果（包含分块数和向量数）
      * @throws Exception 处理失败时抛出异常
      */
@@ -602,7 +602,7 @@ public class DocumentProcessingService {
 
     /**
      * 执行索引（真实实现）⭐
-     *
+     * <p>
      * 注意：索引已在 performVectorization 中完成
      * 此方法保留用于兼容性和日志输出
      */
@@ -617,9 +617,13 @@ public class DocumentProcessingService {
     @lombok.Data
     @lombok.AllArgsConstructor
     public static class RAGProcessingResult {
-        /** 分块数量 */
+        /**
+         * 分块数量
+         */
         private int chunkCount;
-        /** 向量总维度数 */
+        /**
+         * 向量总维度数
+         */
         private int vectorCount;
     }
 }
