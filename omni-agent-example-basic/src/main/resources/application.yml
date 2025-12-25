@@ -295,9 +295,9 @@ omni-agent:
       # - text2vec-base-chinese (中文，768维，~400MB)
       #
       # 模型下载：
-      # 方式1: huggingface-cli download BAAI/bge-base-zh-v1.5 --local-dir ./models/bge-base-zh-v1.5
-      # 方式2: git clone https://www.modelscope.cn/BAAI/bge-base-zh-v1.5.git ./models/bge-base-zh-v1.5
-      model-path: ./models/bge-base-zh-v1.5/model.onnx
+      # 方式1: huggingface-cli download BAAI/bge-base-zh-v1.5 --local-dir ./models/bge-base-zh
+      # 方式2: git clone https://www.modelscope.cn/BAAI/bge-base-zh-v1.5.git ./models/bge-base-zh
+      model-path: ./models/bge-base-zh/model.onnx
 
       # 最大序列长度
       # bge-base-zh-v1.5: 512
