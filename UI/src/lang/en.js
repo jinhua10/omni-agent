@@ -1542,6 +1542,20 @@ export default {
       export: 'Export Config',
       import: 'Import Config',
       save: 'Save as Default',
+      previousStep: 'Previous: Text Extraction',
+      executeChunking: 'Execute Chunking & Indexing',
+    },
+
+    // Step Navigation Messages
+    navigation: {
+      returnToExtraction: 'Return to text extraction',
+      returnSuccess: 'Returned to text extraction',
+      returnFailed: 'Failed to return',
+      chunkingStarted: 'Starting chunking...',
+      chunkingComplete: 'Chunking completed! Generated {count} chunks',
+      chunkingFailed: 'Chunking failed',
+      selectDocumentFirst: 'Please select a document first',
+      selectStrategyFirst: 'Please select a chunking strategy first',
     },
   },
 
@@ -1583,6 +1597,8 @@ export default {
       applyConfig: 'Apply Configuration',
       reset: 'Reset',
       backToFlow: 'Back to Flow View',
+      reExtract: 'Re-extract',
+      nextStep: 'Next: Chunking Config',
     },
 
     // Tips

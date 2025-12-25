@@ -1554,6 +1554,20 @@ export default {
       export: '导出配置',
       import: '导入配置',
       save: '保存为默认',
+      previousStep: '上一步：文本提取',
+      executeChunking: '执行分块并索引',
+    },
+
+    // 步骤导航提示 (Step Navigation Messages)
+    navigation: {
+      returnToExtraction: '返回文本提取步骤',
+      returnSuccess: '已返回到文本提取',
+      returnFailed: '返回失败',
+      chunkingStarted: '开始执行分块...',
+      chunkingComplete: '分块完成！共生成 {count} 个分块',
+      chunkingFailed: '分块失败',
+      selectDocumentFirst: '请先选择文档',
+      selectStrategyFirst: '请先选择分块策略',
     },
   },
 
@@ -1595,6 +1609,8 @@ export default {
       applyConfig: '应用配置',
       reset: '重置',
       backToFlow: '返回流程视图',
+      reExtract: '重新提取',
+      nextStep: '下一步：分块配置',
     },
 
     // 提示

@@ -37,6 +37,9 @@ import {
   ReloadOutlined,
   InfoCircleOutlined,
   CheckCircleOutlined,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/document/ChunkingConfig.css'
@@ -269,6 +272,110 @@ function ChunkingConfig({ documentId }) {
     setPreviewText('')
     setPreviewResult(null)
     setComparisonResults([])
+  }
+
+  // ⭐ 返回上一步（文本提取）
+  const handlePreviousStep = async () => {
+    if (!documentId) return
+
+    try {
+      const encodedDocId = encodeURIComponent(documentId)
+      const response = await fetch(`/api/documents/processing/${encodedDocId}/step/goto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step: 'TEXT_EXTRACTION' }),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        message.success(t('chunkingConfig.navigation.returnSuccess'))
+        // 跳转到文本提取页面
+        window.location.hash = `#/documents/extract?docId=${documentId}`
+      } else {
+        message.error(result.message || t('chunkingConfig.navigation.returnFailed'))
+      }
+    } catch (error) {
+      console.error('返回上一步失败:', error)
+      message.error(t('chunkingConfig.navigation.returnFailed') + ': ' + error.message)
+    }
+  }
+
+  // ⭐ 执行分块并索引
+  const handleExecuteChunking = async () => {
+    if (!documentId) {
+      message.warning(t('chunkingConfig.navigation.selectDocumentFirst'))
+      return
+    }
+
+    if (!currentStrategy) {
+      message.warning(t('chunkingConfig.navigation.selectStrategyFirst'))
+      return
+    }
+
+    setLoading(true)
+    try {
+      const params = form.getFieldsValue()
+      const encodedDocId = encodeURIComponent(documentId)
+
+      message.info(t('chunkingConfig.navigation.chunkingStarted'))
+
+      // 调用分块API（流式）
+      const response = await fetch(`/api/documents/processing/${encodedDocId}/chunk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          strategy: currentStrategy.name,
+          params: params,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(t('chunkingConfig.navigation.chunkingFailed'))
+      }
+
+      // 处理SSE流式响应
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || '' // 保留不完整的行
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              if (data.type === 'progress') {
+                message.info(data.message)
+              } else if (data.type === 'complete') {
+                message.success(
+                  t('chunkingConfig.navigation.chunkingComplete', { count: data.chunkCount })
+                )
+              } else if (data.type === 'error') {
+                message.error(data.message)
+              }
+            } catch (e) {
+              console.warn('解析SSE消息失败:', e)
+            }
+          }
+        }
+      }
+
+      // 完成后刷新配置
+      await loadDocumentConfig()
+      message.success(t('chunkingConfig.message.previewSuccess'))
+
+    } catch (error) {
+      console.error('执行分块失败:', error)
+      message.error(t('chunkingConfig.navigation.chunkingFailed') + ': ' + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // 渲染参数配置表单
@@ -764,6 +871,31 @@ function ChunkingConfig({ documentId }) {
             </Card>
           </Col>
         </Row>
+
+        {/* ⭐ 步骤导航按钮 */}
+        {documentId && (
+          <Card style={{ marginTop: 24 }}>
+            <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={handlePreviousStep}
+                disabled={loading}
+              >
+                {t('chunkingConfig.actions.previousStep')}
+              </Button>
+              <Button
+                type="primary"
+                icon={<ThunderboltOutlined />}
+                onClick={handleExecuteChunking}
+                size="large"
+                disabled={loading || !currentStrategy}
+                loading={loading}
+              >
+                {t('chunkingConfig.actions.executeChunking')}
+              </Button>
+            </Space>
+          </Card>
+        )}
       </Spin>
     </div>
   )

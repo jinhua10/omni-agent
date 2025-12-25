@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import top.yumbo.ai.omni.web.model.ApiResponse;
+import top.yumbo.ai.omni.web.model.DocumentProcessStep;
 import top.yumbo.ai.omni.web.service.SystemRAGConfigService;
 
 import java.nio.file.Files;
@@ -784,6 +785,137 @@ public class DocumentProcessingController {
         } catch (Exception e) {
             log.error("获取文档提取状态失败: documentId={}", documentId, e);
             return ApiResponse.error("获取提取状态失败: " + e.getMessage());
+        }
+    }
+
+    // ========== 步骤管理 API ==========
+
+    /**
+     * 获取文档当前处理步骤
+     * GET /api/documents/processing/{documentId}/step
+     */
+    @GetMapping("/{documentId}/step")
+    public ApiResponse<DocumentProcessStep> getCurrentStep(@PathVariable String documentId) {
+        try {
+            SystemRAGConfigService.DocumentRAGConfig config = configService.getDocumentConfig(documentId);
+            if (config == null) {
+                return ApiResponse.error("文档配置不存在");
+            }
+
+            DocumentProcessStep step = new DocumentProcessStep();
+            step.setDocumentId(documentId);
+
+            // 根据配置状态判断当前步骤
+            String status = config.getStatus();
+            if (status == null || "PENDING".equals(status)) {
+                step.setCurrentStep(DocumentProcessStep.StepType.TEXT_EXTRACTION);
+                step.setStatus(DocumentProcessStep.StepStatus.PENDING);
+            } else if ("EXTRACTING".equals(status)) {
+                step.setCurrentStep(DocumentProcessStep.StepType.TEXT_EXTRACTION);
+                step.setStatus(DocumentProcessStep.StepStatus.PROCESSING);
+            } else if ("EXTRACTED".equals(status)) {
+                step.setCurrentStep(DocumentProcessStep.StepType.CHUNKING);
+                step.setStatus(DocumentProcessStep.StepStatus.PENDING);
+            } else if ("CHUNKING".equals(status)) {
+                step.setCurrentStep(DocumentProcessStep.StepType.CHUNKING);
+                step.setStatus(DocumentProcessStep.StepStatus.PROCESSING);
+            } else if ("CHUNKED".equals(status)) {
+                step.setCurrentStep(DocumentProcessStep.StepType.INDEXING);
+                step.setStatus(DocumentProcessStep.StepStatus.PENDING);
+            } else if ("INDEXING".equals(status)) {
+                step.setCurrentStep(DocumentProcessStep.StepType.INDEXING);
+                step.setStatus(DocumentProcessStep.StepStatus.PROCESSING);
+            } else if ("COMPLETED".equals(status)) {
+                step.setCurrentStep(DocumentProcessStep.StepType.COMPLETED);
+                step.setStatus(DocumentProcessStep.StepStatus.COMPLETED);
+            } else if ("FAILED".equals(status)) {
+                step.setStatus(DocumentProcessStep.StepStatus.FAILED);
+                step.setErrorMessage(config.getErrorMessage());
+            }
+
+            return ApiResponse.success(step);
+        } catch (Exception e) {
+            log.error("获取文档步骤失败: documentId={}", documentId, e);
+            return ApiResponse.error("获取步骤失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 跳转到指定步骤（用于返回上一步）
+     * POST /api/documents/processing/{documentId}/step/goto
+     */
+    @PostMapping("/{documentId}/step/goto")
+    public ApiResponse<DocumentProcessStep> gotoStep(
+            @PathVariable String documentId,
+            @RequestBody Map<String, String> request) {
+        try {
+            String targetStep = request.get("step");
+            SystemRAGConfigService.DocumentRAGConfig config = configService.getDocumentConfig(documentId);
+
+            if (config == null) {
+                return ApiResponse.error("文档配置不存在");
+            }
+
+            // 根据目标步骤更新状态
+            switch (targetStep) {
+                case "TEXT_EXTRACTION":
+                    config.setStatus("PENDING");
+                    break;
+                case "CHUNKING":
+                    config.setStatus("EXTRACTED");
+                    break;
+                case "INDEXING":
+                    config.setStatus("CHUNKED");
+                    break;
+                default:
+                    return ApiResponse.error("无效的步骤: " + targetStep);
+            }
+
+            config.setUpdatedAt(System.currentTimeMillis());
+            configService.setDocumentConfig(documentId, config);
+
+            return getCurrentStep(documentId);
+        } catch (Exception e) {
+            log.error("跳转步骤失败: documentId={}", documentId, e);
+            return ApiResponse.error("跳转失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 执行下一步（从文本提取跳转到分块配置）
+     * POST /api/documents/processing/{documentId}/step/next
+     */
+    @PostMapping("/{documentId}/step/next")
+    public ApiResponse<DocumentProcessStep> nextStep(@PathVariable String documentId) {
+        try {
+            SystemRAGConfigService.DocumentRAGConfig config = configService.getDocumentConfig(documentId);
+
+            if (config == null) {
+                return ApiResponse.error("文档配置不存在");
+            }
+
+            String currentStatus = config.getStatus();
+
+            // 根据当前状态跳转到下一步
+            if ("EXTRACTED".equals(currentStatus)) {
+                // 文本提取完成 → 进入分块配置
+                config.setStatus("EXTRACTED");
+                log.info("📋 文档进入分块配置步骤: documentId={}", documentId);
+            } else if ("CHUNKED".equals(currentStatus)) {
+                // 分块完成 → 进入索引
+                config.setStatus("CHUNKED");
+                log.info("📊 文档进入索引步骤: documentId={}", documentId);
+            } else {
+                return ApiResponse.error("当前状态不允许进入下一步: " + currentStatus);
+            }
+
+            config.setUpdatedAt(System.currentTimeMillis());
+            configService.setDocumentConfig(documentId, config);
+
+            return getCurrentStep(documentId);
+        } catch (Exception e) {
+            log.error("进入下一步失败: documentId={}", documentId, e);
+            return ApiResponse.error("进入下一步失败: " + e.getMessage());
         }
     }
 

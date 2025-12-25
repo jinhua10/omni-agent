@@ -40,6 +40,9 @@ import {
   DownloadOutlined,
   SaveOutlined,
   CheckCircleFilled,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons'
 import MarkdownRenderer from '../common/MarkdownRenderer'
 import BatchContentViewer from '../common/BatchContentViewer'
@@ -195,6 +198,36 @@ function TextExtractionConfig({ documentId }) {
     link.click()
     URL.revokeObjectURL(url)
     message.success(t('textExtractionConfig.export.successHTML'))
+  }
+
+  // ⭐ 跳转到下一步（分块配置）
+  const handleNextStep = async () => {
+    if (!documentId) return
+
+    try {
+      const encodedDocId = encodeURIComponent(documentId)
+      const response = await fetch(`/api/documents/processing/${encodedDocId}/step/next`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        message.success(t('chunkingConfig.navigation.returnToExtraction'))
+        // 跳转到分块配置页面
+        window.location.hash = `#/documents/chunking?docId=${documentId}`
+      } else {
+        message.error(result.message || t('chunkingConfig.navigation.returnFailed'))
+      }
+    } catch (error) {
+      console.error('跳转下一步失败:', error)
+      message.error(t('chunkingConfig.navigation.returnFailed') + ': ' + error.message)
+    }
+  }
+
+  // ⭐ 重新提取
+  const handleReExtract = () => {
+    handleAutoExtract()
   }
 
   // ⭐ 合并所有批次内容
@@ -753,6 +786,30 @@ function TextExtractionConfig({ documentId }) {
                 />
               )}
             </Card>
+
+            {/* ⭐ 步骤导航按钮 */}
+            {documentId && extractionResult && extractionProgress?.status === 'success' && (
+              <Card style={{ marginTop: 16 }}>
+                <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={handleReExtract}
+                    disabled={extracting}
+                  >
+                    {t('textExtractionConfig.buttons.reExtract')}
+                  </Button>
+                  <Button
+                    type="primary"
+                    icon={<ArrowRightOutlined />}
+                    onClick={handleNextStep}
+                    size="large"
+                    disabled={extracting}
+                  >
+                    {t('textExtractionConfig.buttons.nextStep')}
+                  </Button>
+                </Space>
+              </Card>
+            )}
           </div>
         ) : (
           <div className="preview-panel">
