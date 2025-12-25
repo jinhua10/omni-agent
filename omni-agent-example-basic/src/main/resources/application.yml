@@ -12,7 +12,32 @@ spring:
       max-file-size: 100MB      # 单个文件最大100MB
       max-request-size: 100MB   # 整个请求最大100MB
       file-size-threshold: 2KB  # 文件写入磁盘的阈值
-# ========== PPL ONNX 配置 ⭐ ==========
+
+# ========================================
+# OmniAgent 文档处理流程配置
+# ========================================
+# 📄 文档处理流程（6个步骤）：
+#
+# 步骤1️⃣ 文档存储 (Document Storage)
+#   ↓ 上传文档到存储服务，保存原始文件
+#
+# 步骤2️⃣ 文本提取 (Text Extraction / Vision LLM)
+#   ↓ 从PDF/图片等文件中提取文本内容
+#
+# 步骤3️⃣ 智能分块 (Chunking Strategy)
+#   ↓ 将长文本分割成合适的块
+#
+# 步骤4️⃣ 向量化 (Embedding)
+#   ↓ 将文本块转换为向量（可选）
+#
+# 步骤5️⃣ RAG索引 (RAG Service)
+#   ↓ 存储文本块和向量，建立检索索引
+#
+# 步骤6️⃣ AI对话 (AI Service)
+#   ↓ 使用检索结果进行智能对话
+# ========================================
+
+# ========== PPL ONNX 配置（用于步骤3️⃣分块） ⭐ ==========
 ppl:
   onnx:
     # 启用 ONNX PPL 服务
@@ -28,10 +53,67 @@ ppl:
     use-cache: true          # 启用缓存
     cache-size: 1000         # 缓存大小
     cache-ttl: 3600          # 缓存过期时间（秒）
-# ========== OmniAgent 四维可插拔配置 ==========
-# 1. 持久化配置 (Persistence)
-# 支持多种后端：file, sqlite, h2, memory, redis, mongodb, elasticsearch
+# ========== OmniAgent 核心配置（按处理流程顺序）==========
 omni-agent:
+
+  # ========== 步骤1️⃣ 文档存储配置 (Document Storage) ==========
+  # 作用：存储上传的原始文件和提取的文本
+  # 位置：文档处理流程的第1步 - 文档上传和归档
+  # 支持多种后端：file, minio, s3, redis, mongodb, elasticsearch
+  document-storage:
+    # ========== 当前使用的后端类型 ==========
+    type: file
+
+    # ========== File 配置（推荐：简单、直接）==========
+    file:
+      base-path: ./data/documents       # 文档存储根目录
+      chunk-path: ./data/chunks         # 分块存储目录
+      image-path: ./data/images         # 图片存储目录
+      ppl-path: ./data/ppl              # PPL数据存储目录
+      max-file-size: 104857600          # 最大文件大小（100MB）
+
+    # ========== MinIO 配置（对象存储、推荐生产环境）==========
+    # type: minio
+    minio:
+      endpoint: http://localhost:9000   # MinIO服务地址
+      access-key: minioadmin            # 访问密钥
+      secret-key: minioadmin            # 密钥
+      bucket: omni-agent                # 存储桶名称
+      auto-create-bucket: true          # 自动创建存储桶
+
+    # ========== AWS S3 配置（云存储）==========
+    # type: s3
+    s3:
+      region: us-east-1                 # AWS区域
+      access-key: your-access-key       # AWS访问密钥
+      secret-key: your-secret-key       # AWS密钥
+      bucket: omni-agent                # S3存储桶名称
+      endpoint:                         # 自定义端点（可选，用于兼容S3的服务）
+
+    # ========== Redis 配置（缓存式存储）==========
+    # type: redis
+    redis:
+      host: localhost
+      port: 6379
+      database: 1                       # 使用不同的数据库
+      key-prefix: "docs:"                 # 键前缀
+
+    # ========== MongoDB 配置（文档数据库）==========
+    # type: mongodb
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: omni-agent-docs
+      collection: documents             # 集合名称
+
+    # ========== Elasticsearch 配置（全文索引）==========
+    # type: elasticsearch
+    elasticsearch:
+      hosts:
+        - localhost:9200
+      index-name: omni-agent-docs       # 索引名称
+  # ========== 持久化配置 (Persistence) - 系统内部使用 ==========
+  # 作用：存储系统配置、会话历史等元数据
+  # 支持多种后端：file, sqlite, h2, memory, redis, mongodb, elasticsearch
   persistence:
     # ========== 当前使用的后端类型 ==========
     type: sqlite
@@ -109,216 +191,8 @@ omni-agent:
       socket-timeout: 60000             # Socket超时
       index-prefix: omni-agent          # 索引前缀
 
-  # 2. 文档存储配置 (Document Storage)
-  # 支持多种后端：file, minio, s3, redis, mongodb, elasticsearch
-  document-storage:
-    # ========== 当前使用的后端类型 ==========
-    type: file
-
-    # ========== File 配置（推荐：简单、直接）==========
-    file:
-      base-path: ./data/documents       # 文档存储根目录
-      chunk-path: ./data/chunks         # 分块存储目录
-      image-path: ./data/images         # 图片存储目录
-      ppl-path: ./data/ppl              # PPL数据存储目录
-      max-file-size: 104857600          # 最大文件大小（100MB）
-
-    # ========== MinIO 配置（对象存储、推荐生产环境）==========
-    # type: minio
-    minio:
-      endpoint: http://localhost:9000   # MinIO服务地址
-      access-key: minioadmin            # 访问密钥
-      secret-key: minioadmin            # 密钥
-      bucket: omni-agent                # 存储桶名称
-      auto-create-bucket: true          # 自动创建存储桶
-
-    # ========== AWS S3 配置（云存储）==========
-    # type: s3
-    s3:
-      region: us-east-1                 # AWS区域
-      access-key: your-access-key       # AWS访问密钥
-      secret-key: your-secret-key       # AWS密钥
-      bucket: omni-agent                # S3存储桶名称
-      endpoint:                         # 自定义端点（可选，用于兼容S3的服务）
-
-    # ========== Redis 配置（缓存式存储）==========
-    # type: redis
-    redis:
-      host: localhost
-      port: 6379
-      database: 1                       # 使用不同的数据库
-      key-prefix: "docs:"                 # 键前缀
-
-    # ========== MongoDB 配置（文档数据库）==========
-    # type: mongodb
-    mongodb:
-      uri: mongodb://localhost:27017
-      database: omni-agent-docs
-      collection: documents             # 集合名称
-
-    # ========== Elasticsearch 配置（全文索引）==========
-    # type: elasticsearch
-    elasticsearch:
-      hosts:
-        - localhost:9200
-      index-name: omni-agent-docs       # 索引名称
-
-  # 3. RAG 配置 (Retrieval Augmented Generation)
-  # 支持多种后端：file, h2, sqlite, redis, mongodb, elasticsearch
-  rag:
-    # ========== 当前使用的后端类型 ==========
-    type: file
-
-    # ========== File 配置（基于 Lucene）==========
-    file:
-      index-path: ./data/rag-index      # Lucene索引目录
-      analyzer: smartcn                 # 分词器：smartcn(中文), standard(英文)
-      max-results: 100                  # 最大返回结果数
-      similarity-threshold: 0.7         # 相似度阈值（0.0-1.0）
-
-    # ========== H2 配置（内存/文件数据库）==========
-    # type: h2
-    h2:
-      db-path: ./data/rag-h2
-      mode: file                        # file 或 memory
-      vector-dimension: 768             # 向量维度
-      similarity-metric: cosine         # 相似度度量：cosine, euclidean, dot
-
-    # ========== SQLite 配置（轻量级）==========
-    # type: sqlite
-    sqlite:
-      db-path: ./data/rag-sqlite.db
-      vector-dimension: 768
-      similarity-metric: cosine
-
-    # ========== Redis 配置（高性能、分布式）==========
-    # type: redis
-    redis:
-      host: localhost
-      port: 6379
-      database: 2                       # 使用不同的数据库
-      key-prefix: "rag:"
-      vector-dimension: 768
-
-    # ========== MongoDB 配置（文档数据库 + 向量搜索）==========
-    # type: mongodb
-    mongodb:
-      uri: mongodb://localhost:27017
-      database: omni-agent-rag
-      collection: vectors               # 向量集合
-      index-name: vector_index          # 向量索引名称
-
-    # ========== Elasticsearch 配置（全文搜索 + 向量搜索）==========
-    # type: elasticsearch
-    elasticsearch:
-      hosts:
-        - localhost:9200
-      index-name: omni-agent-rag        # 索引名称
-      vector-dimension: 768
-      similarity: cosine                # 相似度算法
-      shard-count: 1                    # 分片数
-      replica-count: 0                  # 副本数
-
-  # 4. AI 配置 (Artificial Intelligence)
-  ai:
-    # type: ollama  # 本地Ollama（开发/测试）
-    type: online-api    # 在线API（生产环境推荐）
-
-    # Ollama 本地配置（开发/测试环境）
-    ollama:
-      base-url: http://localhost:11434
-      model: qwen2.5:latest
-      temperature: 0.7
-      max-tokens: 2000
-      timeout: 30000  # 30秒
-
-    # Online API 配置（生产环境推荐）⭐
-    online:
-      # API提供商: qianwen(千问), openai, claude, zhipu(智谱), deepseek
-      provider: deepseek
-
-      endpoint: https://api.deepseek.com/v1/chat/completions
-      # API基础URL（会自动拼接 /chat/completions）
-#      base-url: https://api.deepseek.com/v1
-
-      # API Key（从阿里云DashScope获取）
-      # 获取地址: https://dashscope.console.aliyun.com/
-      api-key: ${AI_API_KEY:your-api-key-here}
-
-      # 模型选择
-      # qwen-plus: 平衡性能和成本（推荐）
-      # qwen-turbo: 快速响应
-      # qwen-max: 最强性能
-      # qwen-vl-plus: 图像理解能力
-      default-model: deepseek-chat
-
-      # 生成参数
-      temperature: 0.7      # 0.0-2.0，控制随机性
-      max-tokens: 2048      # 最大生成token数
-      top-p: 0.9           # 核采样参数
-      timeout: 60000       # 60秒超时
-      max-retries: 3       # 最大重试次数
-      stream-enabled: true # 启用流式响应
-
-  # 5. Embedding 配置 (Text Embedding) ⭐
-  embedding:
-    # ONNX 本地向量化服务（默认禁用）
-    onnx:
-      # 是否启用 ONNX Embedding 服务
-      enabled: false
-
-      # ONNX 模型文件路径
-      # 推荐模型：
-      # - bge-base-zh-v1.5 (中文，768维，~400MB) - 推荐
-      # - bge-m3 (多语言，1024维，~2GB)
-      # - bge-large-zh (中文，1024维，~1.3GB)
-      # - text2vec-base-chinese (中文，768维，~400MB)
-      #
-      # 模型下载：
-      # 方式1: huggingface-cli download BAAI/bge-base-zh-v1.5 --local-dir ./models/bge-base-zh-v1.5
-      # 方式2: git clone https://www.modelscope.cn/BAAI/bge-base-zh-v1.5.git ./models/bge-base-zh-v1.5
-      model-path: ./models/bge-base-zh-v1.5/model.onnx
-
-      # 最大序列长度
-      # bge-base-zh-v1.5: 512
-      # bge-m3: 8192
-      max-sequence-length: 512
-
-      # 批处理大小（批量向量化时使用）
-      batch-size: 32
-
-  # 6. 分块策略配置 (Chunking Strategy) ⭐
-  chunking:
-    # 默认策略：auto（自动选择）、fixed_size（固定大小）、semantic（语义）、ppl（困惑度）
-    default-strategy: ppl
-
-    # PPL 困惑度分块策略配置
-    ppl:
-      # 模式选择：simplified（简化版，快速）、onnx（ONNX版，精确）、auto（自动选择）
-      mode: onnx  # ⭐ 使用 ONNX 模式
-
-      # 自动模式时是否优先精度（为true时会优先使用ONNX）
-      prefer-accuracy: true  # ⭐ 优先精度
-
-      # 分块大小范围
-      min-chunk-size: 200      # 最小分块大小（字符数）
-      max-chunk-size: 800      # 最大分块大小（字符数）
-
-      # 困惑度阈值（0.0-1.0，值越高越严格）
-      threshold: 0.3
-
-    # 固定大小分块策略配置（备用）
-    fixed-size:
-      chunk-size: 500          # 分块大小
-      overlap: 50              # 重叠大小
-
-    # 语义分块策略配置（备用）
-    semantic:
-      min-chunk-size: 200
-      max-chunk-size: 1000
-      similarity-threshold: 0.75
-
-  # 7. Vision LLM 配置（图片转文字）⭐
+  # ========== 步骤2️⃣ Vision LLM配置 (文本提取) ==========
+  # 作用：从图片/PDF/office文档中提取文本
   vision-llm:
     # 是否启用图片提取功能
     enabled: true
@@ -375,6 +249,164 @@ omni-agent:
       - 图片按空间位置排列（从上到下，从左到右）
       
       保持输出简洁，只提取核心信息。
+
+  # ========== 步骤3️⃣ 分块策略配置 (Chunking) ==========
+  # 作用：智能文本分块
+  chunking:
+    # 默认策略：auto（自动选择）、fixed_size（固定大小）、semantic（语义）、ppl（困惑度）
+    default-strategy: ppl
+
+    # PPL 困惑度分块策略配置
+    ppl:
+      # 模式选择：simplified（简化版，快速）、onnx（ONNX版，精确）、auto（自动选择）
+      mode: onnx  # ⭐ 使用 ONNX 模式
+
+      # 自动模式时是否优先精度（为true时会优先使用ONNX）
+      prefer-accuracy: true  # ⭐ 优先精度
+
+      # 分块大小范围
+      min-chunk-size: 200      # 最小分块大小（字符数）
+      max-chunk-size: 800      # 最大分块大小（字符数）
+
+      # 困惑度阈值（0.0-1.0，值越高越严格）
+      threshold: 0.3
+
+    # 固定大小分块策略配置（备用）
+    fixed-size:
+      chunk-size: 500          # 分块大小
+      overlap: 50              # 重叠大小
+
+    # 语义分块策略配置（备用）
+    semantic:
+      min-chunk-size: 200
+      max-chunk-size: 1000
+      similarity-threshold: 0.75
+
+  # ========== 步骤4️⃣ Embedding配置 (向量化) ==========
+  # 作用：文本转向量（可选）
+  embedding:
+    # ONNX 本地向量化服务（默认禁用）
+    onnx:
+      # 是否启用 ONNX Embedding 服务
+      enabled: false
+
+      # ONNX 模型文件路径
+      # 推荐模型：
+      # - bge-base-zh-v1.5 (中文，768维，~400MB) - 推荐
+      # - bge-m3 (多语言，1024维，~2GB)
+      # - bge-large-zh (中文，1024维，~1.3GB)
+      # - text2vec-base-chinese (中文，768维，~400MB)
+      #
+      # 模型下载：
+      # 方式1: huggingface-cli download BAAI/bge-base-zh-v1.5 --local-dir ./models/bge-base-zh-v1.5
+      # 方式2: git clone https://www.modelscope.cn/BAAI/bge-base-zh-v1.5.git ./models/bge-base-zh-v1.5
+      model-path: ./models/bge-base-zh-v1.5/model.onnx
+
+      # 最大序列长度
+      # bge-base-zh-v1.5: 512
+      # bge-m3: 8192
+      max-sequence-length: 512
+
+      # 批处理大小（批量向量化时使用）
+      batch-size: 32
+  # ========== 步骤5️⃣ RAG配置 (Retrieval) ==========
+  # 作用：文本/向量检索和索引
+  # 支持多种后端：file, h2, sqlite, redis, mongodb, elasticsearch
+  rag:
+    # ========== 当前使用的后端类型 ==========
+    type: file
+
+    # ========== File 配置（基于 Lucene）==========
+    file:
+      index-path: ./data/rag-index      # Lucene索引目录
+      analyzer: smartcn                 # 分词器：smartcn(中文), standard(英文)
+      max-results: 100                  # 最大返回结果数
+      similarity-threshold: 0.7         # 相似度阈值（0.0-1.0）
+
+    # ========== H2 配置（内存/文件数据库）==========
+    # type: h2
+    h2:
+      db-path: ./data/rag-h2
+      mode: file                        # file 或 memory
+      vector-dimension: 768             # 向量维度
+      similarity-metric: cosine         # 相似度度量：cosine, euclidean, dot
+
+    # ========== SQLite 配置（轻量级）==========
+    # type: sqlite
+    sqlite:
+      db-path: ./data/rag-sqlite.db
+      vector-dimension: 768
+      similarity-metric: cosine
+
+    # ========== Redis 配置（高性能、分布式）==========
+    # type: redis
+    redis:
+      host: localhost
+      port: 6379
+      database: 2                       # 使用不同的数据库
+      key-prefix: "rag:"
+      vector-dimension: 768
+
+    # ========== MongoDB 配置（文档数据库 + 向量搜索）==========
+    # type: mongodb
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: omni-agent-rag
+      collection: vectors               # 向量集合
+      index-name: vector_index          # 向量索引名称
+
+    # ========== Elasticsearch 配置（全文搜索 + 向量搜索）==========
+    # type: elasticsearch
+    elasticsearch:
+      hosts:
+        - localhost:9200
+      index-name: omni-agent-rag        # 索引名称
+      vector-dimension: 768
+      similarity: cosine                # 相似度算法
+      shard-count: 1                    # 分片数
+      replica-count: 0                  # 副本数
+
+  # ========== 步骤6️⃣ AI服务配置 (AI Service) ==========
+  # 作用：智能对话和生成
+  ai:
+    # type: ollama  # 本地Ollama（开发/测试）
+    type: online-api    # 在线API（生产环境推荐）
+
+    # Ollama 本地配置（开发/测试环境）
+    ollama:
+      base-url: http://localhost:11434
+      model: qwen2.5:latest
+      temperature: 0.7
+      max-tokens: 2000
+      timeout: 30000  # 30秒
+
+    # Online API 配置（生产环境推荐）⭐
+    online:
+      # API提供商: qianwen(千问), openai, claude, zhipu(智谱), deepseek
+      provider: deepseek
+
+      endpoint: https://api.deepseek.com/v1/chat/completions
+      # API基础URL（会自动拼接 /chat/completions）
+      #      base-url: https://api.deepseek.com/v1
+
+      # API Key（从阿里云DashScope获取）
+      # 获取地址: https://dashscope.console.aliyun.com/
+      api-key: ${AI_API_KEY:your-api-key-here}
+
+      # 模型选择
+      # qwen-plus: 平衡性能和成本（推荐）
+      # qwen-turbo: 快速响应
+      # qwen-max: 最强性能
+      # qwen-vl-plus: 图像理解能力
+      default-model: deepseek-chat
+
+      # 生成参数
+      temperature: 0.7      # 0.0-2.0，控制随机性
+      max-tokens: 2048      # 最大生成token数
+      top-p: 0.9           # 核采样参数
+      timeout: 60000       # 60秒超时
+      max-retries: 3       # 最大重试次数
+      stream-enabled: true # 启用流式响应
 
   # ========== 线程池配置（统一管理）⭐ ==========
   thread-pool:
