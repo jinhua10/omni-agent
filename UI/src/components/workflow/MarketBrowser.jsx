@@ -45,15 +45,18 @@ const MarketBrowser = ({ onViewDetail }) => {
       }
 
       const newWorkflows = result.workflows || result.content || result || [];
+      
+      // ⭐ 确保 newWorkflows 是数组
+      const workflowsArray = Array.isArray(newWorkflows) ? newWorkflows : [];
 
       if (reset) {
-        setWorkflows(newWorkflows);
+        setWorkflows(workflowsArray);
         setPage(0);
       } else {
-        setWorkflows([...workflows, ...newWorkflows]);
+        setWorkflows([...workflows, ...workflowsArray]);
       }
 
-      setHasMore(newWorkflows.length === 20);
+      setHasMore(workflowsArray.length === 20);
     } catch (error) {
       console.error('Failed to load workflows:', error);
     } finally {
