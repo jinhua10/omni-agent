@@ -1,6 +1,5 @@
 package top.yumbo.ai.omni.web.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -164,7 +163,7 @@ public class DocumentProcessingService {
                 if (autoTextExtraction && autoRAG) {
                     // 模式A: 全自动模式
                     log.info("🤖 全自动模式：自动提取 + 自动分块 + 自动索引");
-                    performFullRAGSimulated(documentId, documentName, content, docConfig);
+                    performFullRAG(documentId, documentName, content, docConfig);
 
                 } else if (autoTextExtraction && !autoRAG) {
                     // 模式B: 半自动模式（自动提取，手动分块）
@@ -238,8 +237,8 @@ public class DocumentProcessingService {
      * - 调用统一的核心处理方法 performFullRAGCore
      * - 包含进度推送和状态更新
      */
-    private void performFullRAGSimulated(String documentId, String documentName, byte[] content,
-                                         SystemRAGConfigService.DocumentRAGConfig docConfig) throws Exception {
+    private void performFullRAG(String documentId, String documentName, byte[] content,
+                                SystemRAGConfigService.DocumentRAGConfig docConfig) throws Exception {
 
         log.info("🤖 自动模式处理文档: documentId={}", documentId);
 
