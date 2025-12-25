@@ -114,20 +114,22 @@
   margin-top: 12px;
   margin-bottom: 16px;
   background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
-  border-color: #667eea;
+  border-color: #667eea !important;
   border-radius: 10px;
-  border: 2px solid rgba(102, 126, 234, 0.3);
+  border: 2px solid rgba(102, 126, 234, 0.3) !important;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .chunking-config-container .document-info-card .ant-card-body {
-  padding: 10px 12px;
+  padding: 10px 12px !important;
 }
 
 .chunking-config-container .document-info-space {
   width: 100%;
-  gap: 4px;
+  gap: 4px !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .chunking-config-container .document-info-header {
@@ -138,9 +140,10 @@
 }
 
 .chunking-config-container .document-info-filename {
-  fontSize: 14px;
+  font-size: 14px !important;
   font-weight: 600;
   color: #667eea;
+  display: inline-block;
 }
 
 .chunking-config-container .document-info-tags {
@@ -151,8 +154,13 @@
 }
 
 .chunking-config-container .document-info-tag {
-  margin: 0;
-  fontSize: 12px;
+  margin: 0 !important;
+  font-size: 12px !important;
+}
+
+.chunking-config-container .document-info-card:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  transform: translateY(-1px);
 }
 
 /* 预览卡片 */
@@ -514,8 +522,8 @@
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-.chunking-config-container .document-info-card:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+.chunking-config-container .ant-btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   transform: translateY(-1px);
 }
 
