@@ -367,6 +367,47 @@ function DocumentBrowser() {
     loadStats()
   }, [currentPath, loadDirectory, loadStats])
 
+  /**
+   * 加入流程视图 / Add to flow view
+   *
+   * 将文档从存储目录复制到临时目录，并跳转到流程视图
+   *
+   * @param {object} item - 文件项 / File item
+   */
+  const handleAddToFlowView = useCallback(async (item) => {
+    try {
+      antdMessage.loading({ content: t('document.browse.addingToFlow'), key: 'addToFlow' })
+
+      // 调用后端API：从storage复制到documents临时目录
+      const response = await axios.post('/api/documents/copy-to-pending', {
+        path: item.path,
+        fileName: item.name
+      })
+
+      if (response.data && response.data.success) {
+        antdMessage.success({
+          content: t('document.browse.addToFlowSuccess'),
+          key: 'addToFlow'
+        })
+
+        // 跳转到流程视图，并传递文档ID
+        const documentId = response.data.documentId || item.name
+        window.location.hash = `#/documents?view=flow&docId=${encodeURIComponent(documentId)}`
+      } else {
+        antdMessage.error({
+          content: response.data.message || t('document.browse.addToFlowFailed'),
+          key: 'addToFlow'
+        })
+      }
+    } catch (error) {
+      console.error('Failed to add to flow view:', error)
+      antdMessage.error({
+        content: t('document.browse.addToFlowFailed'),
+        key: 'addToFlow'
+      })
+    }
+  }, [t])
+
   // ============================================================================
   // 面包屑导航 / Breadcrumb navigation
   // ============================================================================
@@ -592,6 +633,17 @@ function DocumentBrowser() {
                     e.stopPropagation()
                     // 跳转到分块配置页面
                     window.location.hash = `#/documents?view=chunking&docId=${encodeURIComponent(record.path)}`
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={t('document.browse.addToFlowView')}>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<SyncOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddToFlowView(record)
                   }}
                 />
               </Tooltip>

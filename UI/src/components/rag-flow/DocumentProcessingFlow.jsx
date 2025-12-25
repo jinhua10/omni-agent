@@ -371,9 +371,10 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             const response = await fetch('/api/system/rag-config/documents-status');
             const result = await response.json();
             if (result.success) {
-                const docs = Object.values(result.data);
+                // ⭐ 只显示未完成的文档（排除COMPLETED状态）
+                const docs = Object.values(result.data).filter(doc => doc.status !== 'COMPLETED');
                 setDocumentsList(docs);
-                console.log('📋 加载文档列表:', docs.length, '个', docs);
+                console.log('📋 加载文档列表:', docs.length, '个待处理文档');
             } else {
                 console.error('加载文档列表失败:', result.message);
             }
@@ -530,9 +531,17 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         if (message.type === 'progress') {
             setProgress(message.data);
 
-            // 如果完成，通知父组件 (Notify parent if completed)
-            if (message.data.status === 'COMPLETED' && onComplete) {
-                onComplete(message.data);
+            // ⭐ 如果完成，刷新文档列表（移除已完成文档）
+            if (message.data.status === 'COMPLETED') {
+                console.log('✅ 文档处理完成，刷新列表移除该文档:', message.data.documentId);
+                // 延迟刷新，确保后端状态已更新
+                setTimeout(() => {
+                    loadDocumentsList();
+                }, 1000);
+
+                if (onComplete) {
+                    onComplete(message.data);
+                }
             }
 
             // 如果失败，通知父组件 (Notify parent if failed)
@@ -544,7 +553,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             setError(message.message);
             if (onError) onError(message);
         }
-    }, [onComplete, onError]);
+    }, [onComplete, onError, loadDocumentsList, t]);
 
     /**
      * 获取当前步骤索引
@@ -657,7 +666,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 <Card
                     title={t('ragFlow.component.pendingDocuments')}
                     size="small"
-                    style={{ marginBottom: 16 }}
+                    style={{ marginBottom: 16, maxHeight: '400px', overflow: 'auto' }}
                 >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {documentsList.map((doc) => (

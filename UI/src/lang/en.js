@@ -362,6 +362,11 @@ export default {
       batchAddToAI: 'Batch Add to AI',
       addToAIPanelSuccess: 'Added {count} file(s) to AI analysis panel',
       removeFromAIPanelSuccess: 'Removed {name} from AI analysis panel',
+      // Flow View
+      addToFlowView: 'Add to Flow View',
+      addingToFlow: 'Adding to flow view...',
+      addToFlowSuccess: 'Added to flow view, redirecting...',
+      addToFlowFailed: 'Failed to add to flow view',
     },
   },
 

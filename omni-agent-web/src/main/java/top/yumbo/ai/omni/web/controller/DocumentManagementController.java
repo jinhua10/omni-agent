@@ -60,7 +60,7 @@ public class DocumentManagementController {
     /**
      * 上传文档（异步处理版本）⭐
      * POST /api/documents/upload
-     *
+     * <p>
      * 新逻辑（中转站模式）：
      * 1. 先保存文件到监听目录（data/documents）作为中转站
      * 2. 触发异步RAG处理：文本提取 → 分块 → 索引
@@ -101,10 +101,10 @@ public class DocumentManagementController {
             // ⭐ 步骤3：触发异步RAG处理流程（推送WebSocket进度）
             // 处理完成后会自动保存到存储服务
             documentProcessingService.processDocument(documentId, filename, file.getBytes())
-                .exceptionally(throwable -> {
-                    log.error("❌ 文档处理异常: documentId={}", documentId, throwable);
-                    return null;
-                });
+                    .exceptionally(throwable -> {
+                        log.error("❌ 文档处理异常: documentId={}", documentId, throwable);
+                        return null;
+                    });
 
             response.setSuccess(true);
             response.setMessage("文件上传成功，正在处理中...");
@@ -128,7 +128,7 @@ public class DocumentManagementController {
     /**
      * 批量上传文档（异步处理版本）⭐
      * POST /api/documents/upload-batch
-     *
+     * <p>
      * 新逻辑：
      * 1. 批量保存文件到监听目录
      * 2. 返回"索引中"状态
@@ -238,21 +238,21 @@ public class DocumentManagementController {
 
             // 如果没找到，使用第一个结果
             if (doc == null && !searchResults.isEmpty() && searchResults.get(0).getDocument() != null) {
-                doc = searchResults.get(0).getDocument();
+                doc = searchResults.getFirst().getDocument();
             }
 
             if (doc != null) {
                 result.put("success", true);
                 result.put("documentId", doc.getId());
                 result.put("fileName", doc.getTitle());
-                
+
                 // 从metadata中获取mimeType
                 if (doc.getMetadata() != null && doc.getMetadata().containsKey("mimeType")) {
                     result.put("mimeType", doc.getMetadata().get("mimeType"));
                 } else {
                     result.put("mimeType", doc.getType());
                 }
-                
+
                 // 使用createdAt时间戳
                 result.put("uploadTime", doc.getCreatedAt());
 
@@ -317,7 +317,7 @@ public class DocumentManagementController {
             }
 
             // 对文件名进行 URL 编码，支持中文文件名
-            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())
+            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
                     .replaceAll("\\+", "%20");
 
             log.info("文件下载成功: {}, size={} bytes", fileName, Files.size(filePath));
@@ -337,7 +337,7 @@ public class DocumentManagementController {
     /**
      * 获取待处理的文件列表（pending 区域）⭐
      * GET /api/documents/pending
-     *
+     * <p>
      * 返回 data/documents 目录下等待索引的文件
      */
     @GetMapping("/pending")
@@ -358,35 +358,35 @@ public class DocumentManagementController {
 
             // 扫描监听目录
             Files.walk(watchDir)
-                .filter(Files::isRegularFile)
-                .filter(path -> {
-                    String name = path.getFileName().toString();
-                    // 过滤临时文件和隐藏文件
-                    return !name.startsWith(".") && !name.startsWith("~") && !name.endsWith(".tmp");
-                })
-                .forEach(filePath -> {
-                    try {
-                        Path relativePath = watchDir.relativize(filePath);
-                        String relativePathStr = relativePath.toString().replace('\\', '/');
-                        String fileName = filePath.getFileName().toString();
+                    .filter(Files::isRegularFile)
+                    .filter(path -> {
+                        String name = path.getFileName().toString();
+                        // 过滤临时文件和隐藏文件
+                        return !name.startsWith(".") && !name.startsWith("~") && !name.endsWith(".tmp");
+                    })
+                    .forEach(filePath -> {
+                        try {
+                            Path relativePath = watchDir.relativize(filePath);
+                            String relativePathStr = relativePath.toString().replace('\\', '/');
+                            String fileName = filePath.getFileName().toString();
 
-                        // 检查处理状态
-                        boolean isProcessing = fileWatcherService.isFileProcessing(relativePathStr);
+                            // 检查处理状态
+                            boolean isProcessing = fileWatcherService.isFileProcessing(relativePathStr);
 
-                        PendingFileInfo fileInfo = new PendingFileInfo();
-                        fileInfo.setFileName(fileName);
-                        fileInfo.setRelativePath(relativePathStr);
-                        fileInfo.setFileSize(Files.size(filePath));
-                        fileInfo.setUploadTime(Files.getLastModifiedTime(filePath).toMillis());
-                        fileInfo.setProcessing(isProcessing);
-                        fileInfo.setCancelable(!isProcessing);  // 未开始处理的可以取消
+                            PendingFileInfo fileInfo = new PendingFileInfo();
+                            fileInfo.setFileName(fileName);
+                            fileInfo.setRelativePath(relativePathStr);
+                            fileInfo.setFileSize(Files.size(filePath));
+                            fileInfo.setUploadTime(Files.getLastModifiedTime(filePath).toMillis());
+                            fileInfo.setProcessing(isProcessing);
+                            fileInfo.setCancelable(!isProcessing);  // 未开始处理的可以取消
 
-                        pendingFiles.add(fileInfo);
+                            pendingFiles.add(fileInfo);
 
-                    } catch (Exception e) {
-                        log.warn("读取文件信息失败: {}", filePath, e);
-                    }
-                });
+                        } catch (Exception e) {
+                            log.warn("读取文件信息失败: {}", filePath, e);
+                        }
+                    });
 
             response.setSuccess(true);
             response.setFiles(pendingFiles);
@@ -404,7 +404,7 @@ public class DocumentManagementController {
     /**
      * 取消文件索引（从待处理列表删除）⭐
      * DELETE /api/documents/pending/{fileName}
-     *
+     * <p>
      * 只有未开始处理的文件才能取消
      */
     @DeleteMapping("/pending/{fileName:.+}")
@@ -449,6 +449,93 @@ public class DocumentManagementController {
     }
 
     /**
+     * 将文档从存储目录复制到待处理目录（加入流程视图）⭐
+     * POST /api/documents/copy-to-pending
+     * <p>
+     * 用于将已完成的文档重新加入流程视图进行处理
+     * 使用虚拟路径系统：从 storage 读取，写入到 data/documents 临时目录
+     */
+    @PostMapping("/copy-to-pending")
+    public Map<String, Object> copyToPending(@RequestBody Map<String, String> request) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            String virtualPath = request.get("path");
+            String fileName = request.get("fileName");
+
+            if (virtualPath == null || fileName == null) {
+                result.put("success", false);
+                result.put("message", "缺少必要参数: path 和 fileName");
+                return result;
+            }
+
+            log.info("📋 将文档加入待处理队列: virtualPath={}, fileName={}", virtualPath, fileName);
+
+            // 1. 从存储服务读取文档（虚拟路径系统）⭐
+            log.debug("从存储服务读取文档: {}", virtualPath);
+            byte[] fileData = storageService.readFile(virtualPath);
+
+            if (fileData == null || fileData.length == 0) {
+                result.put("success", false);
+                result.put("message", "无法读取文档数据（文件可能不存在或为空）");
+                log.warn("⚠️ 读取文档数据失败: virtualPath={}", virtualPath);
+                return result;
+            }
+
+            log.info("✅ 成功从存储服务读取文档: {} bytes", fileData.length);
+
+            // 2. 确保监听目录存在
+            Path watchDir = Paths.get(watchDirectory);
+            if (!Files.exists(watchDir)) {
+                Files.createDirectories(watchDir);
+                log.info("📁 创建监听目录: {}", watchDir);
+            }
+
+            // 3. 写入到监听目录（临时目录）
+            Path targetFile = watchDir.resolve(fileName);
+
+            // 如果文件已存在，生成新文件名避免覆盖
+            if (Files.exists(targetFile)) {
+                String baseName = fileName.contains(".")
+                        ? fileName.substring(0, fileName.lastIndexOf('.'))
+                        : fileName;
+                String extension = fileName.contains(".")
+                        ? fileName.substring(fileName.lastIndexOf('.'))
+                        : "";
+
+                int counter = 1;
+                do {
+                    fileName = baseName + "_" + counter + extension;
+                    targetFile = watchDir.resolve(fileName);
+                    counter++;
+                } while (Files.exists(targetFile) && counter < 100);
+
+                log.info("📝 文件名已存在，生成新名称: {}", fileName);
+            }
+
+            Files.write(targetFile, fileData);
+            log.info("✅ 文档已写入待处理目录: {}", targetFile);
+
+            // 4. 生成文档ID（使用文件名）
+            String documentId = fileName;
+
+            result.put("success", true);
+            result.put("message", "文档已加入待处理列表，等待处理");
+            result.put("documentId", documentId);
+            result.put("fileName", fileName);
+
+            log.info("🎉 文档已加入流程视图: documentId={}, path={}", documentId, targetFile);
+
+        } catch (Exception e) {
+            log.error("❌ 将文档加入待处理队列失败", e);
+            result.put("success", false);
+            result.put("message", "操作失败: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
      * 删除文档
      * DELETE /api/documents/{documentId}
      * <p>
@@ -484,7 +571,7 @@ public class DocumentManagementController {
 
                 // 如果没找到完全匹配的，使用第一个搜索结果
                 if (actualDocumentId.equals(documentId) && !searchResults.isEmpty() && searchResults.get(0).getDocument() != null) {
-                    actualDocumentId = searchResults.get(0).getDocument().getId();
+                    actualDocumentId = searchResults.getFirst().getDocument().getId();
                     log.info("使用第一个搜索结果的文档ID: {}", actualDocumentId);
                 }
             }

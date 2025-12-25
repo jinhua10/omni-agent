@@ -327,6 +327,11 @@ export default {
       batchAddToAI: '批量加入AI分析',
       addToAIPanelSuccess: '已添加 {count} 个文件到AI分析面板',
       removeFromAIPanelSuccess: '已将 {name} 移出AI分析面板',
+      // 流程视图 / Flow View
+      addToFlowView: '加入流程视图',
+      addingToFlow: '正在加入流程视图...',
+      addToFlowSuccess: '已加入流程视图，即将跳转',
+      addToFlowFailed: '加入流程视图失败',
     },
 
     // Shell页面专用 / Shell page specific
