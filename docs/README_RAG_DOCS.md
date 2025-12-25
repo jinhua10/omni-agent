@@ -3,7 +3,7 @@
 ## 📚 核心概念文档
 
 ### 1. EmbeddingService、RAGService 和 PPL 的关系
-**文件**: [BATCH_MERGE_FIX.md](./BATCH_MERGE_FIX.md)
+**文件**: [RAG_CORE_CONCEPTS.md](./RAG_CORE_CONCEPTS.md)
 
 **内容摘要**:
 - EmbeddingService（向量生成服务）的作用
@@ -98,27 +98,45 @@ spring:
 ---
 
 ### 5. 代码示例
-**文件**: [omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/TextOnlyRAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/TextOnlyRAGExample.java)
+**文件**: [omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/RAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/RAGExample.java)
 
 **内容摘要**:
-- ✅ 8 个完整的使用示例
-  1. 索引文档（不使用向量）
+- ✅ **完整的 RAG 检索示例集合**
+- 支持所有检索方式（文本、向量、语义、混合）
+- 包含 11 个示例：
+  1. 索引文档（支持向量和非向量）
   2. 纯文本检索
   3. 多字段检索
   4. 带过滤条件的检索
   5. 专业术语精确匹配
   6. 代码搜索
-  7. 性能对比测试
-  8. 批量索引测试
+  7. 向量检索（需要 EmbeddingService）
+  8. 语义检索（自动向量化）
+  9. 混合检索（文本 + 向量）
+  10. 性能对比测试
+  11. 批量索引测试
+
+**特点**:
+- ✅ 自动检测 EmbeddingService 配置
+- ✅ 可选运行模式（全部/仅文本/仅向量）
+- ✅ 详细的日志输出
 
 **运行方式**:
 ```java
 @Autowired
-private TextOnlyRAGExample example;
+private RAGExample ragExample;
 
-// 运行所有示例
-example.runAllExamples();
+// 运行所有示例（包括向量检索）
+ragExample.runAllExamples();
+
+// 仅运行文本检索示例（无需 EmbeddingService）
+ragExample.runTextSearchExamples();
+
+// 仅运行向量检索示例（需要 EmbeddingService）
+ragExample.runVectorSearchExamples();
 ```
+
+**详细文档**: [README_RAG_EXAMPLE.md](../omni-agent-example-basic/README_RAG_EXAMPLE.md)
 
 ---
 
@@ -139,13 +157,13 @@ example.runAllExamples();
 👉 [RAG_COMPARISON_GUIDE.md - 成本对比](./RAG_COMPARISON_GUIDE.md#💰-成本对比10万条文档768维向量)
 
 #### 看实际代码示例
-👉 [TextOnlyRAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/TextOnlyRAGExample.java)
+👉 [RAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/RAGExample.java)
 
 #### 配置生产环境
 👉 [application-text-only-rag.yml](./application-text-only-rag.yml)
 
 #### 了解重构前的实现
-👉 [BATCH_MERGE_FIX.md - 重构前实现](./BATCH_MERGE_FIX.md#🔧-重构前的实现old-目录)
+👉 [BATCH_MERGE_FIX.md - 重构前实现](import/BATCH_MERGE_FIX.md#🔧-重构前的实现old-目录)
 
 ---
 
@@ -154,13 +172,13 @@ example.runAllExamples();
 ### 初学者路径
 
 1. **第一步：理解基本概念**
-   - 阅读 [BATCH_MERGE_FIX.md](./BATCH_MERGE_FIX.md)
+   - 阅读 [BATCH_MERGE_FIX.md](import/BATCH_MERGE_FIX.md)
    - 了解 EmbeddingService 和 RAGService 的区别
 
 2. **第二步：快速上手**
    - 阅读 [RAG_WITHOUT_EMBEDDING.md](./RAG_WITHOUT_EMBEDDING.md)
    - 按照快速开始指南配置 Lucene
-   - 运行 [TextOnlyRAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/TextOnlyRAGExample.java)
+   - 运行 [RAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/RAGExample.java)
 
 3. **第三步：优化和调优**
    - 参考 [application-text-only-rag.yml](./application-text-only-rag.yml)
@@ -233,7 +251,7 @@ Query vectorQuery = Query.builder()
     .build();
 ```
 
-参考: [TextOnlyRAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/TextOnlyRAGExample.java)
+参考: [RAGExample.java](../omni-agent-example-basic/src/main/java/top/yumbo/ai/omni/example/RAGExample.java)
 
 ---
 
@@ -277,7 +295,7 @@ Query vectorQuery = Query.builder()
 
 ### 向量检索（高级）
 
-- ONNX Runtime 实现: [BATCH_MERGE_FIX.md](./BATCH_MERGE_FIX.md#🔧-重构前的实现old-目录)
+- ONNX Runtime 实现: [BATCH_MERGE_FIX.md](import/BATCH_MERGE_FIX.md#🔧-重构前的实现old-目录)
 - 混合检索策略: [RAG_COMPARISON_GUIDE.md](./RAG_COMPARISON_GUIDE.md#🎨-混合方案推荐)
 
 ---
@@ -301,4 +319,5 @@ Query vectorQuery = Query.builder()
 
 **最后更新**: 2025-12-25
 **维护者**: OmniAgent Team
+
 
