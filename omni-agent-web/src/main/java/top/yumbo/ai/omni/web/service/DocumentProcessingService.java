@@ -179,9 +179,7 @@ public class DocumentProcessingService {
      * 执行文本提取
      */
     private void performTextExtraction(String documentId, String documentName, byte[] content,
-                                       SystemRAGConfigService.DocumentRAGConfig docConfig) throws InterruptedException {
-        pushProgress(documentId, "EXTRACT", 20, "正在提取文本...", documentName, null);
-        Thread.sleep(1500);
+                                       SystemRAGConfigService.DocumentRAGConfig docConfig) {
         // ⭐ 传递文档名称以提取文件扩展名
         String extractedText = extractText(content, docConfig.getTextExtractionModel(), documentName);
 
