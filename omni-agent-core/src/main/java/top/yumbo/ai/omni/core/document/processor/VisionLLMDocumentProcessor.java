@@ -1099,33 +1099,58 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             }
 
             // 非流式：保持原逻辑
-            try {
-                String result = serviceToUse.analyzeImages(imagesData, visionPrompt);
+            // ⭐ 添加重试机制（最多重试3次）
+            int maxRetries = 3;
+            Exception lastException = null;
 
-                log.info("✅ [VisionLLM] 页面 {} 分析完成，内容长度: {} chars",
-                        page.getPageNumber(), result != null ? result.length() : 0);
+            for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    if (attempt > 1) {
+                        log.info("🔄 [VisionLLM] 重试页面 {} 分析（第 {}/{} 次）",
+                                page.getPageNumber(), attempt, maxRetries);
+                        // 等待一段时间再重试
+                        Thread.sleep(2000 * attempt); // 递增等待时间：2s, 4s, 6s
+                    }
 
-                return result != null ? result : "";
+                    String result = serviceToUse.analyzeImages(imagesData, visionPrompt);
 
-            } catch (UnsupportedOperationException e) {
-                log.error("❌ [VisionLLM] 当前AI服务不支持Vision功能: {}", e.getMessage());
+                    log.info("✅ [VisionLLM] 页面 {} 分析完成，内容长度: {} chars",
+                            page.getPageNumber(), result != null ? result.length() : 0);
 
-                return String.format("[页面 %d - 当前AI服务不支持Vision功能]\n" +
-                                "请配置支持Vision的模型（如：qwen-vl-plus, gpt-4o等）\n" +
-                                "包含 %d 张图片",
-                        page.getPageNumber(), page.getImages().size());
+                    return result != null ? result : "";
 
-            } catch (Exception apiEx) {
-                log.error("❌ [VisionLLM] Vision API 调用失败: {}", apiEx.getMessage());
+                } catch (UnsupportedOperationException e) {
+                    log.error("❌ [VisionLLM] 当前AI服务不支持Vision功能: {}", e.getMessage());
+                    // 不支持Vision功能，不需要重试
+                    return String.format("[页面 %d - 当前AI服务不支持Vision功能]\n" +
+                                    "请配置支持Vision的模型（如：qwen-vl-plus, gpt-4o等）\n" +
+                                    "包含 %d 张图片",
+                            page.getPageNumber(), page.getImages().size());
 
-                return String.format("[页面 %d - Vision API 调用失败: %s]\n包含 %d 张图片\n图片格式: %s",
-                        page.getPageNumber(),
-                        apiEx.getMessage(),
-                        page.getImages().size(),
-                        page.getImages().stream()
-                                .map(ExtractedImage::getFormat)
-                                .collect(java.util.stream.Collectors.joining(", ")));
+                } catch (Exception apiEx) {
+                    lastException = apiEx;
+
+                    // 检查是否为网络超时错误
+                    boolean isTimeout = apiEx.getMessage() != null &&
+                            (apiEx.getMessage().contains("timeout") ||
+                             apiEx.getMessage().contains("Connection timed out") ||
+                             apiEx.getMessage().contains("getsockopt"));
+
+                    if (isTimeout && attempt < maxRetries) {
+                        log.warn("⚠️ [VisionLLM] 页面 {} 分析超时，将重试... (尝试 {}/{})",
+                                page.getPageNumber(), attempt, maxRetries);
+                        continue; // 重试
+                    } else {
+                        log.error("❌ [VisionLLM] Vision API 调用失败: {}", apiEx.getMessage());
+                        break; // 不重试或已达最大重试次数
+                    }
+                }
             }
+
+            // 所有重试都失败
+            log.error("❌ [VisionLLM] 页面 {} 分析失败（已重试{}次）", page.getPageNumber(), maxRetries);
+            return String.format("[Vision分析失败: %s]",
+                    lastException != null ? lastException.getMessage() : "未知错误");
 
         } catch (Exception e) {
             log.error("❌ [VisionLLM] 页面识别失败: page={}", page.getPageNumber(), e);
