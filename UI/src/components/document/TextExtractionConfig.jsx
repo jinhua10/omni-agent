@@ -640,7 +640,7 @@ function TextExtractionConfig({ documentId }) {
                   >
                     {t('textExtractionConfig.preview.source')}
                   </Button>
-                  <Divider type="vertical" />
+                  <Divider orientation="vertical" />
                   {/* ⭐ 渲染模式切换 */}
                   {activeTab === 'preview' && (
                     <>
@@ -664,7 +664,7 @@ function TextExtractionConfig({ documentId }) {
                           disabled={extracting}
                         />
                       </Tooltip>
-                      <Divider type="vertical" />
+                      <Divider orientation="vertical" />
                     </>
                   )}
                   <Tooltip title={autoSaveEnabled ? t('textExtractionConfig.autoSave.enabled') : t('textExtractionConfig.autoSave.disabled')}>
