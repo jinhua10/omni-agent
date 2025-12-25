@@ -87,6 +87,7 @@ function ChunkingConfig({ documentId }) {
       // 加载文档配置
       const configResponse = await fetch(`/api/system/rag-config/document/${encodedDocId}`)
       const configResult = await configResponse.json()
+      console.log('📋 配置API返回:', configResult)
       if (configResult.success && configResult.data) {
         setDocumentConfig(configResult.data)
         // 如果有文档配置，应用其分块策略
@@ -103,20 +104,25 @@ function ChunkingConfig({ documentId }) {
       // 加载文档详情（文件名等信息）
       const docResponse = await fetch(`/api/documents/${encodedDocId}`)
       const docResult = await docResponse.json()
+      console.log('📄 文档API返回:', docResult)
+
       if (docResult.success) {
-        // 后端直接返回文档信息字段，不是嵌套在data中
+        // 尝试从data字段获取，如果没有则直接从根获取
+        const docData = docResult.data || docResult
         const info = {
-          fileName: docResult.fileName,
-          fileSize: docResult.fileSize,
-          mimeType: docResult.mimeType,
-          uploadTime: docResult.uploadTime,
-          extractedLength: docResult.extractedLength
+          fileName: docData.fileName || docData.name,
+          fileSize: docData.fileSize || docData.size,
+          mimeType: docData.mimeType || docData.type,
+          uploadTime: docData.uploadTime || docData.createdAt,
+          extractedLength: docData.extractedLength
         }
+        console.log('✅ 设置文档信息:', info)
         setDocumentInfo(info)
-        console.log('📋 加载文档信息:', info.fileName)
+      } else {
+        console.error('❌ 文档API返回失败:', docResult.message)
       }
     } catch (error) {
-      console.error('加载文档配置失败:', error)
+      console.error('❌ 加载文档配置失败:', error)
     }
   }
 
@@ -664,38 +670,53 @@ function ChunkingConfig({ documentId }) {
           <p className="subtitle">{t('chunkingConfig.subtitle')}</p>
           
           {/* 文档信息卡片 */}
-          {documentId && documentInfo && (
+          {documentId && (
             <Card
               size="small"
               className="document-info-card"
             >
-              <Space direction="vertical" className="document-info-space">
-                <div className="document-info-header">
-                  <span className="document-info-filename">
-                    📄 {documentInfo.fileName}
-                  </span>
-                </div>
-                
-                <div className="document-info-tags">
-                  {documentInfo.fileSize && (
-                    <Tag color="green" className="document-info-tag">
-                      {(documentInfo.fileSize / 1024).toFixed(1)} KB
+              {documentInfo ? (
+                <Space direction="vertical" className="document-info-space">
+                  <div className="document-info-header">
+                    <span className="document-info-filename">
+                      📄 {documentInfo.fileName}
+                    </span>
+                  </div>
+
+                  <div className="document-info-tags">
+                    {documentInfo.fileSize && (
+                      <Tag color="green" className="document-info-tag">
+                        {(documentInfo.fileSize / 1024).toFixed(1)} KB
+                      </Tag>
+                    )}
+
+                    {documentInfo.mimeType && (
+                      <Tag color="cyan" className="document-info-tag">
+                        {documentInfo.mimeType.split('/')[1]?.toUpperCase() || documentInfo.mimeType}
+                      </Tag>
+                    )}
+
+                    {documentConfig?.extractedText && (
+                      <Tag color="purple" className="document-info-tag">
+                        {documentConfig.extractedText.length} {t('common.characters')}
+                      </Tag>
+                    )}
+                  </div>
+                </Space>
+              ) : (
+                <Space direction="vertical" className="document-info-space">
+                  <div className="document-info-header">
+                    <span className="document-info-filename">
+                      📄 正在加载文档信息...
+                    </span>
+                  </div>
+                  <div className="document-info-tags">
+                    <Tag color="blue" className="document-info-tag">
+                      文档ID: {documentId}
                     </Tag>
-                  )}
-                  
-                  {documentInfo.mimeType && (
-                    <Tag color="cyan" className="document-info-tag">
-                      {documentInfo.mimeType.split('/')[1]?.toUpperCase() || documentInfo.mimeType}
-                    </Tag>
-                  )}
-                  
-                  {documentConfig?.extractedText && (
-                    <Tag color="purple" className="document-info-tag">
-                      {documentConfig.extractedText.length} {t('common.characters')}
-                    </Tag>
-                  )}
-                </div>
-              </Space>
+                  </div>
+                </Space>
+              )}
             </Card>
           )}
           
