@@ -331,7 +331,7 @@ Phase 4.5: 0%  ░░░░░░░░░░░░░░░░░░░░
 - [MODULE_QUICK_INDEX-2025-12-21.md](../module-index/MODULE_QUICK_INDEX-2025-12-21.md)
 
 ### 技术文档
-- [PHASE_4_DETAILED_PLAN.md](../PHASE_4_DETAILED_PLAN.md)
+- [PHASE_4_DETAILED_PLAN.md](../refactor/phase-4/PHASE_4_DETAILED_PLAN.md)
 
 ---
 

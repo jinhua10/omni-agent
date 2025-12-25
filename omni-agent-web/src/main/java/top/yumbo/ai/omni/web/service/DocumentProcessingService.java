@@ -2,6 +2,7 @@ package top.yumbo.ai.omni.web.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.ai.api.EmbeddingService;
@@ -35,7 +36,6 @@ import java.util.concurrent.CompletableFuture;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class DocumentProcessingService {
 
     private final DocumentProcessingWebSocketHandler webSocketHandler;
@@ -43,11 +43,32 @@ public class DocumentProcessingService {
     private final DocumentStorageService storageService;  // ⭐ 存储服务
     private final DocumentProcessorManager documentProcessorManager;  // ⭐ 文档处理管理器
     private final ChunkingStrategyManager chunkingStrategyManager;  // ⭐ 分块策略管理器
-    private final EmbeddingService embeddingService;  // ⭐ 向量化服务
-    private final RAGService ragService;  // ⭐ RAG索引服务
+
+    // ⭐ 可选服务（如果没有配置相应的 starter，这些服务可能不存在）
+    @Autowired(required = false)
+    private EmbeddingService embeddingService;  // ⭐ 向量化服务（可选）
+
+    @Autowired(required = false)
+    private RAGService ragService;  // ⭐ RAG索引服务（可选）
 
     @Value("${omni-agent.file-watcher.watch-directory:./data/documents}")
     private String watchDirectory;  // ⭐ 中转站目录
+
+    /**
+     * 构造函数
+     */
+    public DocumentProcessingService(
+            DocumentProcessingWebSocketHandler webSocketHandler,
+            SystemRAGConfigService ragConfigService,
+            DocumentStorageService storageService,
+            DocumentProcessorManager documentProcessorManager,
+            ChunkingStrategyManager chunkingStrategyManager) {
+        this.webSocketHandler = webSocketHandler;
+        this.ragConfigService = ragConfigService;
+        this.storageService = storageService;
+        this.documentProcessorManager = documentProcessorManager;
+        this.chunkingStrategyManager = chunkingStrategyManager;
+    }
 
     /**
      * 手动处理文档（强制执行完整流程）⭐
@@ -462,6 +483,14 @@ public class DocumentProcessingService {
      */
     private int performVectorization(String documentId, int chunkCount) {
         log.info("🔢 执行向量化: documentId={}, {} 个分块", documentId, chunkCount);
+
+        // ⭐ 检查必要的服务是否可用
+        if (embeddingService == null || ragService == null) {
+            log.warn("⚠️ EmbeddingService 或 RAGService 未配置，跳过向量化");
+            log.info("💡 提示: 请添加相应的 starter 依赖（如 omni-agent-ai-starter-ollama）");
+            // 降级：返回模拟数据
+            return chunkCount * 768;
+        }
 
         try {
             // ⭐ 1. 从存储服务读取分块

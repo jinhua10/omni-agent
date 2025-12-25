@@ -233,17 +233,17 @@ npm run dev
 ## 📚 文档目录
 
 ### 实施报告
-1. [Phase 4.1完成报告](./worklog/PHASE_4_1_COMPLETE-2025-12-21.md)
-2. [Phase 4.2.1 分块策略配置](./worklog/PHASE_4_2_1_CHUNKING_CONFIG_COMPLETE-2025-12-21.md)
-3. [Phase 4.2.2 查询扩展配置](./worklog/PHASE_4_2_2_QUERY_EXPANSION_CONFIG_COMPLETE-2025-12-21.md)
-4. [Phase 4.2.3 检索参数配置](./worklog/PHASE_4_2_3_RETRIEVAL_CONFIG_COMPLETE-2025-12-21.md)
-5. [Phase 4.2完成报告](./worklog/PHASE_4_2_COMPLETE-2025-12-21.md)
+1. [Phase 4.1完成报告](../../worklog/PHASE_4_1_COMPLETE-2025-12-21.md)
+2. [Phase 4.2.1 分块策略配置](../../worklog/PHASE_4_2_1_CHUNKING_CONFIG_COMPLETE-2025-12-21.md)
+3. [Phase 4.2.2 查询扩展配置](../../worklog/PHASE_4_2_2_QUERY_EXPANSION_CONFIG_COMPLETE-2025-12-21.md)
+4. [Phase 4.2.3 检索参数配置](../../worklog/PHASE_4_2_3_RETRIEVAL_CONFIG_COMPLETE-2025-12-21.md)
+5. [Phase 4.2完成报告](../../worklog/PHASE_4_2_COMPLETE-2025-12-21.md)
 
 ### 总结文档
-6. [Phase 4最终总结](./worklog/PHASE_4_FINAL_SUMMARY-2025-12-21.md)
-7. [Phase 4进度总结](./worklog/PHASE_4_PROGRESS_SUMMARY-2025-12-21.md)
-8. [Phase 4完整报告](./worklog/PHASE_4_COMPLETE_REPORT-2025-12-21.md)
-9. [Phase 4实施清单](./worklog/PHASE_4_IMPLEMENTATION_CHECKLIST-2025-12-21.md)
+6. [Phase 4最终总结](../../worklog/PHASE_4_FINAL_SUMMARY-2025-12-21.md)
+7. [Phase 4进度总结](../../worklog/PHASE_4_PROGRESS_SUMMARY-2025-12-21.md)
+8. [Phase 4完整报告](../../worklog/PHASE_4_COMPLETE_REPORT-2025-12-21.md)
+9. [Phase 4实施清单](../../worklog/PHASE_4_IMPLEMENTATION_CHECKLIST-2025-12-21.md)
 
 ---
 

@@ -449,7 +449,7 @@ EnhancedQueryService (算法市场)
 > 📊 详细报告: 
 > - [QUERY_EXPANSION_STATUS_REPORT-2025-12-21.md](../worklog/QUERY_EXPANSION_STATUS_REPORT-2025-12-21.md)
 > - [PHASE_1_IMPLEMENTATION_COMPLETE-2025-12-21.md](../worklog/PHASE_1_IMPLEMENTATION_COMPLETE-2025-12-21.md)
-> - [PHASE_1_QUICK_REFERENCE.md](../PHASE_1_QUICK_REFERENCE.md)
+> - [PHASE_1_QUICK_REFERENCE.md](../refactor/phase-4/PHASE_1_QUICK_REFERENCE.md)
 
 ---
 
@@ -743,7 +743,7 @@ EnhancedQueryService (算法市场)
 > 📊 详细报告: 
 > - [PHASE_4_ALL_TASKS_COMPLETE-2025-12-21.md](../worklog/PHASE_4_ALL_TASKS_COMPLETE-2025-12-21.md)
 > - [PHASE_4_WORK_SUMMARY-2025-12-21.md](../worklog/PHASE_4_WORK_SUMMARY-2025-12-21.md)
-> - [PHASE_4_README.md](../PHASE_4_README.md)
+> - [PHASE_4_README.md](../refactor/phase-4/PHASE_4_README.md)
 
 ---
 

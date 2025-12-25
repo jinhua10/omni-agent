@@ -1,0 +1,224 @@
+# 不使用向量模型的 RAG 配置示例
+# Configuration example for RAG without embedding model
+
+# ================================================
+# 方案 1：使用 Lucene (推荐)
+# Option 1: Use Lucene (Recommended)
+# ================================================
+spring:
+  application:
+    name: text-only-rag-system
+
+omni-agent:
+  rag:
+    type: file  # 使用基于 Lucene 的文件存储
+    file:
+      # 索引存储路径
+      index-path: ./data/lucene-index
+
+      # RAM 缓冲区大小（MB）
+      ram-buffer-size-mb: 256.0
+
+      # 是否在启动时重建索引
+      rebuild-on-startup: false
+
+      # 最大搜索结果数
+      max-results: 100
+
+      # 默认返回结果数
+      default-top-k: 10
+
+      # 启用高亮显示
+      highlight-enabled: true
+      highlight-prefix: "<mark>"
+      highlight-suffix: "</mark>"
+
+      # 最小相似度阈值
+      min-score: 0.1
+
+# ⚠️ 不需要配置 EmbeddingService
+# 全文检索不依赖向量模型
+
+logging:
+  level:
+    top.yumbo.ai.rag: INFO
+    top.yumbo.ai.omni: DEBUG
+
+---
+# ================================================
+# 方案 2：使用 H2 数据库（嵌入式）
+# Option 2: Use H2 Database (Embedded)
+# ================================================
+spring:
+  profiles: h2
+
+omni-agent:
+  rag:
+    type: h2
+    h2:
+      # 数据库 URL
+      url: jdbc:h2:./data/rag-db
+      username: sa
+      password:
+
+      # 启用全文检索（基于 Lucene）
+      enable-full-text: true
+
+      # 不启用向量检索
+      enable-vector-search: false
+
+      # 批量插入大小
+      batch-size: 100
+
+---
+# ================================================
+# 方案 3：使用 SQLite（轻量级）
+# Option 3: Use SQLite (Lightweight)
+# ================================================
+spring:
+  profiles: sqlite
+
+omni-agent:
+  rag:
+    type: sqlite
+    sqlite:
+      # 数据库文件路径
+      db-path: ./data/rag.db
+
+      # 启用 FTS5 全文检索
+      enable-fts5: true
+
+      # FTS5 分词器（中文需要自定义）
+      tokenizer: unicode61
+
+      # 不使用向量检索
+      enable-vector-search: false
+
+---
+# ================================================
+# 方案 4：使用 Elasticsearch（企业级）
+# Option 4: Use Elasticsearch (Enterprise)
+# ================================================
+spring:
+  profiles: elasticsearch
+
+omni-agent:
+  rag:
+    type: elasticsearch
+    elasticsearch:
+      # Elasticsearch 集群地址
+      hosts: localhost:9200
+
+      # 索引名称
+      index-name: rag-documents
+
+      # 启用文本搜索（BM25）
+      enable-text-search: true
+
+      # 不启用向量检索
+      enable-vector-search: false
+
+      # 分词器
+      analyzer: ik_smart  # 中文推荐使用 IK 分词器
+
+      # 副本数和分片数
+      number-of-replicas: 1
+      number-of-shards: 3
+
+---
+# ================================================
+# 方案 5：使用 MongoDB（NoSQL）
+# Option 5: Use MongoDB (NoSQL)
+# ================================================
+spring:
+  profiles: mongodb
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/rag
+
+omni-agent:
+  rag:
+    type: mongodb
+    mongodb:
+      # 集合名称
+      collection-name: documents
+
+      # 启用文本搜索
+      enable-text-search: true
+
+      # 不启用向量检索
+      enable-vector-search: false
+
+      # 创建文本索引
+      text-index-fields:
+        - title
+        - content
+        - tags
+
+---
+# ================================================
+# 方案 6：使用 Redis（高速缓存）
+# Option 6: Use Redis (High-speed Cache)
+# ================================================
+spring:
+  profiles: redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+omni-agent:
+  rag:
+    type: redis
+    redis:
+      # 键前缀
+      key-prefix: rag:
+
+      # 启用文本索引（关键词倒排）
+      enable-text-index: true
+
+      # 不启用向量检索
+      enable-vector-search: false
+
+      # 过期时间（秒，0 表示不过期）
+      ttl: 0
+
+---
+# ================================================
+# 性能调优建议
+# Performance Tuning Tips
+# ================================================
+
+# 1. Lucene 调优
+omni-agent:
+  rag:
+    file:
+      # 增大 RAM 缓冲区可以提高索引速度
+      ram-buffer-size-mb: 512.0
+
+      # 定期提交索引
+      commit-interval-seconds: 30
+
+      # 合并策略
+      merge-policy: tiered
+      max-merge-at-once: 10
+
+# 2. 查询优化
+query:
+  # 启用查询缓存
+  cache-enabled: true
+  cache-size: 1000
+  cache-ttl-seconds: 300
+
+  # 最小分数阈值（过滤低分结果）
+  min-score: 0.1
+
+  # 最大结果数
+  max-results: 100
+
+# 3. 日志级别（生产环境建议 WARN）
+logging:
+  level:
+    top.yumbo.ai.rag.file: INFO
+    org.apache.lucene: WARN
+

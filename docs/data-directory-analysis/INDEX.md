@@ -163,7 +163,7 @@ LLM 生成答案
 ### 内部文档
 - [文档提取结果持久化](../EXTRACTION_PERSISTENCE_IMPLEMENTATION.md)
 - [虚拟目录方案](../EXTRACTION_VIRTUAL_DIRECTORY.md)
-- [Persistence vs Storage 分析](../PERSISTENCE_VS_STORAGE_ANALYSIS.md)
+- [Persistence vs Storage 分析](PERSISTENCE_VS_STORAGE_ANALYSIS.md)
 
 ---
 

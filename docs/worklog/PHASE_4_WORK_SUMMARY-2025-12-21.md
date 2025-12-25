@@ -156,7 +156,7 @@
 11. [Phase 4全部任务完成报告](./PHASE_4_ALL_TASKS_COMPLETE-2025-12-21.md) ⭐ 新增
 
 ### 说明文档 (1份)
-12. [Phase 4 README](../PHASE_4_README.md)
+12. [Phase 4 README](../refactor/phase-4/PHASE_4_README.md)
 
 **总计**: 12份完整文档 ✅（+1）
 
