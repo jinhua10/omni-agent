@@ -108,7 +108,8 @@ public class DocumentExtractionResultServiceImpl implements DocumentExtractionRe
         try {
             String jsonContent = objectMapper.writeValueAsString(index.toArray(new String[0]));
             byte[] content = jsonContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-            storageService.saveDocument(INDEX_DOC_ID, "_index.json", content);
+            // ⭐ 使用 INDEX_DOC_ID 作为 documentId，"extracted/_index.json" 作为 filename
+            storageService.saveDocument(INDEX_DOC_ID, "extracted/_index.json", content);
         } catch (Exception e) {
             log.error("保存索引失败", e);
         }
