@@ -222,8 +222,6 @@ public class DocumentProcessingService {
         docConfig.setTextSummary(summary);
         docConfig.setExtractedTextRef(documentId);  // 保存引用
 
-        // 为了向后兼容，暂时保留完整文本（后续可以通过迁移任务移除）
-        // docConfig.setExtractedText(extractedText);  // TODO: 数据迁移后移除
 
         docConfig.setStatus("EXTRACTED");
         ragConfigService.setDocumentConfig(documentId, docConfig);
@@ -363,7 +361,7 @@ public class DocumentProcessingService {
 
 
     /**
-     * 提取文本（支持不同模型）⭐ 真实实现
+     * 提取文本（支持不同模型）⭐ 真实实现（支持分批并行）
      */
     private String extractText(byte[] content, String model, String documentName) {
         log.info("📝 提取文本: {} bytes, model={}, file={}", content.length, model, documentName);
@@ -386,9 +384,11 @@ public class DocumentProcessingService {
 
         // vision-llm, ocr 等需要调用DocumentProcessorManager
         try {
-            // ⭐ 构建处理上下文
+            // ⭐ 构建处理上下文（启用分批并行，但不需要流式输出）
             Map<String, Object> options = new HashMap<>();
-            options.put("model", model);  // ⭐ 传递请求的模型
+            options.put("model", model);      // ⭐ 传递请求的模型
+            options.put("batchSize", 5);      // ⭐ 每批处理5个页面（启用分批并行）
+            // 注意：不设置 streaming=true 和 streamCallback，因为流程视图不需要实时输出
 
             top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
                 top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
@@ -396,10 +396,13 @@ public class DocumentProcessingService {
                     .originalFileName(documentName)  // ⭐ 使用真实文件名
                     .fileExtension(fileExtension)    // ⭐ 使用提取的扩展名
                     .fileSize((long) content.length) // ⭐ 文件大小
-                    .options(options)                // ⭐ 处理选项
+                    .options(options)                // ⭐ 处理选项（包含分批配置）
                     .build();
 
-            // ⭐ 真正调用文档处理器进行提取
+            // ⭐ 真正调用文档处理器进行提取（支持分批并行）
+            log.info("🚀 [流程视图] 开始分批并行处理: model={}, file={}, batchSize={}",
+                    model, documentName, options.get("batchSize"));
+
             top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
                 documentProcessorManager.processDocument(context);
 
@@ -410,7 +413,7 @@ public class DocumentProcessingService {
                 return "提取文本为空";
             }
 
-            log.info("✅ 文本提取成功: {} 字符, model={}, processor={}",
+            log.info("✅ 文本提取成功（分批并行）: {} 字符, model={}, processor={}",
                     extractedText.length(), model, result.getProcessorName());
             return extractedText;
 
