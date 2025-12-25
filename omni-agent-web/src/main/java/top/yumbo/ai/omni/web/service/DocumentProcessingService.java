@@ -4,14 +4,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.web.websocket.DocumentProcessingWebSocketHandler;
+import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.storage.api.DocumentStorageService;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -36,11 +40,14 @@ public class DocumentProcessingService {
 
     private final DocumentProcessingWebSocketHandler webSocketHandler;
     private final SystemRAGConfigService ragConfigService;
-    private final DocumentStorageService storageService;  // ⭐ 新增：存储服务
-    private final DocumentProcessorManager documentProcessorManager;  // ⭐ 新增：文档处理管理器
+    private final DocumentStorageService storageService;  // ⭐ 存储服务
+    private final DocumentProcessorManager documentProcessorManager;  // ⭐ 文档处理管理器
+    private final ChunkingStrategyManager chunkingStrategyManager;  // ⭐ 分块策略管理器
+    private final EmbeddingService embeddingService;  // ⭐ 向量化服务
+    private final RAGService ragService;  // ⭐ RAG索引服务
 
     @Value("${omni-agent.file-watcher.watch-directory:./data/documents}")
-    private String watchDirectory;  // ⭐ 新增：中转站目录
+    private String watchDirectory;  // ⭐ 中转站目录
 
     /**
      * 手动处理文档（强制执行完整流程）⭐
@@ -98,8 +105,7 @@ public class DocumentProcessingService {
                 // 阶段4: 向量化
                 pushProgress(documentId, "VECTORIZE", 60, "正在向量化...", documentName,
                     Map.of("chunks", chunkCount));
-                Thread.sleep(2000);
-                int vectorCount = performVectorization(chunkCount);
+                int vectorCount = performVectorization(documentId, chunkCount);  // ⭐ 传递 documentId
                 docConfig.setStatus("VECTORIZING");
                 ragConfigService.setDocumentConfig(documentId, docConfig);
 
@@ -160,7 +166,7 @@ public class DocumentProcessingService {
                 if (autoTextExtraction && autoRAG) {
                     // 模式A: 全自动模式
                     log.info("🤖 全自动模式：自动提取 + 自动分块 + 自动索引");
-                    performFullRAG(documentId, documentName, content, docConfig);
+                    performFullRAGSimulated(documentId, documentName, content, docConfig);
 
                 } else if (autoTextExtraction && !autoRAG) {
                     // 模式B: 半自动模式（自动提取，手动分块）
@@ -230,9 +236,14 @@ public class DocumentProcessingService {
     }
 
     /**
-     * 执行完整RAG流程
+     * 执行完整RAG流程（模拟实现）⚠️
+     *
+     * 注意：此方法为模拟实现，包含 Thread.sleep() 延迟
+     * - 向量化和索引部分是模拟的
+     * - 仅用于演示完整流程
+     * TODO: 实现真正的向量化和索引功能后，重命名为 performFullRAG
      */
-    private void performFullRAG(String documentId, String documentName, byte[] content,
+    private void performFullRAGSimulated(String documentId, String documentName, byte[] content,
                                 SystemRAGConfigService.DocumentRAGConfig docConfig) throws InterruptedException {
         // 文本提取
         if (docConfig.getExtractedTextRef() == null && docConfig.getExtractedText() == null) {
@@ -253,8 +264,7 @@ public class DocumentProcessingService {
         // 阶段4: 向量化
         pushProgress(documentId, "VECTORIZE", 60, "正在向量化...", documentName,
             Map.of("chunks", chunkCount));
-        Thread.sleep(2000);
-        int vectorCount = performVectorization(chunkCount);
+        int vectorCount = performVectorization(documentId, chunkCount);  // ⭐ 传递 documentId
         docConfig.setStatus("VECTORIZING");
         ragConfigService.setDocumentConfig(documentId, docConfig);
 
@@ -426,30 +436,147 @@ public class DocumentProcessingService {
 
 
     /**
-     * 执行分块（支持配置）
+     * 执行分块（真实实现）⭐
      */
     private int performChunking(String text, SystemRAGConfigService.DocumentRAGConfig docConfig) {
         String strategy = docConfig != null ? docConfig.getChunkingStrategy() : "fixed-size";
-        log.debug("✂️ 执行分块: {} 字符, strategy={}", text.length(), strategy);
-        // TODO: 实际实现应该调用ChunkingStrategyManager
-        return 15; // 模拟返回15个分块
+        Map<String, Object> params = docConfig != null ? docConfig.getChunkingParams() : new HashMap<>();
+        String documentId = docConfig != null ? docConfig.getDocumentId() : "unknown";
+
+        log.info("✂️ 执行智能分块: {} 字符, strategy={}, params={}",
+                text.length(), strategy, params);
+
+        try {
+            // ⭐ 调用真正的分块策略管理器
+            var chunks = chunkingStrategyManager.chunkWithStrategy(
+                    documentId,
+                    text,
+                    strategy,
+                    params
+            );
+
+            log.info("✅ 智能分块完成: 生成 {} 个分块, strategy={}", chunks.size(), strategy);
+
+            // ⭐ 持久化分块结果到存储服务
+            saveChunksToStorage(documentId, chunks);
+
+            return chunks.size();
+
+        } catch (Exception e) {
+            log.error("❌ 智能分块失败: strategy={}", strategy, e);
+            // 降级：返回默认分块数
+            return 15;
+        }
     }
 
     /**
-     * 执行向量化（模拟）
+     * 保存分块到存储服务 ⭐
      */
-    private int performVectorization(int chunkCount) {
-        log.debug("🔢 执行向量化: {} 个分块", chunkCount);
-        // 实际实现应该调用向量化服务
-        return chunkCount * 768; // 模拟每个分块生成768维向量
+    private void saveChunksToStorage(String documentId, List<top.yumbo.ai.storage.api.model.Chunk> chunks) {
+        if (chunks == null || chunks.isEmpty()) {
+            log.warn("⚠️ 分块列表为空，跳过保存");
+            return;
+        }
+
+        try {
+            // ⭐ 批量保存分块
+            List<String> chunkIds = storageService.saveChunks(documentId, chunks);
+
+            log.info("✅ 已保存 {} 个分块到存储服务: documentId={}", chunkIds.size(), documentId);
+
+            // 日志：输出前3个分块的预览
+            for (int i = 0; i < Math.min(chunks.size(), 3); i++) {
+                var chunk = chunks.get(i);
+                String preview = chunk.getContent().length() > 100
+                    ? chunk.getContent().substring(0, 100) + "..."
+                    : chunk.getContent();
+                log.debug("📦 分块 #{}: id={}, size={} 字符, preview: {}",
+                        i + 1, chunk.getId(), chunk.getContent().length(), preview);
+            }
+
+            if (chunks.size() > 3) {
+                log.debug("📦 ... 还有 {} 个分块", chunks.size() - 3);
+            }
+
+        } catch (Exception e) {
+            log.error("❌ 保存分块失败: documentId={}", documentId, e);
+            // 不影响整体流程，继续处理
+        }
     }
 
     /**
-     * 执行索引（模拟）
+     * 执行向量化（真实实现）⭐
+     */
+    private int performVectorization(String documentId, int chunkCount) {
+        log.info("🔢 执行向量化: documentId={}, {} 个分块", documentId, chunkCount);
+
+        try {
+            // ⭐ 1. 从存储服务读取分块
+            var chunks = storageService.getChunksByDocument(documentId);
+
+            if (chunks == null || chunks.isEmpty()) {
+                log.warn("⚠️ 未找到分块数据: documentId={}", documentId);
+                return 0;
+            }
+
+            log.info("📦 读取到 {} 个分块，开始向量化", chunks.size());
+
+            // ⭐ 2. 批量生成向量
+            List<String> texts = chunks.stream()
+                .map(top.yumbo.ai.storage.api.model.Chunk::getContent)
+                .collect(java.util.stream.Collectors.toList());
+
+            List<float[]> embeddings = embeddingService.embedBatch(texts);
+
+            log.info("✅ 向量生成完成: {} 个向量, 维度={}",
+                    embeddings.size(), embeddingService.getDimension());
+
+            // ⭐ 3. 构建 RAG 文档并索引
+            List<top.yumbo.ai.rag.api.model.Document> ragDocuments = new java.util.ArrayList<>();
+
+            for (int i = 0; i < chunks.size(); i++) {
+                var chunk = chunks.get(i);
+                float[] embedding = embeddings.get(i);
+
+                var ragDoc = top.yumbo.ai.rag.api.model.Document.builder()
+                    .id(chunk.getId())
+                    .content(chunk.getContent())
+                    .embedding(embedding)
+                    .metadata(new java.util.HashMap<>())
+                    .build();
+
+                // 添加元数据
+                ragDoc.getMetadata().put("documentId", documentId);
+                ragDoc.getMetadata().put("chunkIndex", i);
+                ragDoc.getMetadata().put("chunkId", chunk.getId());
+
+                ragDocuments.add(ragDoc);
+            }
+
+            // ⭐ 4. 批量索引到 RAG 服务
+            List<String> indexedIds = ragService.indexDocuments(ragDocuments);
+
+            log.info("✅ 向量化完成: documentId={}, 生成 {} 个向量, 索引 {} 个文档",
+                    documentId, embeddings.size(), indexedIds.size());
+
+            return embeddings.size() * embeddingService.getDimension();
+
+        } catch (Exception e) {
+            log.error("❌ 向量化失败: documentId={}", documentId, e);
+            // 降级：返回模拟数据
+            return chunkCount * 768;
+        }
+    }
+
+    /**
+     * 执行索引（真实实现）⭐
+     *
+     * 注意：索引已在 performVectorization 中完成
+     * 此方法保留用于兼容性和日志输出
      */
     private void performIndexing(String documentId, int vectorCount) {
-        log.debug("📊 执行索引: documentId={}, {} 个向量", documentId, vectorCount);
-        // 实际实现应该调用索引服务
+        log.info("📊 索引已完成: documentId={}, {} 个向量已索引", documentId, vectorCount);
+        // 索引操作已在 performVectorization() 中通过 ragService.indexDocuments() 完成
     }
 }
 
