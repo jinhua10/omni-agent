@@ -148,20 +148,32 @@ public class FileWatcherService {
             return;
         }
 
+        log.info("🛑 正在停止文件监听...");
         running = false;
 
         try {
+            // 1️⃣ 先关闭线程池，等待线程完成
+            if (executorService != null) {
+                executorService.shutdown();
+                if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                    log.warn("⚠️ 监听线程未能在5秒内正常结束，强制关闭");
+                    executorService.shutdownNow();
+                }
+            }
+
+            if (scanExecutor != null) {
+                scanExecutor.shutdown();
+                if (!scanExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    log.warn("⚠️ 扫描线程未能在5秒内正常结束，强制关闭");
+                    scanExecutor.shutdownNow();
+                }
+            }
+
+            // 2️⃣ 再关闭 WatchService（此时所有使用它的线程已停止）
             if (watchService != null) {
                 watchService.close();
             }
-            if (executorService != null) {
-                executorService.shutdown();
-                executorService.awaitTermination(5, TimeUnit.SECONDS);
-            }
-            if (scanExecutor != null) {
-                scanExecutor.shutdown();
-                scanExecutor.awaitTermination(5, TimeUnit.SECONDS);
-            }
+
             log.info("✅ 文件监听已停止");
         } catch (Exception e) {
             log.error("❌ 停止文件监听失败", e);
@@ -225,9 +237,20 @@ public class FileWatcherService {
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                log.debug("监听线程被中断，准备退出");
+                break;
+            } catch (ClosedWatchServiceException e) {
+                // WatchService 已关闭，正常退出（应用关闭时会发生）
+                log.debug("WatchService 已关闭，监听循环退出");
                 break;
             } catch (Exception e) {
-                log.error("❌ 处理文件变化失败", e);
+                // 只有在服务仍在运行时才记录错误
+                if (running) {
+                    log.error("❌ 处理文件变化失败", e);
+                } else {
+                    log.debug("监听服务已停止，忽略后续错误");
+                    break;
+                }
             }
         }
 
