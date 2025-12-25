@@ -1,71 +1,286 @@
 /**
  * 文本提取配置组件样式
  * (Text Extraction Configuration Component Styles)
+ * 美化版本 - 现代化设计
  */
 
 .text-extraction-config {
   padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  min-height: 100vh;
 }
 
 .text-extraction-config .config-layout {
   display: grid;
-  grid-template-columns: 450px 1fr;
-  gap: 24px;
+  grid-template-columns: 420px 1fr;
+  gap: 20px;
   min-height: 600px;
+  align-items: start;
 }
 
 /* 配置面板 */
 .text-extraction-config .config-panel {
-  background: #fff;
+  background: transparent;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-extraction-config .config-panel .ant-card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  background: white;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-extraction-config .config-panel .ant-card:hover {
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.text-extraction-config .config-panel .ant-card-head {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-bottom: 2px solid #667eea30;
+  border-radius: 12px 12px 0 0;
+  padding: 10px 16px;
+  min-height: auto;
+}
+
+.text-extraction-config .config-panel .ant-card-head-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.text-extraction-config .config-panel .ant-card-body {
+  padding: 12px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-extraction-config .config-panel .vertical-space {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .text-extraction-config .model-selector {
-  margin-top: 16px;
+  margin-top: 12px;
+}
+
+.text-extraction-config .model-selector .ant-select {
+  border-radius: 8px;
+}
+
+.text-extraction-config .model-selector .ant-select-selector {
+  border-radius: 8px !important;
+  border: 2px solid #e5e7eb !important;
+  transition: all 0.3s;
+}
+
+.text-extraction-config .model-selector .ant-select-focused .ant-select-selector {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
 }
 
 .text-extraction-config .config-label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
 }
 
 .text-extraction-config .system-config {
-  padding: 16px;
-  background: #f5f5f5;
-  border-radius: 4px;
+  padding: 12px;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-radius: 8px;
+  border: 1px solid #e9d5ff;
+  margin-top: 12px;
 }
 
 .text-extraction-config .config-item {
-  padding: 8px 0;
+  padding: 6px 0;
+}
+
+.text-extraction-config .config-check-icon {
+  color: #667eea;
+  font-size: 16px;
 }
 
 .text-extraction-config .action-buttons {
-  margin-top: 24px;
+  margin-top: 16px;
+}
+
+.text-extraction-config .action-buttons .ant-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.text-extraction-config .action-buttons .ant-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.text-extraction-config .action-buttons .ant-btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+}
+
+.text-extraction-config .action-buttons .ant-btn:not(.ant-btn-primary):not(.ant-btn-link) {
+  border: 2px solid #e5e7eb;
+}
+
+.text-extraction-config .action-buttons .ant-btn:not(.ant-btn-primary):not(.ant-btn-link):hover {
+  border-color: #667eea;
+  color: #667eea;
 }
 
 /* 流式模式选择器 */
 .text-extraction-config .streaming-mode-selector {
-  padding: 16px;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
   border-radius: 8px;
-  border: 1px solid #bae6fd;
-  margin-top: 16px;
-  transition: all 0.3s ease;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  margin-top: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .text-extraction-config .streaming-mode-selector:hover {
-  border-color: #7dd3fc;
-  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);
+  border-color: #60a5fa;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-1px);
+}
+
+.text-extraction-config .streaming-icon-active {
+  color: #3b82f6;
+  font-size: 14px;
+  animation: pulse 2s infinite;
+  flex-shrink: 0;
+}
+
+.text-extraction-config .streaming-icon-inactive {
+  color: #9ca3af;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 步骤导航按钮 */
+.text-extraction-config .step-navigation-buttons {
+  margin-top: 12px;
+}
+
+.text-extraction-config .step-navigation-buttons .ant-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.text-extraction-config .step-navigation-buttons .ant-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.text-extraction-config .step-navigation-buttons .ant-btn-primary:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+.text-extraction-config .step-navigation-buttons .ant-btn:not(.ant-btn-primary) {
+  border: 2px solid #e5e7eb;
+}
+
+.text-extraction-config .step-navigation-buttons .ant-btn:not(.ant-btn-primary):hover {
+  border-color: #667eea;
+  color: #667eea;
 }
 
 /* 预览面板 */
 .text-extraction-config .preview-panel {
-  background: #fff;
+  background: transparent;
+  border-radius: 12px;
   height: 100%;
+  min-height: 600px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.text-extraction-config .preview-panel .ant-card {
+  border-radius: 12px;
+  border: none;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  background: white;
+}
+
+.text-extraction-config .preview-panel .ant-card:hover {
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+}
+
+.text-extraction-config .preview-panel .ant-card-head {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-bottom: 2px solid #667eea30;
+  border-radius: 12px 12px 0 0;
+  padding: 12px 20px;
+  min-height: auto;
+}
+
+.text-extraction-config .preview-panel .ant-card-head-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.text-extraction-config .preview-panel .ant-card-extra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.text-extraction-config .preview-panel .ant-card-extra .ant-btn {
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+
+.text-extraction-config .preview-panel .ant-card-extra .ant-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+}
+
+.text-extraction-config .preview-panel .ant-card-extra .ant-btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+  transform: translateY(-1px);
+}
+
+.text-extraction-config .preview-panel .ant-card-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
 }
 
 /* ⭐ 性能优化：文本区域使用硬件加速 */
@@ -73,6 +288,47 @@
   will-change: contents;
   transform: translateZ(0);
   -webkit-font-smoothing: subpixel-antialiased;
+  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%) !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 14px !important;
+  line-height: 1.8 !important;
+  color: #374151 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.text-extraction-config .source-editor-textarea:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 3px rgba(102, 126, 234, 0.05);
+}
+
+.text-extraction-config .source-editor-textarea:focus {
+  border-color: #667eea !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+  outline: none !important;
+}
+
+/* 源码编辑器（可编辑） */
+.text-extraction-config .source-editor {
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  min-height: 500px;
+  color: #374151;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.text-extraction-config .source-editor:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
 }
 
 /* ⭐ 性能优化：Markdown预览容器 */
@@ -82,26 +338,89 @@
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
   max-height: calc(100vh - 300px);
+  padding: 4px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+/* Markdown 预览内容区域 */
+.text-extraction-config .markdown-preview-container .markdown-preview {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s;
+}
+
+.text-extraction-config .markdown-preview-container:hover .markdown-preview {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .text-extraction-config .model-info-card {
   height: 100%;
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.text-extraction-config .model-info-card .ant-card-head {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-bottom: 2px solid #667eea30;
 }
 
 .text-extraction-config .model-description h4,
 .text-extraction-config .model-features h4,
 .text-extraction-config .model-scenarios h4 {
-  margin-bottom: 12px;
-  color: #333;
+  margin-bottom: 10px;
+  color: #374151;
   font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.text-extraction-config .model-description h4::before,
+.text-extraction-config .model-features h4::before,
+.text-extraction-config .model-scenarios h4::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
 }
 
 .text-extraction-config .model-description p {
-  color: #666;
+  color: #6b7280;
   line-height: 1.6;
+  font-size: 13px;
 }
 
 /* Alert 样式 */
+.text-extraction-config .ant-alert {
+  border-radius: 8px;
+  border: none;
+}
+
+.text-extraction-config .ant-alert-info {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+.text-extraction-config .ant-alert-warning {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left: 4px solid #f59e0b;
+}
+
+.text-extraction-config .ant-alert-success {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-left: 4px solid #10b981;
+}
+
+.text-extraction-config .ant-alert-error {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-left: 4px solid #ef4444;
+}
+
 .text-extraction-config .progress-info {
   font-size: 12px;
 }
@@ -110,7 +429,7 @@
   margin-top: 8px;
   font-size: 16px;
   font-weight: bold;
-  color: #52c41a;
+  color: #10b981;
 }
 
 /* Tag 样式 */
@@ -166,8 +485,12 @@
 /* Markdown 预览样式 */
 .text-extraction-config .markdown-preview {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  line-height: 1.6;
-  color: #333;
+  line-height: 1.8;
+  color: #374151;
+  padding: 20px 24px;
+  background: white;
+  border-radius: 0;
+  min-height: 500px;
 }
 
 .text-extraction-config .markdown-preview h1,
@@ -177,13 +500,45 @@
   margin-top: 24px;
   margin-bottom: 16px;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.3;
+  color: #1f2937;
 }
 
 .text-extraction-config .markdown-preview h1 {
   font-size: 2em;
-  border-bottom: 1px solid #eaecef;
+  border-bottom: 2px solid #e5e7eb;
   padding-bottom: 0.3em;
+  margin-top: 0;
+}
+
+.text-extraction-config .markdown-preview h2 {
+  font-size: 1.6em;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3em;
+}
+
+.text-extraction-config .markdown-preview h3 {
+  font-size: 1.3em;
+}
+
+.text-extraction-config .markdown-preview h4 {
+  font-size: 1.1em;
+}
+
+.text-extraction-config .markdown-preview p {
+  margin-bottom: 16px;
+  line-height: 1.8;
+}
+
+.text-extraction-config .markdown-preview strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.text-extraction-config .markdown-preview em {
+  font-style: italic;
+  color: #4b5563;
+}
 }
 
 .text-extraction-config .markdown-preview h2 {
@@ -204,18 +559,172 @@
   padding: 0.2em 0.4em;
   margin: 0;
   font-size: 85%;
-  background-color: rgba(27, 31, 35, 0.05);
-  border-radius: 3px;
+  background-color: rgba(175, 184, 193, 0.15);
+  border-radius: 4px;
   font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  color: #d6336c;
+  border: 1px solid rgba(175, 184, 193, 0.2);
 }
 
 .text-extraction-config .markdown-preview pre {
-  padding: 16px;
+  padding: 20px;
   overflow: auto;
-  font-size: 85%;
-  line-height: 1.45;
-  background-color: #f6f8fa;
-  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.7;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 10px;
+  margin: 20px 0;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.text-extraction-config .markdown-preview pre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 8px 8px 0 0;
+}
+
+.text-extraction-config .markdown-preview pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1e293b;
+  display: block;
+  margin-top: 32px;
+}
+
+.text-extraction-config .markdown-preview blockquote {
+  margin: 20px 0;
+  padding: 16px 20px;
+  color: #4b5563;
+  border-left: 4px solid #667eea;
+  background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
+  border-radius: 0 8px 8px 0;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+}
+
+.text-extraction-config .markdown-preview blockquote::before {
+  content: '"';
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  font-size: 48px;
+  color: #667eea;
+  opacity: 0.15;
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+
+.text-extraction-config .markdown-preview blockquote p {
+  margin: 0;
+  padding-left: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.text-extraction-config .markdown-preview ul,
+.text-extraction-config .markdown-preview ol {
+  padding-left: 2.5em;
+  margin: 16px 0;
+}
+
+.text-extraction-config .markdown-preview ul {
+  list-style-type: none;
+}
+
+.text-extraction-config .markdown-preview ul li {
+  position: relative;
+  margin-bottom: 10px;
+  line-height: 1.8;
+}
+
+.text-extraction-config .markdown-preview ul li::before {
+  content: '';
+  position: absolute;
+  left: -1.5em;
+  top: 0.7em;
+  width: 6px;
+  height: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.text-extraction-config .markdown-preview ol li {
+  margin-bottom: 10px;
+  line-height: 1.8;
+  padding-left: 8px;
+}
+
+.text-extraction-config .markdown-preview ol {
+  counter-reset: item;
+}
+
+.text-extraction-config .markdown-preview ol li {
+  counter-increment: item;
+}
+
+.text-extraction-config .markdown-preview ol li::marker {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.text-extraction-config .markdown-preview hr {
+  height: 2px;
+  padding: 0;
+  margin: 32px 0;
+  background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+  border: 0;
+}
+
+/* 链接样式 */
+.text-extraction-config .markdown-preview a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.text-extraction-config .markdown-preview a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transition: width 0.3s;
+}
+
+.text-extraction-config .markdown-preview a:hover {
+  color: #5568d3;
+}
+
+.text-extraction-config .markdown-preview a:hover::after {
+  width: 100%;
+}
+
+/* 图片样式 */
+.text-extraction-config .markdown-preview img {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+  transition: all 0.3s;
+}
+
+.text-extraction-config .markdown-preview img:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
 }
 
 /* 代码块包装器样式 */
@@ -396,18 +905,36 @@
 .text-extraction-config .markdown-preview table {
   border-spacing: 0;
   border-collapse: collapse;
-  margin-bottom: 16px;
+  margin: 16px 0;
   width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
 }
 
-.text-extraction-config .markdown-preview table th,
+.text-extraction-config .markdown-preview table th {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  text-align: left;
+  border: none;
+}
+
 .text-extraction-config .markdown-preview table td {
-  padding: 6px 13px;
-  border: 1px solid #dfe2e5;
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  border-left: none;
+  border-right: none;
 }
 
-.text-extraction-config .markdown-preview table tr:nth-child(2n) {
-  background-color: #f6f8fa;
+.text-extraction-config .markdown-preview table tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.text-extraction-config .markdown-preview table tr:hover {
+  background-color: #f3f4f6;
 }
 
 /* ⭐ 批次面板固定高度 */
@@ -418,22 +945,212 @@
 }
 
 /* 滚动条样式优化 */
-.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar {
+.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar,
+.text-extraction-config .markdown-preview::-webkit-scrollbar,
+.text-extraction-config .source-editor-textarea::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
-.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar-track,
+.text-extraction-config .markdown-preview::-webkit-scrollbar-track,
+.text-extraction-config .source-editor-textarea::-webkit-scrollbar-track {
+  background: #f3f4f6;
   border-radius: 4px;
 }
 
-.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar-thumb {
-  background: #888;
+.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar-thumb,
+.text-extraction-config .markdown-preview::-webkit-scrollbar-thumb,
+.text-extraction-config .source-editor-textarea::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 4px;
 }
 
-.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar-thumb:hover {
-  background: #555;
+.text-extraction-config .batch-collapse-panel .ant-collapse-content-box::-webkit-scrollbar-thumb:hover,
+.text-extraction-config .markdown-preview::-webkit-scrollbar-thumb:hover,
+.text-extraction-config .source-editor-textarea::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3d91 100%);
+}
+
+/* Tag 美化 */
+.text-extraction-config .ant-tag {
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-weight: 500;
+  border: none;
+  font-size: 12px;
+}
+
+/* 通用按钮美化 */
+.text-extraction-config .ant-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 暗色模式支持 */
+.dark-mode .text-extraction-config {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.dark-mode .text-extraction-config .config-panel,
+.dark-mode .text-extraction-config .preview-panel {
+  background: #1f2937;
+  border-color: rgba(129, 140, 248, 0.2);
+}
+
+.dark-mode .text-extraction-config .config-panel .ant-card-head,
+.dark-mode .text-extraction-config .preview-panel .ant-card-head {
+  background: linear-gradient(135deg, #818cf825 0%, #a78bfa25 100%);
+  border-bottom-color: rgba(129, 140, 248, 0.3);
+}
+
+.dark-mode .text-extraction-config .markdown-preview {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  color: #e5e7eb;
+}
+
+.dark-mode .text-extraction-config .model-description h4,
+.dark-mode .text-extraction-config .model-features h4,
+.dark-mode .text-extraction-config .model-scenarios h4 {
+  color: #f3f4f6;
+}
+
+/* 模型卡片边框美化 */
+.text-extraction-config .model-card-border-standard {
+  border-left: 4px solid #1890ff;
+}
+
+.text-extraction-config .model-card-border-vision-llm {
+  border-left: 4px solid #722ed1;
+}
+
+.text-extraction-config .model-card-border-ocr {
+  border-left: 4px solid #52c41a;
+}
+
+/* 动画效果 */
+.text-extraction-config .config-panel,
+.text-extraction-config .preview-panel {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 加载动画 */
+.text-extraction-config .ant-spin {
+  color: #667eea;
+}
+
+/* Markdown 预览的代码高亮（内联代码） */
+.text-extraction-config .markdown-preview :not(pre) > code {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fef3c7 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 选中文本样式 */
+.text-extraction-config .markdown-preview ::selection {
+  background: rgba(102, 126, 234, 0.2);
+  color: inherit;
+}
+
+/* 标题悬停效果 */
+.text-extraction-config .markdown-preview h1:hover,
+.text-extraction-config .markdown-preview h2:hover,
+.text-extraction-config .markdown-preview h3:hover,
+.text-extraction-config .markdown-preview h4:hover {
+  color: #667eea;
+  transition: color 0.3s;
+}
+
+/* 表格悬停行高亮 */
+.text-extraction-config .markdown-preview table tr:hover td {
+  background-color: #e6f0ff !important;
+}
+
+/* 滚动条样式增强 */
+.text-extraction-config .markdown-preview-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.text-extraction-config .markdown-preview-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 5px;
+}
+
+.text-extraction-config .markdown-preview-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 5px;
+  border: 2px solid #f1f5f9;
+}
+
+.text-extraction-config .markdown-preview-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #5568d3 0%, #6a3d91 100%);
+}
+
+/* 徽章样式美化 */
+.text-extraction-config .ant-tag {
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-weight: 500;
+  border: none;
+  font-size: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+}
+
+.text-extraction-config .ant-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* 按钮组样式 */
+.text-extraction-config .preview-panel .ant-card-extra .ant-space-item {
+  display: flex;
+  align-items: center;
+}
+
+/* Divider 美化 */
+.text-extraction-config .preview-panel .ant-divider-vertical {
+  height: 24px;
+  background: linear-gradient(180deg, transparent, #e5e7eb, transparent);
+  border: none;
+  width: 1px;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .text-extraction-config .markdown-preview {
+    padding: 16px;
+  }
+
+  .text-extraction-config .markdown-preview h1 {
+    font-size: 1.5em;
+  }
+
+  .text-extraction-config .markdown-preview pre {
+    padding: 12px;
+    font-size: 12px;
+  }
 }
 
 

@@ -103,7 +103,7 @@ function TextExtractionConfig({ documentId }) {
   const [lastSaved, setLastSaved] = useState(null) // ⭐ 最后保存时间
   const [isMerged, setIsMerged] = useState(false) // ⭐ 是否已合并批次
   const [livePreview, setLivePreview] = useState(false) // ⭐ 实时Markdown预览开关（默认关闭以提升性能）
-  const [renderMode, setRenderMode] = useState('text') // ⭐ 渲染模式: 'text' | 'markdown'
+  const [renderMode, setRenderMode] = useState('markdown') // ⭐ 渲染模式: 'text' | 'markdown'（默认markdown以获得更好的视觉效果）
 
   // 加载系统配置
   useEffect(() => {
@@ -309,7 +309,10 @@ function TextExtractionConfig({ documentId }) {
     setExtractionProgress({ status: 'processing', percent: 0 })
     setExtractionResult('') // ⭐ 清空之前的结果
     setBatches([]) // ⭐ 清空批次
-    setRenderMode('text') // ⭐ 提取时强制使用文本模式提升性能
+    // ⭐ 只在流式且未开启实时预览时使用文本模式提升性能，否则保持 markdown 模式
+    if (streamingMode && !livePreview) {
+      setRenderMode('text')
+    }
     message.info(streamingMode ? t('textExtractionConfig.extraction.streamingStart') : t('textExtractionConfig.extraction.batchStart'))
 
     let currentBatchIndex = -1 // ⭐ 跟踪当前批次
@@ -442,10 +445,8 @@ function TextExtractionConfig({ documentId }) {
                   percent: 100,
                   accuracy: data.accuracy || 0.85
                 })
-                // ⭐ 提取完成后，如果用户开启了实时预览，自动切换到Markdown模式
-                if (livePreview) {
-                  setRenderMode('markdown')
-                }
+                // ⭐ 提取完成后，自动切换到 Markdown 模式以获得更好的视觉效果
+                setRenderMode('markdown')
                 message.success(streamingMode ? t('textExtractionConfig.extraction.streamingComplete') : t('textExtractionConfig.extraction.batchComplete'))
               }
             } catch (e) {
@@ -503,41 +504,37 @@ function TextExtractionConfig({ documentId }) {
         {/* 左侧：配置面板 */}
         <div className="config-panel">
           <Card title={documentId ? `${t('textExtractionConfig.documentTitle')} - ${documentId}` : t('textExtractionConfig.title')}>
-            <Space vertical size="large" className="vertical-space">
+            <Space vertical size="middle" className="vertical-space">
               {documentId && extractionProgress && (
                 <Alert
-                  title={
-                    extractionProgress.status === 'processing' ? t('textExtractionConfig.progress.extracting') : 
-                    extractionProgress.status === 'success' ? t('textExtractionConfig.progress.completed') : 
-                    t('textExtractionConfig.progress.failed')
-                  }
                   description={
-                    <div>
+                    <div style={{ fontSize: '13px' }}>
                       {extractionProgress.message || `进度: ${extractionProgress.percent}%`}
                       {extractionProgress.accuracy && (
-                        <div className="accuracy-display">
+                        <span style={{ marginLeft: 12 }}>
                           📊 {t('textExtractionConfig.progress.accuracy')}: {(extractionProgress.accuracy * 100).toFixed(1)}%
-                        </div>
+                        </span>
                       )}
                     </div>
                   }
                   type={extractionProgress.status === 'processing' ? 'info' : extractionProgress.status === 'success' ? 'success' : 'error'}
                   showIcon
+                  style={{ marginBottom: 8 }}
                 />
               )}
               {documentId && !extractionProgress ? (
                 <Alert
-                  title={t('textExtractionConfig.alerts.documentConfigTitle')}
                   description={t('textExtractionConfig.alerts.documentConfigDesc').replace('{docId}', documentId)}
                   type="warning"
                   showIcon
+                  style={{ marginBottom: 8, fontSize: '13px' }}
                 />
               ) : !documentId && (
                 <Alert
-                  title={t('textExtractionConfig.alerts.systemConfigTitle')}
                   description={t('textExtractionConfig.alerts.systemConfigDesc')}
                   type="info"
                   showIcon
+                  style={{ marginBottom: 8, fontSize: '13px' }}
                 />
               )}
 
@@ -562,74 +559,69 @@ function TextExtractionConfig({ documentId }) {
               {/* ⭐ 流式/非流式开关 */}
               {documentId && (
                 <div className="streaming-mode-selector">
-                  <Space align="center" className="streaming-mode-selector-space">
-                    <Space>
+                  <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+                    <Space align="center" size="small">
                       <ThunderboltFilled className={streamingMode ? 'streaming-icon-active' : 'streaming-icon-inactive'} />
-                      <span className="config-label">
+                      <span style={{ fontSize: '13px', fontWeight: 500 }}>
                         {streamingMode ? t('textExtractionConfig.streamingMode.streamingMode') : t('textExtractionConfig.streamingMode.batchOutput')}
                       </span>
                     </Space>
-                    <Tooltip title={streamingMode ? t('textExtractionConfig.streamingMode.streamingTip') : t('textExtractionConfig.streamingMode.batchTip')}>
-                      <Switch
-                        checked={streamingMode}
-                        onChange={setStreamingMode}
-                        disabled={extracting}
-                        checkedChildren="流式"
-                        unCheckedChildren="批量"
-                      />
-                    </Tooltip>
-                  </Space>
-                  <div className="streaming-mode-description">
-                    {streamingMode
-                      ? `💡 ${t('textExtractionConfig.streamingMode.streamingTip')}`
-                      : `💡 ${t('textExtractionConfig.streamingMode.batchTip')}`}
-                  </div>
-                </div>
-              )}
-
-              {/* 系统配置选项 */}
-              {systemConfig && (
-                <div className="system-config">
-                  <Divider />
-                  <Space vertical className="full-width-space">
-                    <div className="config-item">
-                      <Space>
-                        <CheckCircleOutlined className="config-check-icon" />
-                        <span>{t('textExtractionConfig.labels.defaultModel')}:</span>
-                        <Tag color={currentModel.color}>
-                          {language === 'zh' ? currentModel.name : currentModel.nameEn}
-                        </Tag>
-                      </Space>
-                    </div>
+                    <Switch
+                      checked={streamingMode}
+                      onChange={setStreamingMode}
+                      disabled={extracting}
+                      size="small"
+                    />
                   </Space>
                 </div>
               )}
 
-              <div className="action-buttons">
-                <Space>
+              {/* 操作按钮 */}
+              <Space size="small">
+                <Button
+                  type="primary"
+                  icon={<ThunderboltOutlined />}
+                  onClick={handleApply}
+                  loading={loading || extracting}
+                  disabled={extracting}
+                >
+                  {documentId ? (extracting ? t('textExtractionConfig.buttons.extractionInProgress') : t('textExtractionConfig.buttons.startExtraction')) : t('textExtractionConfig.buttons.applyConfig')}
+                </Button>
+                <Button onClick={loadSystemConfig} disabled={extracting}>
+                  {t('textExtractionConfig.buttons.reset')}
+                </Button>
+                {documentId && (
                   <Button
-                    type="primary"
-                    icon={<ThunderboltOutlined />}
-                    onClick={handleApply}
-                    loading={loading || extracting}
-                    disabled={extracting}
-                    size="large"
+                    onClick={() => window.location.hash = '#/documents?view=flow&docId=' + documentId}
                   >
-                    {documentId ? (extracting ? t('textExtractionConfig.buttons.extractionInProgress') : t('textExtractionConfig.buttons.startExtraction')) : t('textExtractionConfig.buttons.applyConfig')}
+                    {t('textExtractionConfig.buttons.backToFlow')}
                   </Button>
-                  <Button onClick={loadSystemConfig} size="large" disabled={extracting}>
-                    {t('textExtractionConfig.buttons.reset')}
-                  </Button>
-                  {documentId && (
+                )}
+              </Space>
+
+              {/* ⭐ 步骤导航按钮 - 提取完成后显示 */}
+              {documentId && extractionResult && extractionProgress?.status === 'success' && (
+                <>
+                  <Divider style={{ margin: '12px 0' }} />
+                  <Space style={{ width: '100%', justifyContent: 'space-between' }} size="small">
                     <Button
-                      onClick={() => window.location.hash = '#/documents?view=flow&docId=' + documentId}
-                      size="large"
+                      icon={<ReloadOutlined />}
+                      onClick={handleReExtract}
+                      disabled={extracting}
                     >
-                      {t('textExtractionConfig.buttons.backToFlow')}
+                      {t('textExtractionConfig.buttons.reExtract')}
                     </Button>
-                  )}
-                </Space>
-              </div>
+                    <Button
+                      type="primary"
+                      icon={<ArrowRightOutlined />}
+                      onClick={handleNextStep}
+                      disabled={extracting}
+                    >
+                      {t('textExtractionConfig.buttons.nextStep')}
+                    </Button>
+                  </Space>
+                </>
+              )}
             </Space>
           </Card>
         </div>
@@ -786,30 +778,6 @@ function TextExtractionConfig({ documentId }) {
                 />
               )}
             </Card>
-
-            {/* ⭐ 步骤导航按钮 */}
-            {documentId && extractionResult && extractionProgress?.status === 'success' && (
-              <Card style={{ marginTop: 16 }}>
-                <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-                  <Button
-                    icon={<ReloadOutlined />}
-                    onClick={handleReExtract}
-                    disabled={extracting}
-                  >
-                    {t('textExtractionConfig.buttons.reExtract')}
-                  </Button>
-                  <Button
-                    type="primary"
-                    icon={<ArrowRightOutlined />}
-                    onClick={handleNextStep}
-                    size="large"
-                    disabled={extracting}
-                  >
-                    {t('textExtractionConfig.buttons.nextStep')}
-                  </Button>
-                </Space>
-              </Card>
-            )}
           </div>
         ) : (
           <div className="preview-panel">

@@ -1,75 +1,193 @@
 /**
  * 分块策略配置样式 (Chunking Strategy Configuration Styles)
+ * 美化版本 - 现代化设计
  *
  * @author OmniAgent Team
  * @since 2.0.0 (Phase 4)
  */
 
 .chunking-config-container {
-  padding: 24px;
-  background-color: var(--bg-color, #f5f5f5);
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
   min-height: 100vh;
 }
 
 /* 页面标题 */
 .chunking-config-container .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .chunking-config-container .page-header h1 {
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   margin: 0;
-  color: var(--text-primary, #1f1f1f);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .chunking-config-container .page-header .subtitle {
   font-size: 14px;
-  color: var(--text-secondary, #666);
-  margin: 8px 0 0 0;
+  color: #6b7280;
+  margin: 6px 0 0 0;
+  font-weight: 400;
 }
 
 /* 策略卡片 */
 .chunking-config-container .strategy-card {
   height: 100%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chunking-config-container .strategy-card:hover {
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
+}
+
+.chunking-config-container .strategy-card .ant-card-head {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-bottom: 2px solid #667eea30;
+  padding: 10px 16px;
+  min-height: auto;
+}
+
+.chunking-config-container .strategy-card .ant-card-head-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chunking-config-container .strategy-card .ant-card-body {
+  padding: 12px 16px;
 }
 
 .chunking-config-container .strategy-selector {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+}
+
+.chunking-config-container .strategy-selector .ant-select {
+  border-radius: 8px;
+}
+
+.chunking-config-container .strategy-selector .ant-select-selector {
+  border-radius: 8px !important;
+  border: 2px solid #e5e7eb !important;
+  transition: all 0.3s;
+}
+
+.chunking-config-container .strategy-selector .ant-select-focused .ant-select-selector {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
 }
 
 .chunking-config-container .params-config h3 {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--text-primary, #1f1f1f);
+  margin-bottom: 10px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chunking-config-container .params-config h3::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
 }
 
 /* 对比模式 */
 .chunking-config-container .comparison-mode {
-  padding: 16px;
-  background-color: var(--bg-secondary, #fafafa);
-  border-radius: 8px;
+  padding: 12px;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-radius: 10px;
+  border: 1px solid #e9d5ff;
+}
+
+/* 文档信息卡片 */
+.chunking-config-container .document-info-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chunking-config-container .document-info-card:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2) !important;
+  transform: translateY(-1px);
+}
+
+.chunking-config-container .document-info-card .ant-tag {
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 4px;
 }
 
 /* 预览卡片 */
 .chunking-config-container .preview-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  transition: all 0.3s;
+}
+
+.chunking-config-container .preview-card:hover {
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+}
+
+.chunking-config-container .preview-card .ant-card-head {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-bottom: 2px solid #667eea30;
 }
 
 .chunking-config-container .preview-input h3 {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: 12px;
-  color: var(--text-primary, #1f1f1f);
+  margin-bottom: 10px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* 统计卡片 */
+.chunking-config-container .preview-input h3::before {
+  content: '✏️';
+  font-size: 18px;
+}
+
+.chunking-config-container .preview-input .ant-input {
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s;
+}
+
+.chunking-config-container .preview-input .ant-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 统计卡片 - 更炫酷的渐变 */
 .chunking-config-container .statistics-card {
   margin-bottom: 16px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
   color: white;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+  border: none;
+}
+
+.chunking-config-container .statistics-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+  border-radius: 12px;
+  pointer-events: none;
 }
 
 .chunking-config-container .statistics-card .ant-card-head {
@@ -78,16 +196,20 @@
 
 .chunking-config-container .statistics-card .ant-card-head-title {
   color: white;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .chunking-config-container .statistics-card .ant-statistic-title {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
+  font-weight: 500;
 }
 
 .chunking-config-container .statistics-card .ant-statistic-content {
   color: white;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 24px;
 }
 
 .chunking-config-container .statistics-card .ant-divider {
@@ -100,41 +222,54 @@
 }
 
 .chunking-config-container .chunk-results-header {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .chunking-config-container .chunk-list {
   max-height: 600px;
   overflow-y: auto;
+  padding: 4px;
 }
 
 .chunking-config-container .chunk-card {
   margin-bottom: 12px;
-  transition: all 0.3s;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
 }
 
 .chunking-config-container .chunk-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
   transform: translateY(-2px);
+}
+
+.chunking-config-container .chunk-card .ant-card-head {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .chunking-config-container .chunk-content {
   margin: 0;
   padding: 12px;
-  background-color: var(--code-bg, #f6f8fa);
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border-radius: 6px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
   word-wrap: break-word;
   max-height: 200px;
   overflow-y: auto;
+  border: 1px solid #e5e7eb;
 }
 
 /* 对比结果 */
 .chunking-config-container .comparison-card {
   margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .chunking-config-container .comparison-results {
@@ -144,23 +279,63 @@
 }
 
 .chunking-config-container .comparison-item {
-  border: 2px solid var(--border-color, #e8e8e8);
-  transition: all 0.3s;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
 }
 
 .chunking-config-container .comparison-item:hover {
-  border-color: var(--primary-color, #1890ff);
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+  border-color: #667eea;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+  transform: translateY(-3px);
+}
+
+.chunking-config-container .comparison-item .ant-card-head {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-bottom: 2px solid #667eea30;
+}
+
+/* 步骤导航按钮美化 */
+.chunking-config-container .step-navigation-buttons {
+  padding: 4px 0;
+}
+
+.chunking-config-container .step-navigation-buttons .ant-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chunking-config-container .step-navigation-buttons .ant-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.chunking-config-container .step-navigation-buttons .ant-btn-primary:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+.chunking-config-container .step-navigation-buttons .ant-btn:not(.ant-btn-primary) {
+  border: 2px solid #e5e7eb;
+}
+
+.chunking-config-container .step-navigation-buttons .ant-btn:not(.ant-btn-primary):hover {
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateX(-2px);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .chunking-config-container {
-    padding: 16px;
+    padding: 12px;
   }
 
   .chunking-config-container .page-header h1 {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .chunking-config-container .comparison-results {
@@ -170,69 +345,156 @@
 
 /* 暗色模式 */
 .dark-mode .chunking-config-container {
-  background-color: #1f1f1f;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
 .dark-mode .chunking-config-container .page-header h1 {
-  color: #ffffff;
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .dark-mode .chunking-config-container .page-header .subtitle {
-  color: rgba(255, 255, 255, 0.65);
+  color: #9ca3af;
+}
+
+.dark-mode .chunking-config-container .strategy-card,
+.dark-mode .chunking-config-container .preview-card {
+  background: #1f2937;
+  border-color: rgba(129, 140, 248, 0.2);
+}
+
+.dark-mode .chunking-config-container .strategy-card .ant-card-head,
+.dark-mode .chunking-config-container .preview-card .ant-card-head {
+  background: linear-gradient(135deg, #818cf825 0%, #a78bfa25 100%);
+  border-bottom-color: rgba(129, 140, 248, 0.3);
 }
 
 .dark-mode .chunking-config-container .params-config h3,
 .dark-mode .chunking-config-container .preview-input h3 {
-  color: #ffffff;
+  color: #f3f4f6;
 }
 
 .dark-mode .chunking-config-container .comparison-mode {
-  background-color: #2a2a2a;
+  background: linear-gradient(135deg, #2d1b3d 0%, #3b2147 100%);
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+.dark-mode .chunking-config-container .chunk-card,
+.dark-mode .chunking-config-container .comparison-item {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark-mode .chunking-config-container .chunk-card:hover,
+.dark-mode .chunking-config-container .comparison-item:hover {
+  border-color: #818cf8;
+}
+
+.dark-mode .chunking-config-container .chunk-card .ant-card-head,
+.dark-mode .chunking-config-container .comparison-item .ant-card-head {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
 }
 
 .dark-mode .chunking-config-container .chunk-content {
-  background-color: #2a2a2a;
-  color: #ffffff;
-}
-
-.dark-mode .chunking-config-container .comparison-item {
-  border-color: #3a3a3a;
-}
-
-.dark-mode .chunking-config-container .comparison-item:hover {
-  border-color: #1890ff;
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  color: #e5e7eb;
+  border-color: #374151;
 }
 
 /* 滚动条样式 */
 .chunking-config-container .chunk-list::-webkit-scrollbar,
 .chunking-config-container .chunk-content::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
+}
+
+.chunking-config-container .chunk-list::-webkit-scrollbar-track,
+.chunking-config-container .chunk-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
 }
 
 .chunking-config-container .chunk-list::-webkit-scrollbar-thumb,
 .chunking-config-container .chunk-content::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
 }
 
 .chunking-config-container .chunk-list::-webkit-scrollbar-thumb:hover,
 .chunking-config-container .chunk-content::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #5568d3 0%, #6a3d91 100%);
 }
 
 /* 动画效果 */
 .chunking-config-container .chunk-card {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes fadeIn {
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* 加载动画 */
+.chunking-config-container .ant-spin {
+  color: #667eea;
+}
+
+/* Tag 美化 */
+.chunking-config-container .ant-tag {
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-weight: 500;
+  border: none;
+}
+
+/* Alert 美化 */
+.chunking-config-container .ant-alert {
+  border-radius: 8px;
+  border: none;
+}
+
+.chunking-config-container .ant-alert-info {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+.chunking-config-container .ant-alert-warning {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left: 4px solid #f59e0b;
+}
+
+/* 按钮通用美化 */
+.chunking-config-container .ant-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chunking-config-container .ant-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.chunking-config-container .ant-btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+}
+
+.chunking-config-container .ant-btn:not(.ant-btn-primary):not(.ant-btn-link) {
+  border: 2px solid #e5e7eb;
+}
+
+.chunking-config-container .ant-btn:not(.ant-btn-primary):not(.ant-btn-link):hover {
+  border-color: #667eea;
+  color: #667eea;
 }
 

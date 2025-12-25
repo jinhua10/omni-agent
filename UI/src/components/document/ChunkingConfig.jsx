@@ -667,46 +667,44 @@ function ChunkingConfig({ documentId }) {
           {documentId && documentInfo && (
             <Card
               size="small"
-              style={{ marginTop: 16, background: '#f0f5ff', borderColor: '#adc6ff' }}
-              bodyStyle={{ padding: '12px 16px' }}
+              className="document-info-card"
+              style={{
+                marginTop: 12,
+                marginBottom: 16,
+                background: 'linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%)',
+                borderColor: '#667eea',
+                borderRadius: '10px',
+                border: '2px solid rgba(102, 126, 234, 0.3)',
+                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.1)'
+              }}
+              bodyStyle={{ padding: '10px 12px' }}
             >
-              <Space direction="vertical" style={{ width: '100%' }} size="small">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: '#1890ff' }}>
-                    📄 {t('chunkingConfig.currentDocument')}
+              <Space direction="vertical" style={{ width: '100%' }} size={4}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#667eea' }}>
+                    📄 {documentInfo.fileName}
                   </span>
-                  <Tag color="blue" style={{ fontSize: 14 }}>{documentInfo.fileName}</Tag>
                 </div>
                 
-                <Space size="large" wrap>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, fontSize: 12 }}>
                   {documentInfo.fileSize && (
-                    <Space size={4}>
-                      <span style={{ color: '#666' }}>{t('common.fileSize')}:</span>
-                      <Tag color="green">{(documentInfo.fileSize / 1024).toFixed(2)} KB</Tag>
-                    </Space>
+                    <Tag color="green" style={{ margin: 0, fontSize: 12 }}>
+                      {(documentInfo.fileSize / 1024).toFixed(1)} KB
+                    </Tag>
                   )}
                   
                   {documentInfo.mimeType && (
-                    <Space size={4}>
-                      <span style={{ color: '#666' }}>{t('common.fileType')}:</span>
-                      <Tag color="cyan">{documentInfo.mimeType}</Tag>
-                    </Space>
+                    <Tag color="cyan" style={{ margin: 0, fontSize: 12 }}>
+                      {documentInfo.mimeType.split('/')[1]?.toUpperCase() || documentInfo.mimeType}
+                    </Tag>
                   )}
                   
                   {documentConfig?.extractedText && (
-                    <Space size={4}>
-                      <span style={{ color: '#666' }}>{t('chunkingConfig.extractedLength')}:</span>
-                      <Tag color="purple">{documentConfig.extractedText.length} {t('common.characters')}</Tag>
-                    </Space>
+                    <Tag color="purple" style={{ margin: 0, fontSize: 12 }}>
+                      {documentConfig.extractedText.length} {t('common.characters')}
+                    </Tag>
                   )}
-                  
-                  {documentInfo.uploadTime && (
-                    <Space size={4}>
-                      <span style={{ color: '#666' }}>{t('common.uploadTime')}:</span>
-                      <Tag color="orange">{new Date(documentInfo.uploadTime).toLocaleString()}</Tag>
-                    </Space>
-                  )}
-                </Space>
+                </div>
               </Space>
             </Card>
           )}
@@ -758,33 +756,34 @@ function ChunkingConfig({ documentId }) {
 
                 {currentStrategy && (
                   <Alert
-                    title={getStrategyDescription(currentStrategy.name)}
+                    description={getStrategyDescription(currentStrategy.name)}
                     type="info"
                     showIcon
-                    style={{ marginTop: 16 }}
+                    style={{ marginTop: 12, fontSize: '13px' }}
                   />
                 )}
               </div>
 
-              <Divider />
+              <Divider style={{ margin: '12px 0' }} />
 
               {/* 参数配置 */}
               <div className="params-config">
-                <h3>{t('chunkingConfig.params.title')}</h3>
+                <h3 style={{ marginBottom: 12 }}>{t('chunkingConfig.params.title')}</h3>
                 {renderParamsForm()}
               </div>
 
-              <Divider />
+              <Divider style={{ margin: '12px 0' }} />
 
               {/* 对比模式 */}
               <div className="comparison-mode">
-                <Space vertical style={{ width: '100%' }}>
-                  <Space>
+                <Space vertical style={{ width: '100%' }} size="small">
+                  <Space size="small">
                     <SwapOutlined />
                     <span>{t('chunkingConfig.comparison.title')}</span>
                     <Switch
                       checked={comparisonMode}
                       onChange={setComparisonMode}
+                      size="small"
                     />
                   </Space>
 
@@ -816,6 +815,33 @@ function ChunkingConfig({ documentId }) {
                   )}
                 </Space>
               </div>
+
+              {/* ⭐ 步骤导航按钮 - 放在配置面板底部 */}
+              {documentId && (
+                <>
+                  <Divider style={{ margin: '12px 0' }} />
+                  <div className="step-navigation-buttons">
+                    <Space style={{ width: '100%', justifyContent: 'space-between' }} size="small">
+                      <Button
+                        icon={<ArrowLeftOutlined />}
+                        onClick={handlePreviousStep}
+                        disabled={loading}
+                      >
+                        {t('chunkingConfig.actions.previousStep')}
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<ThunderboltOutlined />}
+                        onClick={handleExecuteChunking}
+                        disabled={loading || !currentStrategy}
+                        loading={loading}
+                      >
+                        {t('chunkingConfig.actions.executeChunking')}
+                      </Button>
+                    </Space>
+                  </div>
+                </>
+              )}
             </Card>
           </Col>
 
@@ -871,31 +897,6 @@ function ChunkingConfig({ documentId }) {
             </Card>
           </Col>
         </Row>
-
-        {/* ⭐ 步骤导航按钮 */}
-        {documentId && (
-          <Card style={{ marginTop: 24 }}>
-            <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={handlePreviousStep}
-                disabled={loading}
-              >
-                {t('chunkingConfig.actions.previousStep')}
-              </Button>
-              <Button
-                type="primary"
-                icon={<ThunderboltOutlined />}
-                onClick={handleExecuteChunking}
-                size="large"
-                disabled={loading || !currentStrategy}
-                loading={loading}
-              >
-                {t('chunkingConfig.actions.executeChunking')}
-              </Button>
-            </Space>
-          </Card>
-        )}
       </Spin>
     </div>
   )
