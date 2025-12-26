@@ -95,6 +95,9 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     const [loading, setLoading] = useState(false);
     const [selectedDocId, setSelectedDocId] = useState(documentId);
     
+    // ⭐ 新增：存储所有文档的实时进度（键为 documentId）
+    const [documentsProgress, setDocumentsProgress] = useState({});
+
     // 策略模板管理 (Strategy Template Management - 从后端加载)
     const [strategyTemplates, setStrategyTemplates] = useState([]);
     const [templateModalVisible, setTemplateModalVisible] = useState(false);
@@ -504,25 +507,45 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
      */
     const handleMessage = useCallback((message) => {
         if (message.type === 'progress') {
-            setProgress(message.data);
+            const progressData = message.data;
+            const docId = progressData.documentId;
+
+            setProgress(progressData);
+
+            // ⭐ 更新文档列表中该文档的进度
+            setDocumentsProgress(prev => ({
+                ...prev,
+                [docId]: {
+                    stage: progressData.stage,
+                    percentage: progressData.percentage,
+                    message: progressData.message,
+                    status: progressData.status
+                }
+            }));
 
             // ⭐ 如果完成，刷新文档列表（移除已完成文档）
-            if (message.data.status === 'COMPLETED') {
-                console.log('✅ 文档处理完成，刷新列表移除该文档:', message.data.documentId);
+            if (progressData.status === 'COMPLETED') {
+                console.log('✅ 文档处理完成，刷新列表移除该文档:', docId);
                 // 延迟刷新，确保后端状态已更新
                 setTimeout(() => {
                     loadDocumentsList();
+                    // 清除该文档的进度信息
+                    setDocumentsProgress(prev => {
+                        const newProgress = { ...prev };
+                        delete newProgress[docId];
+                        return newProgress;
+                    });
                 }, 1000);
 
                 if (onComplete) {
-                    onComplete(message.data);
+                    onComplete(progressData);
                 }
             }
 
             // 如果失败，通知父组件 (Notify parent if failed)
-            if (message.data.status === 'FAILED') {
-                setError(message.data.errorMessage || t('ragFlow.messages.processingFailed'));
-                if (onError) onError(message.data);
+            if (progressData.status === 'FAILED') {
+                setError(progressData.errorMessage || t('ragFlow.messages.processingFailed'));
+                if (onError) onError(progressData);
             }
         } else if (message.type === 'error') {
             setError(message.message);
@@ -532,19 +555,22 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
 
     // 初始化 WebSocket 连接 (Initialize WebSocket connection)
     useEffect(() => {
-        // ⭐ 当选中文档且不是演示模式时，建立 WebSocket 连接
-        if (!selectedDocId || demoMode) return;
+        // ⭐ 当有文档列表且不是演示模式时，建立 WebSocket 连接
+        if (documentsList.length === 0 || demoMode) return;
 
-        // console.log('📡 建立 WebSocket 连接，监听文档进度:', selectedDocId);
+        console.log('📡 建立 WebSocket 连接，监听所有文档进度');
 
         // 创建 WebSocket 客户端 (Create WebSocket client)
         const client = new WebSocketClient('ws://localhost:8080/ws/progress');
 
         // 监听连接建立 (Listen for connection established)
         client.on('open', () => {
-            // console.log('✅ WebSocket 连接已建立');
-            // 订阅文档进度 (Subscribe to document progress)
-            client.subscribe(selectedDocId);
+            console.log('✅ WebSocket 连接已建立');
+            // ⭐ 订阅所有文档的进度
+            documentsList.forEach(doc => {
+                client.subscribe(doc.documentId);
+                console.log('📝 订阅文档进度:', doc.documentId);
+            });
         });
 
         // 监听进度更新 (Listen for progress updates)
@@ -562,34 +588,34 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
 
         setWsClient(client);
 
-        // ⭐ 备用方案：轮询检查文档状态（防止 WebSocket 失败）
+        // ⭐ 备用方案：轮询检查所有文档状态
         const pollInterval = setInterval(async () => {
-            try {
-                const response = await fetch(`/api/system/rag-config/document/${selectedDocId}`);
-                const result = await response.json();
-                if (result.success && result.data) {
-                    const doc = result.data;
-                    // 如果状态变化，更新进度
-                    if (doc.status === 'PROCESSING' || doc.status === 'COMPLETED' || doc.status === 'FAILED') {
-                        // console.log('🔄 轮询检测到状态更新:', doc.status);
-                        // 这里可以根据状态更新进度（作为备用）
+            documentsList.forEach(async (doc) => {
+                try {
+                    const response = await fetch(`/api/system/rag-config/document/${doc.documentId}`);
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        const docData = result.data;
+                        if (docData.status === 'PROCESSING') {
+                            console.debug('🔄 轮询检测到处理中:', doc.documentId);
+                        }
                     }
+                } catch (error) {
+                    console.debug('轮询检查失败:', doc.documentId);
                 }
-            } catch (error) {
-                console.debug('轮询检查失败:', error);
-            }
+            });
         }, 5000); // 每 5 秒轮询一次
 
         // 清理函数 (Cleanup function)
         return () => {
             clearInterval(pollInterval);
             if (client) {
-                // console.log('🔌 关闭 WebSocket 连接');
+                console.log('🔌 关闭 WebSocket 连接');
                 client.unsubscribe();
                 client.close();
             }
         };
-    }, [selectedDocId, demoMode, handleMessage, t, onError]);
+    }, [documentsList, demoMode, handleMessage, t, onError]);
 
 
     /**
@@ -748,6 +774,44 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                         {t('ragFlow.component.createdAt')}: {new Date(doc.createdAt).toLocaleString()}
                                     </div>
                                 </div>
+
+                                {/* ⭐ 进度条 - 显示实时处理进度 */}
+                                {documentsProgress[doc.documentId] && (
+                                    <div style={{ marginTop: '12px', marginBottom: '12px' }}>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            marginBottom: '8px',
+                                            fontSize: '12px'
+                                        }}>
+                                            <span style={{ color: '#666' }}>
+                                                {STAGE_CONFIG[documentsProgress[doc.documentId].stage]?.title?.zh || documentsProgress[doc.documentId].stage}
+                                            </span>
+                                            <span style={{ fontWeight: 'bold', color: '#1890ff' }}>
+                                                {documentsProgress[doc.documentId].percentage || 0}%
+                                            </span>
+                                        </div>
+                                        <Progress
+                                            percent={documentsProgress[doc.documentId].percentage || 0}
+                                            status="active"
+                                            strokeColor={{
+                                                '0%': STAGE_CONFIG[documentsProgress[doc.documentId].stage]?.color || '#1890ff',
+                                                '100%': '#52c41a',
+                                            }}
+                                            showInfo={false}
+                                        />
+                                        {documentsProgress[doc.documentId].message && (
+                                            <div style={{
+                                                fontSize: '11px',
+                                                color: '#999',
+                                                marginTop: '4px',
+                                                fontStyle: 'italic'
+                                            }}>
+                                                {documentsProgress[doc.documentId].message}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* 快速处理操作栏 */}
                                 {doc.status === 'PENDING' && (
