@@ -7,6 +7,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -55,6 +56,7 @@ public class PDFDocumentProcessor extends AbstractDocumentProcessor {
 
     // ⭐ OCR 服务（可选，如果引入了 OCR starter 才会注入）
     @Autowired(required = false)
+    @Qualifier("tesseractOCRService")  // 指定 Bean 名称
     private Object ocrService;  // 使用 Object 避免强依赖
 
     @Value("${omni-agent.pdf.enable-ocr:false}")
