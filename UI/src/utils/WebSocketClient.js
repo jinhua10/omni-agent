@@ -52,7 +52,7 @@ class WebSocketClient {
 
             // 连接错误 (Connection error)
             this.ws.onerror = (error) => {
-                console.error('❌ WebSocket 错误:', error);
+                console.debug('WebSocket 错误（可忽略）:', error);
                 this.emit('error', error);
             };
 
@@ -61,13 +61,15 @@ class WebSocketClient {
                 console.debug('🔌 WebSocket 连接关闭', event.code);
                 this.emit('close', event);
 
-                // ⭐ 自动重连（最多重试 3 次）
-                if (this.reconnectAttempts < 3) {
+                // ⭐ 只有在正常关闭（非错误）时才重连，且只重连1次
+                // 1000 = 正常关闭，1006 = 连接异常关闭
+                if (event.code === 1000 && this.reconnectAttempts < 1) {
                     this.reconnectAttempts++;
-                    console.log(`🔄 尝试重连 (${this.reconnectAttempts}/3)...`);
-                    setTimeout(() => this.connect(), this.reconnectDelay);
-                } else {
-                    console.warn('❌ WebSocket 连接失败，请确保后端服务正在运行');
+                    // console.log(`🔄 尝试重连 (${this.reconnectAttempts}/1)...`);
+                    setTimeout(() => this.connect(), 5000); // 延长到5秒
+                } else if (event.code !== 1000) {
+                    // 异常关闭，不重连，避免频繁错误
+                    console.debug('WebSocket 异常关闭，不再重连（后端服务可能未启动）');
                 }
             };
         } catch (error) {

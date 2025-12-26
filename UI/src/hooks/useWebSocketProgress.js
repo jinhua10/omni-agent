@@ -57,7 +57,7 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
 
         // ⭐ 只在第一次初始化时输出日志
         if (!isInitialized.current) {
-            console.log('📡 建立 WebSocket 连接');
+            // console.log('📡 建立 WebSocket 连接');
             isInitialized.current = true;
         }
 
@@ -81,20 +81,20 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
                 wsUrl = `${protocol}//${host}/ws/progress`;
             }
 
-            console.log('🔗 WebSocket URL:', wsUrl);
+            // console.log('🔗 WebSocket URL:', wsUrl);
 
             client = new WebSocketClient(wsUrl);
 
             client.on('open', () => {
-                console.log('✅ WebSocket 连接成功');
+                // console.log('✅ WebSocket 连接成功');
 
                 // 订阅所有文档的进度
                 documentsList.forEach(doc => {
                     try {
                         client.subscribe(doc.documentId);
-                        console.log('📝 已订阅文档:', doc.documentId);
+                        // console.log('📝 已订阅文档:', doc.documentId);
                     } catch (err) {
-                        console.warn('⚠️ 订阅失败:', doc.documentId, err);
+                        console.debug('订阅失败:', doc.documentId, err);
                     }
                 });
             });
@@ -102,7 +102,7 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
             client.on('message', handleMessage);
 
             client.on('error', (error) => {
-                console.warn('⚠️ WebSocket 连接错误');
+                console.debug('WebSocket 连接错误（可忽略）');
             });
 
             client.on('close', (event) => {
@@ -113,7 +113,7 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
             setWsClient(client);
 
         } catch (error) {
-            console.warn('⚠️ WebSocket 初始化失败:', error.message);
+            console.debug('WebSocket 初始化失败（后端服务可能未启动）:', error.message);
         }
 
         // 清理函数
