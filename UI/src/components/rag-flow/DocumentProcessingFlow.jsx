@@ -159,6 +159,26 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         });
     }, [message, loadTemplates, t]);
 
+    // 加载文档列表
+    const loadDocumentsList = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/system/rag-config/documents-status');
+            const result = await response.json();
+            if (result.success) {
+                const docs = Object.values(result.data).filter(doc => doc.status !== 'COMPLETED');
+                setDocumentsList(docs);
+                console.log('📋 加载文档列表:', docs.length, '个待处理文档');
+            } else {
+                console.error('加载文档列表失败:', result.message);
+            }
+        } catch (error) {
+            console.error('加载文档列表失败:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     // 应用策略模板到文档
     const applyTemplateToDocument = useCallback(async (docId, templateId) => {
         try {
@@ -234,25 +254,6 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         }
     }, [selectedDocId, newTemplateName, newTemplateDesc, message, loadTemplates, t]);
 
-    // 加载文档列表
-    const loadDocumentsList = useCallback(async () => {
-        setLoading(true);
-        try {
-            const response = await fetch('/api/system/rag-config/documents-status');
-            const result = await response.json();
-            if (result.success) {
-                const docs = Object.values(result.data).filter(doc => doc.status !== 'COMPLETED');
-                setDocumentsList(docs);
-                console.log('📋 加载文档列表:', docs.length, '个待处理文档');
-            } else {
-                console.error('加载文档列表失败:', result.message);
-            }
-        } catch (error) {
-            console.error('加载文档列表失败:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
 
     // 开始处理文档
     const startProcessDocument = useCallback(async (docId) => {
