@@ -1,0 +1,59 @@
+{
+  "groups": [
+    {
+      "name": "omni-agent.ocr.tesseract",
+      "type": "top.yumbo.ai.ocr.tesseract.TesseractOCRProperties",
+      "sourceType": "top.yumbo.ai.ocr.tesseract.TesseractOCRProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "omni-agent.ocr.tesseract.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用 Tesseract OCR",
+      "defaultValue": false
+    },
+    {
+      "name": "omni-agent.ocr.tesseract.language",
+      "type": "java.lang.String",
+      "description": "识别语言（如 chi_sim+eng 表示简体中文+英文）",
+      "defaultValue": "chi_sim+eng"
+    },
+    {
+      "name": "omni-agent.ocr.tesseract.data-path",
+      "type": "java.lang.String",
+      "description": "Tesseract 数据文件路径"
+    },
+    {
+      "name": "omni-agent.ocr.tesseract.dpi",
+      "type": "java.lang.Integer",
+      "description": "DPI 设置",
+      "defaultValue": 300
+    },
+    {
+      "name": "omni-agent.ocr.tesseract.page-segmentation-mode",
+      "type": "java.lang.Integer",
+      "description": "页面分割模式（0-10）",
+      "defaultValue": 3
+    },
+    {
+      "name": "omni-agent.ocr.tesseract.ocr-engine-mode",
+      "type": "java.lang.Integer",
+      "description": "OCR 引擎模式（0-3）",
+      "defaultValue": 3
+    },
+    {
+      "name": "omni-agent.ocr.tesseract.min-confidence",
+      "type": "java.lang.Integer",
+      "description": "最小文本置信度（0-100）",
+      "defaultValue": 0
+    },
+    {
+      "name": "omni-agent.ocr.tesseract.timeout",
+      "type": "java.lang.Integer",
+      "description": "超时时间（秒）",
+      "defaultValue": 30
+    }
+  ]
+}
+

@@ -87,6 +87,9 @@
         <module>omni-agent-document-storage-starter-s3</module>
         <module>omni-agent-document-storage-starter-minio</module>
 
+        <!-- OCR Starters (OCR 识别) -->
+        <module>omni-agent-ocr-starter-tesseract</module>
+
         <!-- RAG Starters (RAG Starters) -->
         <module>omni-agent-rag-starter-file</module>
         <module>omni-agent-rag-starter-h2</module>

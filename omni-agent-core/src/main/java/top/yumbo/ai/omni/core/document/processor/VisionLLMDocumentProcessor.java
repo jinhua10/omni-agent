@@ -94,8 +94,8 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
      * 支持的文件扩展名
      */
     private static final Set<String> SUPPORTED_EXTENSIONS = Set.of(
-            // Office 文档
-            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            // Office 文档（Excel、Word 和 PDF 由专用处理器处理）
+            "ppt", "pptx",
             // 图片文件
             "png", "jpg", "jpeg", "bmp", "tiff", "gif"
     );
@@ -282,28 +282,10 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             return extractPptPages(context);   // 旧格式，二进制格式
         }
 
-        // Word 文档处理（提取图片）
-        if (ext.equals("docx")) {
-            return extractDocxPages(context);  // 新格式
-        } else if (ext.equals("doc")) {
-            return extractDocPages(context);   // 旧格式
-        }
 
-        // Excel 文档处理（提取图片）⭐
-        if (ext.equals("xlsx")) {
-            return extractXlsxPages(context);  // 新格式
-        } else if (ext.equals("xls")) {
-            return extractXlsPages(context);   // 旧格式
-        }
-
-        // PDF 文档处理 ⭐
-        if (ext.equals("pdf")) {
-            return extractPdfPages(context);
-        }
-
-        // 其他 Office 文档待实现
+        // 其他文档格式待实现
         log.warn("⚠️ [VisionLLM] {} 格式的页面提取功能待实现", ext);
-        throw new Exception("Office 文档页面提取功能待实现: " + ext);
+        throw new Exception("文档页面提取功能待实现: " + ext);
     }
 
     /**
@@ -347,21 +329,45 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
                 // 获取幻灯片尺寸
                 java.awt.Dimension pageSize = ppt.getPageSize();
-                int width = (int) pageSize.getWidth();
-                int height = (int) pageSize.getHeight();
+
+                // ⭐ 提高渲染分辨率（放大2倍），解决文本重叠问题
+                double scale = 2.0; // 分辨率缩放倍数
+                int width = (int) (pageSize.getWidth() * scale);
+                int height = (int) (pageSize.getHeight() * scale);
+
+                log.debug("📐 幻灯片尺寸: 原始={}x{}, 渲染={}x{} (缩放{}x)",
+                        (int)pageSize.getWidth(), (int)pageSize.getHeight(),
+                        width, height, scale);
 
                 // 转换每张幻灯片为图片
                 for (int i = 0; i < slides.size(); i++) {
                     org.apache.poi.xslf.usermodel.XSLFSlide slide = slides.get(i);
 
-                    // 将幻灯片渲染为 BufferedImage
+                    // 将幻灯片渲染为 BufferedImage（高分辨率）
                     java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
                             width, height, java.awt.image.BufferedImage.TYPE_INT_RGB);
                     java.awt.Graphics2D graphics = img.createGraphics();
 
+                    // ⭐ 设置高质量渲染参数
+                    graphics.setRenderingHint(
+                        java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                    graphics.setRenderingHint(
+                        java.awt.RenderingHints.KEY_TEXT_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    graphics.setRenderingHint(
+                        java.awt.RenderingHints.KEY_RENDERING,
+                        java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+                    graphics.setRenderingHint(
+                        java.awt.RenderingHints.KEY_INTERPOLATION,
+                        java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+
                     // 设置白色背景
                     graphics.setPaint(java.awt.Color.WHITE);
                     graphics.fillRect(0, 0, width, height);
+
+                    // ⭐ 应用缩放变换
+                    graphics.scale(scale, scale);
 
                     // 渲染幻灯片
                     slide.draw(graphics);
@@ -457,21 +463,45 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
 
                 // 获取幻灯片尺寸
                 java.awt.Dimension pageSize = ppt.getPageSize();
-                int width = (int) pageSize.getWidth();
-                int height = (int) pageSize.getHeight();
+
+                // ⭐ 提高渲染分辨率（放大2倍），解决文本重叠问题
+                double scale = 2.0; // 分辨率缩放倍数
+                int width = (int) (pageSize.getWidth() * scale);
+                int height = (int) (pageSize.getHeight() * scale);
+
+                log.debug("📐 旧版幻灯片尺寸: 原始={}x{}, 渲染={}x{} (缩放{}x)",
+                        (int)pageSize.getWidth(), (int)pageSize.getHeight(),
+                        width, height, scale);
 
                 // 转换每张幻灯片为图片
                 for (int i = 0; i < slides.size(); i++) {
                     org.apache.poi.hslf.usermodel.HSLFSlide slide = slides.get(i);
 
-                    // 将幻灯片渲染为 BufferedImage
+                    // 将幻灯片渲染为 BufferedImage（高分辨率）
                     java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(
                             width, height, java.awt.image.BufferedImage.TYPE_INT_RGB);
                     java.awt.Graphics2D graphics = img.createGraphics();
 
+                    // ⭐ 设置高质量渲染参数
+                    graphics.setRenderingHint(
+                        java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                    graphics.setRenderingHint(
+                        java.awt.RenderingHints.KEY_TEXT_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    graphics.setRenderingHint(
+                        java.awt.RenderingHints.KEY_RENDERING,
+                        java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+                    graphics.setRenderingHint(
+                        java.awt.RenderingHints.KEY_INTERPOLATION,
+                        java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+
                     // 设置白色背景
                     graphics.setPaint(java.awt.Color.WHITE);
                     graphics.fillRect(0, 0, width, height);
+
+                    // ⭐ 应用缩放变换
+                    graphics.scale(scale, scale);
 
                     // 渲染幻灯片
                     slide.draw(graphics);
@@ -523,310 +553,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
         }
     }
 
-    /**
-     * 提取新版 Word 文档的图片 (.docx 格式)
-     * ⭐ 将每张图片作为一页处理，支持批处理和并行
-     *
-     * @param context 处理上下文
-     * @return 页面列表
-     */
-    private List<DocumentPage> extractDocxPages(ProcessingContext context) throws Exception {
-        try {
-            java.io.InputStream inputStream;
-            if (context.getFileBytes() != null) {
-                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
-            } else {
-                inputStream = new java.io.FileInputStream(context.getFilePath());
-            }
 
-            try (org.apache.poi.xwpf.usermodel.XWPFDocument document =
-                    new org.apache.poi.xwpf.usermodel.XWPFDocument(inputStream)) {
-
-                List<org.apache.poi.xwpf.usermodel.XWPFPictureData> pictures = document.getAllPictures();
-                log.info("🔍 [VisionLLM] Word 文档包含 {} 张图片", pictures.size());
-
-                if (pictures.isEmpty()) {
-                    log.warn("⚠️ [VisionLLM] Word 文档没有图片");
-                    throw new Exception("Word 文档没有图片");
-                }
-
-                // 提取文本内容
-                StringBuilder textContent = new StringBuilder();
-                for (org.apache.poi.xwpf.usermodel.XWPFParagraph paragraph : document.getParagraphs()) {
-                    String text = paragraph.getText();
-                    if (text != null && !text.trim().isEmpty()) {
-                        textContent.append(text).append(" ");
-                    }
-                }
-
-                // ⭐ 每张图片作为一页，支持批处理和并行
-                List<DocumentPage> pages = new ArrayList<>();
-                for (int i = 0; i < pictures.size(); i++) {
-                    org.apache.poi.xwpf.usermodel.XWPFPictureData picture = pictures.get(i);
-                    byte[] imageData = picture.getData();
-
-                    // 创建 metadata
-                    Map<String, Object> imageMetadata = new HashMap<>();
-                    imageMetadata.put("documentText", textContent.toString().trim());
-                    imageMetadata.put("fileName", context.getOriginalFileName());
-                    imageMetadata.put("totalImages", pictures.size());
-                    imageMetadata.put("imageIndex", i);
-                    imageMetadata.put("documentType", "Word");
-
-                    // 创建 ExtractedImage
-                    ExtractedImage image = ExtractedImage.builder()
-                            .data(imageData)
-                            .format(picture.suggestFileExtension())
-                            .pageNumber(i + 1)
-                            .position(new ImagePosition(0, 0, 0, 0))
-                            .metadata(imageMetadata)
-                            .build();
-
-                    // ⭐ 每张图片一页
-                    DocumentPage page = new DocumentPage(i + 1);
-                    page.addImage(image);
-                    pages.add(page);
-                }
-
-                log.info("✅ [VisionLLM] Word 文档图片提取完成: {} 页（每页1张图片）", pages.size());
-                return pages;
-            }
-        } catch (Exception e) {
-            log.error("❌ [VisionLLM] Word 文档页面提取失败", e);
-            throw new Exception("Word 文档页面提取失败: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 提取旧版 Word 文档的图片 (.doc 格式)
-     * ⭐ 将每张图片作为一页处理，支持批处理和并行
-     *
-     * @param context 处理上下文
-     * @return 页面列表
-     */
-    private List<DocumentPage> extractDocPages(ProcessingContext context) throws Exception {
-        try {
-            java.io.InputStream inputStream;
-            if (context.getFileBytes() != null) {
-                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
-            } else {
-                inputStream = new java.io.FileInputStream(context.getFilePath());
-            }
-
-            try (org.apache.poi.hwpf.HWPFDocument document =
-                    new org.apache.poi.hwpf.HWPFDocument(inputStream)) {
-
-                List<org.apache.poi.hwpf.usermodel.Picture> pictures =
-                    document.getPicturesTable().getAllPictures();
-                log.info("🔍 [VisionLLM] 旧版 Word 文档包含 {} 张图片", pictures.size());
-
-                if (pictures.isEmpty()) {
-                    log.warn("⚠️ [VisionLLM] 旧版 Word 文档没有图片");
-                    throw new Exception("旧版 Word 文档没有图片");
-                }
-
-                // 提取文本内容
-                org.apache.poi.hwpf.extractor.WordExtractor extractor =
-                    new org.apache.poi.hwpf.extractor.WordExtractor(document);
-                String textContent = extractor.getText();
-
-                // ⭐ 每张图片作为一页，支持批处理和并行
-                List<DocumentPage> pages = new ArrayList<>();
-                for (int i = 0; i < pictures.size(); i++) {
-                    org.apache.poi.hwpf.usermodel.Picture picture = pictures.get(i);
-                    byte[] imageData = picture.getContent();
-
-                    // 创建 metadata
-                    Map<String, Object> imageMetadata = new HashMap<>();
-                    imageMetadata.put("documentText", textContent.trim());
-                    imageMetadata.put("fileName", context.getOriginalFileName());
-                    imageMetadata.put("totalImages", pictures.size());
-                    imageMetadata.put("imageIndex", i);
-                    imageMetadata.put("documentType", "Word");
-
-                    // 创建 ExtractedImage
-                    ExtractedImage image = ExtractedImage.builder()
-                            .data(imageData)
-                            .format(picture.suggestFileExtension())
-                            .pageNumber(i + 1)
-                            .position(new ImagePosition(0, 0, 0, 0))
-                            .metadata(imageMetadata)
-                            .build();
-
-                    // ⭐ 每张图片一页
-                    DocumentPage page = new DocumentPage(i + 1);
-                    page.addImage(image);
-                    pages.add(page);
-                }
-
-                log.info("✅ [VisionLLM] 旧版 Word 文档图片提取完成: {} 页（每页1张图片）", pages.size());
-                return pages;
-            }
-        } catch (Exception e) {
-            log.error("❌ [VisionLLM] 旧版 Word 文档页面提取失败", e);
-            throw new Exception("旧版 Word 文档页面提取失败: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 提取新版 Excel 文档的图片 (.xlsx 格式)
-     * ⭐ 每个工作表的每张图片作为一页，支持批处理和并行
-     *
-     * @param context 处理上下文
-     * @return 页面列表
-     */
-    private List<DocumentPage> extractXlsxPages(ProcessingContext context) throws Exception {
-        try {
-            java.io.InputStream inputStream;
-            if (context.getFileBytes() != null) {
-                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
-            } else {
-                inputStream = new java.io.FileInputStream(context.getFilePath());
-            }
-
-            try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook =
-                    new org.apache.poi.xssf.usermodel.XSSFWorkbook(inputStream)) {
-
-                List<DocumentPage> pages = new ArrayList<>();
-                int pageNumber = 1;
-
-                for (int sheetIdx = 0; sheetIdx < workbook.getNumberOfSheets(); sheetIdx++) {
-                    org.apache.poi.xssf.usermodel.XSSFSheet sheet = workbook.getSheetAt(sheetIdx);
-                    org.apache.poi.xssf.usermodel.XSSFDrawing drawing = sheet.getDrawingPatriarch();
-
-                    if (drawing != null) {
-                        for (org.apache.poi.xssf.usermodel.XSSFShape shape : drawing.getShapes()) {
-                            if (shape instanceof org.apache.poi.xssf.usermodel.XSSFPicture picture) {
-
-                                try {
-                                    org.apache.poi.xssf.usermodel.XSSFPictureData pictureData = picture.getPictureData();
-                                    byte[] imageData = pictureData.getData();
-
-                                    // 获取图片位置
-                                    org.apache.poi.xssf.usermodel.XSSFClientAnchor anchor = picture.getClientAnchor();
-                                    String location = String.format("工作表[%s] 第%d行, 第%d列",
-                                            sheet.getSheetName(), anchor.getRow1() + 1, anchor.getCol1() + 1);
-
-                                    // 创建 metadata
-                                    Map<String, Object> imageMetadata = new HashMap<>();
-                                    imageMetadata.put("fileName", context.getOriginalFileName());
-                                    imageMetadata.put("sheetName", sheet.getSheetName());
-                                    imageMetadata.put("sheetIndex", sheetIdx);
-                                    imageMetadata.put("location", location);
-                                    imageMetadata.put("documentType", "Excel");
-
-                                    // 创建 ExtractedImage
-                                    ExtractedImage image = ExtractedImage.builder()
-                                            .data(imageData)
-                                            .format(pictureData.suggestFileExtension())
-                                            .pageNumber(pageNumber)
-                                            .position(new ImagePosition(anchor.getCol1(), anchor.getRow1(), 0, 0))
-                                            .metadata(imageMetadata)
-                                            .build();
-
-                                    // ⭐ 每张图片一页
-                                    DocumentPage page = new DocumentPage(pageNumber);
-                                    page.addImage(image);
-                                    pages.add(page);
-                                    pageNumber++;
-
-                                } catch (Exception e) {
-                                    log.warn("提取 Excel 工作表 {} 中的图片失败", sheet.getSheetName(), e);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                log.info("✅ [VisionLLM] Excel 文档图片提取完成: {} 页（每页1张图片）", pages.size());
-                return pages.isEmpty() ? List.of() : pages;
-            }
-        } catch (Exception e) {
-            log.error("❌ [VisionLLM] Excel 文档页面提取失败", e);
-            throw new Exception("Excel 文档页面提取失败: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 提取旧版 Excel 文档的图片 (.xls 格式)
-     * ⭐ 每个工作表的每张图片作为一页，支持批处理和并行
-     *
-     * @param context 处理上下文
-     * @return 页面列表
-     */
-    private List<DocumentPage> extractXlsPages(ProcessingContext context) throws Exception {
-        try {
-            java.io.InputStream inputStream;
-            if (context.getFileBytes() != null) {
-                inputStream = new java.io.ByteArrayInputStream(context.getFileBytes());
-            } else {
-                inputStream = new java.io.FileInputStream(context.getFilePath());
-            }
-
-            try (org.apache.poi.hssf.usermodel.HSSFWorkbook workbook =
-                    new org.apache.poi.hssf.usermodel.HSSFWorkbook(inputStream)) {
-
-                List<DocumentPage> pages = new ArrayList<>();
-                int pageNumber = 1;
-
-                for (int sheetIdx = 0; sheetIdx < workbook.getNumberOfSheets(); sheetIdx++) {
-                    org.apache.poi.hssf.usermodel.HSSFSheet sheet = workbook.getSheetAt(sheetIdx);
-                    org.apache.poi.hssf.usermodel.HSSFPatriarch patriarch = sheet.getDrawingPatriarch();
-
-                    if (patriarch != null) {
-                        for (org.apache.poi.hssf.usermodel.HSSFShape shape : patriarch.getChildren()) {
-                            if (shape instanceof org.apache.poi.hssf.usermodel.HSSFPicture) {
-                                org.apache.poi.hssf.usermodel.HSSFPicture picture =
-                                        (org.apache.poi.hssf.usermodel.HSSFPicture) shape;
-
-                                try {
-                                    org.apache.poi.hssf.usermodel.HSSFPictureData pictureData = picture.getPictureData();
-                                    byte[] imageData = pictureData.getData();
-
-                                    // 获取图片位置
-                                    org.apache.poi.hssf.usermodel.HSSFClientAnchor anchor = picture.getClientAnchor();
-                                    String location = String.format("工作表[%s] 第%d行, 第%d列",
-                                            sheet.getSheetName(), anchor.getRow1() + 1, anchor.getCol1() + 1);
-
-                                    // 创建 metadata
-                                    Map<String, Object> imageMetadata = new HashMap<>();
-                                    imageMetadata.put("fileName", context.getOriginalFileName());
-                                    imageMetadata.put("sheetName", sheet.getSheetName());
-                                    imageMetadata.put("sheetIndex", sheetIdx);
-                                    imageMetadata.put("location", location);
-                                    imageMetadata.put("documentType", "Excel");
-
-                                    // 创建 ExtractedImage
-                                    ExtractedImage image = ExtractedImage.builder()
-                                            .data(imageData)
-                                            .format(pictureData.suggestFileExtension())
-                                            .pageNumber(pageNumber)
-                                            .position(new ImagePosition(anchor.getCol1(), anchor.getRow1(), 0, 0))
-                                            .metadata(imageMetadata)
-                                            .build();
-
-                                    // ⭐ 每张图片一页
-                                    DocumentPage page = new DocumentPage(pageNumber);
-                                    page.addImage(image);
-                                    pages.add(page);
-                                    pageNumber++;
-
-                                } catch (Exception e) {
-                                    log.warn("提取旧版 Excel 工作表 {} 中的图片失败", sheet.getSheetName(), e);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                log.info("✅ [VisionLLM] 旧版 Excel 文档图片提取完成: {} 页（每页1张图片）", pages.size());
-                return pages.isEmpty() ? List.of() : pages;
-            }
-        } catch (Exception e) {
-            log.error("❌ [VisionLLM] 旧版 Excel 文档页面提取失败", e);
-            throw new Exception("旧版 Excel 文档页面提取失败: " + e.getMessage(), e);
-        }
-    }
 
     /**
      * 提取 PDF 文档的页面
