@@ -38,3 +38,183 @@
     background: #bfbfbf;
 }
 
+/* 卡片头部 */
+.pending-documents-list__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pending-documents-list__count {
+    font-size: 12px;
+    color: #999;
+    font-weight: normal;
+}
+
+/* 批量操作工具栏 */
+.pending-documents-list__toolbar {
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.pending-documents-list__search {
+    margin-bottom: 8px;
+}
+
+.pending-documents-list__select-all {
+    margin-bottom: 8px;
+}
+
+/* 文件类型选择器 */
+.pending-documents-list__file-types {
+    margin-top: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+    border-radius: 8px;
+    border: 1px solid #e8e8e8;
+}
+
+.pending-documents-list__file-types-label {
+    font-size: 13px;
+    color: #595959;
+    margin-bottom: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pending-documents-list__file-types-label::before {
+    content: '📂';
+    font-size: 14px;
+}
+
+.pending-documents-list__file-types-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pending-documents-list__file-type-checkbox {
+    margin: 0;
+    padding: 8px 12px;
+    background: white;
+    border: 2px solid #e8e8e8;
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.pending-documents-list__file-type-checkbox::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.pending-documents-list__file-type-checkbox:hover {
+    border-color: #1890ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+}
+
+.pending-documents-list__file-type-checkbox:hover::before {
+    opacity: 0.05;
+}
+
+.pending-documents-list__file-type-checkbox .ant-checkbox {
+    position: relative;
+    z-index: 1;
+}
+
+.pending-documents-list__file-type-checkbox .ant-checkbox + span {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pending-documents-list__file-type-checkbox .ant-checkbox-checked + span {
+    color: #1890ff;
+    font-weight: 500;
+}
+
+.pending-documents-list__file-type-checkbox:has(.ant-checkbox-checked) {
+    background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+    border-color: #1890ff;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+.pending-documents-list__file-type-checkbox:has(.ant-checkbox-indeterminate) {
+    background: linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%);
+    border-color: #faad14;
+}
+
+.pending-documents-list__file-type-label {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: #262626;
+    letter-spacing: 0.5px;
+}
+
+.pending-documents-list__file-type-count {
+    font-size: 12px;
+    color: #8c8c8c;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.pending-documents-list__file-type-checkbox:has(.ant-checkbox-checked) .pending-documents-list__file-type-count {
+    background: rgba(24, 144, 255, 0.15);
+    color: #1890ff;
+}
+
+.pending-documents-list__batch-actions {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 文档项包装器（包含复选框） */
+.pending-documents-list__item-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.pending-documents-list__checkbox {
+    margin-top: 12px;
+    flex-shrink: 0;
+}
+
+.pending-documents-list__checkbox .ant-checkbox {
+    transform: scale(1.1);
+}
+

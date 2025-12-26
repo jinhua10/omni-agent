@@ -1449,6 +1449,19 @@ export default {
       saveAsTemplate: 'Save as Template',
       startFullProcess: 'Start Full Process',
 
+      // Batch Operations
+      searchDocuments: 'Search Documents',
+      selectAll: 'Select All',
+      selectedCount: '{count} Selected',
+      selectByFileType: 'By File Type',
+      selectBatchTemplate: 'Select Batch Template',
+      batchProcess: 'Batch Process',
+      pleaseSelectDocuments: 'Please select documents to process',
+      pleaseSelectTemplate: 'Please select a strategy template',
+      batchProcessConfirm: 'Batch Process Confirmation',
+      batchProcessContent: 'Are you sure you want to apply template "{template}" to {count} document(s) and start processing?',
+      batchProcessSuccess: 'Successfully started processing {count} document(s)',
+
       // ProcessingStepsView
       selectTextExtraction: 'Select Text Extraction Method',
       selectChunkingStrategy: 'Select Chunking Strategy',
@@ -1465,6 +1478,9 @@ export default {
       stageIndex: 'Index Storage',
       stageCompleted: 'Completed',
       waitingToStart: 'Waiting to start',
+      processingFlowOverview: 'Processing Flow Overview',
+      selectDocumentHint: 'Please select a document from the left',
+      selectDocumentDesc: 'After selecting a document, you can view and configure its specific processing flow',
 
       // SaveTemplateModal
       saveTemplateTitle: 'Save as Template',

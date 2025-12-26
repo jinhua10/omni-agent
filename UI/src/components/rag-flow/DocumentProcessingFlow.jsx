@@ -74,10 +74,15 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     // 分块策略列表
     const [chunkingStrategies, setChunkingStrategies] = useState([]);
 
-    // ⭐ 左右布局比例（从 localStorage 读取，默认左侧 30%）
+    // ⭐ 批量处理相关状态
+    const [selectedDocIds, setSelectedDocIds] = useState([]); // 选中的文档ID列表
+    const [filterKeyword, setFilterKeyword] = useState(''); // 过滤关键词
+    const [batchTemplateId, setBatchTemplateId] = useState(null); // 批量处理选择的模板ID
+
+    // ⭐ 左右布局比例（从 localStorage 读取，默认左侧 45%）
     const [leftWidth, setLeftWidth] = useState(() => {
         const saved = localStorage.getItem('documentFlow.leftWidth');
-        return saved ? parseInt(saved) : 30;
+        return saved ? parseInt(saved) : 45;
     });
     const [isDragging, setIsDragging] = useState(false);
 
@@ -372,6 +377,130 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         }
     }, [message, loadDocumentsList, t]);
 
+    // ⭐ 批量处理相关函数
+
+    // 过滤文档列表
+    const filteredDocumentsList = React.useMemo(() => {
+        if (!filterKeyword.trim()) return documentsList;
+        return documentsList.filter(doc =>
+            doc.documentId.toLowerCase().includes(filterKeyword.toLowerCase())
+        );
+    }, [documentsList, filterKeyword]);
+
+    // ⭐ 统计文件类型
+    const fileTypeStats = React.useMemo(() => {
+        const stats = {};
+        filteredDocumentsList.forEach(doc => {
+            const ext = doc.documentId.split('.').pop()?.toLowerCase() || 'unknown';
+            if (!stats[ext]) {
+                stats[ext] = {
+                    count: 0,
+                    docIds: []
+                };
+            }
+            stats[ext].count++;
+            stats[ext].docIds.push(doc.documentId);
+        });
+        return stats;
+    }, [filteredDocumentsList]);
+
+    // 全选/取消全选
+    const handleSelectAll = useCallback(() => {
+        if (selectedDocIds.length === filteredDocumentsList.length) {
+            setSelectedDocIds([]);
+        } else {
+            setSelectedDocIds(filteredDocumentsList.map(doc => doc.documentId));
+        }
+    }, [selectedDocIds, filteredDocumentsList]);
+
+    // 切换单个文档的选择
+    const handleToggleDocSelect = useCallback((docId) => {
+        setSelectedDocIds(prev => {
+            if (prev.includes(docId)) {
+                return prev.filter(id => id !== docId);
+            } else {
+                return [...prev, docId];
+            }
+        });
+    }, []);
+
+    // ⭐ 按文件类型选择/取消选择
+    const handleToggleFileTypeSelect = useCallback((fileType) => {
+        const typeDocIds = fileTypeStats[fileType]?.docIds || [];
+        setSelectedDocIds(prev => {
+            // 检查该类型的文档是否全部被选中
+            const allSelected = typeDocIds.every(id => prev.includes(id));
+
+            if (allSelected) {
+                // 如果全部选中，则取消选择该类型的所有文档
+                return prev.filter(id => !typeDocIds.includes(id));
+            } else {
+                // 否则，添加该类型的所有文档
+                const newIds = [...prev];
+                typeDocIds.forEach(id => {
+                    if (!newIds.includes(id)) {
+                        newIds.push(id);
+                    }
+                });
+                return newIds;
+            }
+        });
+    }, [fileTypeStats]);
+
+    // 检查某个文件类型是否全部被选中
+    const isFileTypeSelected = useCallback((fileType) => {
+        const typeDocIds = fileTypeStats[fileType]?.docIds || [];
+        if (typeDocIds.length === 0) return false;
+        return typeDocIds.every(id => selectedDocIds.includes(id));
+    }, [fileTypeStats, selectedDocIds]);
+
+    // 检查某个文件类型是否部分被选中
+    const isFileTypeIndeterminate = useCallback((fileType) => {
+        const typeDocIds = fileTypeStats[fileType]?.docIds || [];
+        if (typeDocIds.length === 0) return false;
+        const selectedCount = typeDocIds.filter(id => selectedDocIds.includes(id)).length;
+        return selectedCount > 0 && selectedCount < typeDocIds.length;
+    }, [fileTypeStats, selectedDocIds]);
+
+    // 批量应用模板
+    const handleBatchApplyTemplate = useCallback(async () => {
+        if (selectedDocIds.length === 0) {
+            message.warning(t('ragFlow.component.pleaseSelectDocuments'));
+            return;
+        }
+        if (!batchTemplateId) {
+            message.warning(t('ragFlow.component.pleaseSelectTemplate'));
+            return;
+        }
+
+        Modal.confirm({
+            title: t('ragFlow.component.batchProcessConfirm'),
+            content: t('ragFlow.component.batchProcessContent')
+                .replace('{count}', selectedDocIds.length)
+                .replace('{template}', strategyTemplates.find(t => t.id === batchTemplateId)?.name || ''),
+            okText: t('common.confirm'),
+            cancelText: t('common.cancel'),
+            onOk: async () => {
+                const successCount = 0;
+                const failCount = 0;
+
+                for (const docId of selectedDocIds) {
+                    try {
+                        await ragStrategyApi.applyTemplateToDocument(docId, batchTemplateId);
+                        await ragStrategyApi.startProcessing(docId);
+                    } catch (error) {
+                        console.error('批量处理失败:', docId, error);
+                    }
+                }
+
+                message.success(t('ragFlow.component.batchProcessSuccess').replace('{count}', selectedDocIds.length));
+                setSelectedDocIds([]);
+                setBatchTemplateId(null);
+                loadDocumentsList();
+            }
+        });
+    }, [selectedDocIds, batchTemplateId, strategyTemplates, message, t, loadDocumentsList]);
+
     // 导航到配置页面
     const navigateToConfig = useCallback((configType, docId) => {
         const newHash = `#/documents?view=${configType}&docId=${docId}`;
@@ -504,7 +633,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         style={{ width: `${leftWidth}%` }}
                     >
                         <PendingDocumentsList
-                            documentsList={documentsList}
+                            documentsList={filteredDocumentsList}
                             selectedDocId={selectedDocId}
                             documentsProgress={documentsProgress}
                             strategyTemplates={strategyTemplates}
@@ -512,6 +641,18 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                             onApplyTemplate={applyTemplateToDocument}
                             onDeleteTemplate={deleteTemplate}
                             onStartProcess={startProcessDocument}
+                            selectedDocIds={selectedDocIds}
+                            filterKeyword={filterKeyword}
+                            batchTemplateId={batchTemplateId}
+                            onFilterChange={setFilterKeyword}
+                            onSelectAll={handleSelectAll}
+                            onToggleDocSelect={handleToggleDocSelect}
+                            onBatchTemplateChange={setBatchTemplateId}
+                            onBatchProcess={handleBatchApplyTemplate}
+                            fileTypeStats={fileTypeStats}
+                            onToggleFileTypeSelect={handleToggleFileTypeSelect}
+                            isFileTypeSelected={isFileTypeSelected}
+                            isFileTypeIndeterminate={isFileTypeIndeterminate}
                         />
                     </div>
 
@@ -612,8 +753,30 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                             </Button>
                         </Space>
                     </div>
+                ) : (
+                    /* 未选中文档时的提示 */
+                    <div className="document-processing-flow__placeholder">
+                        <div className="document-processing-flow__placeholder-content">
+                            <FileTextOutlined style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} />
+                            <h3>{t('ragFlow.component.selectDocumentHint')}</h3>
+                            <p>{t('ragFlow.component.selectDocumentDesc')}</p>
+                            <div className="document-processing-flow__steps-preview">
+                                <ProcessingStepsView
+                                    progress={null}
+                                    selectedDocId={null}
+                                    documentConfigs={{}}
+                                    chunkingStrategies={chunkingStrategies}
+                                    onUpdateConfig={() => {}}
+                                    onNavigateToConfig={() => {}}
+                                    getCurrentStep={() => 0}
+                                    getStepStatus={() => 'wait'}
+                                    renderStepDescription={() => null}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
                 </Card>
-            )}
                     </div>
                 </div>
             )}

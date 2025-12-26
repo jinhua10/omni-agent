@@ -1461,6 +1461,19 @@ export default {
       saveAsTemplate: '保存为模板',
       startFullProcess: '开始完整处理',
 
+      // 批量操作
+      searchDocuments: '搜索文档',
+      selectAll: '全选',
+      selectedCount: '已选 {count} 个',
+      selectByFileType: '按文件类型',
+      selectBatchTemplate: '选择批量处理模板',
+      batchProcess: '批量处理',
+      pleaseSelectDocuments: '请先选择要处理的文档',
+      pleaseSelectTemplate: '请选择策略模板',
+      batchProcessConfirm: '批量处理确认',
+      batchProcessContent: '确定要对 {count} 个文档应用模板 "{template}" 并开始处理吗？',
+      batchProcessSuccess: '已成功启动 {count} 个文档的处理',
+
       // ProcessingStepsView
       selectTextExtraction: '选择文本提取方式',
       selectChunkingStrategy: '选择分块策略',
@@ -1477,6 +1490,9 @@ export default {
       stageIndex: '索引存储',
       stageCompleted: '处理完成',
       waitingToStart: '等待开始处理',
+      processingFlowOverview: '文档处理流程概览',
+      selectDocumentHint: '请从左侧选择一个文档',
+      selectDocumentDesc: '选择文档后，可以查看和配置该文档的具体处理流程',
 
       // SaveTemplateModal
       saveTemplateTitle: '保存为策略模板',

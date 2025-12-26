@@ -195,6 +195,49 @@ body.resizing * {
     margin-bottom: 0;
 }
 
+/* 未选中文档时的占位符 */
+.document-processing-flow__placeholder {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.document-processing-flow__placeholder-content {
+    text-align: center;
+    max-width: 600px;
+}
+
+.document-processing-flow__placeholder-content h3 {
+    color: #595959;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.document-processing-flow__placeholder-content p {
+    color: #8c8c8c;
+    font-size: 14px;
+    margin-bottom: 32px;
+}
+
+.document-processing-flow__steps-preview {
+    margin-top: 24px;
+    padding: 20px;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px dashed #d9d9d9;
+}
+
+.document-processing-flow__steps-preview .ant-steps-item-title {
+    color: #8c8c8c !important;
+}
+
+.document-processing-flow__steps-preview .ant-steps-item-icon {
+    opacity: 0.6;
+}
+
 /* 文档列表Card美化 */
 .document-processing-flow-container .ant-card {
     border-radius: 8px;
