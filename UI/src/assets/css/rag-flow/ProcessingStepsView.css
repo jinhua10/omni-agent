@@ -9,8 +9,24 @@
 /* ========== 步骤容器 ========== */
 
 .processing-steps-view {
-    margin-bottom: 32px;
-    padding: 24px;
+    padding: 16px;
+}
+
+/* 垂直布局样式调整 */
+.processing-steps-view.ant-steps-vertical {
+    padding: 16px 24px;
+}
+
+.processing-steps-view.ant-steps-vertical .ant-steps-item {
+    padding-bottom: 16px;
+}
+
+.processing-steps-view.ant-steps-vertical .ant-steps-item-content {
+    min-height: auto;
+}
+
+.processing-steps-view.ant-steps-vertical .ant-steps-item-title {
+    line-height: 32px;
 }
 
 /* ========== 步骤标题 ========== */

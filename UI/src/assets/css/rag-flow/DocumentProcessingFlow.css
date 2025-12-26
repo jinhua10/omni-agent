@@ -32,14 +32,15 @@
 
 /* 流程控制按钮容器 */
 .document-processing-flow__controls {
-    margin-top: 24px;
-    padding: 20px;
+    margin-top: 16px;
+    padding: 16px 20px;
     background: linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%);
     border-radius: 8px;
     border: 1px solid #d6e4ff;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 /* ========== 左右布局 ========== */
@@ -157,14 +158,41 @@ body.resizing * {
     border-radius: 8px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.document-processing-flow .ant-card-head {
+    flex-shrink: 0;
 }
 
 .document-processing-flow .ant-card-body {
-    padding: 24px;
+    padding: 16px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.document-processing-flow .ant-card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.document-processing-flow .ant-card-body::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.document-processing-flow .ant-card-body::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3px;
+}
+
+.document-processing-flow .ant-card-body::-webkit-scrollbar-thumb:hover {
+    background: #bfbfbf;
 }
 
 .document-processing-flow .ant-steps {
-    margin-bottom: 30px;
+    margin-bottom: 0;
 }
 
 /* 文档列表Card美化 */
