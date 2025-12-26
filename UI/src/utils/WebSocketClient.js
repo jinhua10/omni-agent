@@ -67,7 +67,7 @@ class WebSocketClient {
                     console.log(`🔄 尝试重连 (${this.reconnectAttempts}/3)...`);
                     setTimeout(() => this.connect(), this.reconnectDelay);
                 } else {
-                    console.log('❌ WebSocket 重连失败，切换到轮询模式');
+                    console.warn('❌ WebSocket 连接失败，请确保后端服务正在运行');
                 }
             };
         } catch (error) {

@@ -6,9 +6,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.web.model.rag.ProcessingProgress;
 import top.yumbo.ai.omni.web.model.rag.ProcessingStage;
-import top.yumbo.ai.omni.web.websocket.ProgressWebSocketHandler;
+import top.yumbo.ai.omni.web.websocket.DocumentProcessingWebSocketHandler;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,7 +31,7 @@ public class ProcessingProgressService {
 
     @Autowired
     @Lazy
-    private ProgressWebSocketHandler webSocketHandler;
+    private DocumentProcessingWebSocketHandler webSocketHandler;
 
     /**
      * 存储所有文档的处理进度
@@ -170,10 +171,29 @@ public class ProcessingProgressService {
      * 广播进度更新
      * (Broadcast progress update)
      */
-    private void broadcastProgress(String documentId, ProcessingProgress progress) {
+    private void broadcastProgress(String documentId, ProcessingProgress prog) {
         if (webSocketHandler != null) {
             try {
-                webSocketHandler.broadcastProgress(documentId, progress);
+                // ⭐ 将 ProcessingProgress 转换为 Map
+                Map<String, Object> progressMap = new HashMap<>();
+                progressMap.put("documentId", prog.getDocumentId());
+                progressMap.put("documentName", prog.getDocumentName());
+                progressMap.put("stage", prog.getStage() != null ? prog.getStage().name() : null);
+                progressMap.put("status", prog.getStatus() != null ? prog.getStatus().name() : "PROCESSING");
+                progressMap.put("percentage", prog.getProgress()); // progress 字段对应前端的 percentage
+                progressMap.put("message", prog.getErrorMessage() != null ? prog.getErrorMessage() : "处理中...");
+                progressMap.put("startTime", prog.getStartTime());
+
+                // 从 details 的 metadata 获取更多信息
+                if (prog.getDetails() != null && prog.getDetails().getMetadata() != null) {
+                    Object chunks = prog.getDetails().getMetadata().get("chunks");
+                    Object vectors = prog.getDetails().getMetadata().get("vectors");
+                    if (chunks != null) progressMap.put("chunks", chunks);
+                    if (vectors != null) progressMap.put("vectors", vectors);
+                }
+
+                webSocketHandler.broadcastProgress(documentId, progressMap);
+                log.debug("📢 已推送进度更新: documentId={}, percentage={}%", documentId, prog.getProgress());
             } catch (Exception e) {
                 log.error("❌ 广播进度更新失败: documentId={}", documentId, e);
             }
