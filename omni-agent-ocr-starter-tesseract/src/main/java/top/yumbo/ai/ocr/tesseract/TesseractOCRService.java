@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
