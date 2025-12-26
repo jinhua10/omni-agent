@@ -543,13 +543,14 @@ public class FileDocumentStorage implements DocumentStorageService {
 
             String format = image.getFormat() != null ? image.getFormat() : "png";
 
-            // ⭐ 构建简洁的文件名：baseName_p001_i000.png（页码3位，图片序号3位）
+            // ⭐ 构建简洁的文件名：p001_i000.png（页码3位，图片序号3位）
+            // 不包含 baseName，因为已经在文件夹名中了
             String imageFilename;
             if (imageIndex != null && imageIndex >= 0) {
-                imageFilename = String.format("%s_p%03d_i%03d.%s", baseName, pageNum, imageIndex, format);
+                imageFilename = String.format("p%03d_i%03d.%s", pageNum, imageIndex, format);
             } else {
-                // 如果没有图片序号，只有页码：baseName_p001.png
-                imageFilename = String.format("%s_p%03d.%s", baseName, pageNum, format);
+                // 如果没有图片序号，只有页码：p001.png
+                imageFilename = String.format("p%03d.%s", pageNum, format);
             }
 
             Path imageFile = docImageDir.resolve(imageFilename);
@@ -563,7 +564,7 @@ public class FileDocumentStorage implements DocumentStorageService {
             String metadataJson = buildImageMetadataJson(image, imageFilename);
             Files.write(metadataFile, metadataJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
-            // ⭐ 使用简洁的 imageId：baseName_p页码_i序号
+            // ⭐ imageId 保持原样（用于全局唯一标识）：baseName_p001_i000
             String imageId = String.format("%s_p%03d_i%03d", baseName, pageNum, imageIndex != null ? imageIndex : 0);
 
             log.debug("Saved image: {} -> {}/{}", imageId, documentId, imageFilename);

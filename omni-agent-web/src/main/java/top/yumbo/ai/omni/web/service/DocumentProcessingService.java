@@ -2,6 +2,7 @@ package top.yumbo.ai.omni.web.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.ai.api.EmbeddingService;
@@ -16,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 /**
  * 文档处理服务（智能混合模式）
@@ -47,6 +49,11 @@ public class DocumentProcessingService {
 
     @Autowired(required = false)
     private RAGService ragService;  // ⭐ RAG索引服务（可选）
+
+    // ⭐ 图片处理线程池（用于异步保存图片）
+    @Autowired(required = false)
+    @Qualifier("imageProcessingExecutor")
+    private Executor imageProcessingExecutor;
 
     @Value("${omni-agent.file-watcher.watch-directory:./data/documents}")
     private String watchDirectory;  // ⭐ 中转站目录
@@ -214,14 +221,35 @@ public class DocumentProcessingService {
             // 继续处理，不影响整体流程
         }
 
-        // ⭐ 持久化图片到存储服务
+        // ⭐ 异步持久化图片到存储服务（不阻塞主流程）
         if (extractionResult.getImages() != null && !extractionResult.getImages().isEmpty()) {
-            try {
-                int savedImageCount = saveExtractedImages(documentId, documentName, extractionResult.getImages());
-                log.info("🖼️ 已保存 {} 张图片到存储服务: documentId={}", savedImageCount, documentId);
-            } catch (Exception e) {
-                log.error("❌ 保存图片失败: documentId={}", documentId, e);
-                // 继续处理，不影响整体流程
+            final String finalDocumentId = documentId;
+            final String finalDocumentName = documentName;
+            final List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> finalImages =
+                    extractionResult.getImages();
+
+            if (imageProcessingExecutor != null) {
+                // 异步保存图片
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        int savedImageCount = saveExtractedImages(finalDocumentId, finalDocumentName, finalImages);
+                        log.info("🖼️ [异步] 已保存 {} 张图片: documentId={}", savedImageCount, finalDocumentId);
+                    } catch (Exception e) {
+                        log.error("❌ [异步] 保存图片失败: documentId={}", finalDocumentId, e);
+                    }
+                }, imageProcessingExecutor).exceptionally(ex -> {
+                    log.error("❌ [异步] 图片保存任务异常: documentId={}", finalDocumentId, ex);
+                    return null;
+                });
+                log.debug("📤 图片保存任务已提交到异步线程池: {} 张图片", finalImages.size());
+            } else {
+                // 同步保存（如果线程池未配置）
+                try {
+                    int savedImageCount = saveExtractedImages(finalDocumentId, finalDocumentName, finalImages);
+                    log.info("🖼️ [同步] 已保存 {} 张图片: documentId={}", savedImageCount, finalDocumentId);
+                } catch (Exception e) {
+                    log.error("❌ [同步] 保存图片失败: documentId={}", finalDocumentId, e);
+                }
             }
         }
 
@@ -602,11 +630,11 @@ public class DocumentProcessingService {
 
         // ⭐ 输出统计信息
         float savedRatio = totalOriginalSize > 0 ? (float) totalCompressedSize / totalOriginalSize : 1.0f;
-        log.info("✅ 图片保存完成: 总数={}, 保存={}, 去重={}, 压缩={}, 原始大小={}MB, 存储大小={}MB, 压缩率={:.1f}%",
+        log.info("✅ 图片保存完成: 总数={}, 保存={}, 去重={}, 压缩={}, 原始大小={}MB, 存储大小={}MB, 压缩率={}%",
                 extractedImages.size(), savedCount, deduplicatedCount, compressedCount,
                 totalOriginalSize / (1024 * 1024),
                 totalCompressedSize / (1024 * 1024),
-                savedRatio * 100);
+                String.format("%.1f", savedRatio * 100));
 
         return savedCount;
     }

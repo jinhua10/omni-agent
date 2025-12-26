@@ -435,6 +435,34 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * 通过哈希值查找图片（用于去重）⭐ NEW
+     */
+    @Override
+    public Optional<String> findImageByHash(String imageHash) {
+        try {
+            // 查找 metadata.imageHash 匹配的文件
+            GridFSFile file = gridFSBucket.find(
+                    new Document("metadata.type", "image")
+                            .append("metadata.imageHash", imageHash)
+            ).first();
+
+            if (file != null && file.getMetadata() != null) {
+                String imageId = file.getMetadata().getString("imageId");
+                if (imageId != null) {
+                    log.debug("🔍 找到重复图片: hash={}, imageId={}",
+                            imageHash.substring(0, Math.min(16, imageHash.length())), imageId);
+                    return Optional.of(imageId);
+                }
+            }
+
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to find image by hash", e);
+            return Optional.empty();
+        }
+    }
+
     // ========== PPL Data Storage ==========
 
     @Override

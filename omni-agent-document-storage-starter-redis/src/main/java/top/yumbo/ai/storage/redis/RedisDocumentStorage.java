@@ -225,6 +225,17 @@ public class RedisDocumentStorage implements DocumentStorageService {
             String docImagesKey = getDocumentImagesKey(documentId);
             redisTemplate.opsForSet().add(docImagesKey, imageId);
 
+            // ⭐ 保存 hash -> imageId 映射（用于去重）
+            if (image.getMetadata() != null && image.getMetadata().containsKey("imageHash")) {
+                String imageHash = (String) image.getMetadata().get("imageHash");
+                String hashKey = "image:hash:" + imageHash;
+                redisTemplate.opsForValue().set(hashKey, imageId);
+
+                if (properties.getTtl() > 0) {
+                    redisTemplate.expire(hashKey, properties.getTtl(), TimeUnit.SECONDS);
+                }
+            }
+
             // 设置过期时间
             if (properties.getTtl() > 0) {
                 redisTemplate.expire(imageKey, properties.getTtl(), TimeUnit.SECONDS);
@@ -302,6 +313,29 @@ public class RedisDocumentStorage implements DocumentStorageService {
             log.info("Deleted all images for document: {}", documentId);
         } catch (Exception e) {
             log.error("Failed to delete images for document: {}", documentId, e);
+        }
+    }
+
+    /**
+     * 通过哈希值查找图片（用于去重）⭐ NEW
+     */
+    @Override
+    public Optional<String> findImageByHash(String imageHash) {
+        try {
+            // 使用 hash -> imageId 的映射表
+            String hashKey = "image:hash:" + imageHash;
+            Object imageId = redisTemplate.opsForValue().get(hashKey);
+
+            if (imageId != null) {
+                log.debug("🔍 找到重复图片: hash={}, imageId={}",
+                        imageHash.substring(0, Math.min(16, imageHash.length())), imageId);
+                return Optional.of(imageId.toString());
+            }
+
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to find image by hash", e);
+            return Optional.empty();
         }
     }
 

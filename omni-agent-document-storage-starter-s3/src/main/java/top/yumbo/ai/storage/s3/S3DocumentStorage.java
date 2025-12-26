@@ -81,7 +81,15 @@ public class S3DocumentStorage implements DocumentStorageService {
     }
 
     private String getImageKey(String documentId, String imageId) {
-        return "images/" + documentId + "/" + imageId + ".bin";
+        // ⭐ 从 imageId 提取简洁文件名
+        // imageId 格式: 文档名_p001_i000
+        // 提取: p001_i000
+        String simpleFilename = imageId;
+        int lastUnderscore = imageId.lastIndexOf("_p");
+        if (lastUnderscore > 0) {
+            simpleFilename = imageId.substring(lastUnderscore + 1); // 去掉 "_"，保留 "p001_i000"
+        }
+        return "images/" + documentId + "/" + simpleFilename + ".bin";
     }
 
     private String getPPLKey(String documentId) {
