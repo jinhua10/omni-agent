@@ -14,6 +14,7 @@ import top.yumbo.ai.storage.api.DocumentStorageService;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -200,14 +201,14 @@ public class DocumentProcessingService {
      */
     private void performTextExtraction(String documentId, String documentName, byte[] content,
                                        SystemRAGConfigService.DocumentRAGConfig docConfig) {
-        // ⭐ 传递文档名称以提取文件扩展名
-        String extractedText = extractText(content, docConfig.getTextExtractionModel(), documentName);
+        // ⭐ 传递文档名称以提取文件扩展名，并获取提取结果（包含图片）
+        TextExtractionResult extractionResult = extractTextWithImages(content, docConfig.getTextExtractionModel(), documentName, documentId);
 
         // ⭐ 持久化提取文本到存储服务
         try {
-            String savedId = storageService.saveExtractedText(documentId, extractedText);
+            String savedId = storageService.saveExtractedText(documentId, extractionResult.getText());
             if (savedId != null) {
-                log.info("✅ 已保存提取文本到存储服务: documentId={}, length={}", documentId, extractedText.length());
+                log.info("✅ 已保存提取文本到存储服务: documentId={}, length={}", documentId, extractionResult.getText().length());
             } else {
                 log.warn("⚠️ 保存提取文本失败（返回null）: documentId={}", documentId);
             }
@@ -216,10 +217,21 @@ public class DocumentProcessingService {
             // 继续处理，不影响整体流程
         }
 
+        // ⭐ 持久化图片到存储服务
+        if (extractionResult.getImages() != null && !extractionResult.getImages().isEmpty()) {
+            try {
+                int savedImageCount = saveExtractedImages(documentId, documentName, extractionResult.getImages());
+                log.info("🖼️ 已保存 {} 张图片到存储服务: documentId={}", savedImageCount, documentId);
+            } catch (Exception e) {
+                log.error("❌ 保存图片失败: documentId={}", documentId, e);
+                // 继续处理，不影响整体流程
+            }
+        }
+
         // 配置中只保存摘要（前200字符）
-        String summary = extractedText.length() > 200
-                ? extractedText.substring(0, 200) + "..."
-                : extractedText;
+        String summary = extractionResult.getText().length() > 200
+                ? extractionResult.getText().substring(0, 200) + "..."
+                : extractionResult.getText();
         docConfig.setTextSummary(summary);
         docConfig.setExtractedTextRef(documentId);  // 保存引用
 
@@ -227,7 +239,7 @@ public class DocumentProcessingService {
         docConfig.setStatus("EXTRACTED");
         ragConfigService.setDocumentConfig(documentId, docConfig);
         pushProgress(documentId, "EXTRACT", 30, "文本提取完成", documentName,
-                Map.of("extractedLength", extractedText.length()));
+                Map.of("extractedLength", extractionResult.getText().length(), "imageCount", extractionResult.getImages().size()));
     }
 
     /**
@@ -404,6 +416,222 @@ public class DocumentProcessingService {
             log.error("❌ 文本提取失败: model={}, file={}", model, documentName, e);
             // 返回错误信息而不是模拟文本
             return "文本提取失败: " + e.getMessage();
+        }
+    }
+
+    /**
+     * 提取文本和图片（支持不同模型）⭐ 新方法
+     */
+    private TextExtractionResult extractTextWithImages(byte[] content, String model, String documentName, String documentId) {
+        log.info("📝 提取文本和图片: {} bytes, model={}, file={}", content.length, model, documentName);
+
+        // 如果是 standard 模型，使用简单的文本提取（无图片）
+        if ("standard".equals(model)) {
+            try {
+                String text = new String(content, java.nio.charset.StandardCharsets.UTF_8);
+                return new TextExtractionResult(text, new ArrayList<>());
+            } catch (Exception e) {
+                log.error("❌ Standard 文本提取失败", e);
+                return new TextExtractionResult("Standard 文本提取失败: " + e.getMessage(), new ArrayList<>());
+            }
+        }
+
+        // ⭐ 提取文件扩展名
+        String fileExtension = "txt";  // 默认
+        if (documentName != null && documentName.contains(".")) {
+            fileExtension = documentName.substring(documentName.lastIndexOf(".") + 1);
+        }
+
+        // vision-llm, ocr 等需要调用DocumentProcessorManager
+        try {
+            // ⭐ 构建处理上下文（启用分批并行，但不需要流式输出）
+            Map<String, Object> options = new HashMap<>();
+            options.put("model", model);      // ⭐ 传递请求的模型
+            options.put("batchSize", 5);      // ⭐ 每批处理5个页面（启用分批并行）
+            options.put("documentId", documentId);  // ⭐ 传递文档ID，用于生成图片路径
+            // 注意：不设置 streaming=true 和 streamCallback，因为流程视图不需要实时输出
+
+            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
+                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+                            .fileBytes(content)              // ⭐ 使用 fileBytes
+                            .originalFileName(documentName)  // ⭐ 使用真实文件名
+                            .fileExtension(fileExtension)    // ⭐ 使用提取的扩展名
+                            .fileSize((long) content.length) // ⭐ 文件大小
+                            .options(options)                // ⭐ 处理选项（包含分批配置和文档ID）
+                            .build();
+
+            // ⭐ 真正调用文档处理器进行提取（支持分批并行）
+            log.info("🚀 [流程视图] 开始分批并行处理: model={}, file={}, batchSize={}",
+                    model, documentName, options.get("batchSize"));
+
+            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
+                    documentProcessorManager.processDocument(context);
+
+            String extractedText = result.getContent();
+            List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> images =
+                    result.getImages() != null ? result.getImages() : new ArrayList<>();
+
+            if (extractedText == null || extractedText.isEmpty()) {
+                log.warn("⚠️ 提取文本为空，使用默认文本");
+                extractedText = "提取文本为空";
+            }
+
+            log.info("✅ 文本和图片提取成功（分批并行）: {} 字符, {} 张图片, model={}, processor={}",
+                    extractedText.length(), images.size(), model, result.getProcessorName());
+            return new TextExtractionResult(extractedText, images);
+
+        } catch (Exception e) {
+            log.error("❌ 文本提取失败: model={}, file={}", model, documentName, e);
+            // 返回错误信息而不是模拟文本
+            return new TextExtractionResult("文本提取失败: " + e.getMessage(), new ArrayList<>());
+        }
+    }
+
+    /**
+     * 保存提取的图片到存储服务（支持压缩和去重）⭐
+     *
+     * @param documentId 文档ID
+     * @param documentName 文档名称（用于生成友好的图片路径）
+     * @param extractedImages 提取的图片列表
+     * @return 成功保存的图片数量
+     */
+    private int saveExtractedImages(String documentId, String documentName,
+                                    List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> extractedImages) {
+        if (extractedImages == null || extractedImages.isEmpty()) {
+            return 0;
+        }
+
+        // ⭐ 从文档名称中提取基础名（去除扩展名）
+        String baseName = documentName;
+        if (documentName != null && documentName.contains(".")) {
+            baseName = documentName.substring(0, documentName.lastIndexOf("."));
+        }
+
+        int savedCount = 0;
+        int deduplicatedCount = 0;
+        int compressedCount = 0;
+        long totalOriginalSize = 0;
+        long totalCompressedSize = 0;
+
+        // ⭐ 配置压缩参数
+        top.yumbo.ai.omni.core.image.ImageCompressor.CompressionConfig compressionConfig =
+                new top.yumbo.ai.omni.core.image.ImageCompressor.CompressionConfig();
+        compressionConfig.setEnabled(true);
+        compressionConfig.setQuality(0.85f);
+        compressionConfig.setMaxWidth(2048);
+        compressionConfig.setMaxHeight(2048);
+        compressionConfig.setMinSizeToCompress(100 * 1024); // 100KB
+
+        for (top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage extractedImage : extractedImages) {
+            try {
+                byte[] imageData = extractedImage.getData();
+                String format = extractedImage.getFormat();
+                int originalSize = imageData.length;
+                totalOriginalSize += originalSize;
+
+                // ⭐ 1. 计算图片哈希值（用于去重）
+                String imageHash = top.yumbo.ai.omni.core.image.ImageHashCalculator.calculateHash(imageData);
+
+                // ⭐ 2. 检查是否已存在相同图片
+                Optional<String> existingImageId = storageService.findImageByHash(imageHash);
+                if (existingImageId.isPresent()) {
+                    deduplicatedCount++;
+                    log.debug("🔄 图片已存在，跳过保存: hash={}, existingId={}",
+                            imageHash.substring(0, 16), existingImageId.get());
+
+                    // 复用已有图片，只更新引用计数（如果需要）
+                    savedCount++;
+                    totalCompressedSize += originalSize; // 估算
+                    continue;
+                }
+
+                // ⭐ 3. 压缩图片
+                top.yumbo.ai.omni.core.image.ImageCompressor.CompressionResult compressionResult =
+                        top.yumbo.ai.omni.core.image.ImageCompressor.compress(imageData, format, compressionConfig);
+
+                if (compressionResult.isCompressed()) {
+                    compressedCount++;
+                    imageData = compressionResult.getData();
+                    format = compressionResult.getFormat();
+                    log.debug("🗜️ 图片已压缩: {}KB -> {}KB (节省: {}KB)",
+                            originalSize / 1024,
+                            compressionResult.getCompressedSize() / 1024,
+                            compressionResult.getSavedBytes() / 1024);
+                }
+
+                totalCompressedSize += imageData.length;
+
+                // ⭐ 4. 从 metadata 中获取图片序号
+                Integer imageIndex = 0;
+                if (extractedImage.getMetadata() != null && extractedImage.getMetadata().containsKey("imageIndex")) {
+                    imageIndex = ((Number) extractedImage.getMetadata().get("imageIndex")).intValue();
+                }
+
+                // ⭐ 5. 构建 Image 对象
+                top.yumbo.ai.storage.api.model.Image image = top.yumbo.ai.storage.api.model.Image.builder()
+                        .documentId(documentId)
+                        .data(imageData)
+                        .format(format)
+                        .pageNumber(extractedImage.getPageNumber())
+                        .metadata(extractedImage.getMetadata() != null ? extractedImage.getMetadata() : new HashMap<>())
+                        .createdAt(System.currentTimeMillis())
+                        .build();
+
+                // ⭐ 6. 在 metadata 中添加关键信息
+                image.getMetadata().put("baseName", baseName);
+                image.getMetadata().put("imageIndex", imageIndex);
+                image.getMetadata().put("imageHash", imageHash);
+                image.getMetadata().put("originalSize", originalSize);
+                image.getMetadata().put("compressed", compressionResult.isCompressed());
+                if (compressionResult.isCompressed()) {
+                    image.getMetadata().put("compressionRatio", compressionResult.getCompressionRatio());
+                }
+
+                // ⭐ 7. 保存到存储服务
+                String imageId = storageService.saveImage(documentId, image);
+                if (imageId != null) {
+                    savedCount++;
+                    log.debug("💾 保存图片: documentId={}, page={}, index={}, imageId={}, size={}KB",
+                            documentId, extractedImage.getPageNumber(), imageIndex, imageId, imageData.length / 1024);
+                } else {
+                    log.warn("⚠️ 保存图片失败（返回null）: documentId={}, page={}, index={}",
+                            documentId, extractedImage.getPageNumber(), imageIndex);
+                }
+            } catch (Exception e) {
+                log.error("❌ 保存图片失败: documentId={}, page={}", documentId, extractedImage.getPageNumber(), e);
+                // 继续处理其他图片
+            }
+        }
+
+        // ⭐ 输出统计信息
+        float savedRatio = totalOriginalSize > 0 ? (float) totalCompressedSize / totalOriginalSize : 1.0f;
+        log.info("✅ 图片保存完成: 总数={}, 保存={}, 去重={}, 压缩={}, 原始大小={}MB, 存储大小={}MB, 压缩率={:.1f}%",
+                extractedImages.size(), savedCount, deduplicatedCount, compressedCount,
+                totalOriginalSize / (1024 * 1024),
+                totalCompressedSize / (1024 * 1024),
+                savedRatio * 100);
+
+        return savedCount;
+    }
+
+    /**
+     * 文本提取结果（包含文本和图片）
+     */
+    private static class TextExtractionResult {
+        private final String text;
+        private final List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> images;
+
+        public TextExtractionResult(String text, List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> images) {
+            this.text = text;
+            this.images = images;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> getImages() {
+            return images;
         }
     }
 

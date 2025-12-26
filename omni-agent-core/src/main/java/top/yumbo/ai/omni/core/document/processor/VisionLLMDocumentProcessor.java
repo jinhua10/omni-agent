@@ -172,10 +172,42 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                 StringBuilder allContent = new StringBuilder();
                 List<ExtractedImage> allImages = new ArrayList<>();
 
+                // ⭐ 从options中获取文档信息，用于生成图片路径引用
+                String documentId = context.getOptions() != null ?
+                        (String) context.getOptions().get("documentId") : null;
+                String baseName = context.getOriginalFileName();
+                if (baseName != null && baseName.contains(".")) {
+                    baseName = baseName.substring(0, baseName.lastIndexOf("."));
+                }
+
                 // 按批次顺序合并（保持页面顺序）
                 for (BatchProcessingResult batchResult : batchResults) {
-                    allContent.append(batchResult.getContent()).append("\n\n");
-                    allImages.addAll(batchResult.getImages());
+                    allContent.append(batchResult.getContent());
+
+                    // ⭐ 为批次中的每个图片添加路径引用
+                    for (ExtractedImage image : batchResult.getImages()) {
+                        // 添加图片元数据，包含路径引用
+                        if (image.getMetadata() == null) {
+                            image.setMetadata(new HashMap<>());
+                        }
+
+                        // 构建图片路径引用：文档名_p页码_i序号
+                        Integer imageIndex = image.getMetadata().containsKey("imageIndex") ?
+                                ((Number) image.getMetadata().get("imageIndex")).intValue() : 0;
+                        String imagePath = String.format("%s_p%03d_i%03d.%s",
+                                baseName, image.getPageNumber(), imageIndex, image.getFormat());
+
+                        // 添加到元数据
+                        image.getMetadata().put("storagePath", imagePath);
+                        image.getMetadata().put("baseName", baseName);
+                        if (documentId != null) {
+                            image.getMetadata().put("documentId", documentId);
+                        }
+
+                        allImages.add(image);
+                    }
+
+                    allContent.append("\n\n");
                 }
 
                 // 5. 构建元数据
@@ -345,6 +377,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                     imageMetadata.put("slideText", slideTexts.get(i));  // 当前幻灯片文字
                     imageMetadata.put("fileName", context.getOriginalFileName());  // 文件名
                     imageMetadata.put("totalSlides", slides.size());  // 总幻灯片数
+                    imageMetadata.put("imageIndex", 0);  // ⭐ 幻灯片作为整页图片，索引为0
 
                     // ⭐ 添加前几张幻灯片的文字作为上下文（帮助理解主题）
                     if (i < 3) {
@@ -840,29 +873,30 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
                         javax.imageio.ImageIO.write(bufferedImage, "png", baos);
                         byte[] imageData = baos.toByteArray();
 
-                        // 4. 创建 metadata
-                        Map<String, Object> imageMetadata = new HashMap<>();
-                        imageMetadata.put("fileName", context.getOriginalFileName());
-                        imageMetadata.put("pageText", pageText.trim());
-                        imageMetadata.put("totalPages", pageCount);
-                        imageMetadata.put("pageIndex", i);
-                        imageMetadata.put("documentType", "PDF");
+                    // 4. 创建 metadata
+                    Map<String, Object> imageMetadata = new HashMap<>();
+                    imageMetadata.put("fileName", context.getOriginalFileName());
+                    imageMetadata.put("pageText", pageText.trim());
+                    imageMetadata.put("totalPages", pageCount);
+                    imageMetadata.put("pageIndex", i);
+                    imageMetadata.put("documentType", "PDF");
+                    imageMetadata.put("imageIndex", 0);  // ⭐ PDF页面作为整页图片，索引为0
 
-                        // ⭐ 添加前几页的文字作为上下文（帮助理解主题）
-                        if (i < 3) {
-                            List<String> contextTexts = new ArrayList<>();
-                            for (int j = 0; j < Math.min(3, pageCount); j++) {
-                                org.apache.pdfbox.text.PDFTextStripper contextStripper =
-                                    new org.apache.pdfbox.text.PDFTextStripper();
-                                contextStripper.setStartPage(j + 1);
-                                contextStripper.setEndPage(j + 1);
-                                String contextText = contextStripper.getText(document);
-                                if (!contextText.trim().isEmpty()) {
-                                    contextTexts.add(contextText.trim());
-                                }
+                    // ⭐ 添加前几页的文字作为上下文（帮助理解主题）
+                    if (i < 3) {
+                        List<String> contextTexts = new ArrayList<>();
+                        for (int j = 0; j < Math.min(3, pageCount); j++) {
+                            org.apache.pdfbox.text.PDFTextStripper contextStripper =
+                                new org.apache.pdfbox.text.PDFTextStripper();
+                            contextStripper.setStartPage(j + 1);
+                            contextStripper.setEndPage(j + 1);
+                            String contextText = contextStripper.getText(document);
+                            if (!contextText.trim().isEmpty()) {
+                                contextTexts.add(contextText.trim());
                             }
-                            imageMetadata.put("documentContext", String.join(" | ", contextTexts));
                         }
+                        imageMetadata.put("documentContext", String.join(" | ", contextTexts));
+                    }
 
                         // 5. 创建 ExtractedImage
                         ExtractedImage image = ExtractedImage.builder()

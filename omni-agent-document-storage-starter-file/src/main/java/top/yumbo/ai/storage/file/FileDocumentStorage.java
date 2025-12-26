@@ -529,21 +529,27 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 pageNum, documentId));
             }
 
-            // 从 metadata 中获取图片序号
+            // 从 metadata 中获取图片序号和基础文件名
             Integer imageIndex = null;
-            if (image.getMetadata() != null && image.getMetadata().containsKey("imageIndex")) {
-                imageIndex = ((Number) image.getMetadata().get("imageIndex")).intValue();
+            String baseName = documentId;  // 默认使用documentId
+            if (image.getMetadata() != null) {
+                if (image.getMetadata().containsKey("imageIndex")) {
+                    imageIndex = ((Number) image.getMetadata().get("imageIndex")).intValue();
+                }
+                if (image.getMetadata().containsKey("baseName")) {
+                    baseName = (String) image.getMetadata().get("baseName");
+                }
             }
 
             String format = image.getFormat() != null ? image.getFormat() : "png";
 
-            // ⭐ 构建有意义的文件名：page_001_img_000.png（页码3位，图片序号3位）
+            // ⭐ 构建简洁的文件名：baseName_p001_i000.png（页码3位，图片序号3位）
             String imageFilename;
             if (imageIndex != null && imageIndex >= 0) {
-                imageFilename = String.format("page_%03d_img_%03d.%s", pageNum, imageIndex, format);
+                imageFilename = String.format("%s_p%03d_i%03d.%s", baseName, pageNum, imageIndex, format);
             } else {
-                // 如果没有图片序号，只有页码：page_001_img.png
-                imageFilename = String.format("page_%03d_img.%s", pageNum, format);
+                // 如果没有图片序号，只有页码：baseName_p001.png
+                imageFilename = String.format("%s_p%03d.%s", baseName, pageNum, format);
             }
 
             Path imageFile = docImageDir.resolve(imageFilename);
@@ -557,8 +563,8 @@ public class FileDocumentStorage implements DocumentStorageService {
             String metadataJson = buildImageMetadataJson(image, imageFilename);
             Files.write(metadataFile, metadataJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
-            // ⭐ 使用有意义的 imageId：page_页码_img_序号
-            String imageId = String.format("page_%03d_img_%03d", pageNum, imageIndex != null ? imageIndex : 0);
+            // ⭐ 使用简洁的 imageId：baseName_p页码_i序号
+            String imageId = String.format("%s_p%03d_i%03d", baseName, pageNum, imageIndex != null ? imageIndex : 0);
 
             log.debug("Saved image: {} -> {}/{}", imageId, documentId, imageFilename);
             return imageId;
@@ -779,6 +785,58 @@ public class FileDocumentStorage implements DocumentStorageService {
             }
         } catch (IOException e) {
             log.error("Failed to delete images for document: {}", documentId, e);
+        }
+    }
+
+    /**
+     * 通过哈希值查找图片（用于去重）⭐ NEW
+     */
+    @Override
+    public Optional<String> findImageByHash(String imageHash) {
+        try {
+            // 遍历所有图片元数据文件，查找匹配的哈希值
+            List<Path> metadataFiles = Files.walk(imagesPath, 3)
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().endsWith(".meta"))
+                    .toList();
+
+            for (Path metadataFile : metadataFiles) {
+                try {
+                    String metadataJson = new String(Files.readAllBytes(metadataFile),
+                            java.nio.charset.StandardCharsets.UTF_8);
+
+                    // 检查是否包含匹配的哈希值
+                    if (metadataJson.contains("\"imageHash\": \"" + imageHash + "\"")) {
+                        // 提取 imageId（假设格式为 "imageId": "xxx_p001_i000"）
+                        int startIdx = metadataJson.indexOf("\"imageHash\"");
+                        if (startIdx > 0) {
+                            // 往前找 imageId
+                            String beforeHash = metadataJson.substring(0, startIdx);
+                            int idStartIdx = beforeHash.lastIndexOf("\"imageId\": \"");
+                            if (idStartIdx > 0) {
+                                int idEndIdx = beforeHash.indexOf("\"", idStartIdx + 13);
+                                if (idEndIdx > 0) {
+                                    // 实际上从文件名提取更简单
+                                    String filename = metadataFile.getFileName().toString();
+                                    String imageId = filename.replace(".meta", "").replace(".png", "")
+                                            .replace(".jpg", "").replace(".jpeg", "");
+
+                                    log.debug("🔍 找到重复图片: hash={}, imageId={}",
+                                            imageHash.substring(0, 16), imageId);
+                                    return Optional.of(imageId);
+                                }
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    log.error("Failed to read metadata file: {}", metadataFile, e);
+                }
+            }
+
+            return Optional.empty();
+        } catch (IOException e) {
+            log.error("Failed to find image by hash", e);
+            return Optional.empty();
         }
     }
 

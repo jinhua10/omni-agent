@@ -179,6 +179,32 @@ public interface DocumentStorageService {
      */
     void deleteImagesByDocument(String documentId);
 
+    /**
+     * 检查图片是否已存在（通过哈希值去重）⭐ NEW
+     * @param imageHash 图片哈希值
+     * @return 如果存在返回已有的图片ID，否则返回空
+     */
+    default Optional<String> findImageByHash(String imageHash) {
+        return Optional.empty();
+    }
+
+    /**
+     * 批量保存图片 ⭐ NEW
+     * @param documentId 文档ID
+     * @param images 图片列表
+     * @return 保存的图片ID列表
+     */
+    default List<String> saveImages(String documentId, List<Image> images) {
+        List<String> imageIds = new ArrayList<>();
+        for (Image image : images) {
+            String imageId = saveImage(documentId, image);
+            if (imageId != null) {
+                imageIds.add(imageId);
+            }
+        }
+        return imageIds;
+    }
+
     // ========== PPL 数据存储 (PPL Data Storage) ==========
     // 注意: PPL方法保留用于向后兼容，推荐使用下方的通用优化数据方法
 

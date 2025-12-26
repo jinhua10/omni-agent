@@ -209,7 +209,30 @@ public class S3DocumentStorage implements DocumentStorageService {
     @Override
     public String saveImage(String documentId, Image image) {
         try {
-            String imageId = image.getId() != null ? image.getId() : UUID.randomUUID().toString();
+            // ⭐ 强制要求页码信息
+            Integer pageNum = image.getPageNumber();
+            if (pageNum == null || pageNum <= 0) {
+                throw new IllegalArgumentException(
+                    String.format("Image must have valid pageNumber (got: %s, documentId: %s). " +
+                                "All images must be assigned a page number.",
+                                pageNum, documentId));
+            }
+
+            // 从 metadata 中获取图片序号和基础文件名
+            Integer imageIndex = null;
+            String baseName = documentId;  // 默认使用documentId
+            if (image.getMetadata() != null) {
+                if (image.getMetadata().containsKey("imageIndex")) {
+                    imageIndex = ((Number) image.getMetadata().get("imageIndex")).intValue();
+                }
+                if (image.getMetadata().containsKey("baseName")) {
+                    baseName = (String) image.getMetadata().get("baseName");
+                }
+            }
+
+            // ⭐ 生成简洁的图片ID：baseName_p001_i000
+            String imageId = String.format("%s_p%03d_i%03d",
+                    baseName, pageNum, imageIndex != null ? imageIndex : 0);
             image.setId(imageId);
 
             String key = getImageKey(documentId, imageId);
