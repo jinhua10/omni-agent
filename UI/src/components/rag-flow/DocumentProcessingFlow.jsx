@@ -74,6 +74,65 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     // 分块策略列表
     const [chunkingStrategies, setChunkingStrategies] = useState([]);
 
+    // ⭐ 左右布局比例（从 localStorage 读取，默认左侧 30%）
+    const [leftWidth, setLeftWidth] = useState(() => {
+        const saved = localStorage.getItem('documentFlow.leftWidth');
+        return saved ? parseInt(saved) : 30;
+    });
+    const [isDragging, setIsDragging] = useState(false);
+
+    // ⭐ 保存布局比例到 localStorage
+    useEffect(() => {
+        localStorage.setItem('documentFlow.leftWidth', leftWidth.toString());
+    }, [leftWidth]);
+
+    // ⭐ 处理拖拽调整比例
+    const handleMouseDown = useCallback((e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    }, []);
+
+    const handleMouseMove = useCallback((e) => {
+        if (!isDragging) return;
+
+        const container = document.querySelector('.document-processing-flow-container');
+        if (!container) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+
+        // 限制在 20% 到 60% 之间
+        if (newLeftWidth >= 20 && newLeftWidth <= 60) {
+            setLeftWidth(Math.round(newLeftWidth));
+        }
+    }, [isDragging]);
+
+    const handleMouseUp = useCallback(() => {
+        setIsDragging(false);
+    }, []);
+
+    // ⭐ 添加和移除鼠标事件监听
+    useEffect(() => {
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        } else {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, [isDragging, handleMouseMove, handleMouseUp]);
+
     // 使用自定义 Hooks
     const { documentConfigs, loadDocumentConfig, updateDocumentConfig } = useDocumentConfig();
 
@@ -425,18 +484,6 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 </Space>
             </div>
 
-            {/* 待处理文档列表 */}
-            <PendingDocumentsList
-                documentsList={documentsList}
-                selectedDocId={selectedDocId}
-                documentsProgress={documentsProgress}
-                strategyTemplates={strategyTemplates}
-                onSelectDocument={setSelectedDocId}
-                onApplyTemplate={applyTemplateToDocument}
-                onDeleteTemplate={deleteTemplate}
-                onStartProcess={startProcessDocument}
-            />
-
             {/* 无文档提示 */}
             {!loading && documentsList.length === 0 && (
                 <Alert
@@ -448,8 +495,41 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 />
             )}
 
-            {/* 处理流程Card */}
-            {(selectedDocId || progress) && (
+            {/* ⭐ 左右布局容器 */}
+            {documentsList.length > 0 && (
+                <div className="document-processing-flow-container__layout">
+                    {/* 左侧：待处理文档列表 */}
+                    <div
+                        className="document-processing-flow-container__left"
+                        style={{ width: `${leftWidth}%` }}
+                    >
+                        <PendingDocumentsList
+                            documentsList={documentsList}
+                            selectedDocId={selectedDocId}
+                            documentsProgress={documentsProgress}
+                            strategyTemplates={strategyTemplates}
+                            onSelectDocument={setSelectedDocId}
+                            onApplyTemplate={applyTemplateToDocument}
+                            onDeleteTemplate={deleteTemplate}
+                            onStartProcess={startProcessDocument}
+                        />
+                    </div>
+
+                    {/* 可拖拽分隔条 */}
+                    <div
+                        className="document-processing-flow-container__resizer"
+                        onMouseDown={handleMouseDown}
+                    >
+                        <div className="document-processing-flow-container__resizer-line" />
+                    </div>
+
+                    {/* 右侧：文档处理流程 */}
+                    <div
+                        className="document-processing-flow-container__right"
+                        style={{ width: `${100 - leftWidth}%` }}
+                    >
+                        {/* 处理流程Card */}
+                        {(selectedDocId || progress) && (
                 <Card
                     className="document-processing-flow"
                     title={
@@ -533,6 +613,9 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         </Space>
                     </div>
                 </Card>
+            )}
+                    </div>
+                </div>
             )}
 
             {/* 保存策略模板Modal */}

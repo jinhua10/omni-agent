@@ -71,6 +71,14 @@ function DocumentListItem({
         }
     }, [progress, doc.documentId]);
 
+    // ⭐ 如果没有 progress，显示初始状态
+    const displayProgress = progress || {
+        stage: 'UPLOAD',
+        percentage: 0,
+        message: t('ragFlow.component.waitingToStart'),
+        status: 'WAITING'
+    };
+
     return (
         <div className={`document-list-item ${isSelected ? 'selected' : ''}`}>
             {/* 文档信息 */}
@@ -100,55 +108,53 @@ function DocumentListItem({
                 </div>
             </div>
 
-            {/* 进度条 */}
-            {progress && (
-                <div className="document-list-item__progress">
-                    <div className="document-list-item__progress-header">
-                        <div className="document-list-item__progress-stage">
-                            <div
-                                className="document-list-item__progress-indicator"
-                                style={{
-                                    background: STAGE_CONFIG[progress.stage]?.color || '#1890ff'
-                                }}
-                            />
-                            <span className="document-list-item__progress-stage-text">
-                                {progress.stage && STAGE_I18N_MAP[progress.stage]
-                                    ? t(`ragFlow.component.${STAGE_I18N_MAP[progress.stage]}`)
-                                    : progress.stage}
-                            </span>
-                        </div>
-                        <span
-                            className="document-list-item__progress-percentage"
+            {/* 进度条 - 始终显示 */}
+            <div className="document-list-item__progress">
+                <div className="document-list-item__progress-header">
+                    <div className="document-list-item__progress-stage">
+                        <div
+                            className="document-list-item__progress-indicator"
                             style={{
-                                color: STAGE_CONFIG[progress.stage]?.color || '#1890ff'
+                                background: STAGE_CONFIG[displayProgress.stage]?.color || '#1890ff'
                             }}
-                        >
-                            {progress.percentage || 0}%
+                        />
+                        <span className="document-list-item__progress-stage-text">
+                            {displayProgress.stage && STAGE_I18N_MAP[displayProgress.stage]
+                                ? t(`ragFlow.component.${STAGE_I18N_MAP[displayProgress.stage]}`)
+                                : displayProgress.stage}
                         </span>
                     </div>
-                    <Progress
-                        percent={progress.percentage || 0}
-                        status={progress.status === 'FAILED' ? 'exception' : 'active'}
-                        strokeColor={{
-                            '0%': STAGE_CONFIG[progress.stage]?.color || '#1890ff',
-                            '100%': '#52c41a',
+                    <span
+                        className="document-list-item__progress-percentage"
+                        style={{
+                            color: STAGE_CONFIG[displayProgress.stage]?.color || '#1890ff'
                         }}
-                        strokeWidth={8}
-                        showInfo={false}
-                        className={`document-list-item__progress-bar ${progress.message ? 'with-message' : ''}`}
-                    />
-                    {progress.message && (
-                        <div
-                            className="document-list-item__progress-message"
-                            style={{
-                                borderLeft: `3px solid ${STAGE_CONFIG[progress.stage]?.color || '#1890ff'}`
-                            }}
-                        >
-                            💬 {progress.message}
-                        </div>
-                    )}
+                    >
+                        {displayProgress.percentage || 0}%
+                    </span>
                 </div>
-            )}
+                <Progress
+                    percent={displayProgress.percentage || 0}
+                    status={displayProgress.status === 'FAILED' ? 'exception' : displayProgress.status === 'WAITING' ? 'normal' : 'active'}
+                    strokeColor={{
+                        '0%': STAGE_CONFIG[displayProgress.stage]?.color || '#1890ff',
+                        '100%': '#52c41a',
+                    }}
+                    strokeWidth={8}
+                    showInfo={false}
+                    className={`document-list-item__progress-bar ${displayProgress.message ? 'with-message' : ''}`}
+                />
+                {displayProgress.message && (
+                    <div
+                        className="document-list-item__progress-message"
+                        style={{
+                            borderLeft: `3px solid ${STAGE_CONFIG[displayProgress.stage]?.color || '#1890ff'}`
+                        }}
+                    >
+                        💬 {displayProgress.message}
+                    </div>
+                )}
+            </div>
 
             {/* 操作栏 */}
             {doc.status === 'PENDING' && (

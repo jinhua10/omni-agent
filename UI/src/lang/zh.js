@@ -1476,6 +1476,7 @@ export default {
       stageVectorize: '向量化',
       stageIndex: '索引存储',
       stageCompleted: '处理完成',
+      waitingToStart: '等待开始处理',
 
       // SaveTemplateModal
       saveTemplateTitle: '保存为策略模板',

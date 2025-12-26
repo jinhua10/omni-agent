@@ -42,6 +42,107 @@
     align-items: center;
 }
 
+/* ========== 左右布局 ========== */
+
+.document-processing-flow-container__layout {
+    display: flex;
+    height: calc(100vh - 200px);
+    min-height: 500px;
+    gap: 0;
+}
+
+.document-processing-flow-container__left {
+    min-width: 20%;
+    max-width: 60%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+}
+
+.document-processing-flow-container__left::-webkit-scrollbar {
+    width: 6px;
+}
+
+.document-processing-flow-container__left::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.document-processing-flow-container__left::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3px;
+}
+
+.document-processing-flow-container__left::-webkit-scrollbar-thumb:hover {
+    background: #bfbfbf;
+}
+
+/* 可拖拽分隔条 */
+.document-processing-flow-container__resizer {
+    width: 12px;
+    cursor: col-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+}
+
+.document-processing-flow-container__resizer:hover {
+    background: rgba(24, 144, 255, 0.05);
+}
+
+.document-processing-flow-container__resizer:hover .document-processing-flow-container__resizer-line {
+    background: #1890ff;
+    width: 3px;
+}
+
+.document-processing-flow-container__resizer-line {
+    width: 2px;
+    height: 40px;
+    background: #d9d9d9;
+    border-radius: 1px;
+    transition: all 0.2s ease;
+}
+
+.document-processing-flow-container__right {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-left: 8px;
+}
+
+.document-processing-flow-container__right::-webkit-scrollbar {
+    width: 6px;
+}
+
+.document-processing-flow-container__right::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.document-processing-flow-container__right::-webkit-scrollbar-thumb {
+    background: #d9d9d9;
+    border-radius: 3px;
+}
+
+.document-processing-flow-container__right::-webkit-scrollbar-thumb:hover {
+    background: #bfbfbf;
+}
+
+/* 拖拽时的样式 */
+body.resizing {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
+body.resizing * {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
 /* 顶部操作栏样式 */
 .document-processing-flow-container > div:first-child {
     background: white;

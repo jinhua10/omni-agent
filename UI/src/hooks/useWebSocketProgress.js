@@ -17,28 +17,49 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
     const isInitialized = useRef(false); // ⭐ 追踪是否已初始化
     const clientRef = useRef(null); // ⭐ 使用ref避免重复创建
     const mountedRef = useRef(true); // ⭐ 追踪组件是否挂载
+    const reconnectAttempts = useRef(0); // ⭐ 重连尝试次数
+    const MAX_RECONNECT_ATTEMPTS = 3; // ⭐ 最大重连次数
+    const onProgressUpdateRef = useRef(onProgressUpdate); // ⭐ 使用 ref 保存回调
+
+    // 更新回调引用
+    useEffect(() => {
+        onProgressUpdateRef.current = onProgressUpdate;
+    }, [onProgressUpdate]);
 
     // 处理 WebSocket 消息
     const handleMessage = useCallback((message) => {
+        console.log('📨 收到 WebSocket 消息:', message);
+
         if (message.type === 'progress') {
             const progressData = message.data;
             const docId = progressData.documentId;
 
+            console.log('📊 处理进度数据:', {
+                docId,
+                stage: progressData.stage,
+                percentage: progressData.percentage,
+                status: progressData.status
+            });
+
             // 通知父组件
-            if (onProgressUpdate) {
-                onProgressUpdate(progressData);
+            if (onProgressUpdateRef.current) {
+                onProgressUpdateRef.current(progressData);
             }
 
             // 更新文档列表中该文档的进度
-            setDocumentsProgress(prev => ({
-                ...prev,
-                [docId]: {
-                    stage: progressData.stage,
-                    percentage: progressData.percentage,
-                    message: progressData.message,
-                    status: progressData.status
-                }
-            }));
+            setDocumentsProgress(prev => {
+                const updated = {
+                    ...prev,
+                    [docId]: {
+                        stage: progressData.stage,
+                        percentage: progressData.percentage,
+                        message: progressData.message,
+                        status: progressData.status
+                    }
+                };
+                console.log('✅ documentsProgress 已更新:', updated);
+                return updated;
+            });
 
             // 如果完成，清除该文档的进度信息
             if (progressData.status === 'COMPLETED') {
@@ -51,7 +72,7 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
                 }, 1000);
             }
         }
-    }, [onProgressUpdate]);
+    }, []); // ⭐ 空依赖数组，使用 ref 访问最新的回调
 
     // WebSocket 连接（完全依赖服务端推送）
     useEffect(() => {
@@ -68,6 +89,12 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
             return;
         }
 
+        // ⭐ 检查重连次数限制
+        if (reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
+            console.error('❌ WebSocket 重连次数超过限制，停止尝试');
+            return;
+        }
+
         // ⭐ 只在第一次初始化时输出日志
         if (!isInitialized.current) {
             console.log('📡 建立 WebSocket 连接');
@@ -76,7 +103,7 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
 
         // ⭐ 建立 WebSocket 连接
         try {
-            // 动态构建 WebSocket URL
+            // ...existing code...
             let wsUrl;
 
             // 开发环境：前端在 3000，后端在 8080
@@ -99,6 +126,7 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
 
             client.on('open', () => {
                 console.log('✅ WebSocket 连接成功');
+                reconnectAttempts.current = 0; // ⭐ 连接成功，重置计数器
 
                 // 订阅所有文档的进度
                 documentsList.forEach(doc => {
@@ -111,14 +139,21 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
                 });
             });
 
-            client.on('message', handleMessage);
+            client.on('message', (msg) => {
+                console.log('🔔 WebSocket 原始消息:', msg);
+                handleMessage(msg);
+            });
 
             client.on('error', (error) => {
-                console.warn('⚠️ WebSocket 连接错误:', error);
+                reconnectAttempts.current++; // ⭐ 错误时增加计数
+                console.warn(`⚠️ WebSocket 连接错误 (尝试 ${reconnectAttempts.current}/${MAX_RECONNECT_ATTEMPTS}):`, error);
             });
 
             client.on('close', (event) => {
                 console.log('🔌 WebSocket 连接关闭:', event?.code);
+                if (reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
+                    console.error('❌ 达到最大重连次数，不再尝试重连');
+                }
             });
 
             client.connect();
@@ -149,7 +184,7 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
 
             return () => clearTimeout(cleanupTimer);
         };
-    }, [documentsList.length, demoMode, handleMessage]); // ⭐ 添加 handleMessage 依赖
+    }, [documentsList.length, demoMode]); // ⭐ 只依赖长度和 demoMode，避免频繁重建
 
     // ⭐ 组件卸载时清理
     useEffect(() => {
@@ -159,6 +194,7 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
                 try {
                     clientRef.current.close();
                     clientRef.current = null;
+                    reconnectAttempts.current = 0; // ⭐ 重置计数器
                 } catch (error) {
                     // 忽略
                 }

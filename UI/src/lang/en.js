@@ -1464,6 +1464,7 @@ export default {
       stageVectorize: 'Vectorization',
       stageIndex: 'Index Storage',
       stageCompleted: 'Completed',
+      waitingToStart: 'Waiting to start',
 
       // SaveTemplateModal
       saveTemplateTitle: 'Save as Template',

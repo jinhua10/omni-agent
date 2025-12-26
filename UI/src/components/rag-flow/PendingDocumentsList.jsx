@@ -12,6 +12,7 @@ import React from 'react';
 import { Card } from 'antd';
 import { useLanguage } from '../../contexts/LanguageContext';
 import DocumentListItem from './DocumentListItem';
+import '../../assets/css/rag-flow/PendingDocumentsList.css';
 
 function PendingDocumentsList({
     documentsList,
@@ -49,7 +50,7 @@ function PendingDocumentsList({
         <Card
             title={t('ragFlow.component.pendingDocuments')}
             size="small"
-            style={{ marginBottom: 16, maxHeight: '400px', overflow: 'auto' }}
+            className="pending-documents-list"
         >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {documentsList.map((doc) => (
