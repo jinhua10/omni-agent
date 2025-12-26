@@ -8,12 +8,13 @@
  * @since 2025-12-26
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import WebSocketClient from '../utils/WebSocketClient';
 
 function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
     const [wsClient, setWsClient] = useState(null);
     const [documentsProgress, setDocumentsProgress] = useState({});
+    const isInitialized = useRef(false); // ⭐ 追踪是否已初始化
 
     // 处理 WebSocket 消息
     const handleMessage = useCallback((message) => {
@@ -50,131 +51,60 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
         }
     }, [onProgressUpdate]);
 
-    // WebSocket 连接
+    // WebSocket 连接（暂时禁用）
     useEffect(() => {
         if (documentsList.length === 0 || demoMode) return;
 
-        console.log('📡 建立 WebSocket 连接，监听所有文档进度');
-
-        let client = null;
-        let pollInterval = null;
-        let connectionFailed = false;
-
-        try {
-            // ⭐ 动态构建 WebSocket URL，区分开发和生产环境
-            let wsUrl;
-
-            // 开发环境：前端在 3000，后端在 8080
-            if (import.meta.env.DEV || window.location.port === '3000') {
-                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                const hostname = window.location.hostname;
-                wsUrl = `${protocol}//${hostname}:8080/ws/progress`;
-                console.log('🔧 开发环境，使用后端服务器地址');
-            }
-            // 生产环境：前后端同域
-            else {
-                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                const host = window.location.host; // 包含 hostname 和 port
-                wsUrl = `${protocol}//${host}/ws/progress`;
-                console.log('🚀 生产环境，使用当前域名');
-            }
-
-            console.log('🔗 WebSocket URL:', wsUrl);
-
-            client = new WebSocketClient(wsUrl);
-
-            client.on('open', () => {
-                console.log('✅ WebSocket 连接已建立');
-                connectionFailed = false;
-                documentsList.forEach(doc => {
-                    try {
-                        client.subscribe(doc.documentId);
-                        console.log('📝 订阅文档进度:', doc.documentId);
-                    } catch (err) {
-                        console.warn('⚠️ 订阅失败:', doc.documentId, err);
-                    }
-                });
-            });
-
-            client.on('message', handleMessage);
-
-            client.on('error', (error) => {
-                console.warn('⚠️ WebSocket 连接错误:', error);
-                connectionFailed = true;
-                console.log('💡 将使用轮询机制作为备用方案');
-            });
-
-            client.on('close', (event) => {
-                console.log('🔌 WebSocket 连接已关闭:', event?.code, event?.reason);
-                connectionFailed = true;
-            });
-
-            client.connect();
-            setWsClient(client);
-
-        } catch (error) {
-            console.warn('⚠️ WebSocket 初始化失败，将使用轮询机制:', error);
-            connectionFailed = true;
+        // ⭐ 只在第一次初始化时输出日志
+        if (!isInitialized.current) {
+            console.log('📡 准备监听文档进度');
+            console.log('💡 使用轮询机制监听文档进度（WebSocket 已禁用）');
+            isInitialized.current = true;
         }
 
-        // 备用轮询
-        pollInterval = setInterval(async () => {
-            const shouldPoll = connectionFailed || !client || client.ws?.readyState !== WebSocket.OPEN;
+        // ⭐ 完全使用轮询机制，不使用 WebSocket
+        const pollInterval = setInterval(async () => {
+            documentsList.forEach(async (doc) => {
+                try {
+                    const response = await fetch(`/api/system/rag-config/document/${doc.documentId}`);
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        const docData = result.data;
+                        if (docData.status === 'PROCESSING' && docData.currentStage) {
+                            const progressData = {
+                                documentId: doc.documentId,
+                                stage: docData.currentStage || 'UPLOAD',
+                                percentage: docData.percentage || 0,
+                                message: docData.message || '处理中...',
+                                status: docData.status
+                            };
 
-            if (shouldPoll) {
-                documentsList.forEach(async (doc) => {
-                    try {
-                        const response = await fetch(`/api/system/rag-config/document/${doc.documentId}`);
-                        const result = await response.json();
-                        if (result.success && result.data) {
-                            const docData = result.data;
-                            if (docData.status === 'PROCESSING' && docData.currentStage) {
-                                const progressData = {
-                                    documentId: doc.documentId,
-                                    stage: docData.currentStage || 'UPLOAD',
-                                    percentage: docData.percentage || 0,
-                                    message: docData.message || '处理中...',
-                                    status: docData.status
-                                };
+                            setDocumentsProgress(prev => ({
+                                ...prev,
+                                [doc.documentId]: {
+                                    stage: progressData.stage,
+                                    percentage: progressData.percentage,
+                                    message: progressData.message,
+                                    status: progressData.status
+                                }
+                            }));
 
-                                setDocumentsProgress(prev => ({
-                                    ...prev,
-                                    [doc.documentId]: {
-                                        stage: progressData.stage,
-                                        percentage: progressData.percentage,
-                                        message: progressData.message,
-                                        status: progressData.status
-                                    }
-                                }));
-
-                                console.debug('🔄 轮询更新进度:', doc.documentId, progressData.percentage + '%');
-                            }
+                            console.debug('🔄 轮询更新进度:', doc.documentId, progressData.percentage + '%');
                         }
-                    } catch (error) {
-                        console.debug('轮询检查失败:', doc.documentId, error.message);
                     }
-                });
-            }
-        }, connectionFailed ? 2000 : 5000);
+                } catch (error) {
+                    console.debug('轮询检查失败:', doc.documentId, error.message);
+                }
+            });
+        }, 2000); // 每 2 秒轮询一次
 
+        // 清理函数
         return () => {
             if (pollInterval) {
                 clearInterval(pollInterval);
             }
-
-            if (client) {
-                try {
-                    console.log('🔌 正在关闭 WebSocket 连接');
-                    if (client.ws && client.ws.readyState === WebSocket.OPEN) {
-                        client.unsubscribe();
-                    }
-                    client.close();
-                } catch (error) {
-                    console.debug('清理 WebSocket 时出错（可忽略）:', error.message);
-                }
-            }
         };
-    }, [documentsList, demoMode, handleMessage]);
+    }, [documentsList, demoMode]); // ⭐ 移除 handleMessage 避免重复触发
 
     return {
         wsClient,

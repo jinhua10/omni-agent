@@ -58,16 +58,19 @@ class WebSocketClient {
 
             // 连接关闭 (Connection closed)
             this.ws.onclose = (event) => {
-                // console.log('🔌 WebSocket 连接关闭', event.code, event.reason);
+                console.debug('🔌 WebSocket 连接关闭', event.code);
                 this.emit('close', event);
 
-                // 自动重连 (Auto reconnect)
-                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                // ⭐ 暂时禁用自动重连，避免控制台错误刷屏
+                // TODO: 当后端 WebSocket 服务稳定后再启用
+                const ENABLE_AUTO_RECONNECT = false;
+
+                if (ENABLE_AUTO_RECONNECT && this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++;
-                    // console.log(`🔄 尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                    console.log(`🔄 尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
                     setTimeout(() => this.connect(), this.reconnectDelay);
-                } else {
-                    // console.log('❌ 达到最大重连次数，停止重连');
+                } else if (ENABLE_AUTO_RECONNECT) {
+                    console.log('❌ 达到最大重连次数，停止重连');
                 }
             };
         } catch (error) {
