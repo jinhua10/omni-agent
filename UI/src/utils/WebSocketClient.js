@@ -16,6 +16,7 @@ class WebSocketClient {
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 3000;
+        this.isClosing = false; // ⚠️ 防止重复关闭
         this.listeners = {
             open: [],
             message: [],
@@ -165,17 +166,33 @@ class WebSocketClient {
      * (Close connection)
      */
     close() {
-        if (this.ws) {
-            try {
-                this.reconnectAttempts = this.maxReconnectAttempts; // 阻止自动重连
-                if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
-                    this.ws.close();
-                }
-                this.ws = null;
-                // console.log('🔌 主动关闭 WebSocket 连接');
-            } catch (error) {
-                console.debug('关闭 WebSocket 时出错（可忽略）:', error.message);
+        // 防止重复关闭
+        if (this.isClosing || !this.ws) {
+            return;
+        }
+
+        this.isClosing = true;
+        this.reconnectAttempts = this.maxReconnectAttempts; // 阻止自动重连
+
+        try {
+            // 只关闭已建立或正在连接的WebSocket
+            if (this.ws.readyState === WebSocket.OPEN) {
+                this.ws.close(1000, 'Client closing'); // 正常关闭
+            } else if (this.ws.readyState === WebSocket.CONNECTING) {
+                // 如果正在连接，等待一下再关闭
+                setTimeout(() => {
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.close(1000, 'Client closing');
+                    }
+                }, 100);
             }
+        } catch (error) {
+            console.debug('关闭 WebSocket 时出错（可忽略）:', error.message);
+        } finally {
+            this.ws = null;
+            setTimeout(() => {
+                this.isClosing = false; // 重置关闭标志
+            }, 500);
         }
     }
 

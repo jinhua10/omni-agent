@@ -118,16 +118,18 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
 
         // 清理函数
         return () => {
-
             if (client) {
-                try {
-                    if (client.isConnected()) {
-                        client.unsubscribe();
+                // 延迟关闭，避免频繁的cleanup导致连接中断
+                setTimeout(() => {
+                    try {
+                        if (client.isConnected()) {
+                            client.unsubscribe();
+                        }
+                        client.close();
+                    } catch (error) {
+                        // 忽略清理错误
                     }
-                    client.close();
-                } catch (error) {
-                    // 忽略清理错误
-                }
+                }, 100);
             }
         };
     }, [documentsList, demoMode, handleMessage]);
