@@ -1,0 +1,81 @@
+/**
+ * 处理步骤视图组件样式
+ * (Processing Steps View Component Styles)
+ *
+ * @author OmniAgent Team
+ * @since 2025-12-27
+ */
+
+/* ========== 步骤容器 ========== */
+
+.processing-steps-view {
+    margin-bottom: 32px;
+    padding: 24px;
+}
+
+/* ========== 步骤标题 ========== */
+
+.processing-steps-view__step-title {
+    cursor: pointer;
+    color: #1890ff;
+    text-decoration: underline;
+}
+
+.processing-steps-view__step-title--disabled {
+    cursor: default;
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ========== 选择器容器 ========== */
+
+.processing-steps-view__selector-container {
+    margin-top: 8px;
+}
+
+.processing-steps-view__text-extraction-select {
+    width: 200px;
+}
+
+.processing-steps-view__chunking-select {
+    width: 300px;
+    max-width: 300px;
+}
+
+/* ========== 下拉菜单配置链接 ========== */
+
+.processing-steps-view__popup-divider {
+    margin: 8px 0;
+}
+
+.processing-steps-view__popup-config {
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #999;
+}
+
+.processing-steps-view__popup-config-link {
+    color: #1890ff;
+}
+
+/* ========== 选项图标 ========== */
+
+.processing-steps-view__option-icon--blue {
+    color: #1890ff;
+}
+
+.processing-steps-view__option-icon--purple {
+    color: #722ed1;
+}
+
+.processing-steps-view__option-icon--green {
+    color: #52c41a;
+}
+
+/* ========== 选项描述 ========== */
+
+.processing-steps-view__option-desc {
+    font-size: 11px;
+    color: #999;
+}
+

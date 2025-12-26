@@ -805,14 +805,12 @@ public class DocumentProcessingService {
     /**
      * 核心RAG处理流程（真实实现）⭐
      * <p>
-     * 提取的统一核心处理逻辑，避免代码重复
-     *
-     * @param documentId   文档ID
-     * @param documentName 文档名称
-     * @param content      文档内容
-     * @param docConfig    文档配置
-     * @return 处理结果（包含分块数和向量数）
-     * @throws Exception 处理失败时抛出异常
+     * 此方法执行完整的RAG处理流程，并推送详细的进度信息：
+     * 1. 文本提取（20-30%）
+     * 2. 智能分块（40-50%）
+     * 3. 向量化（60-70%）
+     * 4. 建立索引（80-90%）
+     * 5. 归档（95-100%）
      */
     private RAGProcessingResult performFullRAGCore(
             String documentId,
@@ -823,27 +821,39 @@ public class DocumentProcessingService {
         log.info("🚀 开始核心RAG流程: documentId={}, model={}, strategy={}",
                 documentId, docConfig.getTextExtractionModel(), docConfig.getChunkingStrategy());
 
-        // 阶段1: 文本提取 ⭐
+        // 阶段1: 文本提取 ⭐ (20-30%)
+        pushProgress(documentId, "EXTRACT", 20, "正在提取文本...", documentName, null);
         performTextExtraction(documentId, documentName, content, docConfig);
+        pushProgress(documentId, "EXTRACT", 30, "文本提取完成", documentName, null);
 
         // 获取提取的文本
         String extractedText = ragConfigService.getExtractedText(documentId)
                 .orElseThrow(() -> new RuntimeException("文本提取失败"));
 
-        // 阶段2: 智能分块 ⭐
+        // 阶段2: 智能分块 ⭐ (40-50%)
+        pushProgress(documentId, "CHUNK", 40, "正在进行智能分块...", documentName,
+                Map.of("strategy", docConfig.getChunkingStrategy()));
         int chunkCount = performChunking(extractedText, docConfig);
         docConfig.setStatus("CHUNKED");
         ragConfigService.setDocumentConfig(documentId, docConfig);
+        pushProgress(documentId, "CHUNK", 50, "分块完成，生成 " + chunkCount + " 个分块", documentName,
+                Map.of("chunkCount", chunkCount));
 
-        // 阶段3: 向量化 ⭐
+        // 阶段3: 向量化 ⭐ (60-70%)
+        pushProgress(documentId, "VECTORIZE", 60, "正在生成向量...", documentName, null);
         int vectorCount = performVectorization(documentId, chunkCount);
         docConfig.setStatus("VECTORIZING");
         ragConfigService.setDocumentConfig(documentId, docConfig);
+        pushProgress(documentId, "VECTORIZE", 70, "向量化完成", documentName,
+                Map.of("vectorCount", vectorCount));
 
-        // 阶段4: 建立索引 ⭐（已在向量化中完成）
+        // 阶段4: 建立索引 ⭐ (80-90%)
+        pushProgress(documentId, "INDEX", 80, "正在建立索引...", documentName, null);
         performIndexing(documentId, vectorCount);
+        pushProgress(documentId, "INDEX", 90, "索引建立完成", documentName, null);
 
-        // 阶段5: 归档 ⭐
+        // 阶段5: 归档 ⭐ (95%)
+        pushProgress(documentId, "INDEX", 95, "正在归档文档...", documentName, null);
         archiveDocument(documentId, documentName, content, docConfig);
 
         log.info("✅ 核心RAG流程完成: documentId={}, chunks={}, vectors={}",

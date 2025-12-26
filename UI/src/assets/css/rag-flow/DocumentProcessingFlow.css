@@ -12,6 +12,36 @@
     min-height: 400px;
 }
 
+/* 顶部操作栏 */
+.document-processing-flow-container__header {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.document-processing-flow-container__title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* 无文档提示 */
+.document-processing-flow-container__no-docs-alert {
+    margin-bottom: 16px;
+}
+
+/* 流程控制按钮容器 */
+.document-processing-flow__controls {
+    margin-top: 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%);
+    border-radius: 8px;
+    border: 1px solid #d6e4ff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 /* 顶部操作栏样式 */
 .document-processing-flow-container > div:first-child {
     background: white;

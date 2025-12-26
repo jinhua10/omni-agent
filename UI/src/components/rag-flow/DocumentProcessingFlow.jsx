@@ -137,43 +137,43 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     // 删除策略模板
     const deleteTemplate = useCallback((templateId, templateName) => {
         Modal.confirm({
-            title: '确认删除',
-            content: `确定要删除策略模板 "${templateName}" 吗？此操作不可恢复。`,
-            okText: '确认',
-            cancelText: '取消',
+            title: t('ragFlow.component.confirmDelete'),
+            content: t('ragFlow.component.confirmDeleteContent').replace('{name}', templateName),
+            okText: t('common.confirm'),
+            cancelText: t('common.cancel'),
             okType: 'danger',
             onOk: async () => {
                 try {
                     const result = await ragStrategyApi.deleteTemplate(templateId);
                     if (result.success) {
-                        message.success('模板已删除');
+                        message.success(t('ragFlow.component.templateDeleted'));
                         loadTemplates();
                     } else {
-                        message.error(result.message || '删除失败');
+                        message.error(result.message || t('ragFlow.component.deleteFailed'));
                     }
                 } catch (error) {
                     console.error('删除模板失败:', error);
-                    message.error('删除失败: ' + error.message);
+                    message.error(t('ragFlow.component.deleteFailed') + ': ' + error.message);
                 }
             }
         });
-    }, [message, loadTemplates]);
+    }, [message, loadTemplates, t]);
 
     // 应用策略模板到文档
     const applyTemplateToDocument = useCallback(async (docId, templateId) => {
         try {
             const result = await ragStrategyApi.applyTemplateToDocument(docId, templateId);
             if (result.success) {
-                message.success('策略模板已应用');
+                message.success(t('ragFlow.component.templateApplied'));
                 loadDocumentsList();
             } else {
-                message.error(result.message || '应用失败');
+                message.error(result.message || t('ragFlow.component.applyFailed'));
             }
         } catch (error) {
             console.error('应用模板失败:', error);
-            message.error('应用失败: ' + error.message);
+            message.error(t('ragFlow.component.applyFailed') + ': ' + error.message);
         }
-    }, [message]);
+    }, [message, t, loadDocumentsList]);
 
     // 打开保存模板Modal
     const openSaveTemplateModal = useCallback(async (docId) => {
@@ -182,11 +182,11 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             if (result.success && result.data) {
                 const config = result.data;
                 if (!config.textExtractionModel) {
-                    message.warning('请先选择文本提取方式');
+                    message.warning(t('ragFlow.component.pleaseSelectTextExtraction'));
                     return;
                 }
                 if (!config.chunkingStrategy) {
-                    message.warning('请先选择分块策略');
+                    message.warning(t('ragFlow.component.pleaseSelectChunkingStrategy'));
                     return;
                 }
 
@@ -194,22 +194,22 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                 setSelectedDocId(docId);
                 setTemplateModalVisible(true);
             } else {
-                message.warning('无法加载文档配置');
+                message.warning(t('ragFlow.component.cannotLoadConfig'));
             }
         } catch (error) {
             console.error('加载文档配置失败:', error);
-            message.error('加载配置失败: ' + error.message);
+            message.error(t('ragFlow.component.loadConfigFailed') + ': ' + error.message);
         }
-    }, [message]);
+    }, [message, t]);
 
     // 保存当前配置为模板
     const saveCurrentAsTemplate = useCallback(async () => {
         if (!selectedDocId) {
-            message.warning('请先选择文档');
+            message.warning(t('ragFlow.component.pleaseSelectDocument'));
             return;
         }
         if (!newTemplateName.trim()) {
-            message.warning('请输入模板名称');
+            message.warning(t('ragFlow.component.pleaseEnterTemplateName'));
             return;
         }
 
@@ -220,19 +220,19 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             });
 
             if (result.success) {
-                message.success('策略模板已保存');
+                message.success(t('ragFlow.component.templateSaved'));
                 setTemplateModalVisible(false);
                 setNewTemplateName('');
                 setNewTemplateDesc('');
                 loadTemplates();
             } else {
-                message.error(result.message || '保存失败');
+                message.error(result.message || t('ragFlow.component.saveFailed'));
             }
         } catch (error) {
             console.error('保存模板失败:', error);
-            message.error('保存失败: ' + error.message);
+            message.error(t('ragFlow.component.saveFailed') + ': ' + error.message);
         }
-    }, [selectedDocId, newTemplateName, newTemplateDesc, message, loadTemplates]);
+    }, [selectedDocId, newTemplateName, newTemplateDesc, message, loadTemplates, t]);
 
     // 加载文档列表
     const loadDocumentsList = useCallback(async () => {
@@ -259,7 +259,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         try {
             const result = await ragStrategyApi.startProcessing(docId);
             if (result.success) {
-                message.success('开始处理文档：' + docId);
+                message.success(t('ragFlow.component.startProcessingDoc') + docId);
                 setSelectedDocId(docId);
                 setProgress({
                     documentId: docId,
@@ -267,18 +267,18 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                     stage: 'UPLOAD',
                     status: 'PROCESSING',
                     percentage: 0,
-                    message: '开始处理...',
+                    message: t('ragFlow.component.processingStarted'),
                     startTime: Date.now()
                 });
                 loadDocumentsList();
             } else {
-                message.error(result.message || '处理失败');
+                message.error(result.message || t('ragFlow.component.applyFailed'));
             }
         } catch (error) {
             console.error('开始处理失败:', error);
-            message.error('处理失败: ' + error.message);
+            message.error(t('ragFlow.component.applyFailed') + ': ' + error.message);
         }
-    }, [message, loadDocumentsList]);
+    }, [message, loadDocumentsList, t]);
 
     // 导航到配置页面
     const navigateToConfig = useCallback((configType, docId) => {
@@ -375,10 +375,10 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     return (
         <div className="document-processing-flow-container">
             {/* 顶部操作栏 */}
-            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="document-processing-flow-container__header">
                 <Space>
                     <LoadingOutlined spin={progress && (progress.status === 'RUNNING' || progress.status === 'PROCESSING')} />
-                    <span style={{ fontSize: 16, fontWeight: 500 }}>{t('ragFlow.component.title')}</span>
+                    <span className="document-processing-flow-container__title">{t('ragFlow.component.title')}</span>
                     {demoMode && <Tag color="blue">{t('ragFlow.component.demoMode')}</Tag>}
                 </Space>
                 <Space>
@@ -411,7 +411,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                     description={t('ragFlow.component.noDocumentsDesc')}
                     type="info"
                     showIcon
-                    style={{ marginBottom: 16 }}
+                    className="document-processing-flow-container__no-docs-alert"
                 />
             )}
 
@@ -422,7 +422,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                     title={
                         <Space>
                             <FileTextOutlined />
-                            <span>文档处理流程：{selectedDocId}</span>
+                            <span>{t('ragFlow.component.documentFlowTitle')}{selectedDocId}</span>
                         </Space>
                     }
                 >
@@ -440,16 +440,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                     />
 
                     {/* 流程控制按钮 */}
-                    <div style={{
-                        marginTop: '24px',
-                        padding: '20px',
-                        background: 'linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%)',
-                        borderRadius: '8px',
-                        border: '1px solid #d6e4ff',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                    }}>
+                    <div className="document-processing-flow__controls">
                         <Space>
                             <Button
                                 icon={<LeftOutlined />}
@@ -464,7 +455,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                 }}
                                 disabled={getCurrentStep() === 0}
                             >
-                                上一步
+                                {t('ragFlow.component.previousStep')}
                             </Button>
                             <Button
                                 icon={<RightOutlined />}
@@ -479,7 +470,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                 }}
                                 disabled={getCurrentStep() >= 2}
                             >
-                                下一步
+                                {t('ragFlow.component.nextStep')}
                             </Button>
                         </Space>
 
@@ -493,7 +484,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                     }
                                 }}
                             >
-                                保存为模板
+                                {t('ragFlow.component.saveAsTemplate')}
                             </Button>
                             <Button
                                 type="primary"
@@ -501,10 +492,10 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                                 icon={<ThunderboltOutlined />}
                                 onClick={() => {
                                     const docId = progress?.documentId || selectedDocId;
-                                    message.success('开始处理文档：' + docId);
+                                    message.success(t('ragFlow.component.startProcessingDoc') + docId);
                                 }}
                             >
-                                开始完整处理
+                                {t('ragFlow.component.startFullProcess')}
                             </Button>
                         </Space>
                     </div>

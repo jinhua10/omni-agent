@@ -1,0 +1,172 @@
+/**
+ * 文档列表项样式
+ * (Document List Item Styles)
+ *
+ * @author OmniAgent Team
+ * @since 2025-12-27
+ */
+
+/* ========== 动画定义 ========== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+    }
+}
+
+/* ========== 文档列表项容器 ========== */
+
+.document-list-item {
+    padding: 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.document-list-item:not(.selected) {
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    box-shadow: none;
+}
+
+.document-list-item.selected {
+    background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+    border: 2px solid #1890ff;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+/* ========== 文档信息区域 ========== */
+
+.document-list-item__info {
+    cursor: pointer;
+    margin-bottom: 12px;
+}
+
+.document-list-item__info-space .anticon {
+    /* 图标样式 */
+}
+
+.document-list-item__filename {
+    font-weight: 500;
+    color: #262626;
+}
+
+.document-list-item__created-at {
+    color: #8c8c8c;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* ========== 进度条容器 ========== */
+
+.document-list-item__progress {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #f6f9fc 0%, #ffffff 100%);
+    border-radius: 6px;
+    border: 1px solid #e8f4f8;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.document-list-item__progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.document-list-item__progress-stage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.document-list-item__progress-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.document-list-item__progress-stage-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #262626;
+}
+
+.document-list-item__progress-percentage {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.document-list-item__progress-bar {
+    margin-bottom: 0;
+}
+
+.document-list-item__progress-bar.with-message {
+    margin-bottom: 8px;
+}
+
+.document-list-item__progress-message {
+    font-size: 12px;
+    color: #595959;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #fafafa;
+    border-radius: 4px;
+}
+
+/* ========== 操作栏 ========== */
+
+.document-list-item__actions {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.document-list-item__template-select {
+    flex: 1;
+}
+
+.document-list-item__template-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.document-list-item__template-option-content {
+    /* 容器 */
+}
+
+.document-list-item__template-option-desc {
+    font-size: 12px;
+    color: #999;
+    margin-left: 8px;
+}
+
+.document-list-item__template-option-delete {
+    color: #ff4d4f;
+    font-size: 12px;
+    margin-left: auto;
+}
+
+
