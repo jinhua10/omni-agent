@@ -13,6 +13,7 @@
 1. **处理完成后自动移除** - 索引存储完成后，文档从流程视图中自动消失
 2. **重新加入流程** - 已完成的文档可以从浏览器视图重新加入到流程视图
 3. **虚拟路径支持** - 基于存储服务的虚拟路径系统，支持多种存储后端
+4. **实时进度监控** ⭐ - 通过 WebSocket 实时显示处理进度和状态更新
 
 ---
 
@@ -80,7 +81,84 @@ COMPLETED (100%) → 处理完成
 
 ## 🛠️ 实现细节
 
-### 1. 前端 - 流程视图自动刷新
+### 1. 前端 - 实时进度监控 ⭐
+
+**文件**: `UI/src/components/rag-flow/DocumentProcessingFlow.jsx`
+
+#### 功能1: 点击"开始处理"后自动监控
+
+```javascript
+// 开始处理文档
+const startProcessDocument = useCallback(async (docId) => {
+    const result = await ragStrategyApi.startProcessing(docId);
+    if (result.success) {
+        message.success('开始处理文档：' + docId);
+        
+        // ⭐ 自动选中该文档，显示处理进度
+        setSelectedDocId(docId);
+        
+        // ⭐ 初始化进度状态
+        setProgress({
+            documentId: docId,
+            documentName: docId,
+            stage: 'UPLOAD',
+            status: 'PROCESSING',
+            percentage: 0,
+            message: '开始处理...',
+            startTime: Date.now()
+        });
+        
+        loadDocumentsList();
+    }
+}, [message, loadDocumentsList]);
+```
+
+#### 功能2: WebSocket 实时更新
+
+```javascript
+// 建立 WebSocket 连接
+useEffect(() => {
+    if (!selectedDocId || demoMode) return;
+    
+    const client = new WebSocketClient('ws://localhost:8080/ws/progress');
+    
+    client.on('open', () => {
+        console.log('✅ WebSocket 连接已建立');
+        client.subscribe(selectedDocId); // 订阅文档进度
+    });
+    
+    client.on('message', handleMessage); // 接收进度更新
+    
+    client.connect();
+    
+    return () => {
+        client.close();
+    };
+}, [selectedDocId, demoMode]);
+```
+
+#### 功能3: 备用轮询机制
+
+```javascript
+// 轮询检查文档状态（防止 WebSocket 失败）
+const pollInterval = setInterval(async () => {
+    const response = await fetch(`/api/system/rag-config/document/${selectedDocId}`);
+    const result = await response.json();
+    if (result.success && result.data) {
+        // 更新状态
+    }
+}, 5000); // 每 5 秒轮询一次
+```
+
+**效果**:
+- ✅ 点击"开始处理"后立即显示进度条
+- ✅ WebSocket 实时推送处理进度（0%→20%→40%→60%→80%→100%）
+- ✅ 显示当前处理阶段（上传→提取→分块→向量化→索引→完成）
+- ✅ 备用轮询机制确保进度更新可靠
+
+---
+
+### 2. 前端 - 流程视图自动刷新
 
 **文件**: `UI/src/components/rag-flow/DocumentProcessingFlow.jsx`
 
@@ -139,7 +217,7 @@ const handleMessage = useCallback((message) => {
 
 ---
 
-### 2. 前端 - 浏览器视图添加按钮
+### 3. 前端 - 浏览器视图添加按钮
 
 **文件**: `UI/src/components/document/DocumentBrowser.jsx`
 
@@ -210,7 +288,7 @@ const handleAddToFlowView = useCallback(async (item) => {
 
 ---
 
-### 3. 后端 - API端点实现
+### 4. 后端 - API端点实现
 
 **文件**: `omni-agent-web/.../DocumentManagementController.java`
 
@@ -278,7 +356,7 @@ result.put("fileName", fileName);
 
 ---
 
-### 4. 国际化支持
+### 5. 国际化支持
 
 #### 中文 (`UI/src/lang/zh.js`)
 
