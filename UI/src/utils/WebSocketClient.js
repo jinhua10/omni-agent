@@ -81,11 +81,16 @@ class WebSocketClient {
      */
     send(message) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            const data = typeof message === 'string' ? message : JSON.stringify(message);
-            this.ws.send(data);
-            // console.log('📤 发送 WebSocket 消息:', message);
+            try {
+                const data = typeof message === 'string' ? message : JSON.stringify(message);
+                this.ws.send(data);
+                // console.log('📤 发送 WebSocket 消息:', message);
+            } catch (error) {
+                console.warn('⚠️ 发送消息失败:', error.message);
+            }
         } else {
-            console.warn('⚠️ WebSocket 未连接，无法发送消息');
+            // 降级为 debug 级别，避免控制台过多警告
+            console.debug('WebSocket 未连接，无法发送消息');
         }
     }
 
@@ -94,6 +99,10 @@ class WebSocketClient {
      * (Subscribe to document progress)
      */
     subscribe(documentId) {
+        if (!documentId) {
+            console.warn('⚠️ documentId 为空，跳过订阅');
+            return;
+        }
         this.send({
             action: 'subscribe',
             documentId: documentId
@@ -105,9 +114,12 @@ class WebSocketClient {
      * (Unsubscribe)
      */
     unsubscribe() {
-        this.send({
-            action: 'unsubscribe'
-        });
+        // 只在连接打开时发送取消订阅消息
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.send({
+                action: 'unsubscribe'
+            });
+        }
     }
 
     /**
@@ -136,7 +148,13 @@ class WebSocketClient {
      */
     emit(event, data) {
         if (this.listeners[event]) {
-            this.listeners[event].forEach(callback => callback(data));
+            this.listeners[event].forEach(callback => {
+                try {
+                    callback(data);
+                } catch (error) {
+                    console.error('❌ 事件回调执行失败:', event, error);
+                }
+            });
         }
     }
 
@@ -146,9 +164,16 @@ class WebSocketClient {
      */
     close() {
         if (this.ws) {
-            this.reconnectAttempts = this.maxReconnectAttempts; // 阻止自动重连
-            this.ws.close();
-            // console.log('🔌 主动关闭 WebSocket 连接');
+            try {
+                this.reconnectAttempts = this.maxReconnectAttempts; // 阻止自动重连
+                if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+                    this.ws.close();
+                }
+                this.ws = null;
+                // console.log('🔌 主动关闭 WebSocket 连接');
+            } catch (error) {
+                console.debug('关闭 WebSocket 时出错（可忽略）:', error.message);
+            }
         }
     }
 
