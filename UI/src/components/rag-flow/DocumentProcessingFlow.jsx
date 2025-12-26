@@ -348,22 +348,6 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         }
     }, [selectedDocId, newTemplateName, newTemplateDesc, message, loadTemplates]);
 
-    // 开始处理文档
-    const startProcessDocument = useCallback(async (docId) => {
-        try {
-            const result = await ragStrategyApi.startProcessing(docId);
-            if (result.success) {
-                message.success('开始处理文档：' + docId);
-                loadDocumentsList(); // 刷新文档列表
-            } else {
-                message.error(result.message || '处理失败');
-            }
-        } catch (error) {
-            console.error('开始处理失败:', error);
-            message.error('处理失败: ' + error.message);
-        }
-    }, [message]);
-
     // 加载文档列表
     const loadDocumentsList = useCallback(async () => {
         setLoading(true);
@@ -384,6 +368,39 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             setLoading(false);
         }
     }, []);
+
+    // 开始处理文档
+    const startProcessDocument = useCallback(async (docId) => {
+        try {
+            const result = await ragStrategyApi.startProcessing(docId);
+            if (result.success) {
+                message.success('开始处理文档：' + docId);
+
+                // ⭐ 自动选中该文档，显示处理进度
+                setSelectedDocId(docId);
+
+                // ⭐ 初始化进度状态
+                setProgress({
+                    documentId: docId,
+                    documentName: docId,
+                    stage: 'UPLOAD',
+                    status: 'PROCESSING',
+                    percentage: 0,
+                    message: '开始处理...',
+                    startTime: Date.now()
+                });
+
+                // 刷新文档列表
+                loadDocumentsList();
+            } else {
+                message.error(result.message || '处理失败');
+            }
+        } catch (error) {
+            console.error('开始处理失败:', error);
+            message.error('处理失败: ' + error.message);
+        }
+    }, [message, loadDocumentsList]);
+
 
     // 初始加载
     useEffect(() => {
@@ -481,48 +498,6 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         return () => clearInterval(interval);
     };
 
-    // 初始化 WebSocket 连接 (Initialize WebSocket connection)
-    useEffect(() => {
-        if (!documentId || demoMode) return;
-
-        // 暂时禁用WebSocket，因为后端还未实现
-        // TODO: 当后端WebSocket服务实现后再启用
-        console.log('📡 WebSocket功能暂时禁用，等待后端实现');
-        return;
-
-        // 创建 WebSocket 客户端 (Create WebSocket client)
-        const client = new WebSocketClient('ws://localhost:8080/ws/progress');
-
-        // 监听连接建立 (Listen for connection established)
-        client.on('open', () => {
-            // 订阅文档进度 (Subscribe to document progress)
-            client.subscribe(documentId);
-        });
-
-        // 监听进度更新 (Listen for progress updates)
-        client.on('message', handleMessage);
-
-        // 监听错误 (Listen for errors)
-        client.on('error', (error) => {
-            console.error('WebSocket error:', error);
-            setError(t('ragFlow.messages.wsError'));
-            if (onError) onError(error);
-        });
-
-        // 连接 WebSocket (Connect WebSocket)
-        client.connect();
-
-        setWsClient(client);
-
-        // 清理函数 (Cleanup function)
-        return () => {
-            if (client) {
-                client.unsubscribe();
-                client.close();
-            }
-        };
-    }, [documentId, demoMode]);
-
     /**
      * 处理 WebSocket 消息
      * (Handle WebSocket message)
@@ -554,6 +529,68 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             if (onError) onError(message);
         }
     }, [onComplete, onError, loadDocumentsList, t]);
+
+    // 初始化 WebSocket 连接 (Initialize WebSocket connection)
+    useEffect(() => {
+        // ⭐ 当选中文档且不是演示模式时，建立 WebSocket 连接
+        if (!selectedDocId || demoMode) return;
+
+        // console.log('📡 建立 WebSocket 连接，监听文档进度:', selectedDocId);
+
+        // 创建 WebSocket 客户端 (Create WebSocket client)
+        const client = new WebSocketClient('ws://localhost:8080/ws/progress');
+
+        // 监听连接建立 (Listen for connection established)
+        client.on('open', () => {
+            // console.log('✅ WebSocket 连接已建立');
+            // 订阅文档进度 (Subscribe to document progress)
+            client.subscribe(selectedDocId);
+        });
+
+        // 监听进度更新 (Listen for progress updates)
+        client.on('message', handleMessage);
+
+        // 监听错误 (Listen for errors)
+        client.on('error', (error) => {
+            console.error('❌ WebSocket error:', error);
+            setError(t('ragFlow.messages.wsError'));
+            if (onError) onError(error);
+        });
+
+        // 连接 WebSocket (Connect WebSocket)
+        client.connect();
+
+        setWsClient(client);
+
+        // ⭐ 备用方案：轮询检查文档状态（防止 WebSocket 失败）
+        const pollInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/system/rag-config/document/${selectedDocId}`);
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const doc = result.data;
+                    // 如果状态变化，更新进度
+                    if (doc.status === 'PROCESSING' || doc.status === 'COMPLETED' || doc.status === 'FAILED') {
+                        // console.log('🔄 轮询检测到状态更新:', doc.status);
+                        // 这里可以根据状态更新进度（作为备用）
+                    }
+                }
+            } catch (error) {
+                console.debug('轮询检查失败:', error);
+            }
+        }, 5000); // 每 5 秒轮询一次
+
+        // 清理函数 (Cleanup function)
+        return () => {
+            clearInterval(pollInterval);
+            if (client) {
+                // console.log('🔌 关闭 WebSocket 连接');
+                client.unsubscribe();
+                client.close();
+            }
+        };
+    }, [selectedDocId, demoMode, handleMessage, t, onError]);
+
 
     /**
      * 获取当前步骤索引

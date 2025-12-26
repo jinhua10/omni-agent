@@ -34,7 +34,7 @@ class WebSocketClient {
 
             // 连接建立 (Connection established)
             this.ws.onopen = (event) => {
-                console.log('✅ WebSocket 连接成功', this.url);
+                // console.log('✅ WebSocket 连接成功', this.url);
                 this.reconnectAttempts = 0;
                 this.emit('open', event);
             };
@@ -43,7 +43,7 @@ class WebSocketClient {
             this.ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
-                    console.log('📨 收到 WebSocket 消息:', message);
+                    // console.log('📨 收到 WebSocket 消息:', message);
                     this.emit('message', message);
                 } catch (error) {
                     console.error('❌ 解析消息失败:', error);
@@ -58,16 +58,16 @@ class WebSocketClient {
 
             // 连接关闭 (Connection closed)
             this.ws.onclose = (event) => {
-                console.log('🔌 WebSocket 连接关闭', event.code, event.reason);
+                // console.log('🔌 WebSocket 连接关闭', event.code, event.reason);
                 this.emit('close', event);
 
                 // 自动重连 (Auto reconnect)
                 if (this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++;
-                    console.log(`🔄 尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                    // console.log(`🔄 尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
                     setTimeout(() => this.connect(), this.reconnectDelay);
                 } else {
-                    console.log('❌ 达到最大重连次数，停止重连');
+                    // console.log('❌ 达到最大重连次数，停止重连');
                 }
             };
         } catch (error) {
@@ -83,7 +83,7 @@ class WebSocketClient {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             const data = typeof message === 'string' ? message : JSON.stringify(message);
             this.ws.send(data);
-            console.log('📤 发送 WebSocket 消息:', message);
+            // console.log('📤 发送 WebSocket 消息:', message);
         } else {
             console.warn('⚠️ WebSocket 未连接，无法发送消息');
         }
@@ -148,7 +148,7 @@ class WebSocketClient {
         if (this.ws) {
             this.reconnectAttempts = this.maxReconnectAttempts; // 阻止自动重连
             this.ws.close();
-            console.log('🔌 主动关闭 WebSocket 连接');
+            // console.log('🔌 主动关闭 WebSocket 连接');
         }
     }
 
