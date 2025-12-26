@@ -77,6 +77,7 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
     // 使用自定义 Hooks
     const { documentConfigs, loadDocumentConfig, updateDocumentConfig } = useDocumentConfig();
     const { documentsProgress } = useWebSocketProgress(documentsList, demoMode, (progressData) => {
+        console.log('🔄 收到进度更新:', progressData);
         setProgress(progressData);
 
         if (progressData.status === 'COMPLETED') {
@@ -95,6 +96,11 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
             if (onError) onError(progressData);
         }
     });
+
+    // 调试：监控 documentsProgress 变化
+    React.useEffect(() => {
+        console.log('📊 DocumentProcessingFlow - documentsProgress 更新:', documentsProgress);
+    }, [documentsProgress]);
 
     // 加载分块策略列表
     const loadChunkingStrategies = useCallback(async () => {

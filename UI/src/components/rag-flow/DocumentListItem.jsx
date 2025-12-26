@@ -20,15 +20,24 @@ import '../../assets/css/rag-flow/document-list-item.css';
 
 const { Option } = Select;
 
-
-// 处理阶段配置
+// 处理阶段配置（仅包含颜色，文本由国际化提供）
 const STAGE_CONFIG = {
-    UPLOAD: { title: { zh: '文档上传', en: 'Document Upload' }, color: '#1890ff' },
-    EXTRACT: { title: { zh: '文本提取', en: 'Text Extraction' }, color: '#52c41a' },
-    CHUNK: { title: { zh: '智能分块', en: 'Smart Chunking' }, color: '#faad14' },
-    VECTORIZE: { title: { zh: '向量化', en: 'Vectorization' }, color: '#722ed1' },
-    INDEX: { title: { zh: '索引存储', en: 'Index Storage' }, color: '#eb2f96' },
-    COMPLETED: { title: { zh: '处理完成', en: 'Completed' }, color: '#52c41a' }
+    UPLOAD: { color: '#1890ff' },
+    EXTRACT: { color: '#52c41a' },
+    CHUNK: { color: '#faad14' },
+    VECTORIZE: { color: '#722ed1' },
+    INDEX: { color: '#eb2f96' },
+    COMPLETED: { color: '#52c41a' }
+};
+
+// 阶段名称映射到国际化键
+const STAGE_I18N_MAP = {
+    UPLOAD: 'stageUpload',
+    EXTRACT: 'stageExtract',
+    CHUNK: 'stageChunk',
+    VECTORIZE: 'stageVectorize',
+    INDEX: 'stageIndex',
+    COMPLETED: 'stageCompleted'
 };
 
 function DocumentListItem({
@@ -41,7 +50,20 @@ function DocumentListItem({
     onDeleteTemplate,
     onStartProcess
 }) {
-    const { t, language } = useLanguage();
+    const { t } = useLanguage();
+
+    // 调试：输出 progress 数据
+    React.useEffect(() => {
+        if (progress) {
+            console.log('📊 文档进度数据:', {
+                docId: doc.documentId,
+                stage: progress.stage,
+                percentage: progress.percentage,
+                message: progress.message,
+                status: progress.status
+            });
+        }
+    }, [progress, doc.documentId]);
 
     return (
         <div className={`document-list-item ${isSelected ? 'selected' : ''}`}>
@@ -84,7 +106,9 @@ function DocumentListItem({
                                 }}
                             />
                             <span className="document-list-item__progress-stage-text">
-                                {STAGE_CONFIG[progress.stage]?.title?.[language] || progress.stage}
+                                {progress.stage && STAGE_I18N_MAP[progress.stage]
+                                    ? t(`ragFlow.component.${STAGE_I18N_MAP[progress.stage]}`)
+                                    : progress.stage}
                             </span>
                         </div>
                         <span

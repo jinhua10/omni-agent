@@ -25,6 +25,12 @@ function PendingDocumentsList({
 }) {
     const { t } = useLanguage();
 
+    // 调试：输出 documentsProgress
+    React.useEffect(() => {
+        console.log('📋 待处理文档列表 - documentsProgress:', documentsProgress);
+        console.log('📋 待处理文档列表 - documentsList:', documentsList.map(d => d.documentId));
+    }, [documentsProgress, documentsList]);
+
     if (!documentsList || documentsList.length === 0) {
         return null;
     }
