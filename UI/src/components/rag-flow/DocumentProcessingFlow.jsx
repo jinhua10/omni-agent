@@ -669,114 +669,120 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
                         className="document-processing-flow-container__right"
                         style={{ width: `${100 - leftWidth}%` }}
                     >
-                        {/* 处理流程Card */}
-                        {(selectedDocId || progress) && (
-                <Card
-                    className="document-processing-flow"
-                    title={
-                        <Space>
-                            <FileTextOutlined />
-                            <span>{t('ragFlow.component.documentFlowTitle')}{selectedDocId}</span>
-                        </Space>
-                    }
-                >
-                    {/* 步骤展示 */}
-                    <ProcessingStepsView
-                        progress={progress}
-                        selectedDocId={selectedDocId}
-                        documentConfigs={documentConfigs}
-                        chunkingStrategies={chunkingStrategies}
-                        onUpdateConfig={updateDocumentConfig}
-                        onNavigateToConfig={navigateToConfig}
-                        getCurrentStep={getCurrentStep}
-                        getStepStatus={getStepStatus}
-                        renderStepDescription={renderStepDescription}
-                    />
+                        {/* 处理流程Card - 始终显示 */}
+                        <Card
+                            className="document-processing-flow"
+                            title={
+                                <Space>
+                                    <FileTextOutlined />
+                                    {selectedDocId ? (
+                                        <span>{t('ragFlow.component.documentFlowTitle')}{selectedDocId}</span>
+                                    ) : (
+                                        <span>{t('ragFlow.component.processingFlowOverview')}</span>
+                                    )}
+                                </Space>
+                            }
+                        >
+                            {(selectedDocId || progress) ? (
+                                <>
+                                    {/* 步骤展示 */}
+                                    <ProcessingStepsView
+                                        progress={progress}
+                                        selectedDocId={selectedDocId}
+                                        documentConfigs={documentConfigs}
+                                        chunkingStrategies={chunkingStrategies}
+                                        onUpdateConfig={updateDocumentConfig}
+                                        onNavigateToConfig={navigateToConfig}
+                                        getCurrentStep={getCurrentStep}
+                                        getStepStatus={getStepStatus}
+                                        renderStepDescription={renderStepDescription}
+                                    />
 
-                    {/* 流程控制按钮 */}
-                    <div className="document-processing-flow__controls">
-                        <Space>
-                            <Button
-                                icon={<LeftOutlined />}
-                                onClick={() => {
-                                    const docId = progress?.documentId || selectedDocId;
-                                    const currentStep = getCurrentStep();
-                                    if (currentStep === 1) {
-                                        window.location.hash = '#/documents?view=flow';
-                                    } else if (currentStep === 2) {
-                                        navigateToConfig('textExtraction', docId);
-                                    }
-                                }}
-                                disabled={getCurrentStep() === 0}
-                            >
-                                {t('ragFlow.component.previousStep')}
-                            </Button>
-                            <Button
-                                icon={<RightOutlined />}
-                                onClick={() => {
-                                    const docId = progress?.documentId || selectedDocId;
-                                    const currentStep = getCurrentStep();
-                                    if (currentStep === 0) {
-                                        navigateToConfig('textExtraction', docId);
-                                    } else if (currentStep === 1) {
-                                        navigateToConfig('chunking', docId);
-                                    }
-                                }}
-                                disabled={getCurrentStep() >= 2}
-                            >
-                                {t('ragFlow.component.nextStep')}
-                            </Button>
-                        </Space>
+                                    {/* 流程控制按钮 */}
+                                    <div className="document-processing-flow__controls">
+                                        <Space>
+                                            <Button
+                                                icon={<LeftOutlined />}
+                                                onClick={() => {
+                                                    const docId = progress?.documentId || selectedDocId;
+                                                    const currentStep = getCurrentStep();
+                                                    if (currentStep === 1) {
+                                                        window.location.hash = '#/documents?view=flow';
+                                                    } else if (currentStep === 2) {
+                                                        navigateToConfig('textExtraction', docId);
+                                                    }
+                                                }}
+                                                disabled={getCurrentStep() === 0}
+                                            >
+                                                {t('ragFlow.component.previousStep')}
+                                            </Button>
+                                            <Button
+                                                icon={<RightOutlined />}
+                                                onClick={() => {
+                                                    const docId = progress?.documentId || selectedDocId;
+                                                    const currentStep = getCurrentStep();
+                                                    if (currentStep === 0) {
+                                                        navigateToConfig('textExtraction', docId);
+                                                    } else if (currentStep === 1) {
+                                                        navigateToConfig('chunking', docId);
+                                                    }
+                                                }}
+                                                disabled={getCurrentStep() >= 2}
+                                            >
+                                                {t('ragFlow.component.nextStep')}
+                                            </Button>
+                                        </Space>
 
-                        <Space>
-                            <Button
-                                icon={<SaveOutlined />}
-                                onClick={() => {
-                                    const docId = progress?.documentId || selectedDocId;
-                                    if (docId) {
-                                        openSaveTemplateModal(docId);
-                                    }
-                                }}
-                            >
-                                {t('ragFlow.component.saveAsTemplate')}
-                            </Button>
-                            <Button
-                                type="primary"
-                                size="large"
-                                icon={<ThunderboltOutlined />}
-                                onClick={() => {
-                                    const docId = progress?.documentId || selectedDocId;
-                                    message.success(t('ragFlow.component.startProcessingDoc') + docId);
-                                }}
-                            >
-                                {t('ragFlow.component.startFullProcess')}
-                            </Button>
-                        </Space>
-                    </div>
-                ) : (
-                    /* 未选中文档时的提示 */
-                    <div className="document-processing-flow__placeholder">
-                        <div className="document-processing-flow__placeholder-content">
-                            <FileTextOutlined style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} />
-                            <h3>{t('ragFlow.component.selectDocumentHint')}</h3>
-                            <p>{t('ragFlow.component.selectDocumentDesc')}</p>
-                            <div className="document-processing-flow__steps-preview">
-                                <ProcessingStepsView
-                                    progress={null}
-                                    selectedDocId={null}
-                                    documentConfigs={{}}
-                                    chunkingStrategies={chunkingStrategies}
-                                    onUpdateConfig={() => {}}
-                                    onNavigateToConfig={() => {}}
-                                    getCurrentStep={() => 0}
-                                    getStepStatus={() => 'wait'}
-                                    renderStepDescription={() => null}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )}
-                </Card>
+                                        <Space>
+                                            <Button
+                                                icon={<SaveOutlined />}
+                                                onClick={() => {
+                                                    const docId = progress?.documentId || selectedDocId;
+                                                    if (docId) {
+                                                        openSaveTemplateModal(docId);
+                                                    }
+                                                }}
+                                            >
+                                                {t('ragFlow.component.saveAsTemplate')}
+                                            </Button>
+                                            <Button
+                                                type="primary"
+                                                size="large"
+                                                icon={<ThunderboltOutlined />}
+                                                onClick={() => {
+                                                    const docId = progress?.documentId || selectedDocId;
+                                                    message.success(t('ragFlow.component.startProcessingDoc') + docId);
+                                                }}
+                                            >
+                                                {t('ragFlow.component.startFullProcess')}
+                                            </Button>
+                                        </Space>
+                                    </div>
+                                </>
+                            ) : (
+                                /* 未选中文档时的提示 */
+                                <div className="document-processing-flow__placeholder">
+                                    <div className="document-processing-flow__placeholder-content">
+                                        <FileTextOutlined style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} />
+                                        <h3>{t('ragFlow.component.selectDocumentHint')}</h3>
+                                        <p>{t('ragFlow.component.selectDocumentDesc')}</p>
+                                        <div className="document-processing-flow__steps-preview">
+                                            <ProcessingStepsView
+                                                progress={null}
+                                                selectedDocId={null}
+                                                documentConfigs={{}}
+                                                chunkingStrategies={chunkingStrategies}
+                                                onUpdateConfig={() => {}}
+                                                onNavigateToConfig={() => {}}
+                                                getCurrentStep={() => 0}
+                                                getStepStatus={() => 'wait'}
+                                                renderStepDescription={() => null}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
                     </div>
                 </div>
             )}
