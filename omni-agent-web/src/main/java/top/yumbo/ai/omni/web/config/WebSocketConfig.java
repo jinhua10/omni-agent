@@ -24,7 +24,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(documentProcessingWebSocketHandler, "/ws/progress")
-                .setAllowedOrigins("*"); // 生产环境应该配置具体的域名
+                .setAllowedOrigins("*")  // 允许所有来源（生产环境应该配置具体的域名）
+                .setAllowedOriginPatterns("*");  // 支持更灵活的来源匹配
     }
 }
 

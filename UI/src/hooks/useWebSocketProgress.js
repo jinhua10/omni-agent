@@ -61,10 +61,23 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
         let connectionFailed = false;
 
         try {
-            // 动态构建 WebSocket URL
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.host;
-            const wsUrl = `${protocol}//${host}/ws/progress`;
+            // ⭐ 动态构建 WebSocket URL，区分开发和生产环境
+            let wsUrl;
+
+            // 开发环境：前端在 3000，后端在 8080
+            if (import.meta.env.DEV || window.location.port === '3000') {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const hostname = window.location.hostname;
+                wsUrl = `${protocol}//${hostname}:8080/ws/progress`;
+                console.log('🔧 开发环境，使用后端服务器地址');
+            }
+            // 生产环境：前后端同域
+            else {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.host; // 包含 hostname 和 port
+                wsUrl = `${protocol}//${host}/ws/progress`;
+                console.log('🚀 生产环境，使用当前域名');
+            }
 
             console.log('🔗 WebSocket URL:', wsUrl);
 
