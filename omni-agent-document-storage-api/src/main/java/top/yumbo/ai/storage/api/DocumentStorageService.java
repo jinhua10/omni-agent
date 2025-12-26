@@ -7,6 +7,7 @@ import top.yumbo.ai.storage.api.model.OptimizationData;
 import top.yumbo.ai.storage.api.model.StorageStatistics;
 import top.yumbo.ai.storage.api.model.DocumentMetadata;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
