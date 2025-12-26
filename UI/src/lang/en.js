@@ -1464,6 +1464,20 @@ export default {
       stageVectorize: 'Vectorization',
       stageIndex: 'Index Storage',
       stageCompleted: 'Completed',
+
+      // SaveTemplateModal
+      saveTemplateTitle: 'Save as Template',
+      currentConfig: 'Current Configuration',
+      textExtractionMethod: '📄 Text Extraction Method:',
+      chunkingStrategy: '✂️ Chunking Strategy:',
+      notConfigured: 'Not Configured',
+      chunkSize: 'Chunk Size',
+      overlap: 'Overlap',
+      saveTemplateTip: '💡 After saving, this configuration can be quickly applied to other documents',
+      templateName: 'Template Name',
+      templateNamePlaceholder: 'Please enter template name',
+      templateDescription: 'Template Description (Optional)',
+      templateDescPlaceholder: 'Briefly describe the purpose and applicable scenarios of this template',
     },
   },
 

@@ -34,7 +34,7 @@ import {
 } from '@ant-design/icons'
 import { Column, Pie } from '@ant-design/plots'
 import { useLanguage } from '../../contexts/LanguageContext'
-import '../../assets/css/rag-flows/RetrievalResultsVisualization.css'
+import '../../assets/css/rag-flow/RetrievalResultsVisualization.css'
 
 function RetrievalResultsVisualization({ results, query }) {
   const { t } = useLanguage()
@@ -43,42 +43,42 @@ function RetrievalResultsVisualization({ results, query }) {
   const mockResults = results || [
     {
       id: 1,
-      documentName: '示例文档1.pdf',
+      documentName: t('retrievalResults.mockData.doc1'),
       score: 0.95,
       source: 'vector',
-      content: '这是一个关于人工智能的文档内容摘要...',
+      content: t('retrievalResults.mockData.content1'),
       timestamp: Date.now() - 3600000,
     },
     {
       id: 2,
-      documentName: '示例文档2.docx',
+      documentName: t('retrievalResults.mockData.doc2'),
       score: 0.88,
       source: 'fulltext',
-      content: '这是一个关于机器学习的文档内容摘要...',
+      content: t('retrievalResults.mockData.content2'),
       timestamp: Date.now() - 7200000,
     },
     {
       id: 3,
-      documentName: '示例文档3.txt',
+      documentName: t('retrievalResults.mockData.doc3'),
       score: 0.82,
       source: 'vector',
-      content: '这是一个关于深度学习的文档内容摘要...',
+      content: t('retrievalResults.mockData.content3'),
       timestamp: Date.now() - 86400000,
     },
     {
       id: 4,
-      documentName: '示例文档4.pdf',
+      documentName: t('retrievalResults.mockData.doc4'),
       score: 0.76,
       source: 'hybrid',
-      content: '这是一个关于神经网络的文档内容摘要...',
+      content: t('retrievalResults.mockData.content4'),
       timestamp: Date.now() - 172800000,
     },
     {
       id: 5,
-      documentName: '示例文档5.docx',
+      documentName: t('retrievalResults.mockData.doc5'),
       score: 0.71,
       source: 'vector',
-      content: '这是一个关于自然语言处理的文档内容摘要...',
+      content: t('retrievalResults.mockData.content5'),
       timestamp: Date.now() - 259200000,
     },
   ]
@@ -214,7 +214,7 @@ function RetrievalResultsVisualization({ results, query }) {
         header={
           <Space>
             <strong>{t('retrievalResults.resultsList.title')}</strong>
-            <Badge count={mockResults.length} style={{ backgroundColor: '#52c41a' }} />
+            <Badge count={mockResults.length} showZero />
           </Space>
         }
         bordered
@@ -237,7 +237,7 @@ function RetrievalResultsVisualization({ results, query }) {
                 </Space>
               }
               description={
-                <Space direction="vertical" style={{ width: '100%' }}>
+                <Space direction="vertical" className="retrieval-results-container__item-description">
                   <div>
                     <Tooltip title={t('retrievalResults.similarity')}>
                       <Progress
@@ -247,8 +247,8 @@ function RetrievalResultsVisualization({ results, query }) {
                       />
                     </Tooltip>
                   </div>
-                  <div style={{ color: '#666' }}>{item.content}</div>
-                  <div style={{ fontSize: '12px', color: '#999' }}>
+                  <div className="retrieval-results-container__item-content">{item.content}</div>
+                  <div className="retrieval-results-container__item-timestamp">
                     <ClockCircleOutlined /> {new Date(item.timestamp).toLocaleString()}
                   </div>
                 </Space>
@@ -302,12 +302,12 @@ function RetrievalResultsVisualization({ results, query }) {
       )}
 
       {/* 统计信息 */}
-      <div style={{ marginTop: 24 }}>
+      <div className="retrieval-results-container__statistics">
         {renderStatistics()}
       </div>
 
       {/* 图表区域 */}
-      <Row gutter={16} style={{ marginTop: 24 }}>
+      <Row gutter={16} className="retrieval-results-container__charts">
         <Col span={12}>
           {renderSourceDistribution()}
         </Col>
@@ -319,7 +319,7 @@ function RetrievalResultsVisualization({ results, query }) {
       <Divider />
 
       {/* 结果列表 */}
-      <div style={{ marginTop: 24 }}>
+      <div className="retrieval-results-container__results-list">
         {renderResultsList()}
       </div>
     </div>

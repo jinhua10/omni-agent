@@ -1476,6 +1476,20 @@ export default {
       stageVectorize: '向量化',
       stageIndex: '索引存储',
       stageCompleted: '处理完成',
+
+      // SaveTemplateModal
+      saveTemplateTitle: '保存为策略模板',
+      currentConfig: '当前配置',
+      textExtractionMethod: '📄 文本提取方式：',
+      chunkingStrategy: '✂️ 分块策略：',
+      notConfigured: '未配置',
+      chunkSize: '块大小',
+      overlap: '重叠',
+      saveTemplateTip: '💡 保存后，此配置可快速应用到其他文档',
+      templateName: '模板名称',
+      templateNamePlaceholder: '请输入模板名称',
+      templateDescription: '模板描述（可选）',
+      templateDescPlaceholder: '请简要描述该模板的用途和适用场景',
     },
   },
 

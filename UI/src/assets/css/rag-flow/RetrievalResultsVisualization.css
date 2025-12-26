@@ -37,3 +37,33 @@
   font-size: 16px;
 }
 
+/* 统计信息区域 */
+.retrieval-results-container__statistics {
+  margin-top: 24px;
+}
+
+/* 图表区域 */
+.retrieval-results-container__charts {
+  margin-top: 24px;
+}
+
+/* 结果列表区域 */
+.retrieval-results-container__results-list {
+  margin-top: 24px;
+}
+
+/* 列表项描述空间 */
+.retrieval-results-container__item-description {
+  width: 100%;
+}
+
+/* 列表项内容 */
+.retrieval-results-container__item-content {
+  color: #666;
+}
+
+/* 列表项时间戳 */
+.retrieval-results-container__item-timestamp {
+  font-size: 12px;
+  color: #999;
+}

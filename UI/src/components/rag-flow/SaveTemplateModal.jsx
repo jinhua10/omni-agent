@@ -10,6 +10,8 @@
 
 import React from 'react';
 import { Modal, Input, Space, Alert, Tag } from 'antd';
+import { useLanguage } from '../../contexts/LanguageContext';
+import '../../assets/css/rag-flow/SaveTemplateModal.css';
 
 const { TextArea } = Input;
 
@@ -23,67 +25,74 @@ function SaveTemplateModal({
     onSave,
     onCancel
 }) {
+    const { t } = useLanguage();
+
     return (
         <Modal
-            title="保存为策略模板"
+            title={t('ragFlow.component.saveTemplateTitle')}
             open={visible}
             onOk={onSave}
             onCancel={onCancel}
-            okText="保存"
-            cancelText="取消"
+            okText={t('common.save')}
+            cancelText={t('common.cancel')}
         >
-            <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+            <Space direction="vertical" className="save-template-modal__content" size="middle">
                 {/* 显示当前配置摘要 */}
                 {documentConfig && (
                     <Alert
-                        title="当前配置"
+                        title={t('ragFlow.component.currentConfig')}
                         description={
-                            <Space orientation="vertical" size="small" style={{ width: '100%' }}>
+                            <Space direction="vertical" size="small" className="save-template-modal__config-space">
                                 <div>
-                                    <strong>📄 文本提取方式：</strong>
-                                    <Tag color="blue" style={{ marginLeft: 8 }}>
-                                        {documentConfig.textExtractionModel === 'standard' ? '标准提取' :
-                                         documentConfig.textExtractionModel === 'vision-llm' ? 'Vision LLM' :
-                                         documentConfig.textExtractionModel === 'ocr' ? 'OCR识别' : '未配置'}
+                                    <strong>{t('ragFlow.component.textExtractionMethod')}</strong>
+                                    <Tag color="blue" className="save-template-modal__extraction-tag">
+                                        {documentConfig.textExtractionModel === 'standard' ? t('ragFlow.component.standardExtraction') :
+                                         documentConfig.textExtractionModel === 'vision-llm' ? t('ragFlow.component.visionLLM') :
+                                         documentConfig.textExtractionModel === 'ocr' ? t('ragFlow.component.ocrRecognition') :
+                                         t('ragFlow.component.notConfigured')}
                                     </Tag>
                                 </div>
                                 <div>
-                                    <strong>✂️ 分块策略：</strong>
-                                    <Tag color="green" style={{ marginLeft: 8 }}>
-                                        {documentConfig.chunkingStrategy || '未配置'}
+                                    <strong>{t('ragFlow.component.chunkingStrategy')}</strong>
+                                    <Tag color="green" className="save-template-modal__chunking-tag">
+                                        {documentConfig.chunkingStrategy || t('ragFlow.component.notConfigured')}
                                     </Tag>
                                 </div>
                                 {documentConfig.chunkingParams?.chunkSize && (
-                                    <div style={{ fontSize: '12px', color: '#666' }}>
-                                        块大小: {documentConfig.chunkingParams.chunkSize},
-                                        重叠: {documentConfig.chunkingParams.overlap || 0}
+                                    <div className="save-template-modal__params">
+                                        {t('ragFlow.component.chunkSize')}: {documentConfig.chunkingParams.chunkSize},
+                                        {t('ragFlow.component.overlap')}: {documentConfig.chunkingParams.overlap || 0}
                                     </div>
                                 )}
-                                <div style={{ fontSize: '12px', color: '#999', marginTop: 4 }}>
-                                    💡 保存后，此配置可快速应用到其他文档
+                                <div className="save-template-modal__tip">
+                                    {t('ragFlow.component.saveTemplateTip')}
                                 </div>
                             </Space>
                         }
                         type="info"
                         showIcon
-                        style={{ marginBottom: 16 }}
+                        className="save-template-modal__alert"
                     />
                 )}
                 <div>
-                    <div style={{ marginBottom: 8 }}>模板名称</div>
+                    <div className="save-template-modal__field-label">
+                        {t('ragFlow.component.templateName')}
+                    </div>
                     <Input
                         value={templateName}
                         onChange={(e) => onNameChange(e.target.value)}
-                        placeholder="请输入模板名称"
+                        placeholder={t('ragFlow.component.templateNamePlaceholder')}
                         maxLength={50}
                     />
                 </div>
                 <div>
-                    <div style={{ marginBottom: 8 }}>模板描述（可选）</div>
+                    <div className="save-template-modal__field-label">
+                        {t('ragFlow.component.templateDescription')}
+                    </div>
                     <TextArea
                         value={templateDesc}
                         onChange={(e) => onDescChange(e.target.value)}
-                        placeholder="请简要描述该模板的用途和适用场景"
+                        placeholder={t('ragFlow.component.templateDescPlaceholder')}
                         rows={4}
                         maxLength={200}
                     />
