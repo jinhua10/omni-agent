@@ -85,16 +85,51 @@ public class DocumentProcessingWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         String sessionId = session.getId();
+
+        // 清理会话和订阅
         sessions.remove(sessionId);
-        sessionSubscriptions.remove(sessionId);
-        log.info("🔌 WebSocket连接关闭: sessionId={}, status={}", sessionId, status);
+        String documentId = sessionSubscriptions.remove(sessionId);
+
+        // ⭐ 根据关闭状态码区分正常和异常关闭
+        if (status.getCode() == CloseStatus.NORMAL.getCode() ||
+            status.getCode() == CloseStatus.GOING_AWAY.getCode()) {
+            log.info("🔌 WebSocket正常关闭: sessionId={}, documentId={}, status={}",
+                sessionId, documentId, status);
+        } else {
+            log.debug("🔌 WebSocket异常关闭: sessionId={}, documentId={}, code={}, reason={}",
+                sessionId, documentId, status.getCode(), status.getReason());
+        }
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         String sessionId = session.getId();
-        log.error("❌ WebSocket传输错误: sessionId={}", sessionId, exception);
-        session.close();
+
+        // ⭐ 区分不同类型的错误，避免打印正常的连接关闭
+        if (exception instanceof java.io.IOException) {
+            String message = exception.getMessage();
+            if (message != null && (
+                message.contains("已建立的连接") ||
+                message.contains("Connection reset") ||
+                message.contains("Broken pipe"))) {
+                // 客户端正常关闭或网络中断，使用 debug 级别
+                log.debug("🔌 WebSocket 连接中断: sessionId={}, reason={}", sessionId, message);
+            } else {
+                log.warn("⚠️ WebSocket IO 错误: sessionId={}, message={}", sessionId, message);
+            }
+        } else {
+            // 其他类型的错误才记录为 error
+            log.error("❌ WebSocket传输错误: sessionId={}", sessionId, exception);
+        }
+
+        // 安全关闭连接
+        try {
+            if (session.isOpen()) {
+                session.close();
+            }
+        } catch (Exception e) {
+            log.debug("关闭会话时出错（可忽略）: {}", e.getMessage());
+        }
     }
 
     /**
@@ -102,12 +137,25 @@ public class DocumentProcessingWebSocketHandler extends TextWebSocketHandler {
      */
     private void sendMessage(WebSocketSession session, Object message) {
         try {
-            if (session.isOpen()) {
+            if (session != null && session.isOpen()) {
                 String json = objectMapper.writeValueAsString(message);
                 session.sendMessage(new TextMessage(json));
+            } else {
+                log.debug("⚠️ 会话已关闭，跳过消息发送");
             }
         } catch (IOException e) {
-            log.error("❌ 发送WebSocket消息失败", e);
+            // ⭐ 区分不同的 IO 错误
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && (
+                errorMsg.contains("已建立的连接") ||
+                errorMsg.contains("Connection reset") ||
+                errorMsg.contains("Broken pipe"))) {
+                log.debug("🔌 连接已断开，无法发送消息: {}", errorMsg);
+            } else {
+                log.error("❌ 发送WebSocket消息失败", e);
+            }
+        } catch (Exception e) {
+            log.error("❌ 发送WebSocket消息时发生未预期的错误", e);
         }
     }
 

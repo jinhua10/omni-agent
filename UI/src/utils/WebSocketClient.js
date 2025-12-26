@@ -61,16 +61,13 @@ class WebSocketClient {
                 console.debug('🔌 WebSocket 连接关闭', event.code);
                 this.emit('close', event);
 
-                // ⭐ 暂时禁用自动重连，避免控制台错误刷屏
-                // TODO: 当后端 WebSocket 服务稳定后再启用
-                const ENABLE_AUTO_RECONNECT = false;
-
-                if (ENABLE_AUTO_RECONNECT && this.reconnectAttempts < this.maxReconnectAttempts) {
+                // ⭐ 自动重连（最多重试 3 次）
+                if (this.reconnectAttempts < 3) {
                     this.reconnectAttempts++;
-                    console.log(`🔄 尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                    console.log(`🔄 尝试重连 (${this.reconnectAttempts}/3)...`);
                     setTimeout(() => this.connect(), this.reconnectDelay);
-                } else if (ENABLE_AUTO_RECONNECT) {
-                    console.log('❌ 达到最大重连次数，停止重连');
+                } else {
+                    console.log('❌ WebSocket 重连失败，切换到轮询模式');
                 }
             };
         } catch (error) {

@@ -51,60 +51,136 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
         }
     }, [onProgressUpdate]);
 
-    // WebSocket 连接（暂时禁用）
+    // WebSocket 连接和轮询
     useEffect(() => {
         if (documentsList.length === 0 || demoMode) return;
 
         // ⭐ 只在第一次初始化时输出日志
         if (!isInitialized.current) {
             console.log('📡 准备监听文档进度');
-            console.log('💡 使用轮询机制监听文档进度（WebSocket 已禁用）');
             isInitialized.current = true;
         }
 
-        // ⭐ 完全使用轮询机制，不使用 WebSocket
-        const pollInterval = setInterval(async () => {
-            documentsList.forEach(async (doc) => {
-                try {
-                    const response = await fetch(`/api/system/rag-config/document/${doc.documentId}`);
-                    const result = await response.json();
-                    if (result.success && result.data) {
-                        const docData = result.data;
-                        if (docData.status === 'PROCESSING' && docData.currentStage) {
-                            const progressData = {
-                                documentId: doc.documentId,
-                                stage: docData.currentStage || 'UPLOAD',
-                                percentage: docData.percentage || 0,
-                                message: docData.message || '处理中...',
-                                status: docData.status
-                            };
+        let client = null;
+        let pollInterval = null;
+        let connectionFailed = false;
 
-                            setDocumentsProgress(prev => ({
-                                ...prev,
-                                [doc.documentId]: {
-                                    stage: progressData.stage,
-                                    percentage: progressData.percentage,
-                                    message: progressData.message,
-                                    status: progressData.status
-                                }
-                            }));
+        // ⭐ 尝试建立 WebSocket 连接
+        try {
+            // 动态构建 WebSocket URL
+            let wsUrl;
 
-                            console.debug('🔄 轮询更新进度:', doc.documentId, progressData.percentage + '%');
-                        }
+            // 开发环境：前端在 3000，后端在 8080
+            if (import.meta.env.DEV || window.location.port === '3000') {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const hostname = window.location.hostname;
+                wsUrl = `${protocol}//${hostname}:8080/ws/progress`;
+            }
+            // 生产环境：前后端同域
+            else {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.host;
+                wsUrl = `${protocol}//${host}/ws/progress`;
+            }
+
+            console.log('🔗 WebSocket URL:', wsUrl);
+
+            client = new WebSocketClient(wsUrl);
+
+            client.on('open', () => {
+                console.log('✅ WebSocket 连接成功');
+                connectionFailed = false;
+
+                // 订阅所有文档的进度
+                documentsList.forEach(doc => {
+                    try {
+                        client.subscribe(doc.documentId);
+                        console.log('📝 已订阅文档:', doc.documentId);
+                    } catch (err) {
+                        console.warn('⚠️ 订阅失败:', doc.documentId, err);
                     }
-                } catch (error) {
-                    console.debug('轮询检查失败:', doc.documentId, error.message);
-                }
+                });
             });
-        }, 2000); // 每 2 秒轮询一次
+
+            client.on('message', handleMessage);
+
+            client.on('error', (error) => {
+                console.warn('⚠️ WebSocket 连接错误，切换到轮询模式');
+                connectionFailed = true;
+            });
+
+            client.on('close', (event) => {
+                console.debug('🔌 WebSocket 连接关闭:', event?.code);
+                connectionFailed = true;
+            });
+
+            client.connect();
+            setWsClient(client);
+
+        } catch (error) {
+            console.warn('⚠️ WebSocket 初始化失败，使用轮询模式');
+            connectionFailed = true;
+        }
+
+        // ⭐ 轮询机制作为备用方案
+        pollInterval = setInterval(async () => {
+            // 只在 WebSocket 未连接时才轮询
+            const shouldPoll = connectionFailed || !client || !client.isConnected();
+
+            if (shouldPoll) {
+                documentsList.forEach(async (doc) => {
+                    try {
+                        const response = await fetch(`/api/system/rag-config/document/${doc.documentId}`);
+                        const result = await response.json();
+                        if (result.success && result.data) {
+                            const docData = result.data;
+                            if (docData.status === 'PROCESSING' && docData.currentStage) {
+                                const progressData = {
+                                    documentId: doc.documentId,
+                                    stage: docData.currentStage || 'UPLOAD',
+                                    percentage: docData.percentage || 0,
+                                    message: docData.message || '处理中...',
+                                    status: docData.status
+                                };
+
+                                setDocumentsProgress(prev => ({
+                                    ...prev,
+                                    [doc.documentId]: {
+                                        stage: progressData.stage,
+                                        percentage: progressData.percentage,
+                                        message: progressData.message,
+                                        status: progressData.status
+                                    }
+                                }));
+
+                                console.debug('🔄 轮询更新进度:', doc.documentId, progressData.percentage + '%');
+                            }
+                        }
+                    } catch (error) {
+                        console.debug('轮询检查失败:', doc.documentId, error.message);
+                    }
+                });
+            }
+        }, 3000); // 每 3 秒轮询一次（WebSocket 连接时不轮询）
 
         // 清理函数
         return () => {
             if (pollInterval) {
                 clearInterval(pollInterval);
             }
+
+            if (client) {
+                try {
+                    if (client.isConnected()) {
+                        client.unsubscribe();
+                    }
+                    client.close();
+                } catch (error) {
+                    // 忽略清理错误
+                }
+            }
         };
-    }, [documentsList, demoMode]); // ⭐ 移除 handleMessage 避免重复触发
+    }, [documentsList, demoMode, handleMessage]);
 
     return {
         wsClient,
