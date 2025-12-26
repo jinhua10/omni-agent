@@ -15,6 +15,8 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
     const [wsClient, setWsClient] = useState(null);
     const [documentsProgress, setDocumentsProgress] = useState({});
     const isInitialized = useRef(false); // ⭐ 追踪是否已初始化
+    const clientRef = useRef(null); // ⭐ 使用ref避免重复创建
+    const mountedRef = useRef(true); // ⭐ 追踪组件是否挂载
 
     // 处理 WebSocket 消息
     const handleMessage = useCallback((message) => {
@@ -55,13 +57,17 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
     useEffect(() => {
         if (documentsList.length === 0 || demoMode) return;
 
+        // ⭐ 如果已有连接且状态正常，不重新创建
+        if (clientRef.current && clientRef.current.isConnected()) {
+            // console.log('WebSocket 已连接，跳过重复创建');
+            return;
+        }
+
         // ⭐ 只在第一次初始化时输出日志
         if (!isInitialized.current) {
             // console.log('📡 建立 WebSocket 连接');
             isInitialized.current = true;
         }
-
-        let client = null;
 
         // ⭐ 建立 WebSocket 连接
         try {
@@ -83,7 +89,8 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
 
             // console.log('🔗 WebSocket URL:', wsUrl);
 
-            client = new WebSocketClient(wsUrl);
+            const client = new WebSocketClient(wsUrl);
+            clientRef.current = client; // ⭐ 保存到ref
 
             client.on('open', () => {
                 // console.log('✅ WebSocket 连接成功');
@@ -118,21 +125,41 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
 
         // 清理函数
         return () => {
-            if (client) {
-                // 延迟关闭，避免频繁的cleanup导致连接中断
-                setTimeout(() => {
+            mountedRef.current = false;
+            
+            // 延迟清理，避免频繁重建
+            const cleanupTimer = setTimeout(() => {
+                if (clientRef.current && !mountedRef.current) {
                     try {
-                        if (client.isConnected()) {
-                            client.unsubscribe();
+                        if (clientRef.current.isConnected()) {
+                            clientRef.current.unsubscribe();
                         }
-                        client.close();
+                        clientRef.current.close();
+                        clientRef.current = null;
                     } catch (error) {
                         // 忽略清理错误
                     }
-                }, 100);
+                }
+            }, 200);
+
+            return () => clearTimeout(cleanupTimer);
+        };
+    }, [documentsList.length, demoMode]); // ⭐ 只依赖长度变化，避免频繁重建
+
+    // ⭐ 组件卸载时清理
+    useEffect(() => {
+        return () => {
+            mountedRef.current = false;
+            if (clientRef.current) {
+                try {
+                    clientRef.current.close();
+                    clientRef.current = null;
+                } catch (error) {
+                    // 忽略
+                }
             }
         };
-    }, [documentsList, demoMode, handleMessage]);
+    }, []);
 
     return {
         wsClient,
