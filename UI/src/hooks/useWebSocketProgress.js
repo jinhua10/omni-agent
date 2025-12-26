@@ -55,17 +55,22 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
 
     // WebSocket 连接（完全依赖服务端推送）
     useEffect(() => {
-        if (documentsList.length === 0 || demoMode) return;
+        console.log('🔍 useWebSocketProgress - documentsList.length:', documentsList.length, 'demoMode:', demoMode);
+
+        if (documentsList.length === 0 || demoMode) {
+            console.log('⏭️ 跳过 WebSocket 连接 - 文档列表为空或演示模式');
+            return;
+        }
 
         // ⭐ 如果已有连接且状态正常，不重新创建
         if (clientRef.current && clientRef.current.isConnected()) {
-            // console.log('WebSocket 已连接，跳过重复创建');
+            console.log('✅ WebSocket 已连接，跳过重复创建');
             return;
         }
 
         // ⭐ 只在第一次初始化时输出日志
         if (!isInitialized.current) {
-            // console.log('📡 建立 WebSocket 连接');
+            console.log('📡 建立 WebSocket 连接');
             isInitialized.current = true;
         }
 
@@ -87,19 +92,19 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
                 wsUrl = `${protocol}//${host}/ws/progress`;
             }
 
-            // console.log('🔗 WebSocket URL:', wsUrl);
+            console.log('🔗 WebSocket URL:', wsUrl);
 
             const client = new WebSocketClient(wsUrl);
             clientRef.current = client; // ⭐ 保存到ref
 
             client.on('open', () => {
-                // console.log('✅ WebSocket 连接成功');
+                console.log('✅ WebSocket 连接成功');
 
                 // 订阅所有文档的进度
                 documentsList.forEach(doc => {
                     try {
                         client.subscribe(doc.documentId);
-                        // console.log('📝 已订阅文档:', doc.documentId);
+                        console.log('📝 已订阅文档:', doc.documentId);
                     } catch (err) {
                         console.debug('订阅失败:', doc.documentId, err);
                     }
@@ -109,18 +114,18 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
             client.on('message', handleMessage);
 
             client.on('error', (error) => {
-                console.debug('WebSocket 连接错误（可忽略）');
+                console.warn('⚠️ WebSocket 连接错误:', error);
             });
 
             client.on('close', (event) => {
-                console.debug('🔌 WebSocket 连接关闭:', event?.code);
+                console.log('🔌 WebSocket 连接关闭:', event?.code);
             });
 
             client.connect();
             setWsClient(client);
 
         } catch (error) {
-            console.debug('WebSocket 初始化失败（后端服务可能未启动）:', error.message);
+            console.error('❌ WebSocket 初始化失败:', error);
         }
 
         // 清理函数
@@ -144,7 +149,7 @@ function useWebSocketProgress(documentsList, demoMode, onProgressUpdate) {
 
             return () => clearTimeout(cleanupTimer);
         };
-    }, [documentsList.length, demoMode]); // ⭐ 只依赖长度变化，避免频繁重建
+    }, [documentsList.length, demoMode, handleMessage]); // ⭐ 添加 handleMessage 依赖
 
     // ⭐ 组件卸载时清理
     useEffect(() => {

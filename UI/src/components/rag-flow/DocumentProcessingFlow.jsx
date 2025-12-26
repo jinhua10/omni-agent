@@ -76,6 +76,23 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
 
     // 使用自定义 Hooks
     const { documentConfigs, loadDocumentConfig, updateDocumentConfig } = useDocumentConfig();
+
+    // 调试：监控 documentsList 变化（仅在长度或 demoMode 变化时输出）
+    const prevDocListLengthRef = React.useRef(0);
+    const prevDemoModeRef = React.useRef(demoMode);
+
+    React.useEffect(() => {
+        if (documentsList.length !== prevDocListLengthRef.current || demoMode !== prevDemoModeRef.current) {
+            console.log('📄 DocumentProcessingFlow - documentsList 变化:', {
+                length: documentsList.length,
+                demoMode,
+                firstDoc: documentsList[0]?.documentId
+            });
+            prevDocListLengthRef.current = documentsList.length;
+            prevDemoModeRef.current = demoMode;
+        }
+    }, [documentsList.length, demoMode]);
+
     const { documentsProgress } = useWebSocketProgress(documentsList, demoMode, (progressData) => {
         console.log('🔄 收到进度更新:', progressData);
         setProgress(progressData);
@@ -97,9 +114,18 @@ function DocumentProcessingFlow({ documentId, onComplete, onError, autoStart = f
         }
     });
 
-    // 调试：监控 documentsProgress 变化
+    // 调试：监控 documentsProgress 变化（仅在对象键数量变化时输出）
+    const prevProgressKeysCountRef = React.useRef(0);
+
     React.useEffect(() => {
-        console.log('📊 DocumentProcessingFlow - documentsProgress 更新:', documentsProgress);
+        const currentKeysCount = Object.keys(documentsProgress).length;
+        if (currentKeysCount !== prevProgressKeysCountRef.current) {
+            console.log('📊 DocumentProcessingFlow - documentsProgress 更新:', {
+                count: currentKeysCount,
+                docIds: Object.keys(documentsProgress)
+            });
+            prevProgressKeysCountRef.current = currentKeysCount;
+        }
     }, [documentsProgress]);
 
     // 加载分块策略列表

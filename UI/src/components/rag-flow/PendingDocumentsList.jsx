@@ -25,10 +25,20 @@ function PendingDocumentsList({
 }) {
     const { t } = useLanguage();
 
-    // 调试：输出 documentsProgress
+    // 调试：输出 documentsProgress（仅在键数量变化时）
+    const prevProgressKeysRef = React.useRef(0);
+    const prevDocCountRef = React.useRef(0);
+
     React.useEffect(() => {
-        console.log('📋 待处理文档列表 - documentsProgress:', documentsProgress);
-        console.log('📋 待处理文档列表 - documentsList:', documentsList.map(d => d.documentId));
+        const progressKeys = Object.keys(documentsProgress).length;
+        const docCount = documentsList.length;
+
+        if (progressKeys !== prevProgressKeysRef.current || docCount !== prevDocCountRef.current) {
+            console.log('📋 待处理文档列表 - documentsProgress 键数:', progressKeys);
+            console.log('📋 待处理文档列表 - 文档数量:', docCount);
+            prevProgressKeysRef.current = progressKeys;
+            prevDocCountRef.current = docCount;
+        }
     }, [documentsProgress, documentsList]);
 
     if (!documentsList || documentsList.length === 0) {

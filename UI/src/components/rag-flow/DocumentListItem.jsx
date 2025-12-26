@@ -52,16 +52,22 @@ function DocumentListItem({
 }) {
     const { t } = useLanguage();
 
-    // 调试：输出 progress 数据
+    // 调试：仅在进度首次出现时输出
+    const hasLoggedProgressRef = React.useRef(false);
+
     React.useEffect(() => {
-        if (progress) {
-            console.log('📊 文档进度数据:', {
+        if (progress && !hasLoggedProgressRef.current) {
+            console.log('📊 文档进度开始:', {
                 docId: doc.documentId,
                 stage: progress.stage,
-                percentage: progress.percentage,
-                message: progress.message,
-                status: progress.status
+                percentage: progress.percentage
             });
+            hasLoggedProgressRef.current = true;
+        }
+
+        // 当进度完成或失败时重置标志
+        if (progress?.status === 'COMPLETED' || progress?.status === 'FAILED') {
+            hasLoggedProgressRef.current = false;
         }
     }, [progress, doc.documentId]);
 
