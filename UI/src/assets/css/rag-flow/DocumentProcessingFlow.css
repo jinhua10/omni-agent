@@ -453,7 +453,9 @@ body.resizing * {
 .document-processing-flow-container .ant-alert-warning {
     background: linear-gradient(135deg, #fff7e6 0%, #ffd591 100%);
 }
-
+.text-extraction-config .full-width-space{
+    padding-left: 3px;;
+}
 /* Steps样式美化 */
 .document-processing-flow .ant-steps-item-process .ant-steps-item-icon {
     /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */

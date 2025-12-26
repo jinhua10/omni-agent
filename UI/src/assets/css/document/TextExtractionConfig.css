@@ -310,7 +310,7 @@
   background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%) !important;
   border: 2px solid #e5e7eb !important;
   border-radius: 8px !important;
-  padding: 20px !important;
+  padding: 24px 28px !important;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
   font-size: 14px !important;
   line-height: 1.8 !important;
@@ -417,6 +417,12 @@
   color: #6b7280;
   line-height: 1.6;
   font-size: 13px;
+  padding-left: 12px;
+}
+
+.text-extraction-config .model-features .ant-space,
+.text-extraction-config .model-scenarios .ant-descriptions {
+  padding-left: 12px;
 }
 
 /* Alert 样式 */
@@ -499,7 +505,7 @@
 }
 
 .text-extraction-config .preview-panel .ant-tabs-tabpane[data-node-key="preview"] {
-  padding: 20px;
+  padding: 24px 28px;
   overflow: auto;
 }
 
@@ -527,7 +533,7 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.8;
   color: #374151;
-  padding: 20px 24px;
+  padding: 24px 28px;
   background: white;
   border-radius: 0;
   min-height: 500px;
@@ -579,7 +585,7 @@
   font-style: italic;
   color: #4b5563;
 }
-}
+
 
 .text-extraction-config .markdown-preview h2 {
   font-size: 1.5em;

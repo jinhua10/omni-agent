@@ -71,7 +71,7 @@ function ProcessingStepsView({
 
     return (
         <Steps
-            direction="vertical"
+            orientation="vertical"
             current={getCurrentStep()}
             status={progress?.status === 'FAILED' ? 'error' : progress?.status === 'COMPLETED' ? 'finish' : 'process'}
             size="default"

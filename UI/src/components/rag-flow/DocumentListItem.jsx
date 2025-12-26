@@ -140,7 +140,7 @@ function DocumentListItem({
                         '0%': STAGE_CONFIG[displayProgress.stage]?.color || '#1890ff',
                         '100%': '#52c41a',
                     }}
-                    strokeWidth={8}
+                    size={8}
                     showInfo={false}
                     className={`document-list-item__progress-bar ${displayProgress.message ? 'with-message' : ''}`}
                 />
