@@ -1,4 +1,4 @@
-package top.yumbo.ai.ai.onnx;
+package top.yumbo.ai.omni.ai.onnx;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;

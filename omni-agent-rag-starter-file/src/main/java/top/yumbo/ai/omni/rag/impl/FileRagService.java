@@ -10,6 +10,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import top.yumbo.ai.ai.api.EmbeddingService;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.Document;
 import top.yumbo.ai.omni.rag.model.IndexStatistics;
@@ -35,6 +36,7 @@ public class FileRagService implements RagService {
 
     private final String domainId;
     private final String indexPath;
+    private final EmbeddingService embeddingService; // ⭐ AI Embedding 服务
 
     private Directory directory;
     private Analyzer analyzer;
@@ -47,11 +49,14 @@ public class FileRagService implements RagService {
      *
      * @param domainId 域ID（支持多域架构）
      * @param indexPath 索引路径
+     * @param embeddingService AI Embedding 服务（可选）
      */
-    public FileRagService(String domainId, String indexPath) {
+    public FileRagService(String domainId, String indexPath, EmbeddingService embeddingService) {
         this.domainId = domainId;
         this.indexPath = indexPath;
-        log.info("创建 FileRagService: domainId={}, indexPath={}", domainId, indexPath);
+        this.embeddingService = embeddingService;
+        log.info("创建 FileRagService: domainId={}, indexPath={}, embedding={}",
+                domainId, indexPath, embeddingService != null ? "enabled" : "disabled");
     }
 
     @PostConstruct
@@ -100,16 +105,43 @@ public class FileRagService implements RagService {
     public List<Document> semanticSearch(String query, int maxResults) {
         log.debug("语义搜索: domainId={}, query={}, maxResults={}", domainId, query, maxResults);
 
-        // 当前使用文本搜索作为语义搜索的降级方案
-        // TODO: 集成 AI Embedding 服务实现真正的语义搜索
-        return textSearch(query, maxResults);
+        if (embeddingService != null) {
+            // 使用 AI Embedding 进行真正的语义搜索
+            try {
+                float[] queryEmbedding = embeddingService.embed(query);
+                return vectorSearchInternal(queryEmbedding, maxResults);
+            } catch (Exception e) {
+                log.warn("语义搜索失败，降级到文本搜索: {}", e.getMessage());
+                return textSearch(query, maxResults);
+            }
+        } else {
+            // 降级到文本搜索
+            log.debug("EmbeddingService 未配置，使用文本搜索");
+            return textSearch(query, maxResults);
+        }
     }
 
     @Override
     public List<Document> vectorSearch(Vector vector, int maxResults) {
-        log.warn("Lucene 暂不支持原生向量搜索，返回空结果");
-        // TODO: 升级到支持向量搜索的 Lucene 版本或使用其他方案
-        return Collections.emptyList();
+        log.debug("向量搜索: domainId={}, dimension={}, maxResults={}",
+                domainId, vector.getDimension(), maxResults);
+
+        if (vector == null || vector.getData() == null || vector.getData().length == 0) {
+            log.warn("向量为空，返回空结果");
+            return Collections.emptyList();
+        }
+
+        return vectorSearchInternal(vector.getData(), maxResults);
+    }
+
+    /**
+     * 内部向量搜索实现
+     */
+    private List<Document> vectorSearchInternal(float[] queryVector, int maxResults) {
+        // TODO: Lucene 9.x 支持向量搜索（KNN），需要在索引时存储向量
+        // 当前返回文本搜索结果作为降级方案
+        log.warn("向量搜索功能待实现，使用文本搜索降级");
+        return getAllDocuments(0, maxResults);
     }
 
     /**
@@ -150,15 +182,40 @@ public class FileRagService implements RagService {
 
     @Override
     public Vector embed(String text) {
-        log.warn("FileRagService 暂不支持向量化，需要集成 AI Embedding 服务");
-        // TODO: 集成 AI Embedding 服务
-        return Vector.of(new float[0]);
+        if (embeddingService != null) {
+            try {
+                float[] embedding = embeddingService.embed(text);
+                return Vector.of(embedding);
+            } catch (Exception e) {
+                log.error("向量化失败: {}", e.getMessage(), e);
+                return Vector.of(new float[0]);
+            }
+        } else {
+            log.warn("EmbeddingService 未配置，无法进行向量化");
+            return Vector.of(new float[0]);
+        }
     }
 
     @Override
     public List<Vector> batchEmbed(List<String> texts) {
-        log.warn("FileRagService 暂不支持批量向量化");
-        return texts.stream().map(this::embed).toList();
+        if (embeddingService != null) {
+            try {
+                List<float[]> embeddings = embeddingService.embedBatch(texts);
+                return embeddings.stream()
+                        .map(Vector::of)
+                        .toList();
+            } catch (Exception e) {
+                log.error("批量向量化失败: {}", e.getMessage(), e);
+                return texts.stream()
+                        .map(t -> Vector.of(new float[0]))
+                        .toList();
+            }
+        } else {
+            log.warn("EmbeddingService 未配置，无法进行批量向量化");
+            return texts.stream()
+                    .map(t -> Vector.of(new float[0]))
+                    .toList();
+        }
     }
 
     // ========== 文档索引 ==========

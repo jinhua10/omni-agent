@@ -1,4 +1,4 @@
-package top.yumbo.ai.ai.ollama;
+package top.yumbo.ai.omni.ai.ollama;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

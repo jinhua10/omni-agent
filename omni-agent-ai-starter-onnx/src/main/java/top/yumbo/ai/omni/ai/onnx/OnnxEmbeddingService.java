@@ -1,4 +1,4 @@
-package top.yumbo.ai.ai.onnx;
+package top.yumbo.ai.omni.ai.onnx;
 
 import ai.onnxruntime.*;
 import lombok.Getter;

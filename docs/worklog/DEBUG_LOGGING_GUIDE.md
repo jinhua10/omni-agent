@@ -158,7 +158,7 @@ DEBUG [QueryService] 🔎 [Query] Result #2: score=0.8876, docId=chunk_034, cont
 ```yaml
 logging:
   level:
-    top.yumbo.ai.ai.ollama.OllamaAIService: DEBUG
+    top.yumbo.ai.omni.ai.ollama.OllamaAIService: DEBUG
 ```
 
 ### 只看 RAG 检索过程
@@ -233,7 +233,7 @@ Get-Content logs.txt -Wait -Tail 50
 logging:
   level:
     top.yumbo.ai.omni.core.document.processor.VisionLLMDocumentProcessor: DEBUG
-    top.yumbo.ai.ai.ollama.OllamaAIService: DEBUG
+    top.yumbo.ai.omni.ai.ollama.OllamaAIService: DEBUG
 ```
 
 查看：

@@ -1,4 +1,4 @@
-package top.yumbo.ai.ai.online;
+package top.yumbo.ai.omni.ai.online;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
