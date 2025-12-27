@@ -1,11 +1,12 @@
 package top.yumbo.ai.omni.core.service.knowledge;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
 import top.yumbo.ai.omni.core.model.KnowledgeDocument;
 import top.yumbo.ai.omni.core.model.RefinedKnowledge;
+import top.yumbo.ai.omni.ai.api.AIService;
 
 import java.util.UUID;
 
@@ -13,18 +14,16 @@ import java.util.UUID;
  * 知识提炼服务
  *
  * <p>使用 AI 模型从文档中提炼关键知识</p>
- * <p>注意：当前为基础实现，实际应用中需要集成 AI 模型服务</p>
  *
  * @author OmniAgent Team
  * @since 1.0.0
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KnowledgeRefinementService {
 
-    // TODO: 注入 AI 模型服务
-    // private final AIModelService aiModelService;
+    @Autowired(required = false)
+    private AIService aiService;
 
     /**
      * 使用 AI 提炼知识
@@ -44,10 +43,18 @@ public class KnowledgeRefinementService {
 
         String refinedContent;
 
-        if (useAI) {
+        if (useAI && aiService != null) {
             // 使用 AI 模型提炼
-            refinedContent = refineWithAI(document, role);
+            try {
+                refinedContent = refineWithAI(document, role);
+            } catch (Exception e) {
+                log.warn("AI 提炼失败，降级到简单提取: {}", e.getMessage());
+                refinedContent = simpleRefine(document, role);
+            }
         } else {
+            if (useAI) {
+                log.warn("AI 服务未配置，使用简单提取");
+            }
             // 简单提取（不使用 AI）
             refinedContent = simpleRefine(document, role);
         }
@@ -65,45 +72,38 @@ public class KnowledgeRefinementService {
     }
 
     /**
-     * 使用 AI 模型提炼知识
+     * 使用 AI 模型提炼知识（真实实现）
      */
     private String refineWithAI(KnowledgeDocument document, KnowledgeRole role) {
-        // TODO: 实际应用中调用 AI 模型 API
-        // String prompt = buildPrompt(document, role);
-        // return aiModelService.generate(prompt);
+        log.info("🤖 使用 AI 模型提炼知识");
 
-        // 当前为模拟实现
-        log.info("使用 AI 提炼知识（模拟）");
+        // 1. 构建提示词
+        String prompt = buildPrompt(document, role);
 
+        // 2. 调用 AI 服务
+        String aiResponse = aiService.chat(prompt);
+
+        // 3. 格式化输出
         return String.format("""
-                ## 提炼的知识（由 %s 提炼）
+                # %s
                 
-                **原始文档：** %s
-                **来源域：** %s
-                
-                ### 关键要点
-                
-                1. 根据职责 "%s" 提取的核心知识点
-                2. 专业术语和概念总结
-                3. 实践建议和最佳实践
-                
-                ### 详细内容
+                > 由 %s 通过 AI 提炼
+                > 来源域：%s
                 
                 %s
                 
-                ### 应用建议
-                
-                基于角色职责的实际应用建议...
-                
                 ---
-                *提炼时间：%s*
-                *提炼方式：AI 模型*
+                
+                **元信息**
+                - 原始文档：%s
+                - 提炼时间：%s
+                - 提炼方式：AI 模型
                 """,
-                role.getRoleName(),
                 document.getTitle(),
+                role.getRoleName(),
                 document.getSourceDomainId(),
-                role.getResponsibilities(),
-                truncateContent(document.getContent(), 500),
+                aiResponse,
+                document.getId(),
                 java.time.LocalDateTime.now()
         );
     }
@@ -112,29 +112,94 @@ public class KnowledgeRefinementService {
      * 简单提炼（不使用 AI）
      */
     private String simpleRefine(KnowledgeDocument document, KnowledgeRole role) {
-        log.info("简单提炼知识（不使用 AI）");
+        log.info("📝 简单提炼知识（不使用 AI）");
 
         return String.format("""
-                ## 知识摘要（由 %s 整理）
+                # %s
                 
-                **文档标题：** %s
-                **来源域：** %s
-                **文档摘要：** %s
+                > 由 %s 整理
+                > 来源域：%s
                 
-                ### 内容节选
+                ## 文档摘要
+                
+                %s
+                
+                ## 内容节选
                 
                 %s
                 
                 ---
-                *整理时间：%s*
-                *整理方式：简单提取*
+                
+                **元信息**
+                - 原始文档：%s
+                - 文档类型：%s
+                - 相关性得分：%.2f
+                - 整理时间：%s
+                - 整理方式：简单提取
+                """,
+                document.getTitle(),
+                role.getRoleName(),
+                document.getSourceDomainId(),
+                document.getSummary() != null ? document.getSummary() : "无摘要",
+                truncateContent(document.getContent(), 800),
+                document.getId(),
+                document.getDocumentType(),
+                document.getRelevanceScore() != null ? document.getRelevanceScore() : 0.0,
+                java.time.LocalDateTime.now()
+        );
+    }
+
+    /**
+     * 构建 AI 提示词
+     */
+    private String buildPrompt(KnowledgeDocument document, KnowledgeRole role) {
+        return String.format("""
+                你是一个专业的知识管理助手。现在需要为一个特定角色提炼知识。
+                
+                ## 角色信息
+                - 角色名称：%s
+                - 角色职责：%s
+                
+                ## 任务
+                从以下文档中提炼出与该角色职责最相关的关键知识点。
+                
+                ## 文档内容
+                **标题**：%s
+                
+                **内容**：
+                %s
+                
+                ## 输出要求
+                
+                请按以下 Markdown 格式输出：
+                
+                ## 核心要点
+                
+                （列出 3-5 个与角色职责直接相关的关键要点，每个要点用一个段落说明）
+                
+                ## 专业术语解释
+                
+                （解释文档中出现的与角色职责相关的专业术语，如果没有则省略此节）
+                
+                ## 实践建议
+                
+                （基于该角色的职责，给出如何应用这些知识的具体建议）
+                
+                ## 注意事项
+                
+                （如果有需要特别注意的地方，列出来；如果没有则省略此节）
+                
+                要求：
+                1. 只提取与角色职责直接相关的内容
+                2. 使用简洁专业的语言
+                3. 结构化输出，便于阅读
+                4. 使用 Markdown 格式
+                5. 不要包含无关内容
                 """,
                 role.getRoleName(),
+                role.getResponsibilities(),
                 document.getTitle(),
-                document.getSourceDomainId(),
-                document.getSummary() != null ? document.getSummary() : "无",
-                truncateContent(document.getContent(), 800),
-                java.time.LocalDateTime.now()
+                truncateContent(document.getContent(), 4000) // 限制输入长度
         );
     }
 
@@ -184,43 +249,4 @@ public class KnowledgeRefinementService {
         }
         return content.substring(0, maxLength) + "\n\n... (内容已截断) ...";
     }
-
-    /**
-     * 构建 AI 提示词（供未来使用）
-     */
-    private String buildPrompt(KnowledgeDocument document, KnowledgeRole role) {
-        return String.format("""
-                你是一个 %s，你的职责是：%s
-                
-                请从以下文档中提炼出与你职责最相关的关键知识点：
-                
-                【文档标题】%s
-                【文档内容】
-                %s
-                
-                请按以下格式输出：
-                
-                ## 关键要点
-                （列出3-5个关键要点）
-                
-                ## 专业术语
-                （解释相关的专业术语）
-                
-                ## 实践建议
-                （基于你的职责给出实践建议）
-                
-                要求：
-                1. 只提取与职责直接相关的内容
-                2. 使用专业术语
-                3. 结构化输出
-                4. Markdown 格式
-                """,
-                role.getRoleName(),
-                role.getResponsibilities(),
-                document.getTitle(),
-                document.getContent()
-        );
-    }
 }
-
-
