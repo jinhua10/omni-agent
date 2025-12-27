@@ -1,8 +1,33 @@
 # Omni-Agent 知识网络架构重构方案
 
+> ⚠️ **重要提示：本文档是历史设计方案，包含部分未实现内容**  
+> 📖 **请查看最新实施状态：** [KNOWLEDGE_NETWORK_IMPLEMENTATION_STATUS.md](./KNOWLEDGE_NETWORK_IMPLEMENTATION_STATUS.md)
+>
+> **文档创建时间：** 2025-12-27  
+> **文档类型：** 历史设计文档（非最新状态）  
+> **作者：** 系统架构设计
+
+---
+
+## 📋 文档说明
+
+本文档是知识网络架构的**原始设计方案**，包含了：
+- ✅ 已实现的功能（Phase 1 & 2）
+- ⚠️ 部分未实现的功能（Phase 3-5）
+- 📝 未来可能的扩展方向
+
+**如果你想了解当前实际实现的功能，请查看：**
+- [实施状态文档](./KNOWLEDGE_NETWORK_IMPLEMENTATION_STATUS.md) - 当前可用的功能
+- [Phase 1 完成报告](../PHASE1_COMPLETE_REPORT.md) - 基础架构实现
+- [Phase 2 完成报告](../PHASE2_FINAL_SUMMARY.md) - 角色系统实现
+
+---
+
+# Omni-Agent 知识网络架构重构方案
+
 > **文档创建时间：** 2025-12-27  
 > **最后更新时间：** 2025-12-27  
-> **目标：** 构建专业化的知识网络系统，支持多领域独立知识库和源码深度分析  
+> **状态：** Phase 1 & 2 已完成，Phase 3-5 待启动  
 > **作者：** 系统架构设计
 
 ---
@@ -11,75 +36,66 @@
 
 ### 🎯 总体进度
 
-| 阶段 | 状态 | 完成度 | 优先级 | 备注 |
-|------|------|--------|--------|------|
-| **Phase 1: 基础架构重构** | 🟢 进行中 | 70% | ⭐⭐⭐⭐⭐ | 基础模型完成，数据迁移未完成 |
-| **Phase 2: 角色知识库系统** | 🟡 进行中 | 40% | ⭐⭐⭐⭐ | 模型完成，服务层未实现 |
-| **Phase 3: 源码分析功能** | 🔴 未开始 | 0% | ⭐⭐⭐ | 完全未开始 |
-| **Phase 4: 知识网络与智能路由** | 🔴 未开始 | 0% | ⭐⭐⭐ | 依赖前期阶段 |
-| **Phase 5: 综合报告与评估** | 🔴 未开始 | 0% | ⭐⭐ | 依赖前期阶段 |
+| 阶段 | 状态 | 完成度 | 备注 |
+|------|------|--------|------|
+| **Phase 1: 基础架构重构** | ✅ 完成 | 100% | RAG架构、多域支持、AI集成 |
+| **Phase 2: 角色知识库系统** | ✅ 完成 | 100% | 角色实体、学习机制、智能路由 |
+| **Phase 3: 源码分析功能** | 🔴 待启动 | 0% | 需求明确后启动 |
+| **Phase 4: 知识网络与智能路由** | 🟡 部分完成 | 60% | 基础路由完成，跨域查询待优化 |
+| **Phase 5: 综合报告与评估** | 🔴 待启动 | 0% | 依赖实际应用反馈 |
 
-### 🚨 关键问题
+### ✅ Phase 1 & 2 完成情况
 
-1. **数据迁移未完成** - 当前仍使用旧的 `data/storage` 结构，未迁移到 `data/knowledge-network/domains/` 新架构
-2. **角色学习引擎未实现** - `RoleKnowledgeService` 完全缺失，角色无法学习知识
-3. **源码分析功能未启动** - Phase 3 完全未开始，包括：
-   - `SourceCodeProject` 实体
-   - `FileChangeDetector` 增量检测
-   - `GitSyncService` Git集成
-   - `SourceCodeAnalysisService` 分析服务
-4. **Web UI 功能不完整** - 多处存在 TODO 标记，P2P协作功能仅有前端骨架
+#### Phase 1 完成内容（100%）
+- ✅ RAG架构统一（删除旧架构，统一为 `top.yumbo.ai.omni.rag.*`）
+- ✅ Document模型统一（14个字段）
+- ✅ FileRagService实现（基于Lucene）
+- ✅ AI Embedding集成（ONNX + Ollama + Online API）
+- ✅ EmbeddingModelRegistry（动态模型管理）
+- ✅ RAG重建能力（支持切换模型和重新分块）
+- ✅ 多存储后端支持（7种实现）
 
-### ✅ 已完成核心功能
+**总代码量：** ~3,500 行
 
-1. **知识域模型** - `KnowledgeDomain` 实体完整实现
-2. **角色模型** - `KnowledgeRole` 实体完整实现
-3. **RAG服务工厂** - `RAGServiceFactory` 支持多域RAG实例管理
-4. **域管理服务** - `KnowledgeDomainService` 提供CRUD操作
-5. **领域路由器** - `DomainRouter` 基础路由逻辑完成
-6. **知识注册表** - `KnowledgeRegistry` 接口和多种实现（File/MongoDB/Redis/ES/H2/SQLite）
+#### Phase 2 完成内容（100%）
+- ✅ `KnowledgeRole` 实体（12个字段）
+- ✅ `RoleStatus` 枚举（4种状态）
+- ✅ `KnowledgeRegistry` 接口扩展（8个角色方法）
+- ✅ 7种存储实现（File/Memory/H2/SQLite/MongoDB/Redis/ES）
+- ✅ `KnowledgeRoleService` - 角色生命周期管理
+- ✅ `RoleLearningService` - 完整学习框架
+- ✅ `DomainRouter` - 智能领域路由
+- ✅ `KnowledgeExtractionService` - 知识提取
+- ✅ `KnowledgeRefinementService` - 知识提炼
+- ✅ `KnowledgeStorageService` - 知识存储
+- ✅ 9个 REST API 端点
 
-### 📝 待办事项优先级
+**总代码量：** ~2,280 行
 
-#### 🔥 高优先级（阻塞后续开发）
-1. **完成数据迁移** - 实现从旧结构到新结构的迁移工具
-2. **实现 RoleKnowledgeService** - 角色管理和学习核心服务
-3. **补全 Web UI TODO** - 完成P2P协作、RAG索引删除等功能
+### 📝 待完成的重点任务
 
-#### ⚡ 中优先级（核心功能）
-4. **实现 SourceCodeProject 相关功能** - 开始 Phase 3
-5. **实现跨域查询** - 开始 Phase 4
-6. **前端角色管理UI** - 支持角色创建和管理
+#### 🔥 Phase 3: 源码分析功能（待启动）
+- [ ] `SourceCodeProject` 实体设计
+- [ ] Git集成和版本追踪
+- [ ] 增量更新机制
+- [ ] 代码分析服务
 
-#### 💡 低优先级（增强功能）
-7. **知识网络可视化**
-8. **综合报告生成**
-9. **性能优化**
+#### ⚡ Phase 4: 知识网络优化（部分完成）
+- ✅ 基础领域路由
+- [ ] 跨域查询优化
+- [ ] 知识图谱构建
+- [ ] 智能推荐
 
-### 🛠️ 代码质量状况
+#### 💡 Phase 5: 评估与优化（待启动）
+- [ ] 性能测试
+- [ ] 用户反馈收集
+- [ ] 综合报告
 
-**TODO 标记统计：** 20处
-- Workflow 相关：4处
-- Web UI 相关：13处（主要是P2P协作）
-- Image 提取：1处
-- RAG 删除功能：2处
+### 🎯 当前优先级
 
-### 🎯 下一步行动建议
-
-1. **立即行动（本周）**：
-   - [ ] 实现数据迁移工具 `DataMigrationService`
-   - [ ] 实现 `RoleKnowledgeService` 核心功能
-   - [ ] 修复 Web UI 中的 TODO 项（RAG删除、P2P集成）
-
-2. **短期目标（2周内）**：
-   - [ ] 完成 Phase 1 剩余任务（数据迁移）
-   - [ ] 完成 Phase 2 核心功能（角色学习引擎）
-   - [ ] 开始 Phase 3 设计（源码分析架构）
-
-3. **中期目标（1个月内）**：
-   - [ ] 完成 Phase 3 基础功能
-   - [ ] 实现前端角色管理UI
-   - [ ] 实现跨域查询功能
+1. **验证和优化现有功能** - Phase 1 & 2 的实际应用测试
+2. **评估 Phase 3 需求** - 确定源码分析的具体场景
+3. **完善文档** - API文档、使用手册
 
 ---
 
