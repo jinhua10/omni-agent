@@ -5,6 +5,8 @@ import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 public class MemoryKnowledgeRegistry implements KnowledgeRegistry {
 
     private final Map<String, KnowledgeDomain> domainStore = new ConcurrentHashMap<>();
+    private final Map<String, KnowledgeRole> roleStore = new ConcurrentHashMap<>();
 
     @Override
     public String saveDomain(KnowledgeDomain domain) {
@@ -110,7 +113,68 @@ public class MemoryKnowledgeRegistry implements KnowledgeRegistry {
      */
     public void clear() {
         domainStore.clear();
-        log.info("✅ 清空内存中的所有知识域");
+        roleStore.clear();
+        log.info("✅ 清空内存中的所有知识域和角色");
+    }
+
+    // ========== 知识角色管理实现 ==========
+
+    @Override
+    public String saveRole(KnowledgeRole role) {
+        role.prePersist();
+        roleStore.put(role.getRoleId(), role);
+        log.info("✅ 保存知识角色到内存: {} ({})", role.getRoleName(), role.getRoleId());
+        return role.getRoleId();
+    }
+
+    @Override
+    public Optional<KnowledgeRole> findRoleById(String roleId) {
+        return Optional.ofNullable(roleStore.get(roleId));
+    }
+
+    @Override
+    public List<KnowledgeRole> findAllRoles() {
+        return List.copyOf(roleStore.values());
+    }
+
+    @Override
+    public List<KnowledgeRole> findRolesByStatus(RoleStatus status) {
+        return roleStore.values().stream()
+                .filter(r -> r.getStatus() == status)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean updateRole(KnowledgeRole role) {
+        if (!roleStore.containsKey(role.getRoleId())) {
+            log.warn("角色不存在，无法更新: {}", role.getRoleId());
+            return false;
+        }
+
+        role.preUpdate();
+        roleStore.put(role.getRoleId(), role);
+        log.info("✅ 更新内存中的知识角色: {} ({})", role.getRoleName(), role.getRoleId());
+        return true;
+    }
+
+    @Override
+    public boolean deleteRole(String roleId) {
+        KnowledgeRole removed = roleStore.remove(roleId);
+        if (removed != null) {
+            log.info("✅ 从内存删除知识角色: {}", roleId);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean roleExists(String roleId) {
+        return roleStore.containsKey(roleId);
+    }
+
+    @Override
+    public long countRoles() {
+        return roleStore.size();
     }
 }
 
