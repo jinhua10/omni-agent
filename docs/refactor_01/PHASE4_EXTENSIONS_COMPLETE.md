@@ -438,22 +438,55 @@ public void exportQualityStats() {
 
 ## 🚀 后续增强方向
 
-### ✅ 短期扩展（已完成）
+### ✅ 短期扩展（全部完成）
 
-1. **✅ 持久化统计数据** - 已完成
-   - 查询缓存持久化（基于 DocumentStorage）
+1. **✅ 查询缓存持久化** - 已完成
+   - 基于 DocumentStorage 实现
    - 使用索引文件避免遍历整个知识库
    - 系统重启后缓存仍然存在
+   - 支持缓存预热（启动时加载热门查询）
 
-2. **✅ 缓存预热机制** - 已完成
-   - 启动时自动加载热门查询
-   - 可配置预热数量
-   - 基于查询频率智能预热
+2. **✅ 域质量评分持久化** - 已完成 ⭐ 新增
+   - 系统启动时自动加载历史统计
+   - 系统关闭时自动保存统计数据
+   - 支持手动触发持久化（用于定时任务）
+   - 存储ID: `domain-quality-stats`
 
-3. **❌ 质量评分和用户偏好持久化** - 待实现
-   - 当前这两个数据仍在内存中
-   - 建议：如果需要持久化，可以定时导出到文件
-   - 或者在系统关闭时保存，启动时加载
+3. **✅ 用户偏好持久化** - 已完成 ⭐ 新增
+   - 系统启动时自动加载用户偏好
+   - 系统关闭时自动保存偏好数据
+   - 支持手动触发持久化（用于定时任务）
+   - 存储ID: `user-preferences`
+
+**持久化机制：**
+```java
+// 启动时自动加载
+@PostConstruct
+public void init() {
+    loadPersistedStats();  // 或 loadPersistedPreferences()
+}
+
+// 关闭时自动保存
+@PreDestroy
+public void destroy() {
+    persistStats();  // 或 persistPreferences()
+}
+
+// 手动触发（定时任务）
+@Scheduled(cron = "0 0 * * * *")  // 每小时
+public void scheduledPersist() {
+    qualityScorer.triggerPersist();
+    preferenceLearner.triggerPersist();
+}
+```
+
+**存储位置：**
+- `domain-quality-stats` - 域质量统计数据
+- `user-preferences` - 用户偏好数据
+- `query-cache-*` - 查询结果缓存
+- `query-cache-index` - 缓存索引
+
+---
 
 ### 🔮 中期扩展（可选）
 

@@ -1,12 +1,18 @@
 package top.yumbo.ai.omni.core.service.preference;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +43,44 @@ public class UserPreferenceLearner {
      * 用户偏好数据（key: userId）
      */
     private final Map<String, UserPreference> userPreferences = new ConcurrentHashMap<>();
+
+    /**
+     * 持久化存储服务
+     */
+    @Autowired(required = false)
+    private DocumentStorageService storageService;
+
+    /**
+     * JSON序列化工具
+     */
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
+
+    /**
+     * 持久化存储ID
+     */
+    private static final String STORAGE_ID = "user-preferences";
+
+    /**
+     * 启动时加载持久化数据
+     */
+    @PostConstruct
+    public void init() {
+        if (storageService != null) {
+            loadPersistedPreferences();
+        }
+        log.info("✅ 用户偏好学习系统已初始化 (持久化: {})", storageService != null);
+    }
+
+    /**
+     * 关闭时保存数据
+     */
+    @PreDestroy
+    public void destroy() {
+        if (storageService != null) {
+            persistPreferences();
+        }
+    }
 
     /**
      * 记录用户查询
@@ -156,6 +200,59 @@ public class UserPreferenceLearner {
      */
     public UserPreference getUserPreference(String userId) {
         return userPreferences.get(userId);
+    }
+
+    // ========== 持久化相关方法 ==========
+
+    /**
+     * 加载持久化的用户偏好数据
+     */
+    private void loadPersistedPreferences() {
+        try {
+            log.info("🔄 开始加载用户偏好数据...");
+
+            Optional<String> jsonOpt = storageService.getExtractedText(STORAGE_ID);
+            if (jsonOpt.isPresent()) {
+                Map<String, UserPreference> loaded = objectMapper.readValue(
+                        jsonOpt.get(),
+                        objectMapper.getTypeFactory().constructMapType(
+                                ConcurrentHashMap.class, String.class, UserPreference.class)
+                );
+                userPreferences.putAll(loaded);
+                log.info("✅ 用户偏好数据加载完成: {} 个用户", loaded.size());
+            } else {
+                log.info("📋 无持久化数据，使用空偏好");
+            }
+        } catch (Exception e) {
+            log.error("加载用户偏好数据失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 持久化用户偏好数据
+     */
+    private void persistPreferences() {
+        try {
+            log.info("💾 开始持久化用户偏好数据...");
+
+            String json = objectMapper.writeValueAsString(userPreferences);
+            storageService.saveExtractedText(STORAGE_ID, json);
+
+            log.info("✅ 用户偏好数据持久化完成: {} 个用户", userPreferences.size());
+        } catch (Exception e) {
+            log.error("持久化用户偏好数据失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 手动触发持久化（用于定时任务）
+     */
+    public void triggerPersist() {
+        if (storageService != null) {
+            persistPreferences();
+        } else {
+            log.warn("持久化服务未配置，跳过");
+        }
     }
 
     /**
