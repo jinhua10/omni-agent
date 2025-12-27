@@ -24,14 +24,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- ========== 生产级 Persistence ========== -->
-        <!-- 使用 Elasticsearch 作为主存储 -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-starter-elasticsearch</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- ========== 生产级 Document Storage ========== -->
         <!-- 使用 S3 作为文档存储 -->
         <dependency>
