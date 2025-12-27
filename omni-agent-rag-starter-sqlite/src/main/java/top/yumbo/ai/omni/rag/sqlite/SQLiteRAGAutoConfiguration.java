@@ -10,7 +10,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
-import top.yumbo.ai.rag.api.RAGService;
+import top.yumbo.ai.omni.rag.RagService;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -75,7 +75,7 @@ public class SQLiteRAGAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public RAGService ragService(JdbcTemplate sqliteJdbcTemplate, SQLiteRAGProperties properties) {
+    public RagService ragService(JdbcTemplate sqliteJdbcTemplate, SQLiteRAGProperties properties) {
         log.info("自动配置 SQLite RAG 服务");
         log.info("数据库路径: {}", properties.getDatabasePath());
         log.info("启用 FTS5: {}", properties.isEnableFts());

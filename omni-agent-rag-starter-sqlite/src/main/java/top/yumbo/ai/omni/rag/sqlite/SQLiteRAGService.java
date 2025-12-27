@@ -7,11 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.rag.api.model.IndexStatistics;
-import top.yumbo.ai.rag.api.model.Query;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+import top.yumbo.ai.omni.rag.model.Vector;
+import top.yumbo.ai.omni.rag.model.IndexStatistics;
 
 import jakarta.annotation.PostConstruct;
 import java.sql.ResultSet;
@@ -28,16 +27,22 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class SQLiteRAGService implements RAGService {
+public class SQLiteRAGService implements RagService {
 
     private final JdbcTemplate jdbcTemplate;
     private final SQLiteRAGProperties properties;
     private final ObjectMapper objectMapper;
+    private final String domainId;
 
     public SQLiteRAGService(JdbcTemplate jdbcTemplate, SQLiteRAGProperties properties) {
+        this(jdbcTemplate, properties, "sqlite-domain");
+    }
+
+    public SQLiteRAGService(JdbcTemplate jdbcTemplate, SQLiteRAGProperties properties, String domainId) {
         this.jdbcTemplate = jdbcTemplate;
         this.properties = properties;
         this.objectMapper = new ObjectMapper();
+        this.domainId = domainId;
     }
 
     @PostConstruct
@@ -125,7 +130,9 @@ public class SQLiteRAGService implements RAGService {
 
     // ========== 文档索引 ==========
 
-    @Override
+    /**
+     * 内部文档索引方法
+     */
     public String indexDocument(Document document) {
         try {
             if (document.getId() == null || document.getId().isEmpty()) {
@@ -170,7 +177,9 @@ public class SQLiteRAGService implements RAGService {
         }
     }
 
-    @Override
+    /**
+     * 内部批量索引方法
+     */
     public List<String> indexDocuments(List<Document> documents) {
         List<String> indexedIds = new ArrayList<>();
         for (Document document : documents) {
@@ -185,7 +194,9 @@ public class SQLiteRAGService implements RAGService {
         return indexedIds;
     }
 
-    @Override
+    /**
+     * 内部文档更新方法
+     */
     public boolean updateDocument(Document document) {
         try {
             if (document.getId() == null || document.getId().isEmpty()) {
@@ -236,7 +247,9 @@ public class SQLiteRAGService implements RAGService {
         }
     }
 
-    @Override
+    /**
+     * 内部文档删除方法
+     */
     public boolean deleteDocument(String documentId) {
         try {
             String sql = "DELETE FROM rag_documents WHERE id = ?";
@@ -266,236 +279,6 @@ public class SQLiteRAGService implements RAGService {
         }
     }
 
-    // ========== 文本搜索 ==========
-
-    @Override
-    public List<SearchResult> search(Query query) {
-        switch (query.getMode()) {
-            case TEXT:
-                return searchByText(query.getText(), query.getTopK());
-            case VECTOR:
-                return query.getEmbedding() != null ?
-                        vectorSearch(query.getEmbedding(), query.getTopK()) :
-                        Collections.emptyList();
-            case HYBRID:
-                return hybridSearch(query);
-            case SEMANTIC:
-                return semanticSearch(query.getText(), query.getTopK());
-            default:
-                return searchByText(query.getText(), query.getTopK());
-        }
-    }
-
-    @Override
-    public List<SearchResult> searchByText(String text, int topK) {
-        try {
-            List<SearchResult> results = new ArrayList<>();
-
-            if (properties.isEnableFts()) {
-                // 使用 FTS5 全文搜索
-                String sql = """
-                    SELECT d.*, 
-                           rank as score
-                    FROM rag_documents_fts fts
-                    JOIN rag_documents d ON fts.id = d.id
-                    WHERE rag_documents_fts MATCH ?
-                    ORDER BY rank
-                    LIMIT ?
-                """;
-
-                results = jdbcTemplate.query(sql, documentRowMapper(), text, topK);
-
-            } else {
-                // 使用 LIKE 查询（降级方案）
-                String sql = """
-                    SELECT * FROM rag_documents
-                    WHERE title LIKE ? OR content LIKE ? OR summary LIKE ? OR tags LIKE ?
-                    LIMIT ?
-                """;
-
-                String pattern = "%" + text + "%";
-                results = jdbcTemplate.query(sql, documentRowMapper(), 
-                        pattern, pattern, pattern, pattern, topK);
-            }
-
-            // 设置排名
-            for (int i = 0; i < results.size(); i++) {
-                results.get(i).setRank(i + 1);
-                results.get(i).setReason("文本匹配");
-            }
-
-            log.debug("文本搜索完成，查询: {}, 结果数: {}", text, results.size());
-            return results;
-
-        } catch (Exception e) {
-            log.error("文本搜索失败: {}", text, e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 向量搜索 ==========
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK) {
-        try {
-            // ⭐ Debug 日志：搜索开始
-            log.debug("🔍 [RAG Vector Search] Starting search - Embedding dim: {}, topK: {}",
-                embedding.length, topK);
-
-            long startTime = System.currentTimeMillis();
-
-            // 获取所有有向量的文档
-            String sql = "SELECT * FROM rag_documents WHERE embedding IS NOT NULL AND embedding != ''";
-            List<Document> allDocs = jdbcTemplate.query(sql, this::mapRowToDocument);
-
-            // ⭐ Debug 日志：候选文档数量
-            log.debug("🔍 [RAG Vector Search] Found {} candidate documents with embeddings", allDocs.size());
-
-            // 计算余弦相似度
-            List<SearchResult> results = new ArrayList<>();
-            for (Document doc : allDocs) {
-                if (doc.getEmbedding() != null && doc.getEmbedding().length > 0) {
-                    float similarity = cosineSimilarity(embedding, doc.getEmbedding());
-                    
-                    SearchResult result = SearchResult.builder()
-                            .document(doc)
-                            .score(similarity)
-                            .vectorScore(similarity)
-                            .reason("向量相似度")
-                            .build();
-                    
-                    results.add(result);
-
-                    // ⭐ Debug 日志：每个候选文档的相似度
-                    log.debug("🔍 [RAG Vector Search] Doc [{}]: similarity={:.4f}, title={}",
-                        doc.getId(), similarity,
-                        doc.getTitle() != null ? doc.getTitle() : doc.getContent().substring(0, Math.min(50, doc.getContent().length())));
-                }
-            }
-
-            // 按相似度排序并返回 topK
-            List<SearchResult> topResults = results.stream()
-                    .sorted(Comparator.comparing(SearchResult::getScore).reversed())
-                    .limit(topK)
-                    .peek(r -> r.setRank(results.indexOf(r) + 1))
-                    .collect(Collectors.toList());
-
-            long duration = System.currentTimeMillis() - startTime;
-
-            // ⭐ Debug 日志：搜索结果
-            log.debug("🔍 [RAG Vector Search] Completed in {}ms - Returned {} results", duration, topResults.size());
-            for (int i = 0; i < topResults.size(); i++) {
-                SearchResult r = topResults.get(i);
-                log.debug("🔍 [RAG Vector Search] Result #{}: score={:.4f}, docId={}, content preview: {}",
-                    i + 1, r.getScore(), r.getDocument().getId(),
-                    r.getDocument().getContent().substring(0, Math.min(100, r.getDocument().getContent().length())) + "...");
-            }
-
-            return topResults;
-
-        } catch (Exception e) {
-            log.error("向量搜索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK, Map<String, Object> filters) {
-        // 先进行向量搜索，然后应用过滤器
-        List<SearchResult> results = vectorSearch(embedding, topK * 2);
-
-        if (filters == null || filters.isEmpty()) {
-            return results.stream().limit(topK).collect(Collectors.toList());
-        }
-
-        // 应用过滤器
-        return results.stream()
-                .filter(result -> matchesFilters(result.getDocument(), filters))
-                .limit(topK)
-                .collect(Collectors.toList());
-    }
-
-    // ========== 混合检索 ==========
-
-    @Override
-    public List<SearchResult> hybridSearch(Query query) {
-        // 执行文本搜索
-        List<SearchResult> textResults = searchByText(query.getText(), query.getTopK() * 2);
-
-        // 如果有向量，执行向量搜索
-        if (query.getEmbedding() != null && query.getEmbedding().length > 0) {
-            List<SearchResult> vectorResults = vectorSearch(query.getEmbedding(), query.getTopK() * 2);
-
-            // 合并结果
-            Map<String, SearchResult> mergedResults = new HashMap<>();
-
-            for (SearchResult result : textResults) {
-                String docId = result.getDocument().getId();
-                Float scoreObj = result.getScore();
-                float textScore = scoreObj != null ? scoreObj : 0.0f;
-                float combinedScore = textScore * query.getTextWeight();
-
-                result.setTextScore(textScore);
-                result.setScore(combinedScore);
-                mergedResults.put(docId, result);
-            }
-
-            for (SearchResult result : vectorResults) {
-                String docId = result.getDocument().getId();
-                Float scoreObj = result.getScore();
-                float vectorScore = scoreObj != null ? scoreObj : 0.0f;
-
-                if (mergedResults.containsKey(docId)) {
-                    SearchResult existing = mergedResults.get(docId);
-                    Float textScoreObj = existing.getTextScore();
-                    float textScore = textScoreObj != null ? textScoreObj : 0.0f;
-                    float combinedScore = textScore * query.getTextWeight() + vectorScore * query.getVectorWeight();
-                    
-                    existing.setVectorScore(vectorScore);
-                    existing.setScore(combinedScore);
-                    existing.setReason("混合检索");
-                } else {
-                    float combinedScore = vectorScore * query.getVectorWeight();
-                    result.setVectorScore(vectorScore);
-                    result.setScore(combinedScore);
-                    result.setReason("向量匹配");
-                    mergedResults.put(docId, result);
-                }
-            }
-
-            // 排序并返回 topK
-            return mergedResults.values().stream()
-                    .sorted(Comparator.comparing(SearchResult::getScore).reversed())
-                    .limit(query.getTopK())
-                    .peek(r -> r.setRank(new ArrayList<>(mergedResults.values()).indexOf(r) + 1))
-                    .collect(Collectors.toList());
-        }
-
-        // 只有文本搜索
-        return textResults.stream().limit(query.getTopK()).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<SearchResult> hybridSearch(String text, float[] embedding,
-                                          float textWeight, float vectorWeight, int topK) {
-        Query query = Query.builder()
-                .text(text)
-                .embedding(embedding)
-                .topK(topK)
-                .mode(Query.SearchMode.HYBRID)
-                .textWeight(textWeight)
-                .vectorWeight(vectorWeight)
-                .build();
-        return hybridSearch(query);
-    }
-
-    // ========== 语义搜索 ==========
-
-    @Override
-    public List<SearchResult> semanticSearch(String text, int topK) {
-        log.warn("语义搜索需要 AI Embedding 服务支持，当前使用文本搜索");
-        return searchByText(text, topK);
-    }
 
     // ========== 文档管理 ==========
 
@@ -579,8 +362,8 @@ public class SQLiteRAGService implements RAGService {
                     .indexType("SQLite-RAG")
                     .vectorSearchEnabled(true)
                     .healthy(true)
-                    .lastIndexedAt(System.currentTimeMillis())
                     .timestamp(System.currentTimeMillis())
+                    .domainId(domainId)
                     .build();
 
         } catch (Exception e) {
@@ -589,6 +372,7 @@ public class SQLiteRAGService implements RAGService {
                     .indexType("SQLite-RAG")
                     .healthy(false)
                     .timestamp(System.currentTimeMillis())
+                    .domainId(domainId)
                     .build();
         }
     }
@@ -624,21 +408,6 @@ public class SQLiteRAGService implements RAGService {
 
     // ========== 辅助方法 ==========
 
-    /**
-     * RowMapper for SearchResult
-     */
-    private RowMapper<SearchResult> documentRowMapper() {
-        return (rs, rowNum) -> {
-            Document document = mapRowToDocument(rs, rowNum);
-            float score = rs.wasNull() ? 0.0f : Math.abs(rs.getFloat("score"));
-
-            return SearchResult.builder()
-                    .document(document)
-                    .score(score)
-                    .textScore(score)
-                    .build();
-        };
-    }
 
     /**
      * Map ResultSet to Document
@@ -804,5 +573,165 @@ public class SQLiteRAGService implements RAGService {
             }
         }
         return true;
+    }
+
+    // ========== 新接口实现 ==========
+
+    @Override
+    public List<Document> semanticSearch(String query, int maxResults) {
+        log.debug("语义搜索: query={}, maxResults={}", query, maxResults);
+        // 使用文本搜索作为降级方案
+        return searchByTextInternal(query, maxResults);
+    }
+
+    @Override
+    public List<Document> vectorSearch(Vector vector, int maxResults) {
+        if (vector == null || vector.getData() == null) {
+            return Collections.emptyList();
+        }
+        return vectorSearchInternal(vector.getData(), maxResults);
+    }
+
+    @Override
+    public Vector embed(String text) {
+        log.warn("SQLiteRAGService 不提供嵌入功能");
+        return null;
+    }
+
+    @Override
+    public List<Vector> batchEmbed(List<String> texts) {
+        log.warn("SQLiteRAGService 不提供批量嵌入功能");
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void index(String id, Vector vector, Map<String, Object> metadata) {
+        Document.DocumentBuilder builder = Document.builder().id(id);
+
+        if (metadata != null) {
+            if (metadata.containsKey("title")) builder.title((String) metadata.get("title"));
+            if (metadata.containsKey("content")) builder.content((String) metadata.get("content"));
+            if (metadata.containsKey("source")) builder.source((String) metadata.get("source"));
+        }
+
+        if (vector != null && vector.getData() != null) {
+            builder.embedding(vector.getData());
+        }
+
+        indexDocument(builder.build());
+    }
+
+    @Override
+    public void batchIndex(List<Document> documents) {
+        for (Document doc : documents) {
+            indexDocument(doc);
+        }
+    }
+
+    @Override
+    public void delete(String id) {
+        deleteDocument(id);
+    }
+
+    @Override
+    public String getDomainId() {
+        return domainId;
+    }
+
+    // ========== 内部辅助方法 ==========
+
+    private List<Document> searchByTextInternal(String text, int topK) {
+        try {
+            List<Document> results = new ArrayList<>();
+
+            if (properties.isEnableFts()) {
+                String sql = """
+                    SELECT d.*
+                    FROM rag_documents_fts fts
+                    JOIN rag_documents d ON fts.id = d.id
+                    WHERE rag_documents_fts MATCH ?
+                    ORDER BY rank
+                    LIMIT ?
+                """;
+                results = jdbcTemplate.query(sql, documentOnlyRowMapper(), text, topK);
+            } else {
+                String sql = """
+                    SELECT * FROM rag_documents
+                    WHERE title LIKE ? OR content LIKE ? OR summary LIKE ?
+                    LIMIT ?
+                """;
+                String pattern = "%" + text + "%";
+                results = jdbcTemplate.query(sql, documentOnlyRowMapper(),
+                        pattern, pattern, pattern, topK);
+            }
+
+            return results;
+        } catch (Exception e) {
+            log.error("文本搜索失败: {}", text, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Document> vectorSearchInternal(float[] embedding, int topK) {
+        String sql = "SELECT * FROM rag_documents WHERE embedding IS NOT NULL";
+
+        try {
+            List<Document> allDocs = jdbcTemplate.query(sql, documentOnlyRowMapper());
+            List<Document> results = new ArrayList<>();
+
+            for (Document doc : allDocs) {
+                if (doc.getEmbedding() != null && doc.getEmbedding().length > 0) {
+                    float similarity = cosineSimilarity(embedding, doc.getEmbedding());
+                    doc.setScore((double) similarity);
+                    results.add(doc);
+                }
+            }
+
+            return results.stream()
+                    .sorted((a, b) -> Double.compare(
+                        b.getScore() != null ? b.getScore() : 0.0,
+                        a.getScore() != null ? a.getScore() : 0.0))
+                    .limit(topK)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("向量搜索失败", e);
+            return Collections.emptyList();
+        }
+    }
+
+    private RowMapper<Document> documentOnlyRowMapper() {
+        return (rs, rowNum) -> {
+            Document.DocumentBuilder builder = Document.builder();
+            builder.id(rs.getString("id"));
+            builder.title(rs.getString("title"));
+            builder.content(rs.getString("content"));
+            builder.summary(rs.getString("summary"));
+            builder.type(rs.getString("type"));
+            builder.source(rs.getString("source"));
+            builder.author(rs.getString("author"));
+
+            String tagsJson = rs.getString("tags");
+            if (tagsJson != null && !tagsJson.isEmpty()) {
+                try {
+                    List<String> tags = objectMapper.readValue(tagsJson, new TypeReference<>() {});
+                    builder.tags(tags);
+                } catch (Exception e) {
+                    log.warn("解析tags失败: {}", e.getMessage());
+                }
+            }
+
+            String embeddingJson = rs.getString("embedding");
+            if (embeddingJson != null && !embeddingJson.isEmpty()) {
+                try {
+                    float[] embedding = objectMapper.readValue(embeddingJson, float[].class);
+                    builder.embedding(embedding);
+                } catch (Exception e) {
+                    log.warn("解析embedding失败: {}", e.getMessage());
+                }
+            }
+
+            return builder.build();
+        };
     }
 }
