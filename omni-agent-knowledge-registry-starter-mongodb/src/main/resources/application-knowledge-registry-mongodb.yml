@@ -1,0 +1,20 @@
+# MongoDB Knowledge Registry 配置示例
+
+omni-agent:
+  knowledge-registry:
+    type: mongodb  # 使用 MongoDB 类型
+    mongodb:
+      collection-name: knowledge_domains  # 集合名称（默认值）
+
+# Spring Data MongoDB 配置
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/omni-agent
+      # 或者使用独立配置
+      # host: localhost
+      # port: 27017
+      # database: omni-agent
+      # username: your_username
+      # password: your_password
+

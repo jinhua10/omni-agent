@@ -131,6 +131,12 @@
 
         <!-- Knowledge Registry Starters ⭐ Phase 1 -->
         <module>omni-agent-knowledge-registry-starter-file</module>
+        <module>omni-agent-knowledge-registry-starter-mongodb</module>
+        <module>omni-agent-knowledge-registry-starter-redis</module>
+        <module>omni-agent-knowledge-registry-starter-memory</module>
+        <module>omni-agent-knowledge-registry-starter-elasticsearch</module>
+        <module>omni-agent-knowledge-registry-starter-h2</module>
+        <module>omni-agent-knowledge-registry-starter-sqlite</module>
     </modules>
 
     <!-- 开发者信息 -->
