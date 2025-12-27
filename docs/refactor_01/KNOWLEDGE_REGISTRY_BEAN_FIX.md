@@ -19,7 +19,7 @@ that could not be found.
 
 ## 修复方案
 
-### 创建 Spring Boot 自动配置注册文件
+### 步骤 1：创建 Spring Boot 自动配置注册文件
 
 **文件位置：**
 ```
@@ -30,8 +30,20 @@ omni-agent-knowledge-registry-starter-file/
 
 **文件内容：**
 ```properties
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-top.yumbo.ai.omni.knowledge.registry.file.FileKnowledgeRegistryAutoConfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=top.yumbo.ai.omni.knowledge.registry.file.FileKnowledgeRegistryAutoConfiguration
+```
+
+**注意：** 
+- 必须是单行，`=` 后面直接跟类的全限定名
+- 不要有多余的空行或换行符
+- 文件编码必须是 UTF-8
+
+### 步骤 2：重新编译和安装模块
+
+创建文件后，必须重新编译和安装模块：
+
+```bash
+mvn clean install -pl omni-agent-knowledge-registry-starter-file -am -DskipTests
 ```
 
 这样 Spring Boot 就能自动发现并加载 `FileKnowledgeRegistryAutoConfiguration`，从而创建 `KnowledgeRegistry` bean。
