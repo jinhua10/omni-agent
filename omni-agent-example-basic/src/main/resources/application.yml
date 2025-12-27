@@ -39,6 +39,19 @@ spring:
 # ========== OmniAgent 核心配置（按处理流程顺序）==========
 omni-agent:
 
+  # ========== 知识注册表配置 (Knowledge Registry) ==========
+  # 作用：管理知识域、角色、关联关系等元数据
+  # 支持多种后端：file, sqlite, h2, memory, redis, mongodb, elasticsearch
+  knowledge-registry:
+    # ========== 当前使用的后端类型 ==========
+    type: file
+
+    # ========== File 配置（推荐：简单、直接）==========
+    file:
+      base-path: ./data/knowledge-network/registry  # 存储路径
+      auto-create-directories: true                 # 自动创建目录
+      pretty-print: true                            # JSON 格式化输出
+
   # ========== 步骤1️⃣ 文档存储配置 (Document Storage) ==========
   # 作用：存储上传的原始文件和提取的文本
   # 位置：文档处理流程的第1步 - 文档上传和归档

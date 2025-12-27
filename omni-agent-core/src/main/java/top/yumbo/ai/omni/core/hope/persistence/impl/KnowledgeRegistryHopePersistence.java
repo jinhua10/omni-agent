@@ -2,8 +2,6 @@ package top.yumbo.ai.omni.core.hope.persistence.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.core.hope.model.QuestionTypeConfig;
 import top.yumbo.ai.omni.core.hope.persistence.HopePersistence;
 import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
@@ -22,7 +20,6 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @Slf4j
-@Component
 public class KnowledgeRegistryHopePersistence implements HopePersistence {
 
     private static final String HOPE_DOMAIN_ID = "hope-question-classifier";
@@ -33,7 +30,6 @@ public class KnowledgeRegistryHopePersistence implements HopePersistence {
     private final KnowledgeRegistry knowledgeRegistry;
     private final ObjectMapper objectMapper;
 
-    @Autowired
     public KnowledgeRegistryHopePersistence(KnowledgeRegistry knowledgeRegistry) {
         this.knowledgeRegistry = knowledgeRegistry;
         this.objectMapper = new ObjectMapper();
