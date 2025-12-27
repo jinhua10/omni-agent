@@ -10,3 +10,9 @@ omni-agent:
     thread-name-prefix: "CrossDomain-"  # 线程名称前缀
     query-timeout: 30           # 查询超时时间（秒）
 
+  # 查询结果缓存配置
+  query-cache:
+    enabled: true               # 是否启用缓存
+    max-size: 1000              # 最大缓存条目数
+    ttl-minutes: 30             # 缓存过期时间（分钟）
+

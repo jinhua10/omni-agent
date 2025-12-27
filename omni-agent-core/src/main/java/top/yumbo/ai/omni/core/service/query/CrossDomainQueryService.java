@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.core.config.CrossDomainQueryConfig;
 import top.yumbo.ai.omni.core.router.DomainRouter;
+import top.yumbo.ai.omni.core.service.cache.QueryResultCache;
+import top.yumbo.ai.omni.core.service.preference.UserPreferenceLearner;
+import top.yumbo.ai.omni.core.service.quality.DomainQualityScorer;
 import top.yumbo.ai.omni.core.service.rag.RAGServiceFactory;
 import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.rag.RagService;
@@ -44,6 +47,9 @@ public class CrossDomainQueryService {
     private final ResultReRanker resultReRanker;
     private final CrossDomainQueryConfig config;
     private final Executor executor;
+    private final DomainQualityScorer qualityScorer;
+    private final UserPreferenceLearner preferenceLearner;
+    private final QueryResultCache resultCache;
 
     @Autowired
     public CrossDomainQueryService(
@@ -53,7 +59,10 @@ public class CrossDomainQueryService {
             DomainWeightStrategy weightStrategy,
             ResultReRanker resultReRanker,
             CrossDomainQueryConfig config,
-            @Qualifier("crossDomainQueryExecutor") Executor executor) {
+            @Qualifier("crossDomainQueryExecutor") Executor executor,
+            DomainQualityScorer qualityScorer,
+            UserPreferenceLearner preferenceLearner,
+            QueryResultCache resultCache) {
         this.domainRouter = domainRouter;
         this.ragServiceFactory = ragServiceFactory;
         this.knowledgeRegistry = knowledgeRegistry;
@@ -61,17 +70,23 @@ public class CrossDomainQueryService {
         this.resultReRanker = resultReRanker;
         this.config = config;
         this.executor = executor;
+        this.qualityScorer = qualityScorer;
+        this.preferenceLearner = preferenceLearner;
+        this.resultCache = resultCache;
     }
 
     /**
-     * 跨域查询（并发优化版）
-     *
-     * @param query 查询文本
-     * @param maxResults 最大结果数
-     * @return 合并后的查询结果
+     * 跨域查询（并发优化版 + 缓存 + 质量评分）
      */
     public CrossDomainQueryResult crossDomainSearch(String query, int maxResults) {
-        log.info("🔍 跨域查询: query='{}', maxResults={}", query, maxResults);
+        return crossDomainSearchWithUser(query, maxResults, null);
+    }
+
+    /**
+     * 跨域查询（带用户ID，支持个性化）
+     */
+    public CrossDomainQueryResult crossDomainSearchWithUser(String query, int maxResults, String userId) {
+        log.info("🔍 跨域查询: query='{}', maxResults={}, userId={}", query, maxResults, userId);
 
         long startTime = System.currentTimeMillis();
 
@@ -86,31 +101,40 @@ public class CrossDomainQueryService {
             return buildEmptyResult(query, startTime);
         }
 
-        // 2. 计算每个域的权重
-        Map<String, Double> domainWeights = calculateDomainWeights(domainIds, query);
+        // 2. 尝试从缓存获取
+        List<Document> cachedResults = resultCache.get(query, domainIds);
+        if (cachedResults != null) {
+            long queryTime = System.currentTimeMillis() - startTime;
+            log.info("✅ 缓存命中，返回 {} 个结果，耗时 {}ms", cachedResults.size(), queryTime);
+            return buildCachedResult(query, domainIds, cachedResults, maxResults, queryTime, routeResult.getConfidence());
+        }
 
-        // 3. 并发查询所有域
-        Map<String, List<Document>> domainResults = queryAllDomainsConcurrently(
-                domainIds, query, maxResults, domainWeights);
+        // 3. 计算域权重（结合质量分数和用户偏好）
+        Map<String, Double> domainWeights = calculateDomainWeightsWithQuality(domainIds, query, userId);
 
-        // 4. 合并结果
+        // 4. 并发查询所有域
+        Map<String, List<Document>> domainResults = queryAllDomainsWithMetrics(
+                domainIds, query, maxResults, domainWeights, userId);
+
+        // 5-7. 合并、重排、去重
         List<Document> mergedResults = mergeResults(domainResults);
-
-        // 5. 使用改进的重排算法
         List<Document> rankedResults = resultReRanker.reRank(mergedResults, query, domainWeights);
-
-        // 6. 去重
         List<Document> dedupResults = deduplicateResults(rankedResults);
+        List<Document> finalResults = dedupResults.stream().limit(maxResults).collect(Collectors.toList());
 
-        // 7. 截取最终结果
-        List<Document> finalResults = dedupResults.stream()
-                .limit(maxResults)
-                .collect(Collectors.toList());
+        // 8. 存入缓存
+        resultCache.put(query, domainIds, finalResults);
 
         long queryTime = System.currentTimeMillis() - startTime;
+        log.info("✅ 跨域查询完成: {} 个域, {} 个结果, {}ms", domainIds.size(), finalResults.size(), queryTime);
 
-        log.info("✅ 跨域查询完成: 查询了 {} 个域, 返回 {} 个结果, 耗时 {}ms",
-                domainIds.size(), finalResults.size(), queryTime);
+        // 9. 记录用户查询
+        if (userId != null) {
+            for (String domainId : domainIds) {
+                int resultCount = domainResults.getOrDefault(domainId, Collections.emptyList()).size();
+                preferenceLearner.recordQuery(userId, query, domainId, resultCount);
+            }
+        }
 
         return CrossDomainQueryResult.builder()
                 .query(query)
@@ -121,6 +145,7 @@ public class CrossDomainQueryService {
                 .results(finalResults)
                 .queryTime(queryTime)
                 .routeConfidence(routeResult.getConfidence())
+                .fromCache(false)
                 .build();
     }
 
@@ -143,6 +168,47 @@ public class CrossDomainQueryService {
                     weights.put(domainId, weight);
                 } else {
                     weights.put(domainId, 1.0); // 默认权重
+                }
+            } catch (Exception e) {
+                log.warn("   计算域 {} 权重失败: {}", domainId, e.getMessage());
+                weights.put(domainId, 1.0);
+            }
+        }
+
+        return weights;
+    }
+
+    /**
+     * 计算域权重（结合质量分数和用户偏好）
+     */
+    private Map<String, Double> calculateDomainWeightsWithQuality(List<String> domainIds, String query, String userId) {
+        Map<String, Double> weights = new HashMap<>();
+
+        for (String domainId : domainIds) {
+            try {
+                var domain = knowledgeRegistry.findDomainById(domainId).orElse(null);
+                if (domain != null) {
+                    // 基础权重
+                    double baseWeight = weightStrategy.calculateDomainWeight(
+                            domainId, domain.getDomainType(), query, null);
+
+                    // 质量分数
+                    double qualityScore = qualityScorer.calculateQualityScore(domainId);
+
+                    // 用户偏好权重
+                    double preferenceWeight = 1.0;
+                    if (userId != null) {
+                        preferenceWeight = preferenceLearner.getDomainPreferenceWeight(userId, domainId);
+                    }
+
+                    // 综合权重
+                    double finalWeight = baseWeight * qualityScore * preferenceWeight;
+                    weights.put(domainId, finalWeight);
+
+                    log.debug("   域 {} 综合权重: {:.2f} (基础:{:.2f}, 质量:{:.2f}, 偏好:{:.2f})",
+                            domainId, finalWeight, baseWeight, qualityScore, preferenceWeight);
+                } else {
+                    weights.put(domainId, 1.0);
                 }
             } catch (Exception e) {
                 log.warn("   计算域 {} 权重失败: {}", domainId, e.getMessage());
@@ -221,6 +287,65 @@ public class CrossDomainQueryService {
     }
 
     /**
+     * 并发查询所有域（带性能指标记录）
+     */
+    private Map<String, List<Document>> queryAllDomainsWithMetrics(
+            List<String> domainIds, String query, int maxResults,
+            Map<String, Double> domainWeights, String userId) {
+
+        Map<String, List<Document>> results = new ConcurrentHashMap<>();
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        for (String domainId : domainIds) {
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                long queryStart = System.currentTimeMillis();
+                try {
+                    RagService ragService = ragServiceFactory.getOrCreateRAGService(domainId);
+
+                    double weight = domainWeights.getOrDefault(domainId, 1.0);
+                    int adjustedLimit = (int) Math.ceil(maxResults * weight);
+                    adjustedLimit = Math.min(adjustedLimit, maxResults * 2);
+
+                    List<Document> domainResults = ragService.semanticSearch(query, adjustedLimit);
+
+                    domainResults.forEach(doc -> {
+                        if (doc.getMetadata() == null) {
+                            doc.setMetadata(new HashMap<>());
+                        }
+                        doc.getMetadata().put("sourceDomain", domainId);
+                        doc.getMetadata().put("domainWeight", weight);
+                    });
+
+                    results.put(domainId, domainResults);
+
+                    // 记录性能指标
+                    long responseTime = System.currentTimeMillis() - queryStart;
+                    qualityScorer.recordQuery(domainId, domainResults.size(), responseTime);
+
+                } catch (Exception e) {
+                    log.error("   域 {} 查询失败: {}", domainId, e.getMessage());
+                    results.put(domainId, Collections.emptyList());
+                    qualityScorer.recordQuery(domainId, 0, System.currentTimeMillis() - queryStart);
+                }
+            }, executor);
+
+            futures.add(future);
+        }
+
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .get(config.getQueryTimeout(), TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            log.warn("   部分域查询超时");
+            futures.forEach(f -> f.cancel(true));
+        } catch (Exception e) {
+            log.error("   等待查询完成时出错: {}", e.getMessage());
+        }
+
+        return results;
+    }
+
+    /**
      * 合并多个域的结果
      */
     private List<Document> mergeResults(Map<String, List<Document>> domainResults) {
@@ -277,6 +402,23 @@ public class CrossDomainQueryService {
     }
 
     /**
+     * 构建缓存结果
+     */
+    private CrossDomainQueryResult buildCachedResult(
+            String query, List<String> domainIds, List<Document> cachedResults,
+            int maxResults, long queryTime, double confidence) {
+        return CrossDomainQueryResult.builder()
+                .query(query)
+                .totalDomains(domainIds.size())
+                .queriedDomains(domainIds)
+                .results(cachedResults.stream().limit(maxResults).collect(Collectors.toList()))
+                .queryTime(queryTime)
+                .routeConfidence(confidence)
+                .fromCache(true)
+                .build();
+    }
+
+    /**
      * 跨域查询结果
      */
     @lombok.Data
@@ -305,6 +447,9 @@ public class CrossDomainQueryService {
 
         /** 路由置信度 */
         private double routeConfidence;
+
+        /** 是否来自缓存 */
+        private boolean fromCache;
 
         /** 是否跨域查询 */
         public boolean isCrossDomain() {
