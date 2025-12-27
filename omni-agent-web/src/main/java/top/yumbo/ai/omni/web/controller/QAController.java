@@ -2,10 +2,14 @@ package top.yumbo.ai.omni.web.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.core.qa.model.IntelligentQARequest;
+import top.yumbo.ai.omni.core.qa.model.IntelligentQAResponse;
+import top.yumbo.ai.omni.core.qa.service.IntelligentQAService;
 import top.yumbo.ai.omni.core.role.Role;
 import top.yumbo.ai.omni.core.role.RoleService;
 import top.yumbo.ai.omni.web.dto.ApiDtos.*;
@@ -25,6 +29,7 @@ import java.util.Map;
  *   <li>none - 直接 LLM 回答（不使用知识库）</li>
  *   <li>rag - 传统 RAG 检索回答</li>
  *   <li>role - 角色知识库回答</li>
+ *   <li>intelligent - 智能问答模式（Phase 3 新增）</li>
  * </ul>
  *
  * @author OmniAgent Team
@@ -39,6 +44,9 @@ public class QAController {
     private final AIService aiService;
     private final RagService ragService;
     private final RoleService roleService;
+
+    @Autowired(required = false)
+    private IntelligentQAService intelligentQAService;
 
     /**
      * 智能问答（统一入口）
@@ -316,6 +324,89 @@ public class QAController {
         } catch (Exception ex) {
             log.error("❌ 发送错误消息失败: {}", ex.getMessage());
         }
+    }
+
+    // ========== Phase 3: 智能问答系统 ==========
+
+    /**
+     * 智能问答（Phase 3 新增）
+     *
+     * <p>特性：</p>
+     * <ul>
+     *   <li>自动意图分析</li>
+     *   <li>智能知识检索</li>
+     *   <li>知识缺口检测</li>
+     *   <li>交互式学习</li>
+     *   <li>多轮对话支持</li>
+     * </ul>
+     *
+     * @param request 智能问答请求
+     * @return 智能问答响应
+     */
+    @PostMapping("/intelligent")
+    public Map<String, Object> intelligentAsk(@RequestBody Map<String, String> request) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 检查服务是否可用
+            if (intelligentQAService == null) {
+                result.put("status", "error");
+                result.put("error", "IntelligentQAService not available");
+                result.put("message", "智能问答服务未启用，请检查配置");
+                return result;
+            }
+
+            // 构建请求
+            IntelligentQARequest qaRequest = IntelligentQARequest.builder()
+                    .question(request.get("question"))
+                    .conversationId(request.get("conversationId"))
+                    .userId(request.get("userId"))
+                    .build();
+
+            log.info("🤖 智能问答请求: question={}, conversationId={}",
+                    qaRequest.getQuestion(), qaRequest.getConversationId());
+
+            // 调用智能问答服务
+            IntelligentQAResponse response = intelligentQAService.ask(qaRequest);
+
+            // 构建响应
+            result.put("status", "success");
+            result.put("conversationId", response.getConversationId());
+            result.put("question", response.getQuestion());
+            result.put("answer", response.getAnswer());
+            result.put("hasKnowledge", response.getHasKnowledge());
+            result.put("knowledgeSufficient", response.getKnowledgeSufficient());
+            result.put("needsMoreInfo", response.getNeedsMoreInfo());
+            result.put("model", aiService.getCurrentModel());
+
+            // 添加意图分析信息
+            if (response.getIntent() != null) {
+                Map<String, Object> intentInfo = new HashMap<>();
+                intentInfo.put("intent", response.getIntent().getIntent());
+                intentInfo.put("entities", response.getIntent().getEntities());
+                intentInfo.put("techStack", response.getIntent().getTechStack());
+                intentInfo.put("missingInfo", response.getIntent().getMissingInfo());
+                intentInfo.put("confidence", response.getIntent().getConfidence());
+                result.put("intentAnalysis", intentInfo);
+            }
+
+            // 添加参考文档
+            if (response.getReferences() != null && !response.getReferences().isEmpty()) {
+                result.put("referenceCount", response.getReferences().size());
+                result.put("references", response.getReferences());
+            }
+
+            log.info("✅ 智能问答完成: needsMoreInfo={}, referencesCount={}",
+                    response.getNeedsMoreInfo(),
+                    response.getReferences() != null ? response.getReferences().size() : 0);
+
+        } catch (Exception e) {
+            log.error("❌ 智能问答失败", e);
+            result.put("status", "error");
+            result.put("error", e.getMessage());
+        }
+
+        return result;
     }
 }
 
