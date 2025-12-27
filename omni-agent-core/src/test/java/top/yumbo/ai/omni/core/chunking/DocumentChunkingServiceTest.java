@@ -11,6 +11,7 @@ import top.yumbo.ai.omni.storage.api.model.Chunk;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -38,8 +39,8 @@ class DocumentChunkingServiceTest {
         MockitoAnnotations.openMocks(this);
         chunkingService = new DocumentChunkingService(storageService, strategyManager);
 
-        // Mock strategyManager 的默认行为：使用简单的固定大小分块
-        when(strategyManager.chunkWithAutoStrategy(anyString(), anyString(), anyString()))
+        // Mock strategyManager.chunkWithAutoStrategy 的默认行为：使用简单的固定大小分块
+        when(strategyManager.chunkWithAutoStrategy(anyString(), anyString(), nullable(String.class)))
             .thenAnswer(invocation -> {
                 String docId = invocation.getArgument(0);
                 String content = invocation.getArgument(1);
@@ -68,6 +69,48 @@ class DocumentChunkingServiceTest {
                         .build());
 
                     pos = end;
+                }
+
+                return chunks;
+            });
+
+        // Mock strategyManager.chunkWithStrategy（用于自定义分块大小的测试）
+        when(strategyManager.chunkWithStrategy(anyString(), anyString(), eq("fixed_size"), anyMap()))
+            .thenAnswer(invocation -> {
+                String docId = invocation.getArgument(0);
+                String content = invocation.getArgument(1);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> params = invocation.getArgument(3);
+
+                if (content == null || content.isEmpty()) {
+                    return List.of();
+                }
+
+                int chunkSize = (int) params.getOrDefault("chunkSize", 500);
+                int overlapSize = (int) params.getOrDefault("overlapSize", 0);
+
+                List<Chunk> chunks = new ArrayList<>();
+                int pos = 0;
+                int sequence = 0;
+
+                while (pos < content.length()) {
+                    int end = Math.min(pos + chunkSize, content.length());
+                    String chunkContent = content.substring(pos, end);
+
+                    chunks.add(Chunk.builder()
+                        .documentId(docId)
+                        .content(chunkContent)
+                        .sequence(sequence++)
+                        .startPosition(pos)
+                        .endPosition(end)
+                        .createdAt(System.currentTimeMillis())
+                        .build());
+
+                    pos = end;
+                    if (pos < content.length() && overlapSize > 0) {
+                        pos -= overlapSize; // 应用重叠
+                        if (pos < 0) pos = 0;
+                    }
                 }
 
                 return chunks;
