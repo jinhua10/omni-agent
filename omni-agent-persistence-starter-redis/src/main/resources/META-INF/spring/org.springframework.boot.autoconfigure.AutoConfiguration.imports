@@ -1,2 +1,2 @@
-top.yumbo.ai.persistence.redis.RedisPersistenceAutoConfiguration
+top.yumbo.ai.omni.persistence.redis.RedisPersistenceAutoConfiguration
 

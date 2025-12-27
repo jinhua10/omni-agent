@@ -12,7 +12,7 @@ import top.yumbo.ai.omni.core.evolution.ConceptVersion;
 import top.yumbo.ai.omni.core.feedback.FeedbackService;
 import top.yumbo.ai.omni.core.knowledge.KnowledgeLoader;
 import top.yumbo.ai.omni.core.role.RoleService;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.ArrayList;
 import java.util.Arrays;

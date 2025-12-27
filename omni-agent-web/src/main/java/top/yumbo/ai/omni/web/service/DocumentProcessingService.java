@@ -8,9 +8,11 @@ import org.springframework.stereotype.Service;
 import top.yumbo.ai.ai.api.EmbeddingService;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
+import top.yumbo.ai.omni.storage.api.model.Chunk;
+import top.yumbo.ai.omni.storage.api.model.Image;
 import top.yumbo.ai.omni.web.websocket.DocumentProcessingWebSocketHandler;
 import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -593,7 +595,7 @@ public class DocumentProcessingService {
                 }
 
                 // ⭐ 5. 构建 Image 对象
-                top.yumbo.ai.storage.api.model.Image image = top.yumbo.ai.storage.api.model.Image.builder()
+                Image image = Image.builder()
                         .documentId(documentId)
                         .data(imageData)
                         .format(format)
@@ -698,7 +700,7 @@ public class DocumentProcessingService {
     /**
      * 保存分块到存储服务 ⭐
      */
-    private void saveChunksToStorage(String documentId, List<top.yumbo.ai.storage.api.model.Chunk> chunks) {
+    private void saveChunksToStorage(String documentId, List<Chunk> chunks) {
         if (chunks == null || chunks.isEmpty()) {
             log.warn("⚠️ 分块列表为空，跳过保存");
             return;
@@ -757,7 +759,7 @@ public class DocumentProcessingService {
 
             // ⭐ 2. 批量生成向量
             List<String> texts = chunks.stream()
-                    .map(top.yumbo.ai.storage.api.model.Chunk::getContent)
+                    .map(Chunk::getContent)
                     .collect(java.util.stream.Collectors.toList());
 
             List<float[]> embeddings = embeddingService.embedBatch(texts);

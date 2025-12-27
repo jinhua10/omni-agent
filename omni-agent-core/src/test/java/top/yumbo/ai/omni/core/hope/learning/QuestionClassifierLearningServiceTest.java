@@ -8,8 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
 import org.mockito.junit.jupiter.MockitoSettings;
-import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
-import top.yumbo.ai.persistence.api.model.QuestionTypeConfig;
+import top.yumbo.ai.omni.persistence.api.QuestionClassifierPersistence;
+import top.yumbo.ai.omni.persistence.api.model.QuestionTypeConfig;
 
 import java.util.ArrayList;
 import java.util.List;

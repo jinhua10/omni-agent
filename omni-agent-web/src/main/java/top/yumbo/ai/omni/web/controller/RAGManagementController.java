@@ -8,7 +8,7 @@ import top.yumbo.ai.omni.web.dto.DocumentRequest;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
 import top.yumbo.ai.rag.api.model.SearchResult;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.HashMap;
 import java.util.List;

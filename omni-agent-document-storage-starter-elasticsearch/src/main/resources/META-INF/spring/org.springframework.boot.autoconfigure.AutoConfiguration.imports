@@ -1,2 +1,2 @@
-top.yumbo.ai.storage.elasticsearch.ElasticsearchDocumentStorageAutoConfiguration
+top.yumbo.ai.omni.storage.elasticsearch.ElasticsearchDocumentStorageAutoConfiguration
 

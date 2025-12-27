@@ -3,10 +3,9 @@ package top.yumbo.ai.omni.core.optimization;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.storage.api.model.OptimizationType;
+import top.yumbo.ai.omni.storage.api.model.OptimizationType;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 自动算法选择引擎

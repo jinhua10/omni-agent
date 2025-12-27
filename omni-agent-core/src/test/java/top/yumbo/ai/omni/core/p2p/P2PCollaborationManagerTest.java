@@ -7,9 +7,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import top.yumbo.ai.p2p.api.model.ConnectionCode;
-import top.yumbo.ai.p2p.api.model.PeerConnection;
-import top.yumbo.ai.p2p.api.model.SharedKnowledge;
+import top.yumbo.ai.omni.p2p.api.model.ConnectionCode;
+import top.yumbo.ai.omni.p2p.api.model.PeerConnection;
+import top.yumbo.ai.omni.p2p.api.model.SharedKnowledge;
 
 import java.time.LocalDateTime;
 import java.util.List;

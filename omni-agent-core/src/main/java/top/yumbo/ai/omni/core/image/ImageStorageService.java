@@ -3,8 +3,8 @@ package top.yumbo.ai.omni.core.image;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.storage.api.DocumentStorageService;
-import top.yumbo.ai.storage.api.model.Image;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.model.Image;
 
 import java.util.List;
 import java.util.Optional;

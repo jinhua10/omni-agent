@@ -10,9 +10,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
 import top.yumbo.ai.omni.web.util.FileStorageUtil;
 import top.yumbo.ai.rag.api.model.SearchResult;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.rag.api.RAGService;
 import top.yumbo.ai.rag.api.model.Document;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
@@ -680,7 +681,7 @@ public class DocumentManagementController {
         try {
             log.info("获取文档列表: keyword={}, page={}, pageSize={}", keyword, page, pageSize);
 
-            List<top.yumbo.ai.storage.api.model.DocumentMetadata> metadataList;
+            List<DocumentMetadata> metadataList;
             long totalCount;
 
             // 从 DocumentStorageService 获取文档列表 ⭐

@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
+import top.yumbo.ai.omni.persistence.api.QuestionClassifierPersistence;
 import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -2,7 +2,7 @@ package top.yumbo.ai.omni.core.chunking.strategy;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.*;
 import java.util.regex.Matcher;

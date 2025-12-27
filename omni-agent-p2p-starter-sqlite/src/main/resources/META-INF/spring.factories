@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-top.yumbo.ai.p2p.starter.sqlite.SqliteP2PAutoConfiguration
+top.yumbo.ai.omni.p2p.starter.sqlite.SqliteP2PAutoConfiguration

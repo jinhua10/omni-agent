@@ -1,2 +1,2 @@
-top.yumbo.ai.storage.minio.MinIODocumentStorageAutoConfiguration
+top.yumbo.ai.omni.storage.minio.MinIODocumentStorageAutoConfiguration
 

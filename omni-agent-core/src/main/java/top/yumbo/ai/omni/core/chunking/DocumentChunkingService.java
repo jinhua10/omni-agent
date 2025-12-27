@@ -3,8 +3,8 @@ package top.yumbo.ai.omni.core.chunking;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.storage.api.DocumentStorageService;
-import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.ArrayList;
 import java.util.List;

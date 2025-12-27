@@ -4,8 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.core.optimization.RAGOptimizationService;
-import top.yumbo.ai.storage.api.model.OptimizationData;
-import top.yumbo.ai.storage.api.model.OptimizationType;
+import top.yumbo.ai.omni.storage.api.model.OptimizationData;
+import top.yumbo.ai.omni.storage.api.model.OptimizationType;
 
 import java.util.*;
 

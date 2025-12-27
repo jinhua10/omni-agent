@@ -96,7 +96,7 @@ PPL是一种程序化生成高质量提示词的机制，将提示词作为"代�
 top.yumbo.ai.omni.core.ppl.PPLStorageService
 
 // PPL数据模型
-top.yumbo.ai.storage.api.model.PPLData
+model.top.yumbo.ai.omni.storage.api.PPLData
 ├── documentId: String      - 文档ID
 ├── analyzedAt: Long        - 分析时间
 ├── metadata: Map          - 元数据
@@ -260,7 +260,7 @@ public class BusinessPPLTemplate {
 top.yumbo.ai.omni.core.chunking.DocumentChunkingService
 
 // 分块模型
-top.yumbo.ai.storage.api.model.Chunk
+model.top.yumbo.ai.omni.storage.api.Chunk
 ├── chunkId: String        - 分块ID
 ├── documentId: String     - 文档ID
 ├── content: String        - 分块内容

@@ -2,8 +2,8 @@ package top.yumbo.ai.p2p.core;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import top.yumbo.ai.p2p.api.P2PConnection;
-import top.yumbo.ai.p2p.api.P2PEndpointDiscovery;
+import top.yumbo.ai.omni.p2p.api.P2PConnection;
+import top.yumbo.ai.omni.p2p.api.P2PEndpointDiscovery;
 
 import java.util.Optional;
 

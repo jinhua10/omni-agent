@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.web.model.ApiResponse;
 import top.yumbo.ai.omni.web.model.DocumentProcessStep;
 import top.yumbo.ai.omni.web.service.SystemRAGConfigService;
@@ -42,7 +43,7 @@ public class DocumentProcessingController {
     private final top.yumbo.ai.omni.web.service.DocumentProcessingService processingService;
     private final top.yumbo.ai.omni.core.document.DocumentProcessorManager documentProcessorManager;
     private final top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager chunkingStrategyManager;
-    private final top.yumbo.ai.storage.api.DocumentStorageService storageService;
+    private final DocumentStorageService storageService;
     private final top.yumbo.ai.omni.core.document.service.DocumentExtractionResultService extractionResultService;
 
     /**

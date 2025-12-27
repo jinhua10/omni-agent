@@ -3,9 +3,9 @@ package top.yumbo.ai.p2p.core;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.p2p.api.P2PConnection;
-import top.yumbo.ai.p2p.api.P2PEndpointDiscovery;
-import top.yumbo.ai.p2p.api.P2PSecureHandshake;
+import top.yumbo.ai.omni.p2p.api.P2PConnection;
+import top.yumbo.ai.omni.p2p.api.P2PEndpointDiscovery;
+import top.yumbo.ai.omni.p2p.api.P2PSecureHandshake;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;

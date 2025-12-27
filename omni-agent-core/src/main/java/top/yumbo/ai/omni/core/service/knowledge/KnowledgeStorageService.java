@@ -1,17 +1,22 @@
 package top.yumbo.ai.omni.core.service.knowledge;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
 import top.yumbo.ai.omni.core.model.RefinedKnowledge;
+import top.yumbo.ai.omni.core.service.rag.RAGServiceFactory;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 知识存储服务
@@ -23,10 +28,16 @@ import java.nio.file.StandardOpenOption;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KnowledgeStorageService {
 
     private final KnowledgeRegistry knowledgeRegistry;
+
+    @Autowired(required = false)
+    private RAGServiceFactory ragServiceFactory;
+
+    public KnowledgeStorageService(KnowledgeRegistry knowledgeRegistry) {
+        this.knowledgeRegistry = knowledgeRegistry;
+    }
 
     /**
      * 存储提炼的知识到角色知识域
@@ -45,9 +56,12 @@ public class KnowledgeStorageService {
             // 2. 存储到文件系统（基础实现）
             storeToFileSystem(knowledge, domain);
 
-            // TODO: 实际应用中还应该：
-            // 3. 索引到 RAG 向量数据库
-            // indexToRAG(knowledge, domain);
+            // 3. 索引到 RAG 向量数据库（如果可用）
+            if (ragServiceFactory != null && ragServiceFactory.isRAGServiceAvailable()) {
+                indexToRAG(knowledge, domain);
+            } else {
+                log.warn("RAG服务不可用，跳过向量索引");
+            }
 
             log.info("✅ 知识存储成功: {}", knowledge.getKnowledgeId());
 
@@ -100,11 +114,11 @@ public class KnowledgeStorageService {
         return String.format("""
                 # %s
                 
-                **知识ID：** `%s`  
-                **来源域：** %s  
-                **原始文档：** %s  
-                **知识类型：** %s  
-                **重要性：** %s ⭐  
+                **知识ID：** `%s`
+                **来源域：** %s
+                **原始文档：** %s
+                **知识类型：** %s
+                **重要性：** %s ⭐
                 
                 ---
                 
@@ -145,14 +159,59 @@ public class KnowledgeStorageService {
     }
 
     /**
-     * 索引到 RAG（占位方法）
+     * 索引到 RAG
      */
     private void indexToRAG(RefinedKnowledge knowledge, KnowledgeDomain domain) {
-        // TODO: 实际应用中应该：
-        // 1. 获取域的 RAG 服务
-        // 2. 将知识转换为向量
-        // 3. 索引到向量数据库
-        log.info("TODO: 索引知识到 RAG - {}", knowledge.getKnowledgeId());
+        try {
+            log.info("开始索引知识到RAG: {}", knowledge.getKnowledgeId());
+
+            // 1. 获取域的 RAG 服务
+            RagService ragService = ragServiceFactory.getOrCreateRAGService(domain.getDomainId());
+
+            // 2. 将知识转换为 RAG 文档
+            Document ragDocument = convertToRAGDocument(knowledge, domain);
+
+            // 3. 索引到向量数据库（使用 batchIndex）
+            ragService.batchIndex(java.util.List.of(ragDocument));
+
+            log.info("✅ 知识已索引到RAG: knowledgeId={}",
+                    knowledge.getKnowledgeId());
+
+        } catch (Exception e) {
+            log.error("索引知识到RAG失败: {}", knowledge.getKnowledgeId(), e);
+            // 不抛出异常，RAG索引失败不应阻止知识存储
+        }
+    }
+
+    /**
+     * 将精炼知识转换为 RAG 文档
+     */
+    private Document convertToRAGDocument(RefinedKnowledge knowledge, KnowledgeDomain domain) {
+        // 构建文档内容（包含标题和内容）
+        String fullContent = String.format("%s\n\n%s",
+                knowledge.getTitle(),
+                knowledge.getRefinedContent());
+
+        // 构建元数据
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("knowledgeId", knowledge.getKnowledgeId());
+        metadata.put("knowledgeType", knowledge.getKnowledgeType());
+        metadata.put("title", knowledge.getTitle());
+        metadata.put("sourceDocumentId", knowledge.getSourceDocumentId());
+        metadata.put("sourceDomainId", knowledge.getSourceDomainId());
+        metadata.put("roleDomainId", domain.getDomainId());
+        metadata.put("roleId", knowledge.getRoleId());
+        metadata.put("importance", knowledge.getImportance());
+        metadata.put("createdAt", java.time.LocalDateTime.now().toString());
+
+        // 构建 RAG 文档
+        return Document.builder()
+                .id(knowledge.getKnowledgeId())
+                .content(fullContent)
+                .title(knowledge.getTitle())
+                .metadata(metadata)
+                .createdAt(System.currentTimeMillis())
+                .build();
     }
 
     /**

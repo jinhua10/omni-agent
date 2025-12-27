@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.validation.constraints.NotBlank;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
@@ -40,7 +38,6 @@ public class Document implements Serializable {
     /**
      * 文档内容
      */
-    @NotBlank(message = "文档内容不能为空")
     private String content;
 
     /**

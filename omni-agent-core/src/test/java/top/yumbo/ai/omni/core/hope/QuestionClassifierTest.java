@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
-import top.yumbo.ai.persistence.api.model.QuestionTypeConfig;
+import top.yumbo.ai.omni.persistence.api.QuestionClassifierPersistence;
+import top.yumbo.ai.omni.persistence.api.model.QuestionTypeConfig;
 
 import java.util.*;
 

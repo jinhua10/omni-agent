@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.core.chunking.strategy.ChunkingStrategy;
-import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

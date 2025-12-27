@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.core.document.model.DocumentExtractionResult;
 import top.yumbo.ai.omni.core.document.service.DocumentExtractionResultService;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.*;
 import java.util.stream.Collectors;

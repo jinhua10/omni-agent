@@ -5,10 +5,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import top.yumbo.ai.p2p.api.P2PConnection;
-import top.yumbo.ai.p2p.api.P2PConnectionManager;
-import top.yumbo.ai.p2p.api.P2PDataTransferService;
-import top.yumbo.ai.p2p.api.P2PTransferBridge;
+import top.yumbo.ai.omni.p2p.api.P2PConnection;
+import top.yumbo.ai.omni.p2p.api.P2PConnectionManager;
+import top.yumbo.ai.omni.p2p.api.P2PDataTransferService;
+import top.yumbo.ai.omni.p2p.api.P2PTransferBridge;
 import top.yumbo.ai.p2p.core.DefaultP2PConnectionManager;
 import top.yumbo.ai.p2p.core.DefaultP2PTransferBridge;
 

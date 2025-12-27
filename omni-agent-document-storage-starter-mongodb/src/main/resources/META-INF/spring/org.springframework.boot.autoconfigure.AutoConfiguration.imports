@@ -1,2 +1,2 @@
-top.yumbo.ai.storage.mongodb.MongoDBDocumentStorageAutoConfiguration
+top.yumbo.ai.omni.storage.mongodb.MongoDBDocumentStorageAutoConfiguration
 

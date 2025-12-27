@@ -2,10 +2,10 @@ package top.yumbo.ai.omni.core.voting;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.voting.api.VotingService;
-import top.yumbo.ai.voting.api.model.Vote;
-import top.yumbo.ai.voting.api.model.VotingResult;
-import top.yumbo.ai.voting.api.model.VotingSession;
+import top.yumbo.ai.omni.voting.api.VotingService;
+import top.yumbo.ai.omni.voting.api.model.Vote;
+import top.yumbo.ai.omni.voting.api.model.VotingResult;
+import top.yumbo.ai.omni.voting.api.model.VotingSession;
 
 import java.time.LocalDateTime;
 import java.util.*;

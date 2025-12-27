@@ -1,2 +1,2 @@
-top.yumbo.ai.storage.redis.RedisDocumentStorageAutoConfiguration
+top.yumbo.ai.omni.storage.redis.RedisDocumentStorageAutoConfiguration
 

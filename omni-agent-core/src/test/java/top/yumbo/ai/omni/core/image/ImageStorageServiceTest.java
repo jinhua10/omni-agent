@@ -4,8 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import top.yumbo.ai.storage.api.DocumentStorageService;
-import top.yumbo.ai.storage.api.model.Image;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.model.Image;
 
 import java.util.Arrays;
 import java.util.List;

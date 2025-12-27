@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import top.yumbo.ai.p2p.api.*;
+import top.yumbo.ai.omni.p2p.api.P2PConnection;
+import top.yumbo.ai.omni.p2p.api.P2PDataTransferService;
+import top.yumbo.ai.omni.p2p.api.P2PTransferBridge;
 
 import java.util.*;
 

@@ -1,6 +1,6 @@
 package top.yumbo.ai.omni.core.chunking.strategy;
 
-import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.List;
 import java.util.Map;

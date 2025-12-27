@@ -3,8 +3,8 @@ package top.yumbo.ai.omni.core.hope.learning;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
-import top.yumbo.ai.persistence.api.model.QuestionTypeConfig;
+import top.yumbo.ai.omni.persistence.api.QuestionClassifierPersistence;
+import top.yumbo.ai.omni.persistence.api.model.QuestionTypeConfig;
 
 import java.util.*;
 

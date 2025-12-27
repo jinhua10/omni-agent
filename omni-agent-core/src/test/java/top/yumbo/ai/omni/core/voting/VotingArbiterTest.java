@@ -3,10 +3,10 @@ package top.yumbo.ai.omni.core.voting;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
-import top.yumbo.ai.voting.api.model.Vote;
-import top.yumbo.ai.voting.api.model.VoterType;
-import top.yumbo.ai.voting.api.model.VotingResult;
-import top.yumbo.ai.voting.api.model.VotingSession;
+import top.yumbo.ai.omni.voting.api.model.Vote;
+import top.yumbo.ai.omni.voting.api.model.VoterType;
+import top.yumbo.ai.omni.voting.api.model.VotingResult;
+import top.yumbo.ai.omni.voting.api.model.VotingSession;
 
 import java.util.List;
 import java.util.Map;

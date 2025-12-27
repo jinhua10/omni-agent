@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.marketplace.security.SecureRemoteExecutor;
 import top.yumbo.ai.omni.marketplace.security.SecureScriptExecutor;
-import top.yumbo.ai.storage.api.model.OptimizationData;
+import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

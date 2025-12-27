@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.web.model.ApiResponse;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
-import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-top.yumbo.ai.rag.file.FileRAGAutoConfiguration
+top.yumbo.ai.omni.rag.file.FileRAGAutoConfiguration

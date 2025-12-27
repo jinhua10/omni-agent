@@ -5,7 +5,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import top.yumbo.ai.p2p.api.*;
+import top.yumbo.ai.omni.p2p.api.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -227,7 +227,7 @@ public class P2PSecureConnectionExample {
             query.put("limit", 100);
 
             try {
-                P2PDataTransferService.TransferResult result = 
+                P2PDataTransferService.TransferResult result =
                         connectionManager.transferThroughConnection(
                                 secureConnection.getConnectionId(),
                                 query,

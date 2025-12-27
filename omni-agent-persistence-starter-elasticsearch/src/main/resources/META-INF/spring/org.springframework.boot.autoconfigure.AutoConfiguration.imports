@@ -1,2 +1,2 @@
-top.yumbo.ai.persistence.elasticsearch.ElasticsearchPersistenceAutoConfiguration
+top.yumbo.ai.omni.persistence.elasticsearch.ElasticsearchPersistenceAutoConfiguration
 

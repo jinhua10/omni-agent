@@ -4,11 +4,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import top.yumbo.ai.p2p.api.P2PDataTransferService;
-import top.yumbo.ai.p2p.api.P2PTransferBridge;
+import top.yumbo.ai.omni.p2p.api.P2PDataTransferService;
+import top.yumbo.ai.omni.p2p.api.P2PTransferBridge;
 
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * H2 P2P数据传输示例

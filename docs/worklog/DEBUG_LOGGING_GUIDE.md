@@ -166,7 +166,7 @@ logging:
 ```yaml
 logging:
   level:
-    top.yumbo.ai.rag.sqlite.SQLiteRAGService: DEBUG
+    top.yumbo.ai.omni.rag.sqlite.SQLiteRAGService: DEBUG
     top.yumbo.ai.omni.core.query.QueryService: DEBUG
 ```
 
@@ -248,7 +248,7 @@ logging:
 ```yaml
 logging:
   level:
-    top.yumbo.ai.rag.sqlite.SQLiteRAGService: DEBUG
+    top.yumbo.ai.omni.rag.sqlite.SQLiteRAGService: DEBUG
     top.yumbo.ai.omni.core.query.QueryService: DEBUG
 ```
 

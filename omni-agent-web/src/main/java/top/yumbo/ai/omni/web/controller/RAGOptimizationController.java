@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.core.optimization.AutoOptimizationSelector;
 import top.yumbo.ai.omni.core.optimization.AutoOptimizationSelector.*;
 import top.yumbo.ai.omni.core.optimization.RAGOptimizationService;
-import top.yumbo.ai.storage.api.model.OptimizationData;
+import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 
 import java.util.List;
 import java.util.Map;

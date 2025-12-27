@@ -1,3 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-top.yumbo.ai.p2p.starter.memory.P2PMemoryAutoConfiguration
+top.yumbo.ai.omni.p2p.starter.memory.P2PMemoryAutoConfiguration
 

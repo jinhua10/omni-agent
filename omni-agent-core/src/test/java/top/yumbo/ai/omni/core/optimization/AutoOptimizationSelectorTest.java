@@ -3,7 +3,7 @@ package top.yumbo.ai.omni.core.optimization;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import top.yumbo.ai.omni.core.optimization.AutoOptimizationSelector.*;
-import top.yumbo.ai.storage.api.model.OptimizationType;
+import top.yumbo.ai.omni.storage.api.model.OptimizationType;
 
 import java.util.Arrays;
 import java.util.List;

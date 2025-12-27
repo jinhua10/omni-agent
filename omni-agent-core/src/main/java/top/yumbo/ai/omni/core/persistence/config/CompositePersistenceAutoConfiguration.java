@@ -7,9 +7,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import top.yumbo.ai.persistence.api.CompositePersistence;
-import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
-import top.yumbo.ai.persistence.api.config.PersistenceCompositeProperties;
+import top.yumbo.ai.omni.persistence.api.CompositePersistence;
+import top.yumbo.ai.omni.persistence.api.QuestionClassifierPersistence;
+import top.yumbo.ai.omni.persistence.api.config.PersistenceCompositeProperties;
 
 import java.util.ArrayList;
 import java.util.List;

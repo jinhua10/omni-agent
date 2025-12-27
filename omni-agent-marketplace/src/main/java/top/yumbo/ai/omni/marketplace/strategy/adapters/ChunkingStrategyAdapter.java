@@ -7,7 +7,7 @@ import top.yumbo.ai.omni.marketplace.strategy.StrategyExecutionException;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.*;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingOutput;
-import top.yumbo.ai.storage.api.model.Chunk;
+import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.List;
 import java.util.Map;

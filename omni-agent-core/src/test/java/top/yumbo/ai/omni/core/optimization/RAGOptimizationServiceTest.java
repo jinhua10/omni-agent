@@ -6,9 +6,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import top.yumbo.ai.storage.api.DocumentStorageService;
-import top.yumbo.ai.storage.api.model.OptimizationData;
-import top.yumbo.ai.storage.api.model.OptimizationType;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.model.OptimizationData;
+import top.yumbo.ai.omni.storage.api.model.OptimizationType;
 
 import java.util.*;
 

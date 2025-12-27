@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.validation.constraints.NotBlank;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
@@ -30,7 +28,6 @@ public class Query implements Serializable {
     /**
      * 查询文本
      */
-    @NotBlank(message = "查询文本不能为空")
     private String text;
 
     /**

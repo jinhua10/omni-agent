@@ -3,10 +3,10 @@ package top.yumbo.ai.omni.core.p2p;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.p2p.api.P2PCollaborationService;
-import top.yumbo.ai.p2p.api.model.ConnectionCode;
-import top.yumbo.ai.p2p.api.model.PeerConnection;
-import top.yumbo.ai.p2p.api.model.SharedKnowledge;
+import top.yumbo.ai.omni.p2p.api.P2PCollaborationService;
+import top.yumbo.ai.omni.p2p.api.model.ConnectionCode;
+import top.yumbo.ai.omni.p2p.api.model.PeerConnection;
+import top.yumbo.ai.omni.p2p.api.model.SharedKnowledge;
 
 import java.time.LocalDateTime;
 import java.util.*;

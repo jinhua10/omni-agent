@@ -101,7 +101,7 @@ public class MemoryPersistenceAutoConfiguration {
 #### 3. spring.factories
 ```properties
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-top.yumbo.ai.persistence.memory.MemoryPersistenceAutoConfiguration
+top.yumbo.ai.omni.persistence.memory.MemoryPersistenceAutoConfiguration
 ```
 
 **作用**:

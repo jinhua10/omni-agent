@@ -5,8 +5,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
-import top.yumbo.ai.persistence.api.model.QuestionTypeConfig;
+import top.yumbo.ai.omni.persistence.api.QuestionClassifierPersistence;
+import top.yumbo.ai.omni.persistence.api.model.QuestionTypeConfig;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
