@@ -64,3 +64,4 @@ src.backup
 /old/ai-reviewer-base-file-rag/
 /old/**
 /omni-agent-example-basic/data/**
+/omni-agent-core/data/
