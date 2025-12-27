@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
@@ -35,10 +35,22 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class DomainRouter {
 
     private final KnowledgeRegistry knowledgeRegistry;
+
+    /**
+     * 构造函数 - KnowledgeRegistry 为可选依赖
+     */
+    @Autowired(required = false)
+    public DomainRouter(KnowledgeRegistry knowledgeRegistry) {
+        this.knowledgeRegistry = knowledgeRegistry;
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available - DomainRouter will use fallback mode");
+        } else {
+            log.info("✅ DomainRouter initialized with KnowledgeRegistry");
+        }
+    }
 
     /**
      * 路由查询到合适的知识域
@@ -122,6 +134,12 @@ public class DomainRouter {
      * @return 匹配的域ID列表
      */
     private List<String> matchDomains(QueryIntent intent) {
+        // 如果 knowledgeRegistry 不可用，返回空列表
+        if (knowledgeRegistry == null) {
+            log.debug("KnowledgeRegistry not available, returning empty domain list");
+            return Collections.emptyList();
+        }
+
         // 获取所有活跃的域
         List<KnowledgeDomain> allDomains = knowledgeRegistry
                 .findDomainsByStatus(DomainStatus.ACTIVE);
@@ -152,6 +170,12 @@ public class DomainRouter {
      * @return 匹配的角色ID列表
      */
     private List<String> matchRoles(QueryIntent intent) {
+        // 如果 knowledgeRegistry 不可用，返回空列表
+        if (knowledgeRegistry == null) {
+            log.debug("KnowledgeRegistry not available, returning empty role list");
+            return Collections.emptyList();
+        }
+
         // 获取所有活跃的角色
         List<KnowledgeRole> allRoles = knowledgeRegistry
                 .findRolesByStatus(RoleStatus.ACTIVE);
