@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import top.yumbo.ai.knowledge.registry.model.DomainStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
 
 /**
  * 更新知识域请求

@@ -3,13 +3,12 @@ package top.yumbo.ai.omni.core.service.domain;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.knowledge.registry.KnowledgeRegistry;
-import top.yumbo.ai.knowledge.registry.model.DomainStatus;
-import top.yumbo.ai.knowledge.registry.model.DomainType;
-import top.yumbo.ai.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
 import top.yumbo.ai.omni.core.dto.domain.CreateDomainRequest;
 import top.yumbo.ai.omni.core.dto.domain.UpdateDomainRequest;
-import top.yumbo.ai.rag.api.RAGService;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
