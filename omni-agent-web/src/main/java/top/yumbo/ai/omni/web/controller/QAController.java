@@ -261,20 +261,67 @@ public class QAController {
                                 .name("metadata")
                                 .data(metadata));
 
-                        // 如果需要更多信息，直接返回问题
+                        // 如果需要更多信息，使用 AI 流式发送问题
                         if (qaResponse.getNeedsMoreInfo()) {
-                            // 分块发送答案
-                            String answer = qaResponse.getAnswer();
-                            for (char c : answer.toCharArray()) {
-                                emitter.send(SseEmitter.event().data(String.valueOf(c)));
-                                Thread.sleep(5); // 模拟流式效果
-                            }
-                            emitter.complete();
+                            // 构建请求更多信息的提示词，让 AI 流式输出
+                            String requestPrompt = String.format(
+                                    "用户提问：%s\n\n" +
+                                    "需要更多信息才能回答。请礼貌地向用户说明需要以下信息，并逐条询问：\n%s",
+                                    question,
+                                    qaResponse.getAnswer()
+                            );
+
+                            List<ChatMessage> requestMessages = List.of(
+                                    ChatMessage.builder()
+                                            .role("user")
+                                            .content(requestPrompt)
+                                            .build()
+                            );
+
+                            // 使用 AI 流式输出请求
+                            aiService.chatFlux(requestMessages)
+                                    .doOnNext(token -> {
+                                        try {
+                                            emitter.send(SseEmitter.event().data(token));
+                                        } catch (Exception e) {
+                                            log.error("❌ 发送请求信息失败: {}", e.getMessage());
+                                            emitter.completeWithError(e);
+                                        }
+                                    })
+                                    .doOnComplete(() -> {
+                                        log.info("✅ 请求更多信息发送完成");
+                                        emitter.complete();
+                                    })
+                                    .doOnError(e -> {
+                                        log.error("❌ 发送请求失败: {}", e.getMessage());
+                                        emitter.completeWithError(e);
+                                    })
+                                    .subscribe();
                             return;
                         }
 
-                        // 使用增强后的完整提示词进行流式生成
-                        prompt = qaResponse.getAnswer(); // 这里可以优化为使用更好的提示词
+                        // 使用智能问答构建的增强提示词进行流式生成
+                        // 这里重新构建一个完整的提示词，包含知识检索结果
+                        StringBuilder enhancedPrompt = new StringBuilder();
+                        enhancedPrompt.append("用户问题：").append(question).append("\n\n");
+
+                        if (qaResponse.getIntent() != null && qaResponse.getIntent().getIntent() != null) {
+                            enhancedPrompt.append("意图分析：").append(qaResponse.getIntent().getIntent()).append("\n\n");
+                        }
+
+                        if (qaResponse.getReferences() != null && !qaResponse.getReferences().isEmpty()) {
+                            enhancedPrompt.append("知识库相关内容：\n");
+                            int index = 1;
+                            for (var doc : qaResponse.getReferences()) {
+                                enhancedPrompt.append("\n【知识").append(index++).append("】\n");
+                                enhancedPrompt.append(doc.getContent()).append("\n");
+                            }
+                            enhancedPrompt.append("\n基于以上知识，请详细回答用户的问题。");
+                        } else {
+                            enhancedPrompt.append("请基于你的知识回答用户的问题。");
+                        }
+
+                        prompt = enhancedPrompt.toString();
 
                         log.info("✅ 使用智能问答模式（流式）");
                     } catch (Exception e) {
