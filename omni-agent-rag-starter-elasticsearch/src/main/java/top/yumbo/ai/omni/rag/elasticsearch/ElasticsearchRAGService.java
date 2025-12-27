@@ -10,10 +10,10 @@ import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.elasticsearch.indices.GetIndexRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.rag.api.model.IndexStatistics;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+import top.yumbo.ai.omni.rag.model.Vector;
+import top.yumbo.ai.omni.rag.model.IndexStatistics;
 
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -37,17 +37,25 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @Slf4j
-public class ElasticsearchRAGService implements RAGService {
+public class ElasticsearchRAGService implements RagService {
 
     private final ElasticsearchClient client;
     private final ElasticsearchRAGProperties properties;
     private final ObjectMapper objectMapper;
+    private final String domainId;
 
     public ElasticsearchRAGService(ElasticsearchClient client,
                                    ElasticsearchRAGProperties properties) {
+        this(client, properties, "elasticsearch-domain");
+    }
+
+    public ElasticsearchRAGService(ElasticsearchClient client,
+                                   ElasticsearchRAGProperties properties,
+                                   String domainId) {
         this.client = client;
         this.properties = properties;
         this.objectMapper = new ObjectMapper();
+        this.domainId = domainId;
     }
 
     @PostConstruct
@@ -72,7 +80,6 @@ public class ElasticsearchRAGService implements RAGService {
 
     // ========== 文档索引 ==========
 
-    @Override
     public String indexDocument(Document document) {
         try {
             if (document.getId() == null || document.getId().isEmpty()) {
@@ -99,7 +106,6 @@ public class ElasticsearchRAGService implements RAGService {
         }
     }
 
-    @Override
     public List<String> indexDocuments(List<Document> documents) {
         try {
             List<String> docIds = new ArrayList<>();
@@ -136,7 +142,6 @@ public class ElasticsearchRAGService implements RAGService {
         }
     }
 
-    @Override
     public boolean updateDocument(Document document) {
         try {
             if (!documentExists(document.getId())) {
@@ -164,7 +169,6 @@ public class ElasticsearchRAGService implements RAGService {
         }
     }
 
-    @Override
     public boolean deleteDocument(String documentId) {
         try {
             DeleteRequest request = DeleteRequest.of(d -> d
@@ -211,205 +215,8 @@ public class ElasticsearchRAGService implements RAGService {
         }
     }
 
-    // ========== 文本搜索 ==========
-
-    @Override
-    public List<SearchResult> search(top.yumbo.ai.rag.api.model.Query query) {
-        switch (query.getMode()) {
-            case TEXT:
-                return searchByText(query.getText(), query.getTopK());
-            case VECTOR:
-                return query.getEmbedding() != null ?
-                        vectorSearch(query.getEmbedding(), query.getTopK()) :
-                        Collections.emptyList();
-            case HYBRID:
-                return hybridSearch(query);
-            default:
-                return Collections.emptyList();
-        }
-    }
-
-    @Override
-    public List<SearchResult> searchByText(String text, int topK) {
-        try {
-            // 多字段查询（title, content, summary, tags）
-            SearchRequest request = SearchRequest.of(s -> s
-                .index(properties.getIndexName())
-                .query(q -> q
-                    .multiMatch(m -> m
-                        .query(text)
-                        .fields("title^3", "content", "summary^2", "tags^2")
-                        .type(TextQueryType.BestFields)
-                    )
-                )
-                .size(topK)
-            );
-
-            SearchResponse<Document> response = client.search(request, Document.class);
-
-            return response.hits().hits().stream()
-                .map(hit -> {
-                    double score = hit.score() != null ? hit.score() : 0.0;
-                    return SearchResult.builder()
-                        .document(hit.source())
-                        .score((float) score)
-                        .textScore((float) score)
-                        .build();
-                })
-                .collect(Collectors.toList());
-
-        } catch (IOException e) {
-            log.error("文本搜索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 向量搜索 ==========
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK) {
-        return vectorSearch(embedding, topK, null);
-    }
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK,
-                                          Map<String, Object> filters) {
-        try {
-            // Elasticsearch kNN 搜索
-            SearchRequest.Builder requestBuilder = new SearchRequest.Builder()
-                .index(properties.getIndexName())
-                .size(topK);
-
-            // 构建 kNN 查询
-            requestBuilder.knn(k -> k
-                .field("embedding")
-                .queryVector(arrayToList(embedding))
-                .k(topK)
-                .numCandidates(topK * 10)
-            );
-
-            // 应用过滤器
-            if (filters != null && !filters.isEmpty()) {
-                List<Query> filterQueries = buildFilterQueries(filters);
-                if (!filterQueries.isEmpty()) {
-                    requestBuilder.query(q -> q
-                        .bool(b -> {
-                            filterQueries.forEach(b::filter);
-                            return b;
-                        })
-                    );
-                }
-            }
-
-            SearchResponse<Document> response = client.search(requestBuilder.build(), Document.class);
-
-            return response.hits().hits().stream()
-                .map(hit -> {
-                    double scoreDouble = hit.score() != null ? hit.score() : 0.0;
-                    float score = (float) scoreDouble;
-                    return SearchResult.builder()
-                        .document(hit.source())
-                        .score(score)
-                        .vectorScore(score)
-                        .distance(1.0f - score)
-                        .build();
-                })
-                .collect(Collectors.toList());
-
-        } catch (IOException e) {
-            log.error("向量搜索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 混合检索 ==========
-
-    @Override
-    public List<SearchResult> hybridSearch(top.yumbo.ai.rag.api.model.Query query) {
-        return hybridSearch(
-            query.getText(),
-            query.getEmbedding(),
-            query.getTextWeight(),
-            query.getVectorWeight(),
-            query.getTopK()
-        );
-    }
-
-    @Override
-    public List<SearchResult> hybridSearch(String text, float[] embedding,
-                                          float textWeight, float vectorWeight, int topK) {
-        try {
-            SearchRequest.Builder requestBuilder = new SearchRequest.Builder()
-                .index(properties.getIndexName())
-                .size(topK);
-
-            // 构建混合查询
-            List<Query> shouldQueries = new ArrayList<>();
-
-            // 文本查询
-            if (textWeight > 0 && text != null && !text.isEmpty()) {
-                shouldQueries.add(Query.of(q -> q
-                    .multiMatch(m -> m
-                        .query(text)
-                        .fields("title^3", "content", "summary^2", "tags^2")
-                        .type(TextQueryType.BestFields)
-                        .boost((float) textWeight)
-                    )
-                ));
-            }
-
-            // 向量查询（通过 kNN）
-            if (vectorWeight > 0 && embedding != null && embedding.length > 0) {
-                requestBuilder.knn(k -> k
-                    .field("embedding")
-                    .queryVector(arrayToList(embedding))
-                    .k(topK * 2)
-                    .numCandidates(topK * 10)
-                    .boost((float) vectorWeight)
-                );
-            }
-
-            // 组合查询
-            if (!shouldQueries.isEmpty()) {
-                requestBuilder.query(q -> q
-                    .bool(b -> {
-                        shouldQueries.forEach(b::should);
-                        return b.minimumShouldMatch("1");
-                    })
-                );
-            }
-
-            SearchResponse<Document> response = client.search(requestBuilder.build(), Document.class);
-
-            return response.hits().hits().stream()
-                .map(hit -> {
-                    double scoreDouble = hit.score() != null ? hit.score() : 0.0;
-                    float score = (float) scoreDouble;
-                    return SearchResult.builder()
-                        .document(hit.source())
-                        .score(score)
-                        .textScore(score * textWeight)
-                        .vectorScore(score * vectorWeight)
-                        .build();
-                })
-                .collect(Collectors.toList());
-
-        } catch (IOException e) {
-            log.error("混合检索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 语义搜索 ==========
-
-    @Override
-    public List<SearchResult> semanticSearch(String text, int topK) {
-        // 需要集成Embedding服务
-        log.warn("语义搜索需要Embedding服务支持");
-        return searchByText(text, topK);
-    }
-
     // ========== 文档管理 ==========
+
 
     @Override
     public Optional<Document> getDocument(String documentId) {
@@ -516,6 +323,7 @@ public class ElasticsearchRAGService implements RAGService {
                 .indexType("Elasticsearch")
                 .healthy(isHealthy())
                 .timestamp(System.currentTimeMillis())
+                .domainId(domainId)
                 .build();
 
         } catch (IOException e) {
@@ -525,6 +333,7 @@ public class ElasticsearchRAGService implements RAGService {
                 .indexSize(0L)
                 .healthy(false)
                 .timestamp(System.currentTimeMillis())
+                .domainId(domainId)
                 .build();
         }
     }
@@ -611,5 +420,124 @@ public class ElasticsearchRAGService implements RAGService {
             list.add(value);
         }
         return list;
+    }
+
+    // ========== 新接口实现 ==========
+
+    @Override
+    public List<Document> semanticSearch(String query, int maxResults) {
+        log.debug("语义搜索: query={}, maxResults={}", query, maxResults);
+        return searchByTextInternal(query, maxResults);
+    }
+
+    @Override
+    public List<Document> vectorSearch(Vector vector, int maxResults) {
+        if (vector == null || vector.getData() == null) {
+            return Collections.emptyList();
+        }
+        return vectorSearchInternal(vector.getData(), maxResults);
+    }
+
+    @Override
+    public Vector embed(String text) {
+        log.warn("ElasticsearchRAGService 不提供嵌入功能");
+        return null;
+    }
+
+    @Override
+    public List<Vector> batchEmbed(List<String> texts) {
+        log.warn("ElasticsearchRAGService 不提供批量嵌入功能");
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void index(String id, Vector vector, Map<String, Object> metadata) {
+        Document.DocumentBuilder builder = Document.builder().id(id);
+
+        if (metadata != null) {
+            if (metadata.containsKey("title")) builder.title((String) metadata.get("title"));
+            if (metadata.containsKey("content")) builder.content((String) metadata.get("content"));
+            if (metadata.containsKey("source")) builder.source((String) metadata.get("source"));
+        }
+
+        if (vector != null && vector.getData() != null) {
+            builder.embedding(vector.getData());
+        }
+
+        indexDocument(builder.build());
+    }
+
+    @Override
+    public void batchIndex(List<Document> documents) {
+        indexDocuments(documents);
+    }
+
+    @Override
+    public void delete(String id) {
+        deleteDocument(id);
+    }
+
+    @Override
+    public String getDomainId() {
+        return domainId;
+    }
+
+    // ========== 内部辅助方法 ==========
+
+    private List<Document> searchByTextInternal(String text, int maxResults) {
+        try {
+            SearchRequest request = SearchRequest.of(s -> s
+                    .index(properties.getIndexName())
+                    .query(q -> q.multiMatch(m -> m
+                            .query(text)
+                            .fields("title^2", "content", "summary")
+                    ))
+                    .size(maxResults)
+            );
+
+            SearchResponse<Document> response = client.search(request, Document.class);
+            return response.hits().hits().stream()
+                    .map(hit -> {
+                        Document doc = hit.source();
+                        if (doc != null && hit.score() != null) {
+                            doc.setScore(hit.score());
+                        }
+                        return doc;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("文本搜索失败: {}", text, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Document> vectorSearchInternal(float[] embedding, int maxResults) {
+        try {
+            SearchRequest request = SearchRequest.of(s -> s
+                    .index(properties.getIndexName())
+                    .knn(k -> k
+                            .field("embedding")
+                            .queryVector(arrayToList(embedding))
+                            .k(maxResults)
+                            .numCandidates(maxResults * 10)
+                    )
+            );
+
+            SearchResponse<Document> response = client.search(request, Document.class);
+            return response.hits().hits().stream()
+                    .map(hit -> {
+                        Document doc = hit.source();
+                        if (doc != null && hit.score() != null) {
+                            doc.setScore(hit.score());
+                        }
+                        return doc;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("向量搜索失败", e);
+            return Collections.emptyList();
+        }
     }
 }

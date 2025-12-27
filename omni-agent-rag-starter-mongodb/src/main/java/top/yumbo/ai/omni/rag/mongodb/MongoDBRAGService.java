@@ -10,10 +10,10 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.data.mongodb.core.query.TextQuery;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.rag.api.model.IndexStatistics;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+import top.yumbo.ai.omni.rag.model.Vector;
+import top.yumbo.ai.omni.rag.model.IndexStatistics;
 
 import jakarta.annotation.PostConstruct;
 import java.util.*;
@@ -27,16 +27,22 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @Slf4j
-public class MongoDBRAGService implements RAGService {
+public class MongoDBRAGService implements RagService {
 
     private final MongoTemplate mongoTemplate;
     private final MongoDBRAGProperties properties;
     private final ObjectMapper objectMapper;
+    private final String domainId;
 
     public MongoDBRAGService(MongoTemplate mongoTemplate, MongoDBRAGProperties properties) {
+        this(mongoTemplate, properties, "mongodb-domain");
+    }
+
+    public MongoDBRAGService(MongoTemplate mongoTemplate, MongoDBRAGProperties properties, String domainId) {
         this.mongoTemplate = mongoTemplate;
         this.properties = properties;
         this.objectMapper = new ObjectMapper();
+        this.domainId = domainId;
     }
 
     @PostConstruct
@@ -91,7 +97,6 @@ public class MongoDBRAGService implements RAGService {
 
     // ========== 文档索引 ==========
 
-    @Override
     public String indexDocument(Document document) {
         try {
             if (document.getId() == null || document.getId().isEmpty()) {
@@ -113,7 +118,6 @@ public class MongoDBRAGService implements RAGService {
         }
     }
 
-    @Override
     public List<String> indexDocuments(List<Document> documents) {
         List<String> docIds = new ArrayList<>();
         for (Document document : documents) {
@@ -127,7 +131,6 @@ public class MongoDBRAGService implements RAGService {
         return docIds;
     }
 
-    @Override
     public boolean updateDocument(Document document) {
         try {
             Query query = new Query(Criteria.where("id").is(document.getId()));
@@ -151,7 +154,6 @@ public class MongoDBRAGService implements RAGService {
         }
     }
 
-    @Override
     public boolean deleteDocument(String documentId) {
         try {
             Query query = new Query(Criteria.where("id").is(documentId));
@@ -180,211 +182,8 @@ public class MongoDBRAGService implements RAGService {
         }
     }
 
-    // ========== 文本搜索 ==========
-
-    @Override
-    public List<SearchResult> search(top.yumbo.ai.rag.api.model.Query query) {
-        switch (query.getMode()) {
-            case TEXT:
-                return searchByText(query.getText(), query.getTopK());
-            case VECTOR:
-                return query.getEmbedding() != null ?
-                        vectorSearch(query.getEmbedding(), query.getTopK()) :
-                        Collections.emptyList();
-            case HYBRID:
-                return hybridSearch(query);
-            default:
-                return Collections.emptyList();
-        }
-    }
-
-    @Override
-    public List<SearchResult> searchByText(String text, int topK) {
-        try {
-            if (!properties.isEnableTextSearch()) {
-                log.warn("文本搜索未启用");
-                return Collections.emptyList();
-            }
-
-            TextCriteria criteria = TextCriteria.forDefaultLanguage().matching(text);
-            Query query = TextQuery.queryText(criteria)
-                    .sortByScore()
-                    .limit(topK);
-
-            List<org.bson.Document> results = mongoTemplate.find(
-                    query,
-                    org.bson.Document.class,
-                    properties.getCollectionName()
-            );
-
-            return results.stream()
-                    .map(doc -> {
-                        Document document = convertFromMongoDoc(doc);
-                        float score = 1.0f; // MongoDB文本搜索分数
-                        return SearchResult.builder()
-                                .document(document)
-                                .score(score)
-                                .textScore(score)
-                                .build();
-                    })
-                    .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("文本搜索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 向量搜索 ==========
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK) {
-        return vectorSearch(embedding, topK, null);
-    }
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK, Map<String, Object> filters) {
-        try {
-            Query query = new Query();
-
-            // 应用过滤器
-            if (filters != null && !filters.isEmpty()) {
-                for (Map.Entry<String, Object> entry : filters.entrySet()) {
-                    query.addCriteria(Criteria.where(entry.getKey()).is(entry.getValue()));
-                }
-            }
-
-            // 查询所有符合条件的文档
-            query.addCriteria(Criteria.where("embedding").exists(true));
-
-            List<org.bson.Document> allDocs = mongoTemplate.find(
-                    query,
-                    org.bson.Document.class,
-                    properties.getCollectionName()
-            );
-
-            // 计算余弦相似度
-            List<SearchResult> results = new ArrayList<>();
-            for (org.bson.Document mongoDoc : allDocs) {
-                Document doc = convertFromMongoDoc(mongoDoc);
-
-                if (doc.getEmbedding() != null && doc.getEmbedding().length > 0) {
-                    float similarity = cosineSimilarity(embedding, doc.getEmbedding());
-
-                    results.add(SearchResult.builder()
-                            .document(doc)
-                            .score(similarity)
-                            .vectorScore(similarity)
-                            .distance(1.0f - similarity)
-                            .build());
-                }
-            }
-
-            // 排序并返回topK
-            return results.stream()
-                    .sorted((a, b) -> Float.compare(b.getScore(), a.getScore()))
-                    .limit(topK)
-                    .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("向量搜索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 混合检索 ==========
-
-    @Override
-    public List<SearchResult> hybridSearch(top.yumbo.ai.rag.api.model.Query query) {
-        return hybridSearch(
-                query.getText(),
-                query.getEmbedding(),
-                query.getTextWeight(),
-                query.getVectorWeight(),
-                query.getTopK()
-        );
-    }
-
-    @Override
-    public List<SearchResult> hybridSearch(String text, float[] embedding,
-                                          float textWeight, float vectorWeight, int topK) {
-        try {
-            // 文本搜索结果
-            List<SearchResult> textResults = Collections.emptyList();
-            if (textWeight > 0 && text != null && !text.isEmpty()) {
-                textResults = searchByText(text, topK * 2);
-            }
-
-            // 向量搜索结果
-            List<SearchResult> vectorResults = Collections.emptyList();
-            if (vectorWeight > 0 && embedding != null && embedding.length > 0) {
-                vectorResults = vectorSearch(embedding, topK * 2);
-            }
-
-            // 合并结果
-            Map<String, SearchResult> mergedResults = new HashMap<>();
-
-            // 添加文本结果
-            for (SearchResult result : textResults) {
-                String docId = result.getDocument().getId();
-                float weightedScore = result.getScore() * textWeight;
-
-                mergedResults.put(docId, SearchResult.builder()
-                        .document(result.getDocument())
-                        .score(weightedScore)
-                        .textScore(result.getScore())
-                        .build());
-            }
-
-            // 合并向量结果
-            for (SearchResult result : vectorResults) {
-                String docId = result.getDocument().getId();
-                float vectorScore = result.getScore();
-                float weightedVectorScore = vectorScore * vectorWeight;
-
-                if (mergedResults.containsKey(docId)) {
-                    SearchResult existing = mergedResults.get(docId);
-                    float combinedScore = existing.getScore() + weightedVectorScore;
-
-                    mergedResults.put(docId, SearchResult.builder()
-                            .document(existing.getDocument())
-                            .score(combinedScore)
-                            .textScore(existing.getTextScore())
-                            .vectorScore(vectorScore)
-                            .distance(result.getDistance())
-                            .build());
-                } else {
-                    mergedResults.put(docId, SearchResult.builder()
-                            .document(result.getDocument())
-                            .score(weightedVectorScore)
-                            .vectorScore(vectorScore)
-                            .distance(result.getDistance())
-                            .build());
-                }
-            }
-
-            // 排序并返回topK
-            return mergedResults.values().stream()
-                    .sorted((a, b) -> Float.compare(b.getScore(), a.getScore()))
-                    .limit(topK)
-                    .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("混合检索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 语义搜索 ==========
-
-    @Override
-    public List<SearchResult> semanticSearch(String text, int topK) {
-        // 需要集成Embedding服务才能实现
-        log.warn("语义搜索需要Embedding服务支持");
-        return searchByText(text, topK);
-    }
-
     // ========== 文档管理 ==========
+
 
     @Override
     public Optional<Document> getDocument(String documentId) {
@@ -471,6 +270,7 @@ public class MongoDBRAGService implements RAGService {
                     .indexType("MongoDB")
                     .healthy(isHealthy())
                     .timestamp(System.currentTimeMillis())
+                    .domainId(domainId)
                     .build();
 
         } catch (Exception e) {
@@ -480,6 +280,7 @@ public class MongoDBRAGService implements RAGService {
                     .indexSize(0L)
                     .healthy(false)
                     .timestamp(System.currentTimeMillis())
+                    .domainId(domainId)
                     .build();
         }
     }
@@ -511,27 +312,6 @@ public class MongoDBRAGService implements RAGService {
 
     // ========== 工具方法 ==========
 
-    private float cosineSimilarity(float[] vec1, float[] vec2) {
-        if (vec1 == null || vec2 == null || vec1.length != vec2.length) {
-            return 0.0f;
-        }
-
-        float dotProduct = 0.0f;
-        float norm1 = 0.0f;
-        float norm2 = 0.0f;
-
-        for (int i = 0; i < vec1.length; i++) {
-            dotProduct += vec1[i] * vec2[i];
-            norm1 += vec1[i] * vec1[i];
-            norm2 += vec2[i] * vec2[i];
-        }
-
-        if (norm1 == 0.0f || norm2 == 0.0f) {
-            return 0.0f;
-        }
-
-        return dotProduct / (float) (Math.sqrt(norm1) * Math.sqrt(norm2));
-    }
 
     private org.bson.Document convertToMongoDoc(Document document) {
         org.bson.Document mongoDoc = new org.bson.Document();
@@ -593,5 +373,148 @@ public class MongoDBRAGService implements RAGService {
         }
 
         return document;
+    }
+
+    // ========== 新接口实现 ==========
+
+    @Override
+    public List<Document> semanticSearch(String query, int maxResults) {
+        log.debug("语义搜索: query={}, maxResults={}", query, maxResults);
+        return searchByTextInternal(query, maxResults);
+    }
+
+    @Override
+    public List<Document> vectorSearch(Vector vector, int maxResults) {
+        if (vector == null || vector.getData() == null) {
+            return Collections.emptyList();
+        }
+        return vectorSearchInternal(vector.getData(), maxResults);
+    }
+
+    @Override
+    public Vector embed(String text) {
+        log.warn("MongoDBRAGService 不提供嵌入功能");
+        return null;
+    }
+
+    @Override
+    public List<Vector> batchEmbed(List<String> texts) {
+        log.warn("MongoDBRAGService 不提供批量嵌入功能");
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void index(String id, Vector vector, Map<String, Object> metadata) {
+        Document.DocumentBuilder builder = Document.builder().id(id);
+
+        if (metadata != null) {
+            if (metadata.containsKey("title")) builder.title((String) metadata.get("title"));
+            if (metadata.containsKey("content")) builder.content((String) metadata.get("content"));
+            if (metadata.containsKey("source")) builder.source((String) metadata.get("source"));
+        }
+
+        if (vector != null && vector.getData() != null) {
+            builder.embedding(vector.getData());
+        }
+
+        indexDocument(builder.build());
+    }
+
+    @Override
+    public void batchIndex(List<Document> documents) {
+        indexDocuments(documents);
+    }
+
+    @Override
+    public void delete(String id) {
+        deleteDocument(id);
+    }
+
+    @Override
+    public String getDomainId() {
+        return domainId;
+    }
+
+    // ========== 内部辅助方法 ==========
+
+    private List<Document> searchByTextInternal(String text, int maxResults) {
+        try {
+            if (properties.isEnableTextSearch()) {
+                TextCriteria criteria = TextCriteria.forDefaultLanguage().matchingAny(text);
+                Query query = TextQuery.queryText(criteria)
+                        .sortByScore()
+                        .limit(maxResults);
+                return mongoTemplate.find(query, org.bson.Document.class, properties.getCollectionName())
+                        .stream()
+                        .map(this::convertFromMongoDoc)
+                        .collect(Collectors.toList());
+            } else {
+                Query query = new Query();
+                Criteria criteria = new Criteria().orOperator(
+                        Criteria.where("title").regex(text, "i"),
+                        Criteria.where("content").regex(text, "i"),
+                        Criteria.where("summary").regex(text, "i")
+                );
+                query.addCriteria(criteria).limit(maxResults);
+                return mongoTemplate.find(query, org.bson.Document.class, properties.getCollectionName())
+                        .stream()
+                        .map(this::convertFromMongoDoc)
+                        .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            log.error("文本搜索失败: {}", text, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Document> vectorSearchInternal(float[] embedding, int maxResults) {
+        try {
+            Query query = new Query(Criteria.where("embedding").exists(true));
+            List<org.bson.Document> mongoDocs = mongoTemplate.find(query, org.bson.Document.class, properties.getCollectionName());
+
+            List<Document> results = new ArrayList<>();
+            for (org.bson.Document mongoDoc : mongoDocs) {
+                Document doc = convertFromMongoDoc(mongoDoc);
+                if (doc.getEmbedding() != null && doc.getEmbedding().length > 0) {
+                    float similarity = cosineSimilarity(embedding, doc.getEmbedding());
+                    doc.setScore((double) similarity);
+                    results.add(doc);
+                }
+            }
+
+            return results.stream()
+                    .sorted((a, b) -> Double.compare(
+                        b.getScore() != null ? b.getScore() : 0.0,
+                        a.getScore() != null ? a.getScore() : 0.0))
+                    .limit(maxResults)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("向量搜索失败", e);
+            return Collections.emptyList();
+        }
+    }
+
+    // ========== 辅助方法 ==========
+
+    private float cosineSimilarity(float[] vec1, float[] vec2) {
+        if (vec1.length != vec2.length) {
+            return 0.0f;
+        }
+
+        float dotProduct = 0.0f;
+        float norm1 = 0.0f;
+        float norm2 = 0.0f;
+
+        for (int i = 0; i < vec1.length; i++) {
+            dotProduct += vec1[i] * vec2[i];
+            norm1 += vec1[i] * vec1[i];
+            norm2 += vec2[i] * vec2[i];
+        }
+
+        if (norm1 == 0.0f || norm2 == 0.0f) {
+            return 0.0f;
+        }
+
+        return dotProduct / (float) (Math.sqrt(norm1) * Math.sqrt(norm2));
     }
 }

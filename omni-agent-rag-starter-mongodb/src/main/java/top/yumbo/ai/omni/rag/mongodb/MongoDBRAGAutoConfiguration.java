@@ -12,7 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import top.yumbo.ai.rag.api.RAGService;
+import top.yumbo.ai.omni.rag.RagService;
 
 import java.util.concurrent.TimeUnit;
 
@@ -64,8 +64,8 @@ public class MongoDBRAGAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(RAGService.class)
-    public RAGService ragService(MongoTemplate mongoTemplate, MongoDBRAGProperties properties) {
+    @ConditionalOnMissingBean(RagService.class)
+    public RagService ragService(MongoTemplate mongoTemplate, MongoDBRAGProperties properties) {
         log.info("创建MongoDB RAG Service: 集合={}", properties.getCollectionName());
         return new MongoDBRAGService(mongoTemplate, properties);
     }

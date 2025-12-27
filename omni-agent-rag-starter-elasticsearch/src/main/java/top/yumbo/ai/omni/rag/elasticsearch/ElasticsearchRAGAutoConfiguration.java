@@ -11,7 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import top.yumbo.ai.rag.api.RAGService;
+import top.yumbo.ai.omni.rag.RagService;
 
 /**
  * Elasticsearch RAG 自动配置类
@@ -74,8 +74,8 @@ public class ElasticsearchRAGAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(RAGService.class)
-    public ElasticsearchRAGService elasticsearchRAGService(
+    @ConditionalOnMissingBean(RagService.class)
+    public RagService elasticsearchRAGService(
             ElasticsearchClient ragElasticsearchClient,
             ElasticsearchRAGProperties properties) {
         

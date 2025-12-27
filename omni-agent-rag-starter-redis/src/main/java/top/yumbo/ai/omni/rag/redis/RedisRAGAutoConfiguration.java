@@ -10,7 +10,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import top.yumbo.ai.rag.api.RAGService;
+import top.yumbo.ai.omni.rag.RagService;
 
 /**
  * Redis RAG 自动配置类
@@ -54,8 +54,8 @@ public class RedisRAGAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(RAGService.class)
-    public RedisRAGService redisRAGService(RedisTemplate<String, Object> ragRedisTemplate,
+    @ConditionalOnMissingBean(RagService.class)
+    public RagService redisRAGService(RedisTemplate<String, Object> ragRedisTemplate,
                                           RedisRAGProperties properties) {
         log.info("创建 Redis RAG Service");
         log.info("  KeyPrefix: {}", properties.getKeyPrefix());

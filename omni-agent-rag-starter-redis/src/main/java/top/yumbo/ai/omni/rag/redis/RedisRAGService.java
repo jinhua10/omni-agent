@@ -3,10 +3,10 @@ package top.yumbo.ai.omni.rag.redis;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.rag.api.model.IndexStatistics;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+import top.yumbo.ai.omni.rag.model.Vector;
+import top.yumbo.ai.omni.rag.model.IndexStatistics;
 
 import jakarta.annotation.PostConstruct;
 import java.util.*;
@@ -29,11 +29,12 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @Slf4j
-public class RedisRAGService implements RAGService {
+public class RedisRAGService implements RagService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedisRAGProperties properties;
     private final ObjectMapper objectMapper;
+    private final String domainId;
 
     // Redis Key前缀
     private static final String DOC_PREFIX = "rag:doc:";           // 文档存储
@@ -44,9 +45,15 @@ public class RedisRAGService implements RAGService {
 
     public RedisRAGService(RedisTemplate<String, Object> redisTemplate, 
                           RedisRAGProperties properties) {
+        this(redisTemplate, properties, "redis-domain");
+    }
+
+    public RedisRAGService(RedisTemplate<String, Object> redisTemplate,
+                          RedisRAGProperties properties, String domainId) {
         this.redisTemplate = redisTemplate;
         this.properties = properties;
         this.objectMapper = new ObjectMapper();
+        this.domainId = domainId;
     }
 
     @PostConstruct
@@ -58,7 +65,6 @@ public class RedisRAGService implements RAGService {
 
     // ========== 文档索引 ==========
 
-    @Override
     public String indexDocument(Document document) {
         try {
             if (document.getId() == null || document.getId().isEmpty()) {
@@ -96,7 +102,6 @@ public class RedisRAGService implements RAGService {
         }
     }
 
-    @Override
     public List<String> indexDocuments(List<Document> documents) {
         List<String> docIds = new ArrayList<>();
         for (Document document : documents) {
@@ -110,7 +115,6 @@ public class RedisRAGService implements RAGService {
         return docIds;
     }
 
-    @Override
     public boolean updateDocument(Document document) {
         try {
             if (!documentExists(document.getId())) {
@@ -133,7 +137,6 @@ public class RedisRAGService implements RAGService {
         }
     }
 
-    @Override
     public boolean deleteDocument(String documentId) {
         try {
             String docKey = getDocKey(documentId);
@@ -185,229 +188,6 @@ public class RedisRAGService implements RAGService {
             log.error("清空索引失败", e);
             throw new RuntimeException("清空索引失败", e);
         }
-    }
-
-    // ========== 文本搜索 ==========
-
-    @Override
-    public List<SearchResult> search(top.yumbo.ai.rag.api.model.Query query) {
-        switch (query.getMode()) {
-            case TEXT:
-                return searchByText(query.getText(), query.getTopK());
-            case VECTOR:
-                return query.getEmbedding() != null ?
-                        vectorSearch(query.getEmbedding(), query.getTopK()) :
-                        Collections.emptyList();
-            case HYBRID:
-                return hybridSearch(query);
-            default:
-                return Collections.emptyList();
-        }
-    }
-
-    @Override
-    public List<SearchResult> searchByText(String text, int topK) {
-        try {
-            if (!properties.isEnableTextIndex()) {
-                log.warn("文本搜索未启用");
-                return Collections.emptyList();
-            }
-
-            // 提取关键词
-            Set<String> keywords = extractKeywords(text);
-
-            // 搜索包含关键词的文档
-            Map<String, Float> docScores = new HashMap<>();
-
-            for (String keyword : keywords) {
-                String textKey = TEXT_PREFIX + keyword.toLowerCase();
-                Set<Object> docIds = redisTemplate.opsForSet().members(textKey);
-
-                if (docIds != null) {
-                    for (Object docId : docIds) {
-                        String id = docId.toString();
-                        docScores.put(id, docScores.getOrDefault(id, 0.0f) + 1.0f);
-                    }
-                }
-            }
-
-            // 归一化分数并排序
-            float maxScore = docScores.values().stream()
-                .max(Float::compareTo)
-                .orElse(1.0f);
-
-            return docScores.entrySet().stream()
-                .sorted((a, b) -> Float.compare(b.getValue(), a.getValue()))
-                .limit(topK)
-                .map(entry -> {
-                    Document doc = getDocument(entry.getKey()).orElse(null);
-                    if (doc != null) {
-                        float normalizedScore = entry.getValue() / maxScore;
-                        return SearchResult.builder()
-                            .document(doc)
-                            .score(normalizedScore)
-                            .textScore(normalizedScore)
-                            .build();
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("文本搜索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 向量搜索 ==========
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK) {
-        return vectorSearch(embedding, topK, null);
-    }
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK, 
-                                          Map<String, Object> filters) {
-        try {
-            // 获取所有有向量的文档
-            Set<Object> allDocs = redisTemplate.opsForSet().members(INDEX_PREFIX + "all");
-
-            if (allDocs == null || allDocs.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            // 计算相似度
-            List<SearchResult> results = new ArrayList<>();
-
-            for (Object docIdObj : allDocs) {
-                String docId = docIdObj.toString();
-                Optional<Document> docOpt = getDocument(docId);
-
-                if (docOpt.isPresent()) {
-                    Document doc = docOpt.get();
-
-                    // 应用过滤器
-                    if (filters != null && !matchFilters(doc, filters)) {
-                        continue;
-                    }
-
-                    if (doc.getEmbedding() != null && doc.getEmbedding().length > 0) {
-                        float similarity = cosineSimilarity(embedding, doc.getEmbedding());
-
-                        results.add(SearchResult.builder()
-                            .document(doc)
-                            .score(similarity)
-                            .vectorScore(similarity)
-                            .distance(1.0f - similarity)
-                            .build());
-                    }
-                }
-            }
-
-            // 排序并返回topK
-            return results.stream()
-                .sorted((a, b) -> Float.compare(b.getScore(), a.getScore()))
-                .limit(topK)
-                .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("向量搜索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 混合检索 ==========
-
-    @Override
-    public List<SearchResult> hybridSearch(top.yumbo.ai.rag.api.model.Query query) {
-        return hybridSearch(
-            query.getText(),
-            query.getEmbedding(),
-            query.getTextWeight(),
-            query.getVectorWeight(),
-            query.getTopK()
-        );
-    }
-
-    @Override
-    public List<SearchResult> hybridSearch(String text, float[] embedding,
-                                          float textWeight, float vectorWeight, int topK) {
-        try {
-            // 文本搜索结果
-            List<SearchResult> textResults = Collections.emptyList();
-            if (textWeight > 0 && text != null && !text.isEmpty()) {
-                textResults = searchByText(text, topK * 2);
-            }
-
-            // 向量搜索结果
-            List<SearchResult> vectorResults = Collections.emptyList();
-            if (vectorWeight > 0 && embedding != null && embedding.length > 0) {
-                vectorResults = vectorSearch(embedding, topK * 2);
-            }
-
-            // 合并结果
-            Map<String, SearchResult> mergedResults = new HashMap<>();
-
-            // 添加文本结果
-            for (SearchResult result : textResults) {
-                String docId = result.getDocument().getId();
-                float weightedScore = result.getScore() * textWeight;
-
-                mergedResults.put(docId, SearchResult.builder()
-                    .document(result.getDocument())
-                    .score(weightedScore)
-                    .textScore(result.getScore())
-                    .build());
-            }
-
-            // 合并向量结果
-            for (SearchResult result : vectorResults) {
-                String docId = result.getDocument().getId();
-                float vectorScore = result.getScore();
-                float weightedVectorScore = vectorScore * vectorWeight;
-
-                if (mergedResults.containsKey(docId)) {
-                    SearchResult existing = mergedResults.get(docId);
-                    float combinedScore = existing.getScore() + weightedVectorScore;
-
-                    mergedResults.put(docId, SearchResult.builder()
-                        .document(existing.getDocument())
-                        .score(combinedScore)
-                        .textScore(existing.getTextScore())
-                        .vectorScore(vectorScore)
-                        .distance(result.getDistance())
-                        .build());
-                } else {
-                    mergedResults.put(docId, SearchResult.builder()
-                        .document(result.getDocument())
-                        .score(weightedVectorScore)
-                        .vectorScore(vectorScore)
-                        .distance(result.getDistance())
-                        .build());
-                }
-            }
-
-            // 排序并返回topK
-            return mergedResults.values().stream()
-                .sorted((a, b) -> Float.compare(b.getScore(), a.getScore()))
-                .limit(topK)
-                .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            log.error("混合检索失败", e);
-            return Collections.emptyList();
-        }
-    }
-
-    // ========== 语义搜索 ==========
-
-    @Override
-    public List<SearchResult> semanticSearch(String text, int topK) {
-        // 需要集成Embedding服务
-        log.warn("语义搜索需要Embedding服务支持");
-        return searchByText(text, topK);
     }
 
     // ========== 文档管理 ==========
@@ -511,6 +291,7 @@ public class RedisRAGService implements RAGService {
                 .indexType("Redis")
                 .healthy(isHealthy())
                 .timestamp(System.currentTimeMillis())
+                .domainId(domainId)
                 .build();
 
         } catch (Exception e) {
@@ -520,6 +301,7 @@ public class RedisRAGService implements RAGService {
                 .indexSize(0L)
                 .healthy(false)
                 .timestamp(System.currentTimeMillis())
+                .domainId(domainId)
                 .build();
         }
     }
@@ -696,5 +478,127 @@ public class RedisRAGService implements RAGService {
         }
 
         return dotProduct / (float) (Math.sqrt(norm1) * Math.sqrt(norm2));
+    }
+
+    // ========== 新接口实现 ==========
+
+    @Override
+    public List<Document> semanticSearch(String query, int maxResults) {
+        log.debug("语义搜索: query={}, maxResults={}", query, maxResults);
+        return searchByTextInternal(query, maxResults);
+    }
+
+    @Override
+    public List<Document> vectorSearch(Vector vector, int maxResults) {
+        if (vector == null || vector.getData() == null) {
+            return Collections.emptyList();
+        }
+        return vectorSearchInternal(vector.getData(), maxResults);
+    }
+
+    @Override
+    public Vector embed(String text) {
+        log.warn("RedisRAGService 不提供嵌入功能");
+        return null;
+    }
+
+    @Override
+    public List<Vector> batchEmbed(List<String> texts) {
+        log.warn("RedisRAGService 不提供批量嵌入功能");
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void index(String id, Vector vector, Map<String, Object> metadata) {
+        Document.DocumentBuilder builder = Document.builder().id(id);
+
+        if (metadata != null) {
+            if (metadata.containsKey("title")) builder.title((String) metadata.get("title"));
+            if (metadata.containsKey("content")) builder.content((String) metadata.get("content"));
+            if (metadata.containsKey("source")) builder.source((String) metadata.get("source"));
+        }
+
+        if (vector != null && vector.getData() != null) {
+            builder.embedding(vector.getData());
+        }
+
+        indexDocument(builder.build());
+    }
+
+    @Override
+    public void batchIndex(List<Document> documents) {
+        indexDocuments(documents);
+    }
+
+    @Override
+    public void delete(String id) {
+        deleteDocument(id);
+    }
+
+    @Override
+    public String getDomainId() {
+        return domainId;
+    }
+
+    // ========== 内部辅助方法 ==========
+
+    private List<Document> searchByTextInternal(String text, int maxResults) {
+        try {
+            Set<Object> docIdsObj = redisTemplate.opsForSet().members(INDEX_PREFIX + "all");
+            if (docIdsObj == null || docIdsObj.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            List<Document> results = new ArrayList<>();
+            for (Object docIdObj : docIdsObj) {
+                String docId = docIdObj.toString();
+                Document doc = (Document) redisTemplate.opsForValue().get(DOC_PREFIX + docId);
+                if (doc != null) {
+                    String content = (doc.getContent() != null ? doc.getContent() : "") + " " +
+                                   (doc.getTitle() != null ? doc.getTitle() : "") + " " +
+                                   (doc.getSummary() != null ? doc.getSummary() : "");
+                    if (content.toLowerCase().contains(text.toLowerCase())) {
+                        results.add(doc);
+                        if (results.size() >= maxResults) {
+                            break;
+                        }
+                    }
+                }
+            }
+            return results;
+        } catch (Exception e) {
+            log.error("文本搜索失败: {}", text, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Document> vectorSearchInternal(float[] embedding, int maxResults) {
+        try {
+            Set<Object> docIdsObj = redisTemplate.opsForSet().members(VECTOR_PREFIX + "all");
+            if (docIdsObj == null || docIdsObj.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            List<Document> results = new ArrayList<>();
+            for (Object docIdObj : docIdsObj) {
+                String docId = docIdObj.toString();
+                Document doc = (Document) redisTemplate.opsForValue().get(DOC_PREFIX + docId);
+                if (doc != null && doc.getEmbedding() != null && doc.getEmbedding().length > 0) {
+                    float similarity = cosineSimilarity(embedding, doc.getEmbedding());
+                    doc.setScore((double) similarity);
+                    results.add(doc);
+                }
+            }
+
+            return results.stream()
+                    .sorted((a, b) -> Double.compare(
+                        b.getScore() != null ? b.getScore() : 0.0,
+                        a.getScore() != null ? a.getScore() : 0.0))
+                    .limit(maxResults)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("向量搜索失败", e);
+            return Collections.emptyList();
+        }
     }
 }
