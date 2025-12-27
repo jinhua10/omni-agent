@@ -36,25 +36,35 @@ public class SQLiteKnowledgeRegistry implements KnowledgeRegistry {
     private final String tableName;
     private final String roleTableName;
 
-    private final RowMapper<KnowledgeDomain> rowMapper = (rs, rowNum) -> {
-        try {
-            String json = rs.getString("data");
-            return objectMapper.readValue(json, KnowledgeDomain.class);
-        } catch (Exception e) {
-            log.error("反序列化知识域失败", e);
-            return null;
-        }
-    };
+    /**
+     * 获取知识域的 RowMapper
+     */
+    private RowMapper<KnowledgeDomain> getDomainRowMapper() {
+        return (rs, rowNum) -> {
+            try {
+                String json = rs.getString("data");
+                return objectMapper.readValue(json, KnowledgeDomain.class);
+            } catch (Exception e) {
+                log.error("反序列化知识域失败", e);
+                return null;
+            }
+        };
+    }
 
-    private final RowMapper<KnowledgeRole> roleRowMapper = (rs, rowNum) -> {
-        try {
-            String json = rs.getString("data");
-            return objectMapper.readValue(json, KnowledgeRole.class);
-        } catch (Exception e) {
-            log.error("反序列化知识角色失败", e);
-            return null;
-        }
-    };
+    /**
+     * 获取知识角色的 RowMapper
+     */
+    private RowMapper<KnowledgeRole> getRoleRowMapper() {
+        return (rs, rowNum) -> {
+            try {
+                String json = rs.getString("data");
+                return objectMapper.readValue(json, KnowledgeRole.class);
+            } catch (Exception e) {
+                log.error("反序列化知识角色失败", e);
+                return null;
+            }
+        };
+    }
 
     @PostConstruct
     public void init() {
@@ -137,7 +147,7 @@ public class SQLiteKnowledgeRegistry implements KnowledgeRegistry {
     public Optional<KnowledgeDomain> findDomainById(String domainId) {
         try {
             String sql = String.format("SELECT * FROM %s WHERE domain_id = ?", tableName);
-            List<KnowledgeDomain> results = jdbcTemplate.query(sql, rowMapper, domainId);
+            List<KnowledgeDomain> results = jdbcTemplate.query(sql, getDomainRowMapper(), domainId);
             return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
         } catch (Exception e) {
             log.error("从 SQLite 查询知识域失败: {}", domainId, e);
@@ -149,7 +159,7 @@ public class SQLiteKnowledgeRegistry implements KnowledgeRegistry {
     public List<KnowledgeDomain> findAllDomains() {
         try {
             String sql = String.format("SELECT * FROM %s", tableName);
-            return jdbcTemplate.query(sql, rowMapper);
+            return jdbcTemplate.query(sql, getDomainRowMapper());
         } catch (Exception e) {
             log.error("从 SQLite 查询所有知识域失败", e);
             return List.of();
@@ -160,7 +170,7 @@ public class SQLiteKnowledgeRegistry implements KnowledgeRegistry {
     public List<KnowledgeDomain> findDomainsByType(DomainType type) {
         try {
             String sql = String.format("SELECT * FROM %s WHERE domain_type = ?", tableName);
-            return jdbcTemplate.query(sql, rowMapper, type.name());
+            return jdbcTemplate.query(sql, getDomainRowMapper(), type.name());
         } catch (Exception e) {
             log.error("从 SQLite 按类型查询知识域失败: {}", type, e);
             return List.of();
@@ -171,7 +181,7 @@ public class SQLiteKnowledgeRegistry implements KnowledgeRegistry {
     public List<KnowledgeDomain> findDomainsByStatus(DomainStatus status) {
         try {
             String sql = String.format("SELECT * FROM %s WHERE status = ?", tableName);
-            return jdbcTemplate.query(sql, rowMapper, status.name());
+            return jdbcTemplate.query(sql, getDomainRowMapper(), status.name());
         } catch (Exception e) {
             log.error("从 SQLite 按状态查询知识域失败: {}", status, e);
             return List.of();
@@ -277,7 +287,7 @@ public class SQLiteKnowledgeRegistry implements KnowledgeRegistry {
     public Optional<KnowledgeRole> findRoleById(String roleId) {
         try {
             String sql = String.format("SELECT * FROM %s WHERE role_id = ?", roleTableName);
-            List<KnowledgeRole> results = jdbcTemplate.query(sql, roleRowMapper, roleId);
+            List<KnowledgeRole> results = jdbcTemplate.query(sql, getRoleRowMapper(), roleId);
             return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
         } catch (Exception e) {
             log.error("从 SQLite 查询知识角色失败: {}", roleId, e);
@@ -289,7 +299,7 @@ public class SQLiteKnowledgeRegistry implements KnowledgeRegistry {
     public List<KnowledgeRole> findAllRoles() {
         try {
             String sql = String.format("SELECT * FROM %s", roleTableName);
-            return jdbcTemplate.query(sql, roleRowMapper);
+            return jdbcTemplate.query(sql, getRoleRowMapper());
         } catch (Exception e) {
             log.error("从 SQLite 查询所有知识角色失败", e);
             return List.of();
@@ -300,7 +310,7 @@ public class SQLiteKnowledgeRegistry implements KnowledgeRegistry {
     public List<KnowledgeRole> findRolesByStatus(RoleStatus status) {
         try {
             String sql = String.format("SELECT * FROM %s WHERE status = ?", roleTableName);
-            return jdbcTemplate.query(sql, roleRowMapper, status.name());
+            return jdbcTemplate.query(sql, getRoleRowMapper(), status.name());
         } catch (Exception e) {
             log.error("从 SQLite 按状态查询知识角色失败: {}", status, e);
             return List.of();

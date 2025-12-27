@@ -15,6 +15,14 @@
     <description>H2 RAG 实现 - 嵌入式数据库全文检索</description>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
         <!-- RAG API -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
