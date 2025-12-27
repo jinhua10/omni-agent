@@ -118,5 +118,69 @@ public interface KnowledgeRegistry {
      * @return 数量
      */
     long countDomainsByType(DomainType type);
+
+    // ========== 知识角色管理 (Knowledge Role Management) ==========
+
+    /**
+     * 保存知识角色
+     *
+     * @param role 知识角色对象
+     * @return 角色ID
+     */
+    String saveRole(top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole role);
+
+    /**
+     * 查找知识角色
+     *
+     * @param roleId 角色ID
+     * @return 知识角色对象（Optional）
+     */
+    Optional<top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole> findRoleById(String roleId);
+
+    /**
+     * 列出所有知识角色
+     *
+     * @return 知识角色列表
+     */
+    List<top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole> findAllRoles();
+
+    /**
+     * 根据状态查找角色
+     *
+     * @param status 角色状态
+     * @return 知识角色列表
+     */
+    List<top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole> findRolesByStatus(top.yumbo.ai.omni.knowledge.registry.model.RoleStatus status);
+
+    /**
+     * 更新知识角色
+     *
+     * @param role 知识角色对象
+     * @return 是否成功
+     */
+    boolean updateRole(top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole role);
+
+    /**
+     * 删除知识角色
+     *
+     * @param roleId 角色ID
+     * @return 是否成功
+     */
+    boolean deleteRole(String roleId);
+
+    /**
+     * 检查角色是否存在
+     *
+     * @param roleId 角色ID
+     * @return 是否存在
+     */
+    boolean roleExists(String roleId);
+
+    /**
+     * 统计角色数量
+     *
+     * @return 总数量
+     */
+    long countRoles();
 }
 
