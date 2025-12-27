@@ -1,7 +1,8 @@
 # ✅ RAG 架构决策总结
 
 > 日期：2025-12-27  
-> 决策人：系统架构分析
+> 决策人：系统架构分析  
+> 状态：🟢 已完成旧代码清理
 
 ---
 
@@ -11,29 +12,33 @@
 
 **理由：完美契合知识网络重构方案的多域架构**
 
+**执行策略：直接删除旧代码，不做兼容（全新分支）** ✅
+
 ---
 
-## 📊 两套 API 对比
+## 🗑️ 已删除的旧代码
 
-### 1. RagService（简化版）✅ 采用
+### 1. 旧的 RAG API（已删除）✅
 
-- **包路径：** `top.yumbo.ai.omni.rag.RagService`
-- **核心特性：** 
-  - ✅ 支持域ID（`getDomainId()`）
-  - ✅ 包路径规范
-  - ✅ 接口简洁（现在 15 个方法）
-  - ✅ 统一的 Document 模型
-- **契合度：** 100% 符合重构方案
+- ❌ `top.yumbo.ai.rag.api.RAGService` - 已删除
+- ❌ `top.yumbo.ai.rag.api.model.Document` - 已删除
+- ❌ `top.yumbo.ai.rag.api.model.Query` - 已删除
+- ❌ `top.yumbo.ai.rag.api.model.SearchResult` - 已删除
+- ❌ `top.yumbo.ai.rag.api.model.IndexStatistics` - 已删除
 
-### 2. RAGService（完整版）❌ 淘汰
+### 2. 废弃的模型（已删除）✅
 
-- **包路径：** `top.yumbo.ai.rag.api.RAGService`
-- **问题：**
-  - ❌ 不支持域ID
-  - ❌ 包路径不规范
-  - ❌ 无法实现多域架构
-  - ❌ 接口过于复杂（20+ 方法）
-- **契合度：** 0% 不符合重构方案
+- ❌ `top.yumbo.ai.omni.rag.model.RagDocument` - 已删除
+
+### 3. 旧的实现类（已删除）✅
+
+- ❌ 所有 `omni-agent-rag-starter-*` 模块中的旧实现
+- ❌ `LuceneRAGService.java`
+- ❌ `H2RAGService.java`
+- ❌ `SQLiteRAGService.java`
+- ❌ `RedisRAGService.java`
+- ❌ `MongoDBRAGService.java`
+- ❌ `ElasticsearchRAGService.java`
 
 ---
 
@@ -226,40 +231,6 @@ top.yumbo.ai.omni.rag.model.RagDocument
 
 ---
 
-## 📝 迁移策略
-
-### 过渡期方案
-
-**适配器模式：**
-```java
-@Component
-public class RAGServiceAdapter implements RagService {
-    
-    @Autowired(required = false)
-    private top.yumbo.ai.rag.api.RAGService oldService;
-    
-    private final String domainId;
-    
-    @Override
-    public String getDomainId() {
-        return domainId;  // 新增域ID支持
-    }
-    
-    @Override
-    public List<Document> semanticSearch(String query, int maxResults) {
-        // 调用旧接口，转换结果
-        List<SearchResult> results = oldService.semanticSearch(query, maxResults);
-        return convertToDocuments(results);
-    }
-}
-```
-
-**时间表：**
-- Week 1-2: 适配器开发和测试
-- Week 3-4: 逐步迁移实现
-- Week 5-6: 删除旧接口
-
----
 
 ## ✅ 验证清单
 
@@ -268,10 +239,11 @@ public class RAGServiceAdapter implements RagService {
 - [x] Document 模型统一
 - [x] RAGServiceFactory 基础实现
 - [x] KnowledgeStorageService 集成
-- [ ] 旧接口标记 @Deprecated
-- [ ] 迁移指南编写
-- [ ] 适配器实现
-- [ ] 实现类迁移
+- [x] **旧接口完全删除** ✅
+- [x] **旧实现完全删除** ✅
+- [x] **废弃模型删除** ✅
+- [ ] 修复编译错误（Web 模块等）
+- [ ] 重新实现 RAG 服务（按需）
 - [ ] 集成测试
 
 ---
