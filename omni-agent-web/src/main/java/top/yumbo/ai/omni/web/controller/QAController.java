@@ -26,11 +26,33 @@ import java.util.Map;
  *
  * <p>提供统一的智能问答接口，支持多种知识模式：</p>
  * <ul>
- *   <li>none - 直接 LLM 回答（不使用知识库）</li>
+ *   <li>intelligent/none - 智能问答模式（Phase 3）
+ *       <ul>
+ *         <li>自动意图分析</li>
+ *         <li>智能知识检索</li>
+ *         <li>知识缺口检测</li>
+ *         <li>交互式学习</li>
+ *         <li>多轮对话支持</li>
+ *       </ul>
+ *   </li>
  *   <li>rag - 传统 RAG 检索回答</li>
  *   <li>role - 角色知识库回答</li>
- *   <li>intelligent - 智能问答模式（Phase 3 新增）</li>
  * </ul>
+ *
+ * <h3>使用示例</h3>
+ * <pre>
+ * // 智能问答模式（推荐）
+ * POST /api/qa/ask
+ * {
+ *   "question": "如何实现用户认证？",
+ *   "knowledgeMode": "intelligent",
+ *   "userId": "user123",
+ *   "hopeSessionId": "session-uuid"  // 用于多轮对话
+ * }
+ *
+ * // 流式智能问答
+ * GET /api/qa/ask/stream?question=如何实现用户认证&knowledgeMode=intelligent&conversationId=xxx
+ * </pre>
  *
  * @author OmniAgent Team
  * @since 2.0.0
@@ -69,11 +91,58 @@ public class QAController {
 
             String answer;
             List<SearchResult> references = null;
+            Map<String, Object> intentAnalysis = null;
 
             switch (knowledgeMode.toLowerCase()) {
+                case "intelligent":
                 case "none":
-                    // 直接 LLM 模式
-                    answer = aiService.chat(question);
+                    // 智能问答模式（Phase 3）- 替代原 none 模式
+                    if (intelligentQAService != null) {
+                        try {
+                            IntelligentQARequest qaRequest = IntelligentQARequest.builder()
+                                    .question(question)
+                                    .conversationId(hopeSessionId) // 使用 hopeSessionId 作为对话ID
+                                    .userId(request.getUserId() != null ? request.getUserId() : "anonymous")
+                                    .build();
+
+                            IntelligentQAResponse qaResponse = intelligentQAService.ask(qaRequest);
+
+                            answer = qaResponse.getAnswer();
+                            if (qaResponse.getReferences() != null && !qaResponse.getReferences().isEmpty()) {
+                                references = qaResponse.getReferences().stream()
+                                        .map(SearchResult::fromDocument)
+                                        .toList();
+                            }
+
+                            // 添加智能问答特有的信息
+                            result.put("conversationId", qaResponse.getConversationId());
+                            result.put("hasKnowledge", qaResponse.getHasKnowledge());
+                            result.put("knowledgeSufficient", qaResponse.getKnowledgeSufficient());
+                            result.put("needsMoreInfo", qaResponse.getNeedsMoreInfo());
+
+                            // 意图分析信息
+                            if (qaResponse.getIntent() != null) {
+                                intentAnalysis = new HashMap<>();
+                                intentAnalysis.put("intent", qaResponse.getIntent().getIntent());
+                                intentAnalysis.put("entities", qaResponse.getIntent().getEntities());
+                                intentAnalysis.put("techStack", qaResponse.getIntent().getTechStack());
+                                intentAnalysis.put("missingInfo", qaResponse.getIntent().getMissingInfo());
+                                intentAnalysis.put("confidence", qaResponse.getIntent().getConfidence());
+                            }
+
+                            log.info("✅ 使用智能问答模式");
+                            break;
+                        } catch (Exception e) {
+                            log.warn("智能问答失败，降级到直接 AI 模式: {}", e.getMessage());
+                            // 降级到直接 AI
+                            answer = aiService.chat(question);
+                            break;
+                        }
+                    } else {
+                        // 智能问答服务不可用，使用直接 AI
+                        log.info("智能问答服务未启用，使用直接 AI 模式");
+                        answer = aiService.chat(question);
+                    }
                     break;
 
                 case "role":
@@ -121,9 +190,12 @@ public class QAController {
                 result.put("references", references);
             }
 
+            if (intentAnalysis != null) {
+                result.put("intentAnalysis", intentAnalysis);
+            }
+
             if (hopeSessionId != null && !hopeSessionId.isEmpty()) {
                 result.put("hopeSessionId", hopeSessionId);
-                // TODO: 保存到 HOPE 会话历史
             }
 
         } catch (Exception e) {
@@ -141,21 +213,78 @@ public class QAController {
      * @param question      问题
      * @param knowledgeMode 知识模式
      * @param roleName      角色名称（role 模式时需要）
+     * @param conversationId 对话ID（intelligent 模式时使用）
+     * @param userId        用户ID（intelligent 模式时使用）
      * @return SSE 流
      */
     @GetMapping(value = "/ask/stream", produces = "text/event-stream")
     public SseEmitter askStream(
             @RequestParam String question,
             @RequestParam(defaultValue = "rag") String knowledgeMode,
-            @RequestParam(required = false) String roleName) {
+            @RequestParam(required = false) String roleName,
+            @RequestParam(required = false) String conversationId,
+            @RequestParam(required = false) String userId) {
 
-        log.info("流式问答: question={}, mode={}, role={}", question, knowledgeMode, roleName);
+        log.info("流式问答: question={}, mode={}, role={}, conversationId={}",
+                question, knowledgeMode, roleName, conversationId);
 
         SseEmitter emitter = new SseEmitter(300000L);
 
         new Thread(() -> {
             try {
-                String prompt = buildPrompt(question, knowledgeMode, roleName);
+                String prompt;
+
+                // 如果是智能模式，先进行意图分析和知识检索
+                if (("intelligent".equals(knowledgeMode) || "none".equals(knowledgeMode))
+                        && intelligentQAService != null) {
+                    try {
+                        // 使用智能问答服务构建更好的提示词
+                        IntelligentQARequest qaRequest = IntelligentQARequest.builder()
+                                .question(question)
+                                .conversationId(conversationId)
+                                .userId(userId != null ? userId : "anonymous")
+                                .build();
+
+                        // 调用智能问答获取增强的提示词（非流式部分）
+                        IntelligentQAResponse qaResponse = intelligentQAService.ask(qaRequest);
+
+                        // 发送元数据事件（意图分析结果）
+                        Map<String, Object> metadata = new HashMap<>();
+                        metadata.put("type", "metadata");
+                        metadata.put("conversationId", qaResponse.getConversationId());
+                        metadata.put("needsMoreInfo", qaResponse.getNeedsMoreInfo());
+                        if (qaResponse.getIntent() != null) {
+                            metadata.put("intent", qaResponse.getIntent().getIntent());
+                            metadata.put("confidence", qaResponse.getIntent().getConfidence());
+                        }
+                        emitter.send(SseEmitter.event()
+                                .name("metadata")
+                                .data(metadata));
+
+                        // 如果需要更多信息，直接返回问题
+                        if (qaResponse.getNeedsMoreInfo()) {
+                            // 分块发送答案
+                            String answer = qaResponse.getAnswer();
+                            for (char c : answer.toCharArray()) {
+                                emitter.send(SseEmitter.event().data(String.valueOf(c)));
+                                Thread.sleep(5); // 模拟流式效果
+                            }
+                            emitter.complete();
+                            return;
+                        }
+
+                        // 使用增强后的完整提示词进行流式生成
+                        prompt = qaResponse.getAnswer(); // 这里可以优化为使用更好的提示词
+
+                        log.info("✅ 使用智能问答模式（流式）");
+                    } catch (Exception e) {
+                        log.warn("智能问答失败，降级到普通模式: {}", e.getMessage());
+                        prompt = buildPrompt(question, "rag", roleName);
+                    }
+                } else {
+                    // 其他模式使用原有逻辑
+                    prompt = buildPrompt(question, knowledgeMode, roleName);
+                }
 
                 List<ChatMessage> messages = List.of(
                         ChatMessage.builder()
@@ -324,89 +453,6 @@ public class QAController {
         } catch (Exception ex) {
             log.error("❌ 发送错误消息失败: {}", ex.getMessage());
         }
-    }
-
-    // ========== Phase 3: 智能问答系统 ==========
-
-    /**
-     * 智能问答（Phase 3 新增）
-     *
-     * <p>特性：</p>
-     * <ul>
-     *   <li>自动意图分析</li>
-     *   <li>智能知识检索</li>
-     *   <li>知识缺口检测</li>
-     *   <li>交互式学习</li>
-     *   <li>多轮对话支持</li>
-     * </ul>
-     *
-     * @param request 智能问答请求
-     * @return 智能问答响应
-     */
-    @PostMapping("/intelligent")
-    public Map<String, Object> intelligentAsk(@RequestBody Map<String, String> request) {
-        Map<String, Object> result = new HashMap<>();
-
-        try {
-            // 检查服务是否可用
-            if (intelligentQAService == null) {
-                result.put("status", "error");
-                result.put("error", "IntelligentQAService not available");
-                result.put("message", "智能问答服务未启用，请检查配置");
-                return result;
-            }
-
-            // 构建请求
-            IntelligentQARequest qaRequest = IntelligentQARequest.builder()
-                    .question(request.get("question"))
-                    .conversationId(request.get("conversationId"))
-                    .userId(request.get("userId"))
-                    .build();
-
-            log.info("🤖 智能问答请求: question={}, conversationId={}",
-                    qaRequest.getQuestion(), qaRequest.getConversationId());
-
-            // 调用智能问答服务
-            IntelligentQAResponse response = intelligentQAService.ask(qaRequest);
-
-            // 构建响应
-            result.put("status", "success");
-            result.put("conversationId", response.getConversationId());
-            result.put("question", response.getQuestion());
-            result.put("answer", response.getAnswer());
-            result.put("hasKnowledge", response.getHasKnowledge());
-            result.put("knowledgeSufficient", response.getKnowledgeSufficient());
-            result.put("needsMoreInfo", response.getNeedsMoreInfo());
-            result.put("model", aiService.getCurrentModel());
-
-            // 添加意图分析信息
-            if (response.getIntent() != null) {
-                Map<String, Object> intentInfo = new HashMap<>();
-                intentInfo.put("intent", response.getIntent().getIntent());
-                intentInfo.put("entities", response.getIntent().getEntities());
-                intentInfo.put("techStack", response.getIntent().getTechStack());
-                intentInfo.put("missingInfo", response.getIntent().getMissingInfo());
-                intentInfo.put("confidence", response.getIntent().getConfidence());
-                result.put("intentAnalysis", intentInfo);
-            }
-
-            // 添加参考文档
-            if (response.getReferences() != null && !response.getReferences().isEmpty()) {
-                result.put("referenceCount", response.getReferences().size());
-                result.put("references", response.getReferences());
-            }
-
-            log.info("✅ 智能问答完成: needsMoreInfo={}, referencesCount={}",
-                    response.getNeedsMoreInfo(),
-                    response.getReferences() != null ? response.getReferences().size() : 0);
-
-        } catch (Exception e) {
-            log.error("❌ 智能问答失败", e);
-            result.put("status", "error");
-            result.put("error", e.getMessage());
-        }
-
-        return result;
     }
 }
 

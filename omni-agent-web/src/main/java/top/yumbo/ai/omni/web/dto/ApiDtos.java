@@ -66,9 +66,10 @@ public class ApiDtos {
     @Data
     public static class QuestionRequest {
         private String question;
-        private String knowledgeMode; // none, rag, role
+        private String knowledgeMode; // none, rag, role, intelligent
         private String roleName;
-        private String hopeSessionId;
+        private String hopeSessionId;  // 用于多轮对话
+        private String userId;  // 用于智能问答模式
     }
 
     /**
