@@ -35,10 +35,12 @@ public class MongoKnowledgeRegistryAutoConfiguration {
 
         log.info("🚀 初始化 MongoDB 知识注册表");
         log.info("   - 集合名称: {}", properties.getCollectionName());
+        log.info("   - 角色集合名称: knowledge_roles");
 
         return new MongoKnowledgeRegistry(
                 mongoTemplate,
-                properties.getCollectionName()
+                properties.getCollectionName(),
+                "knowledge_roles"
         );
     }
 }

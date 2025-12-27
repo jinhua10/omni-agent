@@ -11,6 +11,8 @@ import top.yumbo.ai.omni.knowledge.registry.exception.KnowledgeRegistryException
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
 
 import jakarta.annotation.PostConstruct;
 import java.util.List;
@@ -31,6 +33,7 @@ public class H2KnowledgeRegistry implements KnowledgeRegistry {
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
     private final String tableName;
+    private final String roleTableName;
 
     private final RowMapper<KnowledgeDomain> rowMapper = (rs, rowNum) -> {
         try {
@@ -42,9 +45,20 @@ public class H2KnowledgeRegistry implements KnowledgeRegistry {
         }
     };
 
+    private final RowMapper<KnowledgeRole> roleRowMapper = (rs, rowNum) -> {
+        try {
+            String json = rs.getString("data");
+            return objectMapper.readValue(json, KnowledgeRole.class);
+        } catch (Exception e) {
+            log.error("反序列化知识角色失败", e);
+            return null;
+        }
+    };
+
     @PostConstruct
     public void init() {
         createTableIfNotExists();
+        createRoleTableIfNotExists();
     }
 
     private void createTableIfNotExists() {
@@ -66,6 +80,27 @@ public class H2KnowledgeRegistry implements KnowledgeRegistry {
         } catch (Exception e) {
             log.error("创建 H2 表失败", e);
             throw new KnowledgeRegistryException("Failed to create H2 table", e);
+        }
+    }
+
+    private void createRoleTableIfNotExists() {
+        String sql = String.format("""
+            CREATE TABLE IF NOT EXISTS %s (
+                role_id VARCHAR(255) PRIMARY KEY,
+                role_name VARCHAR(500),
+                status VARCHAR(50),
+                data TEXT,
+                created_at TIMESTAMP,
+                updated_at TIMESTAMP
+            )
+            """, roleTableName);
+
+        try {
+            jdbcTemplate.execute(sql);
+            log.info("✅ H2 角色表已初始化: {}", roleTableName);
+        } catch (Exception e) {
+            log.error("创建 H2 角色表失败", e);
+            throw new KnowledgeRegistryException("Failed to create H2 role table", e);
         }
     }
 
@@ -204,6 +239,115 @@ public class H2KnowledgeRegistry implements KnowledgeRegistry {
             return count != null ? count : 0;
         } catch (Exception e) {
             log.error("统计 H2 中指定类型知识域数量失败: {}", type, e);
+            return 0;
+        }
+    }
+
+    // ========== 知识角色管理实现 ==========
+
+    @Override
+    public String saveRole(KnowledgeRole role) {
+        try {
+            role.prePersist();
+            String json = objectMapper.writeValueAsString(role);
+
+            String sql = String.format("""
+                MERGE INTO %s (role_id, role_name, status, data, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """, roleTableName);
+
+            jdbcTemplate.update(sql,
+                    role.getRoleId(),
+                    role.getRoleName(),
+                    role.getStatus().name(),
+                    json,
+                    role.getCreatedAt(),
+                    role.getUpdatedAt());
+
+            log.info("✅ 保存知识角色到 H2: {} ({})", role.getRoleName(), role.getRoleId());
+            return role.getRoleId();
+        } catch (JsonProcessingException e) {
+            log.error("序列化知识角色失败: {}", role.getRoleId(), e);
+            throw new KnowledgeRegistryException("Failed to serialize role", e);
+        }
+    }
+
+    @Override
+    public Optional<KnowledgeRole> findRoleById(String roleId) {
+        try {
+            String sql = String.format("SELECT * FROM %s WHERE role_id = ?", roleTableName);
+            List<KnowledgeRole> results = jdbcTemplate.query(sql, roleRowMapper, roleId);
+            return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+        } catch (Exception e) {
+            log.error("从 H2 查询知识角色失败: {}", roleId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<KnowledgeRole> findAllRoles() {
+        try {
+            String sql = String.format("SELECT * FROM %s", roleTableName);
+            return jdbcTemplate.query(sql, roleRowMapper);
+        } catch (Exception e) {
+            log.error("从 H2 查询所有知识角色失败", e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public List<KnowledgeRole> findRolesByStatus(RoleStatus status) {
+        try {
+            String sql = String.format("SELECT * FROM %s WHERE status = ?", roleTableName);
+            return jdbcTemplate.query(sql, roleRowMapper, status.name());
+        } catch (Exception e) {
+            log.error("从 H2 按状态查询知识角色失败: {}", status, e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public boolean updateRole(KnowledgeRole role) {
+        return saveRole(role) != null;
+    }
+
+    @Override
+    public boolean deleteRole(String roleId) {
+        try {
+            String sql = String.format("DELETE FROM %s WHERE role_id = ?", roleTableName);
+            int rows = jdbcTemplate.update(sql, roleId);
+
+            if (rows > 0) {
+                log.info("✅ 从 H2 删除知识角色: {}", roleId);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("从 H2 删除知识角色失败: {}", roleId, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean roleExists(String roleId) {
+        try {
+            String sql = String.format("SELECT COUNT(*) FROM %s WHERE role_id = ?", roleTableName);
+            Integer count = jdbcTemplate.queryForObject(sql, Integer.class, roleId);
+            return count != null && count > 0;
+        } catch (Exception e) {
+            log.error("检查 H2 中知识角色是否存在失败: {}", roleId, e);
+            return false;
+        }
+    }
+
+    @Override
+    public long countRoles() {
+        try {
+            String sql = String.format("SELECT COUNT(*) FROM %s", roleTableName);
+            Long count = jdbcTemplate.queryForObject(sql, Long.class);
+            return count != null ? count : 0;
+        } catch (Exception e) {
+            log.error("统计 H2 中知识角色数量失败", e);
             return 0;
         }
     }

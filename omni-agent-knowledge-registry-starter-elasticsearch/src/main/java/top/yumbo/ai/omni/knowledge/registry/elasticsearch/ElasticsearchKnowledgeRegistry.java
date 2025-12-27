@@ -12,6 +12,8 @@ import top.yumbo.ai.omni.knowledge.registry.exception.KnowledgeRegistryException
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +33,7 @@ public class ElasticsearchKnowledgeRegistry implements KnowledgeRegistry {
 
     private final ElasticsearchOperations elasticsearchOperations;
     private final String indexName;
+    private final String roleIndexName;
 
     @Override
     public String saveDomain(KnowledgeDomain domain) {
@@ -169,6 +172,107 @@ public class ElasticsearchKnowledgeRegistry implements KnowledgeRegistry {
             return elasticsearchOperations.count(query, KnowledgeDomain.class);
         } catch (Exception e) {
             log.error("统计 Elasticsearch 中指定类型知识域数量失败: {}", type, e);
+            return 0;
+        }
+    }
+
+    // ========== 知识角色管理实现 ==========
+
+    @Override
+    public String saveRole(KnowledgeRole role) {
+        try {
+            role.prePersist();
+            elasticsearchOperations.save(role);
+            log.info("✅ 保存知识角色到 Elasticsearch: {} ({})", role.getRoleName(), role.getRoleId());
+            return role.getRoleId();
+        } catch (Exception e) {
+            log.error("保存知识角色到 Elasticsearch 失败: {}", role.getRoleId(), e);
+            throw new KnowledgeRegistryException("Failed to save role to Elasticsearch", e);
+        }
+    }
+
+    @Override
+    public Optional<KnowledgeRole> findRoleById(String roleId) {
+        try {
+            KnowledgeRole role = elasticsearchOperations.get(roleId, KnowledgeRole.class);
+            return Optional.ofNullable(role);
+        } catch (Exception e) {
+            log.error("从 Elasticsearch 查询知识角色失败: {}", roleId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<KnowledgeRole> findAllRoles() {
+        try {
+            Query query = Query.findAll();
+            return elasticsearchOperations.search(query, KnowledgeRole.class)
+                    .stream()
+                    .map(SearchHit::getContent)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("从 Elasticsearch 查询所有知识角色失败", e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public List<KnowledgeRole> findRolesByStatus(RoleStatus status) {
+        try {
+            Criteria criteria = new Criteria("status").is(status.name());
+            Query query = new CriteriaQuery(criteria);
+            return elasticsearchOperations.search(query, KnowledgeRole.class)
+                    .stream()
+                    .map(SearchHit::getContent)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("从 Elasticsearch 按状态查询知识角色失败: {}", status, e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public boolean updateRole(KnowledgeRole role) {
+        try {
+            role.preUpdate();
+            elasticsearchOperations.save(role);
+            log.info("✅ 更新 Elasticsearch 中的知识角色: {} ({})", role.getRoleName(), role.getRoleId());
+            return true;
+        } catch (Exception e) {
+            log.error("更新 Elasticsearch 中的知识角色失败: {}", role.getRoleId(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteRole(String roleId) {
+        try {
+            elasticsearchOperations.delete(roleId, KnowledgeRole.class);
+            log.info("✅ 从 Elasticsearch 删除知识角色: {}", roleId);
+            return true;
+        } catch (Exception e) {
+            log.error("从 Elasticsearch 删除知识角色失败: {}", roleId, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean roleExists(String roleId) {
+        try {
+            return elasticsearchOperations.exists(roleId, KnowledgeRole.class);
+        } catch (Exception e) {
+            log.error("检查 Elasticsearch 中知识角色是否存在失败: {}", roleId, e);
+            return false;
+        }
+    }
+
+    @Override
+    public long countRoles() {
+        try {
+            Query query = Query.findAll();
+            return elasticsearchOperations.count(query, KnowledgeRole.class);
+        } catch (Exception e) {
+            log.error("统计 Elasticsearch 中知识角色数量失败", e);
             return 0;
         }
     }

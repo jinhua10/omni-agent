@@ -35,10 +35,12 @@ public class ElasticsearchKnowledgeRegistryAutoConfiguration {
 
         log.info("🚀 初始化 Elasticsearch 知识注册表");
         log.info("   - 索引名称: {}", properties.getIndexName());
+        log.info("   - 角色索引名称: knowledge_roles");
 
         return new ElasticsearchKnowledgeRegistry(
                 elasticsearchOperations,
-                properties.getIndexName()
+                properties.getIndexName(),
+                "knowledge_roles"
         );
     }
 }

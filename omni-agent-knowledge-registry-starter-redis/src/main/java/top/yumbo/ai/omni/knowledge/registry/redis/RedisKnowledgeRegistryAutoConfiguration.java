@@ -39,6 +39,8 @@ public class RedisKnowledgeRegistryAutoConfiguration {
         log.info("🚀 初始化 Redis 知识注册表");
         log.info("   - Key 前缀: {}", properties.getKeyPrefix());
         log.info("   - 域列表 Key: {}", properties.getDomainListKey());
+        log.info("   - 角色 Key 前缀: knowledge:role:");
+        log.info("   - 角色列表 Key: knowledge:roles:all");
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
@@ -48,7 +50,9 @@ public class RedisKnowledgeRegistryAutoConfiguration {
                 redisTemplate,
                 objectMapper,
                 properties.getKeyPrefix(),
-                properties.getDomainListKey()
+                properties.getDomainListKey(),
+                "knowledge:role:",
+                "knowledge:roles:all"
         );
     }
 }

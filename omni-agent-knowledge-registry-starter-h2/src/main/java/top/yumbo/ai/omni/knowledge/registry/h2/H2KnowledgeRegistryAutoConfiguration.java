@@ -38,6 +38,7 @@ public class H2KnowledgeRegistryAutoConfiguration {
 
         log.info("🚀 初始化 H2 知识注册表");
         log.info("   - 表名: {}", properties.getTableName());
+        log.info("   - 角色表名: knowledge_roles");
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
@@ -46,7 +47,8 @@ public class H2KnowledgeRegistryAutoConfiguration {
         return new H2KnowledgeRegistry(
                 jdbcTemplate,
                 objectMapper,
-                properties.getTableName()
+                properties.getTableName(),
+                "knowledge_roles"
         );
     }
 }
