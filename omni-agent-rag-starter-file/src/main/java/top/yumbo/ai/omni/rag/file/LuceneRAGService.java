@@ -14,11 +14,11 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.rag.api.model.IndexStatistics;
-import top.yumbo.ai.rag.api.model.Query;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+import top.yumbo.ai.omni.rag.model.Vector;
+import top.yumbo.ai.omni.rag.model.SearchResult;
+import top.yumbo.ai.omni.rag.model.IndexStatistics;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class LuceneRAGService implements RAGService {
+public class LuceneRAGService implements RagService {
 
     private final FileRAGProperties properties;
     private Directory directory;

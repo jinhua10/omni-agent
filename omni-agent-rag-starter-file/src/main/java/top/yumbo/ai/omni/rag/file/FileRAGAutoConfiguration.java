@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import top.yumbo.ai.rag.api.RAGService;
+import top.yumbo.ai.omni.rag.RagService;
 
 /**
  * File RAG 自动配置
@@ -30,7 +30,7 @@ public class FileRAGAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public RAGService ragService(FileRAGProperties properties) {
+    public RagService ragService(FileRAGProperties properties) {
         log.info("自动配置 File RAG (Lucene) 服务");
         log.info("索引路径: {}", properties.getIndexPath());
         log.info("RAM 缓冲区: {} MB", properties.getRamBufferSizeMb());
