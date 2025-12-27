@@ -17,3 +17,5 @@ omni-agent:
     ttl-minutes: 30             # 缓存过期时间（分钟）
     persistence-enabled: true   # 是否启用持久化（重启后保留缓存）
     persistence-prefix: "query-cache"  # 持久化存储前缀
+    warmup-enabled: true        # 是否启用预热（启动时加载热门查询）
+    warmup-size: 50             # 预热查询数量

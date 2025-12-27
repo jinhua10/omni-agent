@@ -106,15 +106,30 @@ public class QueryResultCache {
             .registerModule(new JavaTimeModule());
 
     /**
+     * 是否启用预热
+     */
+    private boolean warmupEnabled = true;
+
+    /**
+     * 预热查询数量（加载最热门的N个查询）
+     */
+    private int warmupSize = 50;
+
+    /**
      * 启动时加载持久化缓存
      */
     @PostConstruct
     public void init() {
         if (enabled && persistenceEnabled && storageService != null) {
             loadPersistedCache();
+
+            // 预热缓存
+            if (warmupEnabled) {
+                warmupCache();
+            }
         }
-        log.info("✅ 查询缓存已初始化 (启用: {}, 持久化: {}, 最大: {})",
-                enabled, persistenceEnabled, maxSize);
+        log.info("✅ 查询缓存已初始化 (启用: {}, 持久化: {}, 预热: {}, 最大: {})",
+                enabled, persistenceEnabled, warmupEnabled, maxSize);
     }
 
     /**
@@ -331,6 +346,63 @@ public class QueryResultCache {
         }
     }
 
+    /**
+     * 缓存预热
+     * 在系统启动后，预先执行热门查询以填充缓存
+     */
+    public void warmupCache() {
+        try {
+            log.info("🔥 开始缓存预热...");
+
+            // 获取热门查询（基于历史查询频率）
+            List<String> hotQueries = getHotQueries(warmupSize);
+
+            if (hotQueries.isEmpty()) {
+                log.info("   无热门查询可预热");
+                return;
+            }
+
+            int warmedUp = 0;
+            for (String cacheKey : hotQueries) {
+                try {
+                    // 检查缓存是否已经在内存中
+                    if (cache.containsKey(cacheKey)) {
+                        warmedUp++;
+                        continue;
+                    }
+
+                    // 从持久化存储加载
+                    String storageId = getStorageId(cacheKey);
+                    CacheEntry entry = loadFromPersistence(cacheKey);
+
+                    if (entry != null && !isExpired(entry)) {
+                        cache.put(cacheKey, entry);
+                        accessOrder.addFirst(cacheKey);
+                        warmedUp++;
+                    }
+                } catch (Exception e) {
+                    log.debug("预热缓存失败: {} - {}", cacheKey, e.getMessage());
+                }
+            }
+
+            log.info("✅ 缓存预热完成: {} 个热门查询已加载", warmedUp);
+
+        } catch (Exception e) {
+            log.error("缓存预热失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 手动触发预热（用于定时任务）
+     */
+    public void triggerWarmup() {
+        if (enabled && persistenceEnabled && warmupEnabled) {
+            warmupCache();
+        } else {
+            log.warn("预热未启用，跳过");
+        }
+    }
+
     // ========== 持久化相关方法 ==========
 
     /**
@@ -365,7 +437,7 @@ public class QueryResultCache {
             // 添加到索引
             cacheIndex.add(storageId);
 
-            log.debug("💾 持久化保��: {}", cacheKey);
+            log.debug("💾 持久化保存: {}", cacheKey);
         } catch (Exception e) {
             log.warn("持久化保存缓存失败: {} - {}", cacheKey, e.getMessage());
         }
