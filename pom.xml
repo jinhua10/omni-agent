@@ -128,6 +128,9 @@
         <module>omni-agent-behavior-starter-memory</module>
         <module>omni-agent-behavior-starter-redis</module>
         <module>omni-agent-behavior-starter-mongodb</module>
+
+        <!-- Knowledge Registry Starters ⭐ Phase 1 -->
+        <module>omni-agent-knowledge-registry-starter-file</module>
     </modules>
 
     <!-- 开发者信息 -->
