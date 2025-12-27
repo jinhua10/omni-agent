@@ -4,10 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ActiveProfiles;
 import top.yumbo.ai.omni.rag.RagService;
 
+import java.util.Collections;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * RAG服务工厂测试
@@ -17,9 +22,24 @@ import static org.junit.jupiter.api.Assertions.*;
  * @since 1.0.0
  */
 @Slf4j
-@SpringBootTest
+@SpringBootTest(classes = RAGServiceFactoryTest.TestConfig.class)
 @ActiveProfiles("test")
 class RAGServiceFactoryTest {
+
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public RagService mockRagService() {
+            RagService ragService = mock(RagService.class);
+            when(ragService.getDomainId()).thenReturn("test-domain");
+            return ragService;
+        }
+
+        @Bean
+        public RAGServiceFactory ragServiceFactory() {
+            return new RAGServiceFactory();
+        }
+    }
 
     @Autowired(required = false)
     private RAGServiceFactory ragServiceFactory;

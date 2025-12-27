@@ -4,7 +4,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ActiveProfiles;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
@@ -12,8 +15,11 @@ import top.yumbo.ai.omni.core.dto.domain.CreateDomainRequest;
 import top.yumbo.ai.omni.core.dto.domain.UpdateDomainRequest;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  * KnowledgeDomainService 集成测试
@@ -21,16 +27,33 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author OmniAgent Team
  * @since 1.0.0
  */
-@SpringBootTest
+@SpringBootTest(classes = KnowledgeDomainServiceIntegrationTest.TestConfig.class)
 @ActiveProfiles("test")
 class KnowledgeDomainServiceIntegrationTest {
+
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public KnowledgeRegistry knowledgeRegistry() {
+            return mock(KnowledgeRegistry.class);
+        }
+
+        @Bean
+        public KnowledgeDomainService knowledgeDomainService(KnowledgeRegistry registry) {
+            return new KnowledgeDomainService(registry);
+        }
+    }
 
     @Autowired
     private KnowledgeDomainService domainService;
 
+    @Autowired
+    private KnowledgeRegistry knowledgeRegistry;
+
     @BeforeEach
     void setUp() {
-        // 清理测试数据（如果需要）
+        // 重置 mock
+        reset(knowledgeRegistry);
     }
 
     @Test
@@ -42,6 +65,17 @@ class KnowledgeDomainServiceIntegrationTest {
                 .description("这是一个测试文档域")
                 .build();
 
+        KnowledgeDomain mockDomain = KnowledgeDomain.builder()
+                .domainId("test-domain-id")
+                .domainName("测试文档域")
+                .domainType(DomainType.DOCUMENT)
+                .description("这是一个测试文档域")
+                .status(DomainStatus.ACTIVE)
+                .build();
+
+        when(knowledgeRegistry.saveDomain(any(KnowledgeDomain.class))).thenReturn("test-domain-id");
+        when(knowledgeRegistry.findDomainById("test-domain-id")).thenReturn(Optional.of(mockDomain));
+
         // When
         KnowledgeDomain domain = domainService.createDomain(request);
 
@@ -49,6 +83,7 @@ class KnowledgeDomainServiceIntegrationTest {
         assertNotNull(domain);
         assertNotNull(domain.getDomainId());
         assertEquals("测试文档域", domain.getDomainName());
+        verify(knowledgeRegistry, times(1)).saveDomain(any(KnowledgeDomain.class));
         assertEquals(DomainType.DOCUMENT, domain.getDomainType());
         assertEquals(DomainStatus.ACTIVE, domain.getStatus());
     }

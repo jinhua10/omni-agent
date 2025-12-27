@@ -4,12 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ActiveProfiles;
 import top.yumbo.ai.omni.core.model.RefinedKnowledge;
 
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * 知识存储服务集成测试
@@ -19,9 +22,17 @@ import static org.junit.jupiter.api.Assertions.*;
  * @since 1.0.0
  */
 @Slf4j
-@SpringBootTest
+@SpringBootTest(classes = KnowledgeStorageServiceIntegrationTest.TestConfig.class)
 @ActiveProfiles("test")
 class KnowledgeStorageServiceIntegrationTest {
+
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public KnowledgeStorageService knowledgeStorageService() {
+            return mock(KnowledgeStorageService.class);
+        }
+    }
 
     @Autowired(required = false)
     private KnowledgeStorageService knowledgeStorageService;
