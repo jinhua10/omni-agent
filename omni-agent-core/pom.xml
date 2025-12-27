@@ -25,13 +25,6 @@
 
         <!-- ========== API 依赖（只依赖接口） ========== -->
 
-        <!-- Persistence API -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- Document Storage API -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
