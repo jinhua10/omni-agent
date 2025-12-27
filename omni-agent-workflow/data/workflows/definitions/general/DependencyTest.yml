@@ -4,6 +4,7 @@ description: null
 steps:
 - id: "stepA"
   name: null
+  description: null
   agent: "EchoAgent"
   input: "A"
   config: null
@@ -14,6 +15,7 @@ steps:
   condition: null
 - id: "stepB"
   name: null
+  description: null
   agent: "EchoAgent"
   input: "B"
   config: null
@@ -25,6 +27,7 @@ steps:
   condition: null
 - id: "stepC"
   name: null
+  description: null
   agent: "EchoAgent"
   input: "C"
   config: null
@@ -38,9 +41,10 @@ steps:
 config: null
 version: "1.0.0"
 tags: null
+category: null
 metadata: null
-createdAt: 1766236868096
-updatedAt: 1766236868096
+createdAt: 1766841742722
+updatedAt: 1766841742722
 author: null
 status: "active"
 inputSchema: null
