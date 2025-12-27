@@ -1,14 +1,15 @@
 package top.yumbo.ai.omni.rag.h2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.rag.api.model.IndexStatistics;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+import top.yumbo.ai.omni.rag.model.Vector;
+import top.yumbo.ai.omni.rag.model.IndexStatistics;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -17,41 +18,50 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 基于 H2 数据库的 RAG 实现
- * (H2 Database-based RAG Implementation)
- * 
- * <p>特性:
- * <ul>
- *   <li>嵌入式数据库，零配置启动</li>
- *   <li>全文搜索（H2 Full-Text Search）</li>
- *   <li>向量搜索（余弦相似度）</li>
- *   <li>混合检索（文本 + 向量）</li>
- *   <li>HikariCP连接池</li>
- * </ul>
+ * 基于 H2 数据库的 RAG 实现（重构版本）
+ * <p>
+ * 符合新的多域架构设计
  *
  * @author OmniAgent Team
- * @since 1.0.0
+ * @since 2.0.0
  */
 @Slf4j
-public class H2RAGService implements RAGService {
+public class H2RAGService implements RagService {
 
     private final H2RAGProperties properties;
     private final HikariDataSource dataSource;
     private final ObjectMapper objectMapper;
+    private final String domainId;
 
     public H2RAGService(H2RAGProperties properties) {
+        this(properties, "h2-domain");
+    }
+
+    public H2RAGService(H2RAGProperties properties, String domainId) {
         this.properties = properties;
+        this.domainId = domainId;
         this.objectMapper = new ObjectMapper();
         this.dataSource = createDataSource();
+    }
+
+    private HikariDataSource createDataSource() {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(properties.getUrl());
+        config.setUsername(properties.getUsername());
+        config.setPassword(properties.getPassword());
+        config.setMaximumPoolSize(properties.getMaxPoolSize());
+        config.setMinimumIdle(properties.getMinPoolSize());
+        config.setConnectionTimeout(properties.getConnectionTimeout());
+        config.setIdleTimeout(properties.getIdleTimeout());
+        config.setMaxLifetime(1800000);
+        return new HikariDataSource(config);
     }
 
     @PostConstruct
     public void init() {
         try {
             createTables();
-            createFullTextIndex();
-            log.info("H2 RAG Service 初始化成功");
-            log.info("数据库路径: {}", properties.getUrl());
+            log.info("H2 RAG Service 初始化成功: domain={}", domainId);
         } catch (SQLException e) {
             log.error("初始化H2 RAG失败", e);
             throw new RuntimeException("初始化失败", e);
@@ -66,10 +76,99 @@ public class H2RAGService implements RAGService {
         }
     }
 
-    // ========== 文档索引 ==========
+    // ========== RagService 接口实现 ==========
 
     @Override
-    public String indexDocument(Document document) {
+    public List<Document> semanticSearch(String query, int maxResults) {
+        log.debug("语义搜索: query={}, maxResults={}", query, maxResults);
+        return searchByText(query, maxResults);
+    }
+
+    @Override
+    public List<Document> vectorSearch(Vector vector, int maxResults) {
+        if (vector == null || vector.getData() == null) {
+            return Collections.emptyList();
+        }
+        return vectorSearchByFloatArray(vector.getData(), maxResults);
+    }
+
+    @Override
+    public Vector embed(String text) {
+        log.warn("H2RAGService 不提供嵌入功能，请使用外部 AI 服务");
+        return null;
+    }
+
+    @Override
+    public List<Vector> batchEmbed(List<String> texts) {
+        log.warn("H2RAGService 不提供批量嵌入功能");
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void index(String id, Vector vector, Map<String, Object> metadata) {
+        Document.DocumentBuilder builder = Document.builder().id(id);
+
+        if (metadata != null) {
+            if (metadata.containsKey("title")) builder.title((String) metadata.get("title"));
+            if (metadata.containsKey("content")) builder.content((String) metadata.get("content"));
+            if (metadata.containsKey("source")) builder.source((String) metadata.get("source"));
+            if (metadata.containsKey("summary")) builder.summary((String) metadata.get("summary"));
+        }
+
+        if (vector != null && vector.getData() != null) {
+            builder.embedding(vector.getData());
+        }
+
+        indexDocument(builder.build());
+    }
+
+    @Override
+    public void batchIndex(List<Document> documents) {
+        for (Document doc : documents) {
+            indexDocument(doc);
+        }
+    }
+
+    @Override
+    public void delete(String id) {
+        deleteDocument(id);
+    }
+
+    @Override
+    public String getDomainId() {
+        return domainId;
+    }
+
+    // ========== 内部实现方法 ==========
+
+    private void createTables() throws SQLException {
+        String createTableSQL = """
+            CREATE TABLE IF NOT EXISTS rag_documents (
+                id VARCHAR(255) PRIMARY KEY,
+                title VARCHAR(1000),
+                content CLOB,
+                summary VARCHAR(5000),
+                tags VARCHAR(1000),
+                type VARCHAR(100),
+                source VARCHAR(1000),
+                author VARCHAR(255),
+                embedding CLOB,
+                metadata CLOB,
+                score DOUBLE,
+                created_at TIMESTAMP,
+                updated_at TIMESTAMP
+            )
+            """;
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(createTableSQL);
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_type ON rag_documents(type)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_source ON rag_documents(source)");
+        }
+    }
+
+    private void indexDocument(Document document) {
         if (document.getId() == null || document.getId().isEmpty()) {
             document.setId(UUID.randomUUID().toString());
         }
@@ -93,14 +192,12 @@ public class H2RAGService implements RAGService {
             stmt.setString(8, document.getAuthor());
             stmt.setString(9, serializeEmbedding(document.getEmbedding()));
             stmt.setString(10, serializeMetadata(document.getMetadata()));
-            stmt.setTimestamp(11, new Timestamp(document.getCreatedAt() != null ? 
-                document.getCreatedAt() : System.currentTimeMillis()));
+            stmt.setTimestamp(11, new Timestamp(document.getCreatedAt() != null ?
+                    document.getCreatedAt() : System.currentTimeMillis()));
             stmt.setTimestamp(12, new Timestamp(System.currentTimeMillis()));
 
             stmt.executeUpdate();
-
             log.debug("文档索引成功: {}", document.getId());
-            return document.getId();
 
         } catch (SQLException e) {
             log.error("索引文档失败", e);
@@ -108,120 +205,44 @@ public class H2RAGService implements RAGService {
         }
     }
 
-    @Override
-    public List<String> indexDocuments(List<Document> documents) {
-        List<String> docIds = new ArrayList<>();
-        
-        for (Document document : documents) {
-            try {
-                String docId = indexDocument(document);
-                docIds.add(docId);
-            } catch (Exception e) {
-                log.error("索引文档失败: {}", document.getId(), e);
-            }
-        }
-        
-        return docIds;
-    }
-
-    @Override
-    public boolean updateDocument(Document document) {
-        if (!documentExists(document.getId())) {
-            log.warn("文档不存在: {}", document.getId());
-            return false;
-        }
-
-        indexDocument(document);
-        return true;
-    }
-
-    @Override
-    public boolean deleteDocument(String documentId) {
+    private void deleteDocument(String documentId) {
         String sql = "DELETE FROM rag_documents WHERE id = ?";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, documentId);
-            int rows = stmt.executeUpdate();
-
-            if (rows > 0) {
-                log.debug("文档删除成功: {}", documentId);
-                return true;
-            } else {
-                log.warn("文档不存在: {}", documentId);
-                return false;
-            }
+            stmt.executeUpdate();
+            log.debug("文档删除成功: {}", documentId);
 
         } catch (SQLException e) {
             log.error("删除文档失败: {}", documentId, e);
-            return false;
+            throw new RuntimeException("删除文档失败", e);
         }
     }
 
-    @Override
-    public void clearAll() {
-        String sql = "DELETE FROM rag_documents";
-
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-
-            stmt.executeUpdate(sql);
-            log.info("所有索引已清空");
-
-        } catch (SQLException e) {
-            log.error("清空索引失败", e);
-            throw new RuntimeException("清空索引失败", e);
-        }
-    }
-
-    // ========== 文本搜索 ==========
-
-    @Override
-    public List<SearchResult> search(top.yumbo.ai.rag.api.model.Query query) {
-        switch (query.getMode()) {
-            case TEXT:
-                return searchByText(query.getText(), query.getTopK());
-            case VECTOR:
-                return query.getEmbedding() != null ?
-                        vectorSearch(query.getEmbedding(), query.getTopK()) :
-                        Collections.emptyList();
-            case HYBRID:
-                return hybridSearch(query);
-            default:
-                return Collections.emptyList();
-        }
-    }
-
-    @Override
-    public List<SearchResult> searchByText(String text, int topK) {
-        // H2 全文搜索
+    private List<Document> searchByText(String text, int topK) {
+        // 简单的 LIKE 搜索（H2 全文搜索需要额外配置）
         String sql = """
-            SELECT d.*, FT.SCORE
-            FROM rag_documents d, FT_SEARCH_DATA(?, 0, 0) FT
-            WHERE d.id = FT.KEYS[0]
-            ORDER BY FT.SCORE DESC
+            SELECT * FROM rag_documents
+            WHERE content LIKE ? OR title LIKE ?
+            ORDER BY created_at DESC
             LIMIT ?
             """;
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, text);
-            stmt.setInt(2, topK);
+            String pattern = "%" + text + "%";
+            stmt.setString(1, pattern);
+            stmt.setString(2, pattern);
+            stmt.setInt(3, topK);
 
             ResultSet rs = stmt.executeQuery();
-            List<SearchResult> results = new ArrayList<>();
+            List<Document> results = new ArrayList<>();
 
             while (rs.next()) {
-                Document doc = mapResultSetToDocument(rs);
-                float score = rs.getFloat("SCORE");
-
-                results.add(SearchResult.builder()
-                    .document(doc)
-                    .score(score)
-                    .textScore(score)
-                    .build());
+                results.add(mapResultSetToDocument(rs));
             }
 
             return results;
@@ -232,156 +253,37 @@ public class H2RAGService implements RAGService {
         }
     }
 
-    // ========== 向量搜索 ==========
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK) {
-        return vectorSearch(embedding, topK, null);
-    }
-
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK,
-                                          Map<String, Object> filters) {
-        // 获取所有有向量的文档
-        StringBuilder sql = new StringBuilder(
-            "SELECT * FROM rag_documents WHERE embedding IS NOT NULL"
-        );
-
-        // 应用过滤器
-        if (filters != null && !filters.isEmpty()) {
-            for (String key : filters.keySet()) {
-                sql.append(" AND ").append(key).append(" = ?");
-            }
-        }
+    private List<Document> vectorSearchByFloatArray(float[] embedding, int topK) {
+        String sql = "SELECT * FROM rag_documents WHERE embedding IS NOT NULL";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-
-            // 设置过滤器参数
-            if (filters != null && !filters.isEmpty()) {
-                int paramIndex = 1;
-                for (Object value : filters.values()) {
-                    stmt.setObject(paramIndex++, value);
-                }
-            }
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             ResultSet rs = stmt.executeQuery();
-            List<SearchResult> results = new ArrayList<>();
+            List<Document> results = new ArrayList<>();
 
             while (rs.next()) {
                 Document doc = mapResultSetToDocument(rs);
-                
+
                 if (doc.getEmbedding() != null && doc.getEmbedding().length > 0) {
                     float similarity = cosineSimilarity(embedding, doc.getEmbedding());
-                    
-                    results.add(SearchResult.builder()
-                        .document(doc)
-                        .score(similarity)
-                        .vectorScore(similarity)
-                        .distance(1.0f - similarity)
-                        .build());
+                    doc.setScore((double) similarity);
+                    results.add(doc);
                 }
             }
 
-            // 排序并返回topK
             return results.stream()
-                .sorted((a, b) -> Float.compare(b.getScore(), a.getScore()))
-                .limit(topK)
-                .collect(Collectors.toList());
+                    .sorted((a, b) -> Double.compare(
+                            b.getScore() != null ? b.getScore() : 0.0,
+                            a.getScore() != null ? a.getScore() : 0.0))
+                    .limit(topK)
+                    .collect(Collectors.toList());
 
         } catch (SQLException e) {
             log.error("向量搜索失败", e);
             return Collections.emptyList();
         }
     }
-
-    // ========== 混合检索 ==========
-
-    @Override
-    public List<SearchResult> hybridSearch(top.yumbo.ai.rag.api.model.Query query) {
-        return hybridSearch(
-            query.getText(),
-            query.getEmbedding(),
-            query.getTextWeight(),
-            query.getVectorWeight(),
-            query.getTopK()
-        );
-    }
-
-    @Override
-    public List<SearchResult> hybridSearch(String text, float[] embedding,
-                                          float textWeight, float vectorWeight, int topK) {
-        // 文本搜索结果
-        List<SearchResult> textResults = Collections.emptyList();
-        if (textWeight > 0 && text != null && !text.isEmpty()) {
-            textResults = searchByText(text, topK * 2);
-        }
-
-        // 向量搜索结果
-        List<SearchResult> vectorResults = Collections.emptyList();
-        if (vectorWeight > 0 && embedding != null && embedding.length > 0) {
-            vectorResults = vectorSearch(embedding, topK * 2);
-        }
-
-        // 合并结果
-        Map<String, SearchResult> mergedResults = new HashMap<>();
-
-        // 添加文本结果
-        for (SearchResult result : textResults) {
-            String docId = result.getDocument().getId();
-            float weightedScore = result.getScore() * textWeight;
-
-            mergedResults.put(docId, SearchResult.builder()
-                .document(result.getDocument())
-                .score(weightedScore)
-                .textScore(result.getScore())
-                .build());
-        }
-
-        // 合并向量结果
-        for (SearchResult result : vectorResults) {
-            String docId = result.getDocument().getId();
-            float vectorScore = result.getScore();
-            float weightedVectorScore = vectorScore * vectorWeight;
-
-            if (mergedResults.containsKey(docId)) {
-                SearchResult existing = mergedResults.get(docId);
-                float combinedScore = existing.getScore() + weightedVectorScore;
-
-                mergedResults.put(docId, SearchResult.builder()
-                    .document(existing.getDocument())
-                    .score(combinedScore)
-                    .textScore(existing.getTextScore())
-                    .vectorScore(vectorScore)
-                    .distance(result.getDistance())
-                    .build());
-            } else {
-                mergedResults.put(docId, SearchResult.builder()
-                    .document(result.getDocument())
-                    .score(weightedVectorScore)
-                    .vectorScore(vectorScore)
-                    .distance(result.getDistance())
-                    .build());
-            }
-        }
-
-        // 排序并返回topK
-        return mergedResults.values().stream()
-            .sorted((a, b) -> Float.compare(b.getScore(), a.getScore()))
-            .limit(topK)
-            .collect(Collectors.toList());
-    }
-
-    // ========== 语义搜索 ==========
-
-    @Override
-    public List<SearchResult> semanticSearch(String text, int topK) {
-        // 需要集成Embedding服务
-        log.warn("语义搜索需要Embedding服务支持");
-        return searchByText(text, topK);
-    }
-
-    // ========== 文档管理 ==========
 
     @Override
     public Optional<Document> getDocument(String documentId) {
@@ -406,24 +308,6 @@ public class H2RAGService implements RAGService {
     }
 
     @Override
-    public boolean documentExists(String documentId) {
-        String sql = "SELECT COUNT(*) FROM rag_documents WHERE id = ?";
-
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, documentId);
-            ResultSet rs = stmt.executeQuery();
-
-            return rs.next() && rs.getInt(1) > 0;
-
-        } catch (SQLException e) {
-            log.error("检查文档存在失败: {}", documentId, e);
-            return false;
-        }
-    }
-
-    @Override
     public long getDocumentCount() {
         String sql = "SELECT COUNT(*) FROM rag_documents";
 
@@ -441,8 +325,11 @@ public class H2RAGService implements RAGService {
 
     @Override
     public List<Document> getAllDocuments(int offset, int limit) {
-        String sql = "SELECT id, title, content, source, type, metadata, created_at " +
-                     "FROM rag_documents ORDER BY created_at DESC LIMIT ? OFFSET ?";
+        String sql = """
+            SELECT * FROM rag_documents
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+            """;
 
         List<Document> documents = new ArrayList<>();
 
@@ -454,20 +341,10 @@ public class H2RAGService implements RAGService {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                Document document = Document.builder()
-                    .id(rs.getString("id"))
-                    .title(rs.getString("title"))
-                    .content(rs.getString("content"))
-                    .source(rs.getString("source"))
-                    .type(rs.getString("type"))
-                    .metadata(deserializeMetadata(rs.getString("metadata")))
-                    .createdAt(rs.getTimestamp("created_at").getTime())
-                    .build();
-                    documents.add(document);
+                    documents.add(mapResultSetToDocument(rs));
                 }
             }
 
-            log.debug("获取文档列表: offset={}, limit={}, count={}", offset, limit, documents.size());
             return documents;
 
         } catch (SQLException e) {
@@ -476,226 +353,136 @@ public class H2RAGService implements RAGService {
         }
     }
 
-    // ========== 统计与健康 ==========
-
     @Override
     public IndexStatistics getStatistics() {
         try {
             long totalDocs = getDocumentCount();
 
             return IndexStatistics.builder()
-                .totalDocuments(totalDocs)
-                .indexSize(totalDocs * 1024L) // 估算
-                .indexType("H2")
-                .healthy(isHealthy())
-                .timestamp(System.currentTimeMillis())
-                .build();
+                    .totalDocuments(totalDocs)
+                    .indexSize(totalDocs * 1024L)
+                    .indexType("H2")
+                    .healthy(isHealthy())
+                    .timestamp(System.currentTimeMillis())
+                    .domainId(domainId)
+                    .build();
 
         } catch (Exception e) {
             log.error("获取统计信息失败", e);
             return IndexStatistics.builder()
-                .totalDocuments(0L)
-                .indexSize(0L)
-                .healthy(false)
-                .timestamp(System.currentTimeMillis())
-                .build();
+                    .totalDocuments(0L)
+                    .healthy(false)
+                    .timestamp(System.currentTimeMillis())
+                    .domainId(domainId)
+                    .build();
         }
     }
 
-    @Override
-    public boolean isHealthy() {
-        try (Connection conn = dataSource.getConnection()) {
-            return conn.isValid(1);
-        } catch (SQLException e) {
-            log.error("健康检查失败", e);
-            return false;
-        }
-    }
-
-    @Override
-    public void rebuildIndex() {
-        try {
-            // 删除并重建全文索引
-            try (Connection conn = dataSource.getConnection();
-                 Statement stmt = conn.createStatement()) {
-                
-                stmt.execute("DROP ALIAS IF EXISTS FT_SEARCH_DATA");
-                createFullTextIndex();
-                
-                log.info("索引重建完成");
-            }
-
-        } catch (SQLException e) {
-            log.error("重建索引失败", e);
-            throw new RuntimeException("重建索引失败", e);
-        }
-    }
-
-    // ========== 工具方法 ==========
-
-    private HikariDataSource createDataSource() {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(properties.getUrl());
-        config.setUsername(properties.getUsername());
-        config.setPassword(properties.getPassword());
-        config.setMaximumPoolSize(properties.getMaxPoolSize());
-        config.setMinimumIdle(properties.getMinPoolSize());
-        config.setConnectionTimeout(properties.getConnectionTimeout());
-        config.setIdleTimeout(properties.getIdleTimeout());
-        config.setMaxLifetime(properties.getMaxLifetime());
-
-        return new HikariDataSource(config);
-    }
-
-    private void createTables() throws SQLException {
-        String sql = """
-            CREATE TABLE IF NOT EXISTS rag_documents (
-                id VARCHAR(255) PRIMARY KEY,
-                title VARCHAR(1000),
-                content CLOB,
-                summary CLOB,
-                tags VARCHAR(2000),
-                type VARCHAR(100),
-                source VARCHAR(500),
-                author VARCHAR(255),
-                embedding CLOB,
-                metadata CLOB,
-                created_at TIMESTAMP,
-                updated_at TIMESTAMP
-            );
-            
-            CREATE INDEX IF NOT EXISTS idx_type ON rag_documents(type);
-            CREATE INDEX IF NOT EXISTS idx_source ON rag_documents(source);
-            CREATE INDEX IF NOT EXISTS idx_author ON rag_documents(author);
-            """;
-
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            
-            for (String s : sql.split(";")) {
-                if (!s.trim().isEmpty()) {
-                    stmt.execute(s);
-                }
-            }
-        }
-    }
-
-    private void createFullTextIndex() throws SQLException {
-        String sql = """
-            CREATE ALIAS IF NOT EXISTS FT_INIT FOR "org.h2.fulltext.FullText.init";
-            CALL FT_INIT();
-            CALL FT_CREATE_INDEX('PUBLIC', 'RAG_DOCUMENTS', 'TITLE,CONTENT,SUMMARY');
-            """;
-
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            
-            for (String s : sql.split(";")) {
-                if (!s.trim().isEmpty()) {
-                    stmt.execute(s);
-                }
-            }
-        }
-    }
+    // ========== 辅助方法 ==========
 
     private Document mapResultSetToDocument(ResultSet rs) throws SQLException {
-        return Document.builder()
-            .id(rs.getString("id"))
-            .title(rs.getString("title"))
-            .content(rs.getString("content"))
-            .summary(rs.getString("summary"))
-            .tags(parseTags(rs.getString("tags")))
-            .type(rs.getString("type"))
-            .source(rs.getString("source"))
-            .author(rs.getString("author"))
-            .embedding(deserializeEmbedding(rs.getString("embedding")))
-            .metadata(deserializeMetadata(rs.getString("metadata")))
-            .createdAt(rs.getTimestamp("created_at") != null ? 
-                rs.getTimestamp("created_at").getTime() : null)
-            .updatedAt(rs.getTimestamp("updated_at") != null ? 
-                rs.getTimestamp("updated_at").getTime() : null)
-            .build();
-    }
+        Document.DocumentBuilder builder = Document.builder();
 
-    private List<String> parseTags(String tagsStr) {
-        if (tagsStr == null || tagsStr.isEmpty()) {
-            return Collections.emptyList();
+        builder.id(rs.getString("id"));
+        builder.title(rs.getString("title"));
+        builder.content(rs.getString("content"));
+        builder.summary(rs.getString("summary"));
+        builder.type(rs.getString("type"));
+        builder.source(rs.getString("source"));
+        builder.author(rs.getString("author"));
+
+        String tagsStr = rs.getString("tags");
+        if (tagsStr != null && !tagsStr.isEmpty()) {
+            builder.tags(Arrays.asList(tagsStr.split(",")));
         }
-        return Arrays.asList(tagsStr.split(","));
+
+        String embeddingStr = rs.getString("embedding");
+        if (embeddingStr != null) {
+            builder.embedding(deserializeEmbedding(embeddingStr));
+        }
+
+        String metadataStr = rs.getString("metadata");
+        if (metadataStr != null) {
+            builder.metadata(deserializeMetadata(metadataStr));
+        }
+
+        Timestamp createdAt = rs.getTimestamp("created_at");
+        if (createdAt != null) {
+            builder.createdAt(createdAt.getTime());
+        }
+
+        return builder.build();
     }
 
     private String serializeEmbedding(float[] embedding) {
         if (embedding == null || embedding.length == 0) {
             return null;
         }
-        
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < embedding.length; i++) {
-            if (i > 0) sb.append(",");
-            sb.append(embedding[i]);
-        }
-        return sb.toString();
-    }
-
-    private float[] deserializeEmbedding(String embeddingStr) {
-        if (embeddingStr == null || embeddingStr.isEmpty()) {
+        try {
+            return objectMapper.writeValueAsString(embedding);
+        } catch (JsonProcessingException e) {
+            log.error("序列化向量失败", e);
             return null;
         }
-        
-        String[] parts = embeddingStr.split(",");
-        float[] embedding = new float[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            embedding[i] = Float.parseFloat(parts[i]);
+    }
+
+    private float[] deserializeEmbedding(String json) {
+        if (json == null || json.isEmpty()) {
+            return null;
         }
-        return embedding;
+        try {
+            return objectMapper.readValue(json, float[].class);
+        } catch (JsonProcessingException e) {
+            log.error("反序列化向量失败", e);
+            return null;
+        }
     }
 
     private String serializeMetadata(Map<String, Object> metadata) {
         if (metadata == null || metadata.isEmpty()) {
             return null;
         }
-        
         try {
             return objectMapper.writeValueAsString(metadata);
         } catch (JsonProcessingException e) {
-            log.error("序列化metadata失败", e);
+            log.error("序列化元数据失败", e);
             return null;
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> deserializeMetadata(String metadataStr) {
-        if (metadataStr == null || metadataStr.isEmpty()) {
-            return Collections.emptyMap();
+    private Map<String, Object> deserializeMetadata(String json) {
+        if (json == null || json.isEmpty()) {
+            return new HashMap<>();
         }
-        
         try {
-            return objectMapper.readValue(metadataStr, Map.class);
+            return objectMapper.readValue(json, new TypeReference<>() {});
         } catch (JsonProcessingException e) {
-            log.error("反序列化metadata失败", e);
-            return Collections.emptyMap();
+            log.error("反序列化元数据失败", e);
+            return new HashMap<>();
         }
     }
 
-    private float cosineSimilarity(float[] vec1, float[] vec2) {
-        if (vec1 == null || vec2 == null || vec1.length != vec2.length) {
+    private float cosineSimilarity(float[] a, float[] b) {
+        if (a.length != b.length) {
             return 0.0f;
         }
 
         float dotProduct = 0.0f;
-        float norm1 = 0.0f;
-        float norm2 = 0.0f;
+        float normA = 0.0f;
+        float normB = 0.0f;
 
-        for (int i = 0; i < vec1.length; i++) {
-            dotProduct += vec1[i] * vec2[i];
-            norm1 += vec1[i] * vec1[i];
-            norm2 += vec2[i] * vec2[i];
+        for (int i = 0; i < a.length; i++) {
+            dotProduct += a[i] * b[i];
+            normA += a[i] * a[i];
+            normB += b[i] * b[i];
         }
 
-        if (norm1 == 0.0f || norm2 == 0.0f) {
+        if (normA == 0.0f || normB == 0.0f) {
             return 0.0f;
         }
 
-        return dotProduct / (float) (Math.sqrt(norm1) * Math.sqrt(norm2));
+        return dotProduct / (float) (Math.sqrt(normA) * Math.sqrt(normB));
     }
 }
+
+

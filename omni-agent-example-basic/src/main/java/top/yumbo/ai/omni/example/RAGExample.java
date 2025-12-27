@@ -7,11 +7,8 @@ import org.springframework.stereotype.Service;
 import top.yumbo.ai.ai.api.EmbeddingService;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.Document;
-// Query removed
-import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * RAG 检索示例
@@ -50,17 +47,18 @@ public class RAGExample {
                 .createdAt(System.currentTimeMillis())
                 .build();
 
-        RagService.indexDocument(doc1);
+        // 使用 batchIndex 方法
+        RagService.batchIndex(List.of(doc1));
         log.info("✅ 已索引文档");
     }
 
     /**
-     * 示例 2：文本检索
+     * 示例 2：文本检索（语义搜索）
      */
     public void textSearchExample() {
-        log.info("\n=== 示例 2：文本检索 ===");
-        List<SearchResult> results = RagService.searchByText("ONNX Runtime", 5);
-        results.forEach(r -> log.info("  - {}", r.getDocument().getTitle()));
+        log.info("\n=== 示例 2：文本检索（语义搜索） ===");
+        List<Document> results = RagService.semanticSearch("ONNX Runtime", 5);
+        results.forEach(r -> log.info("  - {}", r.getTitle()));
     }
 
     /**
@@ -72,9 +70,16 @@ public class RAGExample {
             log.warn("⚠️ 未配置 EmbeddingService");
             return;
         }
-        float[] embedding = embeddingService.embed("ONNX Runtime");
-        List<SearchResult> results = RagService.vectorSearch(embedding, 5);
-        results.forEach(r -> log.info("  - {}", r.getDocument().getTitle()));
+
+        // 使用 RagService 的 embed 方法获取 Vector 对象
+        top.yumbo.ai.omni.rag.model.Vector vector = RagService.embed("ONNX Runtime");
+        if (vector == null) {
+            log.warn("⚠️ 向量化失败");
+            return;
+        }
+
+        List<Document> results = RagService.vectorSearch(vector, 5);
+        results.forEach(r -> log.info("  - {}", r.getTitle()));
     }
 
     /**

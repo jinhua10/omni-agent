@@ -118,7 +118,9 @@ public class LuceneRAGService implements RagService {
 
     // ========== 文档索引 ==========
 
-    @Override
+    /**
+     * 索引单个文档（内部方法）
+     */
     public String indexDocument(Document document) {
         try {
             // 生成 ID（如果没有）
@@ -151,7 +153,9 @@ public class LuceneRAGService implements RagService {
         }
     }
 
-    @Override
+    /**
+     * 批量索引文档（内部方法）
+     */
     public List<String> indexDocuments(List<Document> documents) {
         List<String> indexedIds = new ArrayList<>();
         try {
@@ -180,7 +184,9 @@ public class LuceneRAGService implements RagService {
         }
     }
 
-    @Override
+    /**
+     * 更新文档（内部方法）
+     */
     public boolean updateDocument(Document document) {
         try {
             if (document.getId() == null || document.getId().isEmpty()) {
@@ -205,7 +211,9 @@ public class LuceneRAGService implements RagService {
         }
     }
 
-    @Override
+    /**
+     * 删除文档（内部方法）
+     */
     public boolean deleteDocument(String documentId) {
         try {
             indexWriter.deleteDocuments(new Term("id", documentId));
@@ -219,6 +227,11 @@ public class LuceneRAGService implements RagService {
             log.error("删除文档失败: {}", documentId, e);
             return false;
         }
+    }
+
+    @Override
+    public void delete(String id) {
+        deleteDocument(id);
     }
 
     @Override
@@ -238,25 +251,9 @@ public class LuceneRAGService implements RagService {
 
     // ========== 文本搜索 ==========
 
-    @Override
-    public List<SearchResult> search(Query query) {
-        switch (query.getMode()) {
-            case TEXT:
-                return searchByText(query.getText(), query.getTopK());
-            case VECTOR:
-                return query.getEmbedding() != null ?
-                        vectorSearch(query.getEmbedding(), query.getTopK()) :
-                        Collections.emptyList();
-            case HYBRID:
-                return hybridSearch(query);
-            case SEMANTIC:
-                return semanticSearch(query.getText(), query.getTopK());
-            default:
-                return searchByText(query.getText(), query.getTopK());
-        }
-    }
-
-    @Override
+    /**
+     * 内部文本搜索方法
+     */
     public List<SearchResult> searchByText(String text, int topK) {
         try {
             IndexSearcher searcher = searcherManager.acquire();
@@ -278,10 +275,9 @@ public class LuceneRAGService implements RagService {
 
                     SearchResult result = SearchResult.builder()
                             .document(document)
-                            .score(scoreDoc.score)
-                            .textScore(scoreDoc.score)
+                            .score((double) scoreDoc.score)
                             .rank(rank++)
-                            .reason("文本匹配")
+                            .matchedField("文本匹配")
                             .build();
 
                     results.add(result);
@@ -302,68 +298,124 @@ public class LuceneRAGService implements RagService {
 
     // ========== 向量搜索 ==========
 
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK) {
+    /**
+     * 内部向量搜索方法（使用 float[] 数组）
+     */
+    public List<SearchResult> vectorSearchInternal(float[] embedding, int topK) {
         // Lucene 9.x 支持向量搜索，但需要额外配置
         // 这里提供基础实现，实际使用时需要根据需求扩展
         log.warn("Lucene File RAG 暂不支持原生向量搜索，请使用语义搜索或混合搜索");
         return Collections.emptyList();
     }
 
-    @Override
-    public List<SearchResult> vectorSearch(float[] embedding, int topK, Map<String, Object> filters) {
+    /**
+     * 内部向量搜索方法（使用 float[] 数组和过滤器）
+     */
+    public List<SearchResult> vectorSearchInternal(float[] embedding, int topK, Map<String, Object> filters) {
         log.warn("Lucene File RAG 暂不支持原生向量搜索，请使用语义搜索或混合搜索");
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<Document> vectorSearch(Vector vector, int maxResults) {
+        // 实现向量搜索，返回 Document 列表
+        log.warn("Lucene File RAG 暂不支持原生向量搜索");
         return Collections.emptyList();
     }
 
     // ========== 混合检索 ==========
 
-    @Override
-    public List<SearchResult> hybridSearch(Query query) {
-        // 混合搜索：先执行文本搜索，然后根据需要结合向量搜索
-        List<SearchResult> textResults = searchByText(query.getText(), query.getTopK() * 2);
+    /**
+     * 内部混合搜索方法
+     */
+    public List<SearchResult> hybridSearchInternal(String text, float[] embedding,
+                                          float textWeight, float vectorWeight, int topK) {
+        // 混合搜索：先执行文本搜索
+        List<SearchResult> textResults = searchByText(text, topK * 2);
 
         // 如果没有向量，直接返回文本结果
-        if (query.getEmbedding() == null || query.getEmbedding().length == 0) {
-            return textResults.stream().limit(query.getTopK()).collect(Collectors.toList());
+        if (embedding == null || embedding.length == 0) {
+            return textResults.stream().limit(topK).collect(Collectors.toList());
         }
 
         // 重新计算分数（文本权重 + 向量权重）
         for (SearchResult result : textResults) {
-            float textScore = result.getTextScore() != null ? result.getTextScore() : 0;
-            float combinedScore = textScore * query.getTextWeight();
+            Double scoreValue = result.getScore();
+            double score = scoreValue != null ? scoreValue : 0.0;
+            double combinedScore = score * textWeight;
             result.setScore(combinedScore);
         }
 
         // 排序并返回 topK
         return textResults.stream()
                 .sorted(Comparator.comparing(SearchResult::getScore).reversed())
-                .limit(query.getTopK())
+                .limit(topK)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<SearchResult> hybridSearch(String text, float[] embedding,
-                                          float textWeight, float vectorWeight, int topK) {
-        Query query = Query.builder()
-                .text(text)
-                .embedding(embedding)
-                .topK(topK)
-                .mode(Query.SearchMode.HYBRID)
-                .textWeight(textWeight)
-                .vectorWeight(vectorWeight)
-                .build();
-        return hybridSearch(query);
     }
 
     // ========== 语义搜索 ==========
 
     @Override
-    public List<SearchResult> semanticSearch(String text, int topK) {
+    public List<Document> semanticSearch(String text, int maxResults) {
         // 语义搜索需要集成 AI Embedding 服务
         // 这里先使用文本搜索作为降级方案
         log.warn("语义搜索需要 AI Embedding 服务支持，当前使用文本搜索");
-        return searchByText(text, topK);
+        List<SearchResult> searchResults = searchByText(text, maxResults);
+        return searchResults.stream()
+                .map(SearchResult::getDocument)
+                .collect(Collectors.toList());
+    }
+
+    // ========== 向量化 ==========
+
+    @Override
+    public Vector embed(String text) {
+        // 需要集成 AI Embedding 服务
+        log.warn("向量化需要 AI Embedding 服务支持");
+        return null;
+    }
+
+    @Override
+    public List<Vector> batchEmbed(List<String> texts) {
+        // 需要集成 AI Embedding 服务
+        log.warn("批量向量化需要 AI Embedding 服务支持");
+        return Collections.emptyList();
+    }
+
+    // ========== 文档索引接口实现 ==========
+
+    @Override
+    public void index(String id, Vector vector, Map<String, Object> metadata) {
+        // 创建文档对象并索引
+        Document.DocumentBuilder builder = Document.builder()
+                .id(id);
+
+        if (metadata != null) {
+            if (metadata.containsKey("title")) {
+                builder.title((String) metadata.get("title"));
+            }
+            if (metadata.containsKey("content")) {
+                builder.content((String) metadata.get("content"));
+            }
+            if (metadata.containsKey("source")) {
+                builder.source((String) metadata.get("source"));
+            }
+        }
+
+        Document document = builder.build();
+        indexDocument(document);
+    }
+
+    @Override
+    public void batchIndex(List<Document> documents) {
+        indexDocuments(documents);
+    }
+
+    // ========== 域管理 ==========
+
+    @Override
+    public String getDomainId() {
+        return "file-domain";
     }
 
     // ========== 文档管理 ==========
@@ -482,7 +534,6 @@ public class LuceneRAGService implements RagService {
                     .indexType("Lucene-File")
                     .vectorSearchEnabled(false)
                     .healthy(true)
-                    .lastIndexedAt(System.currentTimeMillis())
                     .timestamp(System.currentTimeMillis())
                     .build();
 

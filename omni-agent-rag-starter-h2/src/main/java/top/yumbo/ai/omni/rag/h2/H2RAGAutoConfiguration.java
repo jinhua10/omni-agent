@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import top.yumbo.ai.rag.api.RAGService;
+import top.yumbo.ai.omni.rag.RagService;
 
 /**
  * H2 RAG 自动配置类
@@ -26,8 +26,8 @@ import top.yumbo.ai.rag.api.RAGService;
 public class H2RAGAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(RAGService.class)
-    public H2RAGService h2RAGService(H2RAGProperties properties) {
+    @ConditionalOnMissingBean(RagService.class)
+    public RagService h2RAGService(H2RAGProperties properties) {
         log.info("创建 H2 RAG Service");
         log.info("  数据库URL: {}", properties.getUrl());
         log.info("  连接池大小: {}-{}", properties.getMinPoolSize(), properties.getMaxPoolSize());
