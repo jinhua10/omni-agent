@@ -16,21 +16,44 @@
 
 ### 📖 重构文档
 
-我们已经准备了完整的重构方案和实施指南：
+> **📂 所有重构文档已整理到：** [docs/refactor_01/](docs/refactor_01/)  
+> **📋 完整文档索引：** [docs/refactor_01/README.md](docs/refactor_01/README.md)
 
-1. **📘 [知识网络架构重构完整方案](docs/KNOWLEDGE_NETWORK_REFACTORING_PLAN.md)**
-   - 当前系统问题分析
-   - 知识网络架构设计
-   - 角色知识库系统
-   - 源码深度分析功能
-   - 增量更新机制
-   - 完整的实施路线图（5个Phase）
+#### 核心文档（必读）⭐
 
-2. **📗 [快速开始指南](docs/QUICK_START_REFACTORING.md)**
-   - Phase 1 立即可执行的步骤
-   - 完整的代码示例
-   - 数据迁移方案
-   - 测试计划和检查清单
+1. **📗 [Phase 1 最终实施方案](docs/refactor_01/core/PHASE1_FINAL_IMPLEMENTATION_PLAN.md)** ✅
+   - 创建独立的 Knowledge Registry 模块
+   - 详细的接口设计和实现
+   - 6天完整实施计划
+
+2. **📘 知识网络架构重构完整方案** ⚠️ 
+   - 整体架构设计
+   - 5 个 Phase 规划
+   - 技术实现方案
+   - *注：文档需要重新生成或从备份恢复*
+
+#### 决策过程文档
+
+3. **📙 [架构优化总结](docs/refactor_01/decision-process/ARCHITECTURE_OPTIMIZATION_SUMMARY.md)** ✅
+   - 从 50 个模块优化到 46 个模块
+   - 决策过程和收益分析
+
+4. **📕 最终决策说明** ⚠️
+   - 完整的决策历程
+   - 方案对比分析
+   - 为什么选择创建独立模块
+   - *注：文档需要重新生成或从备份恢复*
+
+#### 技术细节文档
+
+5. **📓 [命名演化对比](docs/refactor_01/technical-details/NAMING_EVOLUTION_COMPARISON.md)** ✅
+   - 3个阶段的命名演化
+   - 设计哲学和最佳实践
+
+6. **📒 命名优化方案** ⚠️
+   - 从 Persistence 到 KnowledgeRegistry
+   - 语义化改进说明
+   - *注：文档需要重新生成或从备份恢复*
 
 ### 🌟 核心改进点
 
@@ -48,15 +71,20 @@
 - ✅ **Git深度集成**：自动同步代码仓库
 - ✅ **智能路由**：根据查询意图路由到专业知识域
 - ✅ **成本优化**：支持本地AI模型，成本降低80%+
+- ✅ **独立模块**：新增 2 个模块（Knowledge Registry API + File Starter）
 
 ### 🛣️ 开发路线
 
 ```
-master 分支（当前稳定版本）
+master 分支（当前稳定版本 - 44个模块）
     │
     ├─────> refactor_01 分支（重构开发）
     │         │
     │         ├─ Phase 1: 基础架构重构（2周）
+    │         │    └─ 新增 2 个模块
+    │         │       ├─ omni-agent-knowledge-registry-api
+    │         │       └─ omni-agent-knowledge-registry-starter-file
+    │         │
     │         ├─ Phase 2: 角色知识库系统（2周）
     │         ├─ Phase 3: 源码分析功能（3周）
     │         ├─ Phase 4: 知识网络与智能路由（2周）
@@ -64,7 +92,7 @@ master 分支（当前稳定版本）
     │         │
     │         └─> 测试、优化、文档完善
     │         
-    └─────< 合并回 master（重构成熟后）
+    └─────< 合并回 master（重构成熟后 - 预计 46个模块）
 ```
 
 ### 🔧 如何参与
