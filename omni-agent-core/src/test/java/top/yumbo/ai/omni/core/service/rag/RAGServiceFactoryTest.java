@@ -43,10 +43,10 @@ class RAGServiceFactoryTest {
             return;
         }
 
-        RagService ragService = ragServiceFactory.getDefaultRAGService();
-        assertNotNull(ragService, "默认RAG服务不应为null");
+        RagService RagService = ragServiceFactory.getDefaultRAGService();
+        assertNotNull(RagService, "默认RAG服务不应为null");
 
-        log.info("✅ 获取默认RAG服务成功: {}", ragService.getClass().getSimpleName());
+        log.info("✅ 获取默认RAG服务成功: {}", RagService.getClass().getSimpleName());
     }
 
     @Test
@@ -123,8 +123,8 @@ class RAGServiceFactoryTest {
         }
 
         // 测试null域ID
-        RagService ragService = ragServiceFactory.getOrCreateRAGService(null);
-        assertNotNull(ragService, "null域ID应该返回默认RAG服务");
+        RagService RagService = ragServiceFactory.getOrCreateRAGService(null);
+        assertNotNull(RagService, "null域ID应该返回默认RAG服务");
 
         // 测试空字符串域ID
         RagService ragService2 = ragServiceFactory.getOrCreateRAGService("");
@@ -133,4 +133,5 @@ class RAGServiceFactoryTest {
         log.info("✅ null/空域ID处理测试成功");
     }
 }
+
 

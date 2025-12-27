@@ -184,3 +184,4 @@ public class KnowledgeLoaderBenchmark {
         new Runner(opt).run();
     }
 }
+

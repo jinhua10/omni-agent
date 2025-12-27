@@ -7,8 +7,9 @@ import org.springframework.stereotype.Service;
 import top.yumbo.ai.ai.api.AIService;
 import top.yumbo.ai.omni.core.query.cache.QueryExpansionCacheService;
 import top.yumbo.ai.omni.marketplace.config.QueryExpansionConfig;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.SearchResult;
+import top.yumbo.ai.omni.rag.model.Document;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -44,7 +45,7 @@ import java.util.stream.Collectors;
 public class EnhancedQueryService {
 
     @Autowired
-    private RAGService ragService;
+    private RagService ragService;
 
     @Autowired(required = false)
     private AlgorithmMarketService algorithmMarketService;
@@ -176,7 +177,10 @@ public class EnhancedQueryService {
         } catch (Exception e) {
             log.error("❌ 增强查询失败，降级到普通检索: {}", e.getMessage(), e);
             // 降级：使用普通 RAG 检索
-            return ragService.searchByText(question, topK);
+            var documents = ragService.semanticSearch(question, topK);
+            return documents.stream()
+                    .map(SearchResult::fromDocument)
+                    .collect(Collectors.toList());
         }
     }
 
@@ -195,7 +199,10 @@ public class EnhancedQueryService {
                 .map(query -> CompletableFuture.supplyAsync(
                         () -> {
                             try {
-                                return ragService.searchByText(query, topK);
+                                var documents = ragService.semanticSearch(query, topK);
+                                return documents.stream()
+                                        .map(SearchResult::fromDocument)
+                                        .collect(Collectors.toList());
                             } catch (Exception e) {
                                 log.error("查询失败: query={}, error={}", query, e.getMessage());
                                 return Collections.<SearchResult>emptyList();
@@ -252,7 +259,10 @@ public class EnhancedQueryService {
         List<SearchResult> allResults = new ArrayList<>();
         for (String query : queries) {
             try {
-                List<SearchResult> results = ragService.searchByText(query, topK);
+                var documents = ragService.semanticSearch(query, topK);
+                List<SearchResult> results = documents.stream()
+                        .map(SearchResult::fromDocument)
+                        .toList();
                 allResults.addAll(results);
             } catch (Exception e) {
                 log.error("查询失败: query={}, error={}", query, e.getMessage());
@@ -531,7 +541,7 @@ public class EnhancedQueryService {
                 .map(entry -> {
                     SearchResult result = docMap.get(entry.getKey());
                     // 更新分数为 RRF 分数
-                    result.setScore(entry.getValue().floatValue());
+                    result.setScore(entry.getValue()); // 已经是 Double 类型
                     return result;
                 })
                 .collect(Collectors.toList());

@@ -617,3 +617,4 @@ public class CoreModulesIntegrationTest {
         log.info("✓ Test 8 completed: All module statistics working");
     }
 }
+

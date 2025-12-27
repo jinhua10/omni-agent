@@ -1306,3 +1306,4 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
         return results;
     }
 }
+

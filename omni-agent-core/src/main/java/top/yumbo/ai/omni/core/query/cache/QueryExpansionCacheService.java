@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.core.query.model.CacheStatistics;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -210,4 +210,5 @@ public class QueryExpansionCacheService {
                 .build();
     }
 }
+
 

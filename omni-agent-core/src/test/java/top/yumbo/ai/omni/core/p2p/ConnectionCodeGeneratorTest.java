@@ -194,3 +194,4 @@ class ConnectionCodeGeneratorTest {
         assertThat(codes.size()).isGreaterThanOrEqualTo(2);
     }
 }
+

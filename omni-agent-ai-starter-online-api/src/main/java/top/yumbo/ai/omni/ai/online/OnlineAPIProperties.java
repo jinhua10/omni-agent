@@ -7,6 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * Online API AI 配置属性
  * (Online API AI Configuration Properties)
  *
+ * <p>支持 LLM 问答和 Embedding 向量化</p>
+ *
  * @author OmniAgent Team
  * @since 1.0.0
  */
@@ -16,7 +18,7 @@ public class OnlineAPIProperties {
 
     /**
      * API 提供商
-     * 支持: openai, claude, qianwen (tongyi), zhipu, etc.
+     * 支持: openai, claude, qianwen (tongyi), zhipu, dashscope, azure, etc.
      * 默认: qianwen
      */
     private String provider = "qianwen";
@@ -55,13 +57,35 @@ public class OnlineAPIProperties {
     private String apiKey;
 
     /**
-     * 默认模型
+     * 默认模型（用于问答）
      * 千问 (Qianwen): qwen-plus, qwen-turbo, qwen-max
      * OpenAI: gpt-3.5-turbo, gpt-4
      * Claude: claude-3-opus, claude-3-sonnet
      * 智谱AI: glm-4, glm-3-turbo
      */
     private String defaultModel = "qwen-plus";
+
+    /**
+     * Embedding 模型名称（用于向量化）⭐
+     * <p>
+     * OpenAI 推荐模型:
+     * - text-embedding-3-small (1536维，性价比高，推荐)
+     * - text-embedding-3-large (3072维，最强)
+     * - text-embedding-ada-002 (1536维，经典)
+     * <p>
+     * 阿里云 DashScope 推荐模型:
+     * - text-embedding-v1 (1536维)
+     * - text-embedding-v2 (1536维)
+     * <p>
+     * 默认: text-embedding-3-small
+     */
+    private String embeddingModel = "text-embedding-3-small";
+
+    /**
+     * 是否启用 Embedding 功能 ⭐
+     * 默认: true
+     */
+    private boolean enableEmbedding = true;
 
     /**
      * 请求超时时间（毫秒）

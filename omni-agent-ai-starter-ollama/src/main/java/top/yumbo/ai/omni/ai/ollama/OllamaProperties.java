@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * <p>支持本地和远程 Ollama 服务</p>
  * <p>本地: http://localhost:11434</p>
  * <p>远程: http://your-server-ip:11434</p>
+ * <p>支持 LLM 问答和 Embedding 向量化</p>
  *
  * @author OmniAgent Team
  * @since 1.0.0
@@ -27,10 +28,26 @@ public class OllamaProperties {
     private String baseUrl = "http://localhost:11434";
 
     /**
-     * 默认模型名称
+     * 默认模型名称（用于问答）
      * 默认: llama2
      */
     private String defaultModel = "llama2";
+
+    /**
+     * Embedding 模型名称（用于向量化）⭐
+     * 推荐模型:
+     * - nomic-embed-text (768维，推荐)
+     * - mxbai-embed-large (1024维)
+     * - all-minilm (384维)
+     * 默认: nomic-embed-text
+     */
+    private String embeddingModel = "nomic-embed-text";
+
+    /**
+     * 是否启用 Embedding 功能 ⭐
+     * 默认: true
+     */
+    private boolean enableEmbedding = true;
 
     /**
      * 请求超时时间（毫秒）

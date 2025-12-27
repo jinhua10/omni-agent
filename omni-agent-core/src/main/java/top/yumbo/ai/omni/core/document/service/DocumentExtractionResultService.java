@@ -88,3 +88,4 @@ public interface DocumentExtractionResultService {
     java.util.Map<String, Object> getStatistics();
 }
 
+

@@ -768,13 +768,13 @@ public class DocumentProcessingService {
                     embeddings.size(), embeddingService.getDimension());
 
             // ⭐ 3. 构建 RAG 文档并索引
-            List<top.yumbo.ai.rag.api.model.Document> ragDocuments = new java.util.ArrayList<>();
+            List<top.yumbo.ai.omni.rag.model.Document> ragDocuments = new java.util.ArrayList<>();
 
             for (int i = 0; i < chunks.size(); i++) {
                 var chunk = chunks.get(i);
                 float[] embedding = embeddings.get(i);
 
-                var ragDoc = top.yumbo.ai.rag.api.model.Document.builder()
+                var ragDoc = top.yumbo.ai.omni.rag.model.Document.builder()
                         .id(chunk.getId())
                         .content(chunk.getContent())
                         .embedding(embedding)
@@ -790,10 +790,10 @@ public class DocumentProcessingService {
             }
 
             // ⭐ 4. 批量索引到 RAG 服务
-            List<String> indexedIds = ragService.indexDocuments(ragDocuments);
+            ragService.batchIndex(ragDocuments);
 
             log.info("✅ 向量化完成: documentId={}, 生成 {} 个向量, 索引 {} 个文档",
-                    documentId, embeddings.size(), indexedIds.size());
+                    documentId, embeddings.size(), ragDocuments.size());
 
             return embeddings.size() * embeddingService.getDimension();
 
@@ -891,6 +891,3 @@ public class DocumentProcessingService {
         private int vectorCount;
     }
 }
-
-
-

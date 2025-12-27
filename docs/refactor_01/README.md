@@ -1,7 +1,7 @@
 # RAG 重构项目文档索引
 
 > 日期：2025-12-27  
-> 状态：✅ 项目完成
+> 状态：✅ 项目完成 + AI 模块优化完成 ⭐
 
 ---
 
@@ -15,12 +15,17 @@
    - 技术亮点
    - 质量评价
 
-2. **[快速开始指南](README_RAG_REFACTOR.md)**
+2. **[AI 模块优化完成报告](AI_MODULE_OPTIMIZATION_COMPLETE.md)** ⭐ 新增
+   - Ollama + Embedding 支持
+   - Online API + Embedding 支持
+   - 使用示例和配置
+
+3. **[快速开始指南](README_RAG_REFACTOR.md)**
    - 快速上手
    - 配置示例
    - 使用方法
 
-3. **[任务完成总结](TASK_COMPLETION_SUMMARY.md)**
+4. **[任务完成总结](TASK_COMPLETION_SUMMARY.md)**
    - 完成的任务
    - 进度追踪
    - 下一步计划
@@ -34,6 +39,7 @@
 - [RAG 架构决策分析](RAG_ARCHITECTURE_DECISION.md) - 详细的技术决策分析
 - [RAG 决策总结](RAG_DECISION_SUMMARY.md) - 决策摘要和执行结果
 - [文档模型统一方案](DOCUMENT_MODEL_UNIFICATION.md) - Document 模型统一
+- [AI 模块优化建议](AI_MODULE_OPTIMIZATION_PROPOSAL.md) - AI 模块架构分析 ⭐
 
 ### 清理报告
 

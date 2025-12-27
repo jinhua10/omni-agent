@@ -133,3 +133,4 @@ public class QueryRequest {
                 queryText, limit, offset, minScore);
     }
 }
+

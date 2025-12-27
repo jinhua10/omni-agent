@@ -274,3 +274,4 @@ class QuestionClassifierLearningServiceTest {
         assertThat(stats.getCacheSize()).isEqualTo(3);
     }
 }
+

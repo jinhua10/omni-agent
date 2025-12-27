@@ -50,3 +50,4 @@ public class QueryRouteResult {
     private Boolean crossDomain = false;
 }
 
+

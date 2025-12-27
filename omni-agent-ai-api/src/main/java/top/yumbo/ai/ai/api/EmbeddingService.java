@@ -36,5 +36,32 @@ public interface EmbeddingService {
      * @return 模型名称
      */
     String getEmbeddingModel();
+
+    /**
+     * 动态检测模型维度（通过实际调用）⭐
+     *
+     * <p>用于未注册模型的维度自动检测</p>
+     *
+     * @return 实际向量维度
+     */
+    default int detectDimension() {
+        try {
+            float[] testVector = embed("test");
+            return testVector.length;
+        } catch (Exception e) {
+            return getDimension(); // 降级到配置的维度
+        }
+    }
+
+    /**
+     * 验证模型兼容性（检查维度是否匹配）⭐
+     *
+     * @param expectedDimension 期望的维度
+     * @return 是否兼容
+     */
+    default boolean isCompatible(int expectedDimension) {
+        int actualDimension = getDimension();
+        return actualDimension == expectedDimension;
+    }
 }
 

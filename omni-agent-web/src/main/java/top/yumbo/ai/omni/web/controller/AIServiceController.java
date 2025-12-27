@@ -319,10 +319,15 @@ public class AIServiceController {
 
         try {
             // 1. 使用 RAG 检索相关文档
-            List<SearchResult> searchResults = ragService.semanticSearch(
+            var documents = ragService.semanticSearch(
                     request.getQuestion(),
                     request.getTopK() != null ? request.getTopK() : 5
             );
+
+            // 转换为 SearchResult
+            List<SearchResult> searchResults = documents.stream()
+                    .map(SearchResult::fromDocument)
+                    .toList();
 
             // 2. 构建上下文
             String context = ContextBuilder.buildContext(searchResults);
@@ -404,6 +409,9 @@ public class AIServiceController {
         }
     }
 }
+
+
+
 
 
 

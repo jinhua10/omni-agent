@@ -5,16 +5,19 @@ import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Flux;
 import top.yumbo.ai.ai.api.AIService;
+import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.ai.api.EmbeddingModelRegistry;
 import top.yumbo.ai.ai.api.model.AIRequest;
 import top.yumbo.ai.ai.api.model.AIResponse;
 import top.yumbo.ai.ai.api.model.ChatMessage;
 import top.yumbo.ai.ai.api.model.ModelInfo;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * Ollama AI 服务实现
- * (Ollama AI Service Implementation)
+ * Ollama AI 服务实现（支持问答和 Embedding）
+ * (Ollama AI Service Implementation - Supports Chat and Embedding)
  *
  * <p>
  * 特点 (Features):
@@ -22,13 +25,14 @@ import java.util.*;
  * - 通过配置 baseUrl 切换本地/远程
  * - 本地部署：数据安全、离线可用
  * - 远程部署：集中管理、资源共享
+ * - 支持 Embedding 向量化（nomic-embed-text 等模型）⭐
  * </p>
  *
  * @author OmniAgent Team
  * @since 1.0.0
  */
 @Slf4j
-public class OllamaAIService implements AIService {
+public class OllamaAIService implements AIService, EmbeddingService {
 
     private final RestTemplate restTemplate;
     private final top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter;
@@ -593,5 +597,120 @@ public class OllamaAIService implements AIService {
                 sink.error(e);
             }
         });
+    }
+
+    // ========== EmbeddingService 接口实现（新增）==========
+
+    /**
+     * 生成文本向量
+     *
+     * @param text 文本内容
+     * @return 向量数组
+     */
+    @Override
+    public float[] embed(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            log.warn("输入文本为空，返回零向量");
+            return new float[getDimension()];
+        }
+
+        try {
+            String url = properties.getBaseUrl() + "/api/embeddings";
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", properties.getEmbeddingModel());
+            requestBody.put("prompt", text);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            log.debug("Ollama Embedding 请求: model={}, text length={}",
+                    properties.getEmbeddingModel(), text.length());
+
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                List<Number> embedding = (List<Number>) response.getBody().get("embedding");
+                if (embedding != null) {
+                    float[] result = new float[embedding.size()];
+                    for (int i = 0; i < embedding.size(); i++) {
+                        result[i] = embedding.get(i).floatValue();
+                    }
+                    log.debug("Ollama Embedding 成功: dimension={}", result.length);
+                    return result;
+                }
+            }
+
+            log.error("Ollama Embedding 失败: status={}", response.getStatusCode());
+            throw new RuntimeException("Ollama embedding failed: " + response.getStatusCode());
+
+        } catch (Exception e) {
+            log.error("Ollama Embedding 异常: {}", e.getMessage(), e);
+            return new float[getDimension()];
+        }
+    }
+
+    /**
+     * 批量生成向量
+     *
+     * @param texts 文本列表
+     * @return 向量数组列表
+     */
+    @Override
+    public List<float[]> embedBatch(List<String> texts) {
+        if (texts == null || texts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        log.info("Ollama 批量 Embedding: count={}", texts.size());
+
+        return texts.stream()
+                .map(this::embed)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取向量维度（动态获取）⭐
+     *
+     * @return 维度
+     */
+    @Override
+    public int getDimension() {
+        String model = properties.getEmbeddingModel();
+
+        if (model == null) {
+            return 768; // 默认维度
+        }
+
+        // 1. 尝试从注册表获取 ⭐
+        Integer registeredDimension = EmbeddingModelRegistry.getDimension(model);
+        if (registeredDimension != null) {
+            log.debug("从注册表获取模型 {} 的维度: {}", model, registeredDimension);
+            return registeredDimension;
+        }
+
+        // 2. 未注册模型，尝试动态检测 ⭐
+        log.warn("模型 {} 未注册，尝试动态检测维度", model);
+        try {
+            int detectedDimension = detectDimension();
+            // 自动注册
+            EmbeddingModelRegistry.register(model, detectedDimension, "ollama", "Auto-detected");
+            log.info("✅ 自动检测并注册模型 {}: dimension={}", model, detectedDimension);
+            return detectedDimension;
+        } catch (Exception e) {
+            log.error("动态检测维度失败，使用默认值 768", e);
+            return 768; // 降级到默认值
+        }
+    }
+
+    /**
+     * 获取当前使用的 Embedding 模型
+     *
+     * @return 模型名称
+     */
+    @Override
+    public String getEmbeddingModel() {
+        return properties.getEmbeddingModel();
     }
 }

@@ -99,7 +99,10 @@ public class AdvancedQAController {
                     handleSingleTrack(emitter, question, fullAnswerBuilder);
                 } else {
                     // 双轨模式
-                    List<SearchResult> references = ragService.semanticSearch(question, 5);
+                    var documents = ragService.semanticSearch(question, 5);
+                    List<SearchResult> references = documents.stream()
+                            .map(SearchResult::fromDocument)
+                            .toList();
                     log.info("📚 检索到 {} 个参考文档", references.size());
 
                     sendReferences(emitter, references);
@@ -552,6 +555,4 @@ public class AdvancedQAController {
         emitter.onCompletion(() -> log.info("✅ SSE连接关闭"));
     }
 }
-
-
 

@@ -77,7 +77,8 @@ public class QAController {
                     }
 
                     Role roleEntity = roleService.getRole(roleName);
-                    references = ragService.semanticSearch(question, 5);
+                    var roleDocuments = ragService.semanticSearch(question, 5);
+                    references = roleDocuments.stream().map(SearchResult::fromDocument).toList();
 
                     String roleContext = ContextBuilder.buildRoleContext(references);
                     String rolePrompt = String.format(
@@ -90,7 +91,8 @@ public class QAController {
                 case "rag":
                 default:
                     // 传统 RAG 模式
-                    references = ragService.semanticSearch(question, 5);
+                    var ragDocuments = ragService.semanticSearch(question, 5);
+                    references = ragDocuments.stream().map(SearchResult::fromDocument).toList();
                     String context = ContextBuilder.buildContext(references);
                     String prompt = String.format(
                             "基于以下知识回答问题：\n\n%s\n\n问题：%s",
@@ -209,7 +211,8 @@ public class QAController {
             // String hopeAnswer = hopeManager.query(question, sessionId);
 
             // 临时实现：使用 RAG
-            List<SearchResult> references = ragService.semanticSearch(question, 5);
+            var documents_temp = ragService.semanticSearch(question, 5);
+            List<SearchResult> references = documents_temp.stream().map(SearchResult::fromDocument).toList();
             String context = ContextBuilder.buildContext(references);
             String prompt = String.format(
                     "【HOPE 智能问答】基于以下知识回答问题：\n\n%s\n\n问题：%s",
@@ -248,7 +251,8 @@ public class QAController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            List<SearchResult> searchResults = ragService.semanticSearch(question, topK);
+            var documents_temp = ragService.semanticSearch(question, topK);
+            List<SearchResult> searchResults = documents_temp.stream().map(SearchResult::fromDocument).toList();
 
             result.put("status", "success");
             result.put("question", question);
@@ -274,14 +278,16 @@ public class QAController {
             return question;
         } else if ("role".equals(knowledgeMode) && roleName != null) {
             Role role = roleService.getRole(roleName);
-            List<SearchResult> references = ragService.semanticSearch(question, 5);
+            var documents_temp = ragService.semanticSearch(question, 5);
+            List<SearchResult> references = documents_temp.stream().map(SearchResult::fromDocument).toList();
             String context = ContextBuilder.buildRoleContext(references);
             return String.format(
                     "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
                     role.getName(), role.getDescription(), context, question
             );
         } else {
-            List<SearchResult> references = ragService.semanticSearch(question, 5);
+            var documents_temp = ragService.semanticSearch(question, 5);
+            List<SearchResult> references = documents_temp.stream().map(SearchResult::fromDocument).toList();
             String context = ContextBuilder.buildContext(references);
             return String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", context, question);
         }
@@ -312,6 +318,9 @@ public class QAController {
         }
     }
 }
+
+
+
 
 
 

@@ -5,16 +5,19 @@ import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Flux;
 import top.yumbo.ai.ai.api.AIService;
+import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.ai.api.EmbeddingModelRegistry;
 import top.yumbo.ai.ai.api.model.AIRequest;
 import top.yumbo.ai.ai.api.model.AIResponse;
 import top.yumbo.ai.ai.api.model.ChatMessage;
 import top.yumbo.ai.ai.api.model.ModelInfo;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * Online API AI 服务实现
- * (Online API AI Service Implementation)
+ * Online API AI 服务实现（支持问答和 Embedding）
+ * (Online API AI Service Implementation - Supports Chat and Embedding)
  *
  * <p>
  * 特点 (Features):
@@ -22,6 +25,7 @@ import java.util.*;
  * - OpenAI、Claude、通义千问等
  * - 最新模型支持
  * - 生产级可靠性
+ * - 支持 Embedding 向量化（OpenAI text-embedding-3-small 等）⭐
  * </p>
  *
  * @author OmniAgent Team
@@ -29,7 +33,7 @@ import java.util.*;
  * @version 1.0.0 - Online API Starter 实现
  */
 @Slf4j
-public class OnlineAPIAIService implements AIService {
+public class OnlineAPIAIService implements AIService, EmbeddingService {
 
     private final RestTemplate restTemplate;
     private final top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter;
@@ -767,5 +771,241 @@ public class OnlineAPIAIService implements AIService {
                 sink.error(e);
             }
         });
+    }
+
+    // ========== EmbeddingService 接口实现（新增）==========
+
+    /**
+     * 生成文本向量
+     *
+     * @param text 文本内容
+     * @return 向量数组
+     */
+    @Override
+    public float[] embed(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            log.warn("输入文本为空，返回零向量");
+            return new float[getDimension()];
+        }
+
+        String provider = properties.getProvider();
+
+        if ("openai".equalsIgnoreCase(provider)) {
+            return embedWithOpenAI(text);
+        } else if ("azure".equalsIgnoreCase(provider)) {
+            return embedWithAzure(text);
+        } else if ("dashscope".equalsIgnoreCase(provider) || "qwen".equalsIgnoreCase(provider)) {
+            return embedWithDashScope(text);
+        }
+
+        log.warn("Provider {} 不支持 Embedding，返回零向量", provider);
+        return new float[getDimension()];
+    }
+
+    /**
+     * 使用 OpenAI API 生成向量
+     */
+    private float[] embedWithOpenAI(String text) {
+        try {
+            String url = properties.getBaseUrl() + "/v1/embeddings";
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", properties.getEmbeddingModel());
+            requestBody.put("input", text);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + properties.getApiKey());
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            log.debug("OpenAI Embedding 请求: model={}, text length={}",
+                    properties.getEmbeddingModel(), text.length());
+
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                List<Map<String, Object>> data = (List<Map<String, Object>>) response.getBody().get("data");
+                if (data != null && !data.isEmpty()) {
+                    List<Number> embedding = (List<Number>) data.get(0).get("embedding");
+                    if (embedding != null) {
+                        float[] result = new float[embedding.size()];
+                        for (int i = 0; i < embedding.size(); i++) {
+                            result[i] = embedding.get(i).floatValue();
+                        }
+                        log.debug("OpenAI Embedding 成功: dimension={}", result.length);
+                        return result;
+                    }
+                }
+            }
+
+            log.error("OpenAI Embedding 失败: status={}", response.getStatusCode());
+            throw new RuntimeException("OpenAI embedding failed");
+
+        } catch (Exception e) {
+            log.error("OpenAI Embedding 异常: {}", e.getMessage(), e);
+            return new float[getDimension()];
+        }
+    }
+
+    /**
+     * 使用 Azure OpenAI API 生成向量
+     */
+    private float[] embedWithAzure(String text) {
+        // Azure 的 API 格式与 OpenAI 类似，但 URL 和认证方式不同
+        try {
+            String url = properties.getBaseUrl() + "/openai/deployments/"
+                    + properties.getEmbeddingModel() + "/embeddings?api-version=2023-05-15";
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("input", text);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", properties.getApiKey());
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            log.debug("Azure Embedding 请求: model={}, text length={}",
+                    properties.getEmbeddingModel(), text.length());
+
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                List<Map<String, Object>> data = (List<Map<String, Object>>) response.getBody().get("data");
+                if (data != null && !data.isEmpty()) {
+                    List<Number> embedding = (List<Number>) data.get(0).get("embedding");
+                    if (embedding != null) {
+                        float[] result = new float[embedding.size()];
+                        for (int i = 0; i < embedding.size(); i++) {
+                            result[i] = embedding.get(i).floatValue();
+                        }
+                        log.debug("Azure Embedding 成功: dimension={}", result.length);
+                        return result;
+                    }
+                }
+            }
+
+            log.error("Azure Embedding 失败: status={}", response.getStatusCode());
+            throw new RuntimeException("Azure embedding failed");
+
+        } catch (Exception e) {
+            log.error("Azure Embedding 异常: {}", e.getMessage(), e);
+            return new float[getDimension()];
+        }
+    }
+
+    /**
+     * 使用阿里云 DashScope API 生成向量
+     */
+    private float[] embedWithDashScope(String text) {
+        try {
+            String url = properties.getBaseUrl() + "/services/embeddings/text-embedding/text-embedding";
+
+            Map<String, Object> input = new HashMap<>();
+            input.put("texts", Collections.singletonList(text));
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", properties.getEmbeddingModel());
+            requestBody.put("input", input);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + properties.getApiKey());
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            log.debug("DashScope Embedding 请求: model={}, text length={}",
+                    properties.getEmbeddingModel(), text.length());
+
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                Map<String, Object> output = (Map<String, Object>) response.getBody().get("output");
+                if (output != null) {
+                    List<Map<String, Object>> embeddings = (List<Map<String, Object>>) output.get("embeddings");
+                    if (embeddings != null && !embeddings.isEmpty()) {
+                        List<Number> embedding = (List<Number>) embeddings.get(0).get("embedding");
+                        if (embedding != null) {
+                            float[] result = new float[embedding.size()];
+                            for (int i = 0; i < embedding.size(); i++) {
+                                result[i] = embedding.get(i).floatValue();
+                            }
+                            log.debug("DashScope Embedding 成功: dimension={}", result.length);
+                            return result;
+                        }
+                    }
+                }
+            }
+
+            log.error("DashScope Embedding 失败: status={}", response.getStatusCode());
+            throw new RuntimeException("DashScope embedding failed");
+
+        } catch (Exception e) {
+            log.error("DashScope Embedding 异常: {}", e.getMessage(), e);
+            return new float[getDimension()];
+        }
+    }
+
+    /**
+     * 批量生成向量
+     *
+     * @param texts 文本列表
+     * @return 向量数组列表
+     */
+    @Override
+    public List<float[]> embedBatch(List<String> texts) {
+        if (texts == null || texts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        log.info("Online API 批量 Embedding: count={}, provider={}", texts.size(), properties.getProvider());
+
+        // TODO: 可以优化为使用 API 的批量接口（如果支持）
+        return texts.stream()
+                .map(this::embed)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取向量维度（动态获取）⭐
+     *
+     * @return 维度
+     */
+    @Override
+    public int getDimension() {
+        String model = properties.getEmbeddingModel();
+        String provider = properties.getProvider();
+
+        if (model == null) {
+            return 1536; // 默认维度
+        }
+
+        // 1. 尝试从注册表获取 ⭐
+        Integer registeredDimension = EmbeddingModelRegistry.getDimension(model);
+        if (registeredDimension != null) {
+            log.debug("从注册表获取模型 {} 的维度: {}", model, registeredDimension);
+            return registeredDimension;
+        }
+
+        // 2. 未注册模型，尝试动态检测 ⭐
+        log.warn("模型 {} 未注册，尝试动态检测维度", model);
+        try {
+            int detectedDimension = detectDimension();
+            // 自动注册
+            EmbeddingModelRegistry.register(model, detectedDimension, provider, "Auto-detected");
+            log.info("✅ 自动检测并注册模型 {}: dimension={}", model, detectedDimension);
+            return detectedDimension;
+        } catch (Exception e) {
+            log.error("动态检测维度失败，使用默认值 1536", e);
+            return 1536; // 降级到默认值
+        }
+    }
+
+    /**
+     * 获取当前使用的 Embedding 模型
+     *
+     * @return 模型名称
+     */
+    @Override
+    public String getEmbeddingModel() {
+        return properties.getEmbeddingModel();
     }
 }

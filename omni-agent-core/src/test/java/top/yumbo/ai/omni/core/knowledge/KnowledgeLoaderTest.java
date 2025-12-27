@@ -237,3 +237,4 @@ class KnowledgeLoaderTest {
         assertTrue(keys.contains("key1")); // 得分100
     }
 }
+

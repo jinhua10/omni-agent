@@ -64,3 +64,4 @@ public class KnowledgeDocument {
     private Double relevanceScore;
 }
 
+

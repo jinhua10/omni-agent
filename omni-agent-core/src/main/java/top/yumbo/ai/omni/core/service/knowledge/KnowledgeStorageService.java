@@ -166,13 +166,13 @@ public class KnowledgeStorageService {
             log.info("开始索引知识到RAG: {}", knowledge.getKnowledgeId());
 
             // 1. 获取域的 RAG 服务
-            RagService ragService = ragServiceFactory.getOrCreateRAGService(domain.getDomainId());
+            RagService RagService = ragServiceFactory.getOrCreateRAGService(domain.getDomainId());
 
             // 2. 将知识转换为 RAG 文档
             Document ragDocument = convertToRAGDocument(knowledge, domain);
 
             // 3. 索引到向量数据库（使用 batchIndex）
-            ragService.batchIndex(java.util.List.of(ragDocument));
+            RagService.batchIndex(java.util.List.of(ragDocument));
 
             log.info("✅ 知识已索引到RAG: knowledgeId={}",
                     knowledge.getKnowledgeId());
@@ -239,4 +239,5 @@ public class KnowledgeStorageService {
         log.info("批量存储完成: 成功={}, 失败={}", successCount, failCount);
     }
 }
+
 

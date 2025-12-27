@@ -37,3 +37,4 @@ public class LearnFromDomainsRequest {
     private Integer maxDocuments = 100;
 }
 
+

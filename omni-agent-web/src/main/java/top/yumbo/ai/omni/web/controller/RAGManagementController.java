@@ -58,11 +58,11 @@ public class RAGManagementController {
                     .source("api")
                     .build();
 
-            String docId = ragService.indexDocument(document);
+            ragService.batchIndex(List.of(document));
             result.put("status", "success");
-            result.put("documentId", docId);
+            result.put("documentId", document.getId());
             result.put("message", "Document indexed successfully");
-            log.info("✅ 文档索引成功: id={}", docId);
+            log.info("✅ 文档索引成功: id={}", document.getId());
         } catch (Exception e) {
             log.error("❌ 文档索引失败", e);
             result.put("status", "error");
@@ -83,7 +83,12 @@ public class RAGManagementController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            List<String> docIds = ragService.indexDocuments(request.getDocuments());
+            ragService.batchIndex(request.getDocuments());
+
+            // 提取文档ID列表
+            List<String> docIds = request.getDocuments().stream()
+                    .map(Document::getId)
+                    .collect(java.util.stream.Collectors.toList());
 
             result.put("status", "success");
             result.put("indexedCount", docIds.size());
@@ -138,7 +143,8 @@ public class RAGManagementController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            List<SearchResult> searchResults = ragService.semanticSearch(query, topK);
+            var documents_temp = ragService.semanticSearch(query, topK);
+            List<SearchResult> searchResults = documents_temp.stream().map(SearchResult::fromDocument).toList();
             result.put("status", "success");
             result.put("query", query);
             result.put("resultCount", searchResults.size());
@@ -197,6 +203,9 @@ public class RAGManagementController {
         return result;
     }
 }
+
+
+
 
 
 
