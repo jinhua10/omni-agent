@@ -44,6 +44,9 @@
         <!-- Behavior API (Behavior Analysis API) -->
         <module>omni-agent-behavior-api</module>
 
+        <!-- Knowledge Registry API (Knowledge Registry API) ⭐ Phase 1 -->
+        <module>omni-agent-knowledge-registry-api</module>
+
         <!-- ========== 通用工具模块 (Common Module) ========== -->
 
         <module>omni-agent-common</module>
