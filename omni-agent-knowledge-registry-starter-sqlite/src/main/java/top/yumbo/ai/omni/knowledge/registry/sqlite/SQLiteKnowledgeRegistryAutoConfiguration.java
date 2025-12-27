@@ -39,6 +39,7 @@ public class SQLiteKnowledgeRegistryAutoConfiguration {
         log.info("🚀 初始化 SQLite 知识注册表");
         log.info("   - 数据库路径: {}", properties.getDbPath());
         log.info("   - 表名: {}", properties.getTableName());
+        log.info("   - 角色表名: knowledge_roles");
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
@@ -47,7 +48,8 @@ public class SQLiteKnowledgeRegistryAutoConfiguration {
         return new SQLiteKnowledgeRegistry(
                 jdbcTemplate,
                 objectMapper,
-                properties.getTableName()
+                properties.getTableName(),
+                "knowledge_roles"
         );
     }
 }
