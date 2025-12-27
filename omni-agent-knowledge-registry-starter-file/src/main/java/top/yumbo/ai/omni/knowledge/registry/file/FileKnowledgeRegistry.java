@@ -1,16 +1,15 @@
-package top.yumbo.ai.knowledge.registry.file;
+package top.yumbo.ai.omni.knowledge.registry.file;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.knowledge.registry.KnowledgeRegistry;
-import top.yumbo.ai.knowledge.registry.exception.KnowledgeRegistryException;
-import top.yumbo.ai.knowledge.registry.model.DomainStatus;
-import top.yumbo.ai.knowledge.registry.model.DomainType;
-import top.yumbo.ai.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.exception.KnowledgeRegistryException;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

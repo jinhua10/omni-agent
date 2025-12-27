@@ -1,13 +1,13 @@
-package top.yumbo.ai.knowledge.registry.file;
+package top.yumbo.ai.omni.knowledge.registry.file;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import top.yumbo.ai.knowledge.registry.KnowledgeRegistry;
-import top.yumbo.ai.knowledge.registry.model.DomainStatus;
-import top.yumbo.ai.knowledge.registry.model.DomainType;
-import top.yumbo.ai.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
 
 import java.nio.file.Path;
 import java.util.List;

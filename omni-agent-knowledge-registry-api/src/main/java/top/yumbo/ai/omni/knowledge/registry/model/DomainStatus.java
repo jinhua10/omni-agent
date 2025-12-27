@@ -1,4 +1,4 @@
-package top.yumbo.ai.knowledge.registry.model;
+package top.yumbo.ai.omni.knowledge.registry.model;
 
 /**
  * 知识域状态枚举

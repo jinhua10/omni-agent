@@ -1,4 +1,4 @@
-package top.yumbo.ai.knowledge.registry.file;
+package top.yumbo.ai.omni.knowledge.registry.file;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import top.yumbo.ai.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 
 /**
  * 文件知识注册表自动配置

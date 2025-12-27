@@ -1,4 +1,4 @@
-package top.yumbo.ai.knowledge.registry.exception;
+package top.yumbo.ai.omni.knowledge.registry.exception;
 
 import java.io.Serial;
 

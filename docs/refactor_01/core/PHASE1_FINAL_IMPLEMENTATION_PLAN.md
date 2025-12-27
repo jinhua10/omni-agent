@@ -132,13 +132,13 @@ omni-agent-knowledge-registry-starter-file/
 ```
 
 **实现：**
+
 ```java
 package top.yumbo.ai.knowledge.registry.file;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.knowledge.registry.KnowledgeRegistry;
-import top.yumbo.ai.knowledge.registry.model.*;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 
 import java.io.File;
 import java.nio.file.*;
@@ -147,19 +147,19 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class FileKnowledgeRegistry implements KnowledgeRegistry {
-    
+
     private final String basePath;
     private final ObjectMapper objectMapper;
-    
+
     public FileKnowledgeRegistry(String basePath) {
         this.basePath = basePath;
         this.objectMapper = new ObjectMapper();
         this.objectMapper.findAndRegisterModules();
-        
+
         // 初始化目录
         initDirectories();
     }
-    
+
     private void initDirectories() {
         try {
             Files.createDirectories(Paths.get(basePath, "domains"));
@@ -169,16 +169,16 @@ public class FileKnowledgeRegistry implements KnowledgeRegistry {
             throw new RuntimeException("Failed to create directories", e);
         }
     }
-    
+
     // ========== 知识域管理 ==========
-    
+
     @Override
     public String saveDomain(KnowledgeDomain domain) {
         Path filePath = Paths.get(basePath, "domains", domain.getDomainId() + ".json");
-        
+
         try {
             objectMapper.writerWithDefaultPrettyPrinter()
-                .writeValue(filePath.toFile(), domain);
+                    .writeValue(filePath.toFile(), domain);
             log.info("✅ 保存知识域: {}", domain.getDomainName());
             return domain.getDomainId();
         } catch (Exception e) {
@@ -186,19 +186,19 @@ public class FileKnowledgeRegistry implements KnowledgeRegistry {
             throw new RuntimeException("Failed to save domain", e);
         }
     }
-    
+
     @Override
     public Optional<KnowledgeDomain> findDomainById(String domainId) {
         Path filePath = Paths.get(basePath, "domains", domainId + ".json");
-        
+
         if (!Files.exists(filePath)) {
             return Optional.empty();
         }
-        
+
         try {
             KnowledgeDomain domain = objectMapper.readValue(
-                filePath.toFile(), 
-                KnowledgeDomain.class
+                    filePath.toFile(),
+                    KnowledgeDomain.class
             );
             return Optional.of(domain);
         } catch (Exception e) {
@@ -206,53 +206,53 @@ public class FileKnowledgeRegistry implements KnowledgeRegistry {
             return Optional.empty();
         }
     }
-    
+
     @Override
     public List<KnowledgeDomain> findAllDomains() {
         try {
             Path domainsDir = Paths.get(basePath, "domains");
-            
+
             if (!Files.exists(domainsDir)) {
                 return Collections.emptyList();
             }
-            
+
             return Files.list(domainsDir)
-                .filter(p -> p.toString().endsWith(".json"))
-                .map(p -> {
-                    try {
-                        return objectMapper.readValue(
-                            p.toFile(), 
-                            KnowledgeDomain.class
-                        );
-                    } catch (Exception e) {
-                        log.warn("读取域文件失败: {}", p, e);
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                    .filter(p -> p.toString().endsWith(".json"))
+                    .map(p -> {
+                        try {
+                            return objectMapper.readValue(
+                                    p.toFile(),
+                                    KnowledgeDomain.class
+                            );
+                        } catch (Exception e) {
+                            log.warn("读取域文件失败: {}", p, e);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("列出知识域失败", e);
             return Collections.emptyList();
         }
     }
-    
+
     @Override
     public List<KnowledgeDomain> findDomainsByType(DomainType type) {
         return findAllDomains().stream()
-            .filter(d -> d.getDomainType() == type)
-            .collect(Collectors.toList());
+                .filter(d -> d.getDomainType() == type)
+                .collect(Collectors.toList());
     }
-    
+
     @Override
     public boolean updateDomain(KnowledgeDomain domain) {
         return saveDomain(domain) != null;
     }
-    
+
     @Override
     public boolean deleteDomain(String domainId) {
         Path filePath = Paths.get(basePath, "domains", domainId + ".json");
-        
+
         try {
             boolean deleted = Files.deleteIfExists(filePath);
             if (deleted) {
@@ -264,29 +264,29 @@ public class FileKnowledgeRegistry implements KnowledgeRegistry {
             return false;
         }
     }
-    
+
     // ========== 角色和项目管理（类似实现）==========
-    
+
     @Override
     public String saveRole(KnowledgeRole role) {
         // 类似 saveDomain 的实现
         return null;
     }
-    
+
     @Override
     public Optional<KnowledgeRole> findRoleById(String roleId) {
         // 类似 findDomainById 的实现
         return Optional.empty();
     }
-    
+
     // ... 其他方法
-    
+
     @Override
     public boolean exists(String entityType, String entityId) {
         Path filePath = Paths.get(basePath, entityType + "s", entityId + ".json");
         return Files.exists(filePath);
     }
-    
+
     @Override
     public long count(String entityType) {
         try {
@@ -295,8 +295,8 @@ public class FileKnowledgeRegistry implements KnowledgeRegistry {
                 return 0;
             }
             return Files.list(dir)
-                .filter(p -> p.toString().endsWith(".json"))
-                .count();
+                    .filter(p -> p.toString().endsWith(".json"))
+                    .count();
         } catch (Exception e) {
             return 0;
         }
@@ -313,7 +313,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import top.yumbo.ai.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 
 @Configuration
 @ConditionalOnProperty(
@@ -355,7 +355,7 @@ public class FileKnowledgeRegistryProperties {
 ```properties
 # src/main/resources/META-INF/spring.factories
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  top.yumbo.ai.knowledge.registry.file.FileKnowledgeRegistryAutoConfiguration
+  top.yumbo.ai.omni.knowledge.registry.file.FileKnowledgeRegistryAutoConfiguration
 ```
 
 ---

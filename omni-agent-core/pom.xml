@@ -75,6 +75,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Knowledge Registry API ⭐ Phase 1 -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-knowledge-registry-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- ========== 工具库 ========== -->
 
         <!-- Jackson YAML for Workflow Definitions -->

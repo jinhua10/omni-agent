@@ -1,4 +1,4 @@
 # Spring Boot Auto-Configuration
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  top.yumbo.ai.knowledge.registry.file.FileKnowledgeRegistryAutoConfiguration
+  top.yumbo.ai.omni.knowledge.registry.file.FileKnowledgeRegistryAutoConfiguration
 

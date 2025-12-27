@@ -67,7 +67,7 @@ omni-agent:
 **spring.factories**
 ```properties
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  top.yumbo.ai.knowledge.registry.file.FileKnowledgeRegistryAutoConfiguration
+  top.yumbo.ai.omni.knowledge.registry.file.FileKnowledgeRegistryAutoConfiguration
 ```
 
 ### 6. 单元测试

@@ -1,8 +1,8 @@
-package top.yumbo.ai.knowledge.registry;
+package top.yumbo.ai.omni.knowledge.registry;
 
-import top.yumbo.ai.knowledge.registry.model.DomainStatus;
-import top.yumbo.ai.knowledge.registry.model.DomainType;
-import top.yumbo.ai.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
 
 import java.util.List;
 import java.util.Optional;
