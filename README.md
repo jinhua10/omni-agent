@@ -135,7 +135,7 @@ git checkout master
 
 ---
 
-> **💡 提示**：建议先阅读 [重构方案文档](docs/KNOWLEDGE_NETWORK_REFACTORING_PLAN.md) 了解完整设计思路！
+> **💡 提示**：建议先阅读 [重构方案文档](docs/refactor_01/core/KNOWLEDGE_NETWORK_REFACTORING_PLAN.md) 了解完整设计思路！
 
 ---
 
