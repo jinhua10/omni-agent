@@ -172,6 +172,16 @@ public class AlgorithmMarketService {
             String algorithmId,
             String documentId,
             Map<String, Object> context) throws AlgorithmExecutionException {
+        return executeMarketAlgorithm(algorithmId, (Object) documentId, context);
+    }
+
+    /**
+     * 执行市场算法（带安全检查）- 接受任意输入类型
+     */
+    public OptimizationData executeMarketAlgorithm(
+            String algorithmId,
+            Object input,
+            Map<String, Object> context) throws AlgorithmExecutionException {
 
         // 1. 获取算法
         MarketAlgorithm algorithm = publishedAlgorithms.get(algorithmId);
@@ -192,9 +202,9 @@ public class AlgorithmMarketService {
 
         // 4. 根据类型执行
         return switch (algorithm.getType()) {
-            case PIPELINE -> executePipeline(algorithm, documentId, context);
-            case SCRIPT -> executeScript(algorithm, documentId, context);
-            case REMOTE -> executeRemote(algorithm, documentId, context);
+            case PIPELINE -> executePipelineWithInput(algorithm, input, context);
+            case SCRIPT -> executeScriptWithInput(algorithm, input, context);
+            case REMOTE -> executeRemoteWithInput(algorithm, input, context);
         };
     }
 
@@ -205,8 +215,18 @@ public class AlgorithmMarketService {
             MarketAlgorithm algorithm,
             String documentId,
             Map<String, Object> context) throws AlgorithmExecutionException {
+        return executePipelineWithInput(algorithm, documentId, context);
+    }
 
-        Object result = documentId;
+    /**
+     * 执行配置化算法（Pipeline）- 接受任意输入类型
+     */
+    private OptimizationData executePipelineWithInput(
+            MarketAlgorithm algorithm,
+            Object input,
+            Map<String, Object> context) throws AlgorithmExecutionException {
+
+        Object result = input;
         Map<String, Double> allMetrics = new HashMap<>();
 
         long startTime = System.currentTimeMillis();
@@ -220,8 +240,12 @@ public class AlgorithmMarketService {
                     continue;
                 }
 
+                // 合并 step 的 params 和 context
+                Map<String, Object> mergedParams = new HashMap<>(step.getParams());
+                mergedParams.putAll(context);
+
                 // 执行组件
-                result = component.execute(result, step.getParams());
+                result = component.execute(result, mergedParams);
                 allMetrics.putAll(component.getMetrics());
 
                 // 检查超时
@@ -231,6 +255,9 @@ public class AlgorithmMarketService {
                     throw new AlgorithmExecutionException("Pipeline execution timeout");
                 }
             }
+
+            // 提取 documentId（如果 input 是 String）
+            String documentId = input instanceof String ? (String) input : "unknown";
 
             return OptimizationData.builder()
                     .documentId(documentId)
@@ -297,6 +324,22 @@ public class AlgorithmMarketService {
     }
 
     /**
+     * 执行脚本算法（Script）- 接受任意输入类型
+     */
+    private OptimizationData executeScriptWithInput(
+            MarketAlgorithm algorithm,
+            Object input,
+            Map<String, Object> context) throws AlgorithmExecutionException {
+
+        // 将 input 添加到 context 中
+        Map<String, Object> enhancedContext = new HashMap<>(context);
+        enhancedContext.put("input", input);
+
+        String documentId = input instanceof String ? (String) input : "unknown";
+        return executeScript(algorithm, documentId, enhancedContext);
+    }
+
+    /**
      * 执行远程算法（Remote）- 需要网络鉴权
      */
     private OptimizationData executeRemote(
@@ -340,6 +383,22 @@ public class AlgorithmMarketService {
             log.error("Remote execution failed: algorithmId={}", algorithm.getAlgorithmId(), e);
             throw new AlgorithmExecutionException("Remote execution failed: " + e.getMessage());
         }
+    }
+
+    /**
+     * 执行远程算法（Remote）- 接受任意输入类型
+     */
+    private OptimizationData executeRemoteWithInput(
+            MarketAlgorithm algorithm,
+            Object input,
+            Map<String, Object> context) throws AlgorithmExecutionException {
+
+        // 将 input 添加到 context 中
+        Map<String, Object> enhancedContext = new HashMap<>(context);
+        enhancedContext.put("input", input);
+
+        String documentId = input instanceof String ? (String) input : "unknown";
+        return executeRemote(algorithm, documentId, enhancedContext);
     }
 
     /**
