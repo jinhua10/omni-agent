@@ -1,0 +1,12 @@
+# ========================================
+# 跨域查询配置
+# ========================================
+omni-agent:
+  cross-domain-query:
+    # 线程池配置
+    core-pool-size: 5           # 核心线程数
+    max-pool-size: 10           # 最大线程数
+    queue-capacity: 100         # 队列容量
+    thread-name-prefix: "CrossDomain-"  # 线程名称前缀
+    query-timeout: 30           # 查询超时时间（秒）
+

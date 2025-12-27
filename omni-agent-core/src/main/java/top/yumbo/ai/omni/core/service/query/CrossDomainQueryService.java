@@ -1,0 +1,315 @@
+package top.yumbo.ai.omni.core.service.query;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.core.config.CrossDomainQueryConfig;
+import top.yumbo.ai.omni.core.router.DomainRouter;
+import top.yumbo.ai.omni.core.service.rag.RAGServiceFactory;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+
+/**
+ * 跨域查询服务（优化版）
+ * (Cross-Domain Query Service - Optimized)
+ *
+ * <p>实现跨多个知识域的并发查询和智能结果合并</p>
+ *
+ * <p>核心优化：</p>
+ * <ul>
+ *     <li>并发查询 - 使用线程池并行查询多个域</li>
+ *     <li>动态域权重 - 根据查询场景动态计算域权重</li>
+ *     <li>智能重排 - 多维度综合排序算法</li>
+ *     <li>多样性保证 - 避免结果过度集中</li>
+ *     <li>超时控制 - 防止慢查询阻塞</li>
+ * </ul>
+ *
+ * @author OmniAgent Team
+ * @since 1.0.0
+ */
+@Slf4j
+@Service
+public class CrossDomainQueryService {
+
+    private final DomainRouter domainRouter;
+    private final RAGServiceFactory ragServiceFactory;
+    private final KnowledgeRegistry knowledgeRegistry;
+    private final DomainWeightStrategy weightStrategy;
+    private final ResultReRanker resultReRanker;
+    private final CrossDomainQueryConfig config;
+    private final Executor executor;
+
+    @Autowired
+    public CrossDomainQueryService(
+            DomainRouter domainRouter,
+            RAGServiceFactory ragServiceFactory,
+            KnowledgeRegistry knowledgeRegistry,
+            DomainWeightStrategy weightStrategy,
+            ResultReRanker resultReRanker,
+            CrossDomainQueryConfig config,
+            @Qualifier("crossDomainQueryExecutor") Executor executor) {
+        this.domainRouter = domainRouter;
+        this.ragServiceFactory = ragServiceFactory;
+        this.knowledgeRegistry = knowledgeRegistry;
+        this.weightStrategy = weightStrategy;
+        this.resultReRanker = resultReRanker;
+        this.config = config;
+        this.executor = executor;
+    }
+
+    /**
+     * 跨域查询（并发优化版）
+     *
+     * @param query 查询文本
+     * @param maxResults 最大结果数
+     * @return 合并后的查询结果
+     */
+    public CrossDomainQueryResult crossDomainSearch(String query, int maxResults) {
+        log.info("🔍 跨域查询: query='{}', maxResults={}", query, maxResults);
+
+        long startTime = System.currentTimeMillis();
+
+        // 1. 路由到相关的域
+        var routeResult = domainRouter.route(query);
+        List<String> domainIds = routeResult.getDomainIds();
+
+        log.info("   路由到 {} 个域: {}", domainIds.size(), domainIds);
+
+        if (domainIds.isEmpty()) {
+            log.warn("   未找到匹配的域，返回空结果");
+            return buildEmptyResult(query, startTime);
+        }
+
+        // 2. 计算每个域的权重
+        Map<String, Double> domainWeights = calculateDomainWeights(domainIds, query);
+
+        // 3. 并发查询所有域
+        Map<String, List<Document>> domainResults = queryAllDomainsConcurrently(
+                domainIds, query, maxResults, domainWeights);
+
+        // 4. 合并结果
+        List<Document> mergedResults = mergeResults(domainResults);
+
+        // 5. 使用改进的重排算法
+        List<Document> rankedResults = resultReRanker.reRank(mergedResults, query, domainWeights);
+
+        // 6. 去重
+        List<Document> dedupResults = deduplicateResults(rankedResults);
+
+        // 7. 截取最终结果
+        List<Document> finalResults = dedupResults.stream()
+                .limit(maxResults)
+                .collect(Collectors.toList());
+
+        long queryTime = System.currentTimeMillis() - startTime;
+
+        log.info("✅ 跨域查询完成: 查询了 {} 个域, 返回 {} 个结果, 耗时 {}ms",
+                domainIds.size(), finalResults.size(), queryTime);
+
+        return CrossDomainQueryResult.builder()
+                .query(query)
+                .totalDomains(domainIds.size())
+                .queriedDomains(domainIds)
+                .domainResults(domainResults)
+                .domainWeights(domainWeights)
+                .results(finalResults)
+                .queryTime(queryTime)
+                .routeConfidence(routeResult.getConfidence())
+                .build();
+    }
+
+    /**
+     * 计算域权重
+     */
+    private Map<String, Double> calculateDomainWeights(List<String> domainIds, String query) {
+        Map<String, Double> weights = new HashMap<>();
+
+        for (String domainId : domainIds) {
+            try {
+                var domain = knowledgeRegistry.findDomainById(domainId).orElse(null);
+                if (domain != null) {
+                    double weight = weightStrategy.calculateDomainWeight(
+                            domainId,
+                            domain.getDomainType(),
+                            query,
+                            null // 可传入查询上下文
+                    );
+                    weights.put(domainId, weight);
+                } else {
+                    weights.put(domainId, 1.0); // 默认权重
+                }
+            } catch (Exception e) {
+                log.warn("   计算域 {} 权重失败: {}", domainId, e.getMessage());
+                weights.put(domainId, 1.0);
+            }
+        }
+
+        return weights;
+    }
+
+    /**
+     * 并发查询所有域
+     */
+    private Map<String, List<Document>> queryAllDomainsConcurrently(
+            List<String> domainIds,
+            String query,
+            int maxResults,
+            Map<String, Double> domainWeights) {
+
+        Map<String, List<Document>> results = new ConcurrentHashMap<>();
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        // 为每个域创建异步查询任务
+        for (String domainId : domainIds) {
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                try {
+                    log.debug("   [{}] 开始查询域: {}", Thread.currentThread().getName(), domainId);
+
+                    RagService ragService = ragServiceFactory.getOrCreateRAGService(domainId);
+
+                    // 根据域权重调整查询数量
+                    double weight = domainWeights.getOrDefault(domainId, 1.0);
+                    int adjustedLimit = (int) Math.ceil(maxResults * weight);
+                    adjustedLimit = Math.min(adjustedLimit, maxResults * 2); // 最多查询2倍
+
+                    List<Document> domainResults = ragService.semanticSearch(query, adjustedLimit);
+
+                    // 标记文档来源域
+                    domainResults.forEach(doc -> {
+                        if (doc.getMetadata() == null) {
+                            doc.setMetadata(new HashMap<>());
+                        }
+                        doc.getMetadata().put("sourceDomain", domainId);
+                        doc.getMetadata().put("domainWeight", weight);
+                    });
+
+                    results.put(domainId, domainResults);
+
+                    log.debug("   [{}] 域 {} 返回 {} 个结果",
+                            Thread.currentThread().getName(), domainId, domainResults.size());
+
+                } catch (Exception e) {
+                    log.error("   域 {} 查询失败: {}", domainId, e.getMessage());
+                    results.put(domainId, Collections.emptyList());
+                }
+            }, executor);
+
+            futures.add(future);
+        }
+
+        // 等待所有查询完成，设置超时
+        try {
+            CompletableFuture<Void> allOf = CompletableFuture.allOf(
+                    futures.toArray(new CompletableFuture[0]));
+
+            allOf.get(config.getQueryTimeout(), TimeUnit.SECONDS);
+
+        } catch (TimeoutException e) {
+            log.warn("   部分域查询超时，使用已完成的结果");
+            futures.forEach(f -> f.cancel(true));
+        } catch (Exception e) {
+            log.error("   等待查询完成时出错: {}", e.getMessage());
+        }
+
+        return results;
+    }
+
+    /**
+     * 合并多个域的结果
+     */
+    private List<Document> mergeResults(Map<String, List<Document>> domainResults) {
+        List<Document> merged = new ArrayList<>();
+        domainResults.values().forEach(merged::addAll);
+
+        log.debug("   合并结果: {} 个文档", merged.size());
+
+        return merged;
+    }
+
+    /**
+     * 去重 - 基于文档ID或内容相似度
+     */
+    private List<Document> deduplicateResults(List<Document> documents) {
+        // 基于文档ID去重
+        Map<String, Document> uniqueDocs = new LinkedHashMap<>();
+
+        for (Document doc : documents) {
+            String key = doc.getId();
+            if (!uniqueDocs.containsKey(key)) {
+                uniqueDocs.put(key, doc);
+            } else {
+                // 如果ID相同，保留分数更高的
+                Document existing = uniqueDocs.get(key);
+                double existingScore = existing.getScore() != null ? existing.getScore() : 0.0;
+                double newScore = doc.getScore() != null ? doc.getScore() : 0.0;
+
+                if (newScore > existingScore) {
+                    uniqueDocs.put(key, doc);
+                }
+            }
+        }
+
+        List<Document> deduped = new ArrayList<>(uniqueDocs.values());
+
+        if (deduped.size() < documents.size()) {
+            log.debug("   去重: {} -> {} 个文档", documents.size(), deduped.size());
+        }
+
+        return deduped;
+    }
+
+    /**
+     * 构建空结果
+     */
+    private CrossDomainQueryResult buildEmptyResult(String query, long startTime) {
+        return CrossDomainQueryResult.builder()
+                .query(query)
+                .totalDomains(0)
+                .results(Collections.emptyList())
+                .queryTime(System.currentTimeMillis() - startTime)
+                .build();
+    }
+
+    /**
+     * 跨域查询结果
+     */
+    @lombok.Data
+    @lombok.Builder
+    public static class CrossDomainQueryResult {
+        /** 查询文本 */
+        private String query;
+
+        /** 查询的域总数 */
+        private int totalDomains;
+
+        /** 实际查询的域ID列表 */
+        private List<String> queriedDomains;
+
+        /** 每个域的查询结果 */
+        private Map<String, List<Document>> domainResults;
+
+        /** 每个域的权重 */
+        private Map<String, Double> domainWeights;
+
+        /** 合并后的最终结果 */
+        private List<Document> results;
+
+        /** 查询耗时（毫秒） */
+        private long queryTime;
+
+        /** 路由置信度 */
+        private double routeConfidence;
+
+        /** 是否跨域查询 */
+        public boolean isCrossDomain() {
+            return totalDomains > 1;
+        }
+    }
+}
+
