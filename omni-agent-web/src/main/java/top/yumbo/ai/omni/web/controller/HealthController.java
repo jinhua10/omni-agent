@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.omni.persistence.api.QuestionClassifierPersistence;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
@@ -27,7 +27,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HealthController {
 
-    private final QuestionClassifierPersistence persistence;
+    private final KnowledgeRegistry knowledgeRegistry;
     private final DocumentStorageService storageService;
     private final RagService ragService;
     private final AIService aiService;
@@ -41,12 +41,12 @@ public class HealthController {
     public Map<String, Object> health() {
         Map<String, Object> result = new HashMap<>();
         result.put("status", "UP");
-        result.put("persistence", persistence.getClass().getSimpleName());
+        result.put("knowledgeRegistry", knowledgeRegistry.getClass().getSimpleName());
         result.put("documentStorage", storageService.getClass().getSimpleName());
         result.put("rag", ragService.getClass().getSimpleName());
         result.put("ai", aiService.getClass().getSimpleName());
         result.put("aiModel", aiService.getCurrentModel());
-        result.put("message", "OmniAgent is running with pluggable architecture!");
+        result.put("message", "OmniAgent is running with Knowledge Network Architecture!");
         return result;
     }
 }
