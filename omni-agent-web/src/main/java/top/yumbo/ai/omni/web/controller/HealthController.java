@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import top.yumbo.ai.ai.api.AIService;
 import top.yumbo.ai.omni.persistence.api.QuestionClassifierPersistence;
-import top.yumbo.ai.rag.api.RAGService;
+import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.HashMap;
@@ -29,7 +29,7 @@ public class HealthController {
 
     private final QuestionClassifierPersistence persistence;
     private final DocumentStorageService storageService;
-    private final RAGService ragService;
+    private final RagService ragService;
     private final AIService aiService;
 
     /**
@@ -50,4 +50,6 @@ public class HealthController {
         return result;
     }
 }
+
+
 

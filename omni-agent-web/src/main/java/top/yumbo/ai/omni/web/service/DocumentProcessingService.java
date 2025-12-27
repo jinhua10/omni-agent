@@ -11,7 +11,7 @@ import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.storage.api.model.Chunk;
 import top.yumbo.ai.omni.storage.api.model.Image;
 import top.yumbo.ai.omni.web.websocket.DocumentProcessingWebSocketHandler;
-import top.yumbo.ai.rag.api.RAGService;
+import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.nio.file.Files;
@@ -50,7 +50,7 @@ public class DocumentProcessingService {
     private EmbeddingService embeddingService;  // ⭐ 向量化服务（可选）
 
     @Autowired(required = false)
-    private RAGService ragService;  // ⭐ RAG索引服务（可选）
+    private RagService ragService;  // ⭐ RAG索引服务（可选）
 
     // ⭐ 图片处理线程池（用于异步保存图片）
     @Autowired(required = false)
@@ -891,4 +891,6 @@ public class DocumentProcessingService {
         private int vectorCount;
     }
 }
+
+
 

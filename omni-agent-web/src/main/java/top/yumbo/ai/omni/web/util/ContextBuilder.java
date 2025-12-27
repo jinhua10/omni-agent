@@ -1,6 +1,6 @@
 package top.yumbo.ai.omni.web.util;
 
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
 
@@ -54,4 +54,6 @@ public class ContextBuilder {
         return context.toString();
     }
 }
+
+
 

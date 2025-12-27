@@ -5,10 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.ai.api.EmbeddingService;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.rag.api.model.Query;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+// Query removed
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
 import java.util.Map;
@@ -31,7 +31,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RAGExample {
 
-    private final RAGService ragService;
+    private final RagService RagService;
 
     @Autowired(required = false)
     private EmbeddingService embeddingService;
@@ -50,7 +50,7 @@ public class RAGExample {
                 .createdAt(System.currentTimeMillis())
                 .build();
 
-        ragService.indexDocument(doc1);
+        RagService.indexDocument(doc1);
         log.info("✅ 已索引文档");
     }
 
@@ -59,7 +59,7 @@ public class RAGExample {
      */
     public void textSearchExample() {
         log.info("\n=== 示例 2：文本检索 ===");
-        List<SearchResult> results = ragService.searchByText("ONNX Runtime", 5);
+        List<SearchResult> results = RagService.searchByText("ONNX Runtime", 5);
         results.forEach(r -> log.info("  - {}", r.getDocument().getTitle()));
     }
 
@@ -73,7 +73,7 @@ public class RAGExample {
             return;
         }
         float[] embedding = embeddingService.embed("ONNX Runtime");
-        List<SearchResult> results = ragService.vectorSearch(embedding, 5);
+        List<SearchResult> results = RagService.vectorSearch(embedding, 5);
         results.forEach(r -> log.info("  - {}", r.getDocument().getTitle()));
     }
 
@@ -98,3 +98,4 @@ public class RAGExample {
         }
     }
 }
+

@@ -47,16 +47,24 @@ omni-agent-core/
 
 ## 🚀 下一步工作
 
+### ✅ 已完成任务
+
+1. **实现 FileRagService** ✅
+   - 基于 Lucene 9.x
+   - 实现 RagService 接口
+   - 支持域ID
+   - 400+ 行代码
+   - 文档：[FILE_RAG_IMPLEMENTATION.md](FILE_RAG_IMPLEMENTATION.md)
+
 ### 立即任务
 
 1. **修复编译错误**
-   - Web 模块的 import 语句
-   - 示例代码的 import 语句
+   - Web 模块的 SearchResult 类缺失
+   - 需要创建或重构
 
-2. **实现 FileRagService**
-   - 基于 Lucene
-   - 实现 RagService 接口
-   - 支持域ID
+2. **集成 AI Embedding**
+   - 实现真正的语义搜索
+   - 支持向量检索
 
 ### 参考文档
 

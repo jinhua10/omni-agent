@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import top.yumbo.ai.omni.marketplace.EnhancedQueryService;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
 import java.util.Map;
@@ -279,4 +279,5 @@ class EnhancedQueryServicePhase1Test {
         }
     }
 }
+
 

@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
 import top.yumbo.ai.omni.web.util.FileStorageUtil;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.core.image.ImageStorageService;
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 public class DocumentManagementController {
 
     private final DocumentStorageService storageService;
-    private final RAGService ragService;
+    private final RagService ragService;
     private final DocumentProcessorManager documentProcessorManager;
     private final ChunkingStrategyManager chunkingStrategyManager;
     private final ImageStorageService imageStorageService;
@@ -225,7 +225,7 @@ public class DocumentManagementController {
             log.info("获取文档详情请求: {}", documentId);
 
             // 尝试从RAG查找文档
-            List<SearchResult> searchResults = ragService.searchByText(documentId, 10);
+            List<SearchResult> searchResults = ragService.semanticSearch(documentId, 10);
             Document doc = null;
 
             // 如果是文件路径，尝试查找匹配的文档
@@ -571,7 +571,7 @@ public class DocumentManagementController {
                 log.info("检测到可能是文件名，尝试搜索对应的文档: {}", documentId);
 
                 // 使用文件名搜索文档
-                List<SearchResult> searchResults = ragService.searchByText(documentId, 10);
+                List<SearchResult> searchResults = ragService.semanticSearch(documentId, 10);
 
                 // 查找title完全匹配的文档
                 for (SearchResult sr : searchResults) {
@@ -784,7 +784,7 @@ public class DocumentManagementController {
         try {
             // 使用RAG搜索文档
             List<top.yumbo.ai.rag.api.model.SearchResult> searchResults =
-                    ragService.searchByText(keyword, limit);
+                    ragService.semanticSearch(keyword, limit);
 
             // 提取唯一的文档源
             List<String> documentIds = searchResults.stream()
@@ -888,6 +888,8 @@ public class DocumentManagementController {
         private boolean cancelable;     // 是否可以取消
     }
 }
+
+
 
 
 

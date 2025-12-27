@@ -423,3 +423,5 @@ public class SystemRAGConfigService {
         private long updatedAt = System.currentTimeMillis();
     }
 }
+
+

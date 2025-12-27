@@ -2,7 +2,7 @@ package top.yumbo.ai.omni.web.dto;
 
 import lombok.Data;
 import top.yumbo.ai.ai.api.model.ChatMessage;
-import top.yumbo.ai.rag.api.model.Document;
+import top.yumbo.ai.omni.rag.model.Document;
 
 import java.util.List;
 
@@ -99,4 +99,6 @@ public class ApiDtos {
         private long timestamp;
     }
 }
+
+
 

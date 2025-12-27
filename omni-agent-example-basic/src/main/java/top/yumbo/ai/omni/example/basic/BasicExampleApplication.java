@@ -49,3 +49,4 @@ public class BasicExampleApplication {
         SpringApplication.run(BasicExampleApplication.class, args);
     }
 }
+

@@ -13,8 +13,8 @@ import top.yumbo.ai.omni.marketplace.EnhancedQueryService;
 import top.yumbo.ai.omni.web.controller.SystemController;
 import top.yumbo.ai.omni.web.util.ContextBuilder;
 import top.yumbo.ai.omni.web.util.JsonUtil;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AdvancedQAController {
 
     private final AIService aiService;
-    private final RAGService ragService;
+    private final RagService ragService;
     private final RoleService roleService;
     private final HOPEKnowledgeManager hopeManager;
     private final EnhancedQueryService enhancedQueryService;
@@ -99,7 +99,7 @@ public class AdvancedQAController {
                     handleSingleTrack(emitter, question, fullAnswerBuilder);
                 } else {
                     // 双轨模式
-                    List<SearchResult> references = ragService.searchByText(question, 5);
+                    List<SearchResult> references = ragService.semanticSearch(question, 5);
                     log.info("📚 检索到 {} 个参考文档", references.size());
 
                     sendReferences(emitter, references);
@@ -552,4 +552,6 @@ public class AdvancedQAController {
         emitter.onCompletion(() -> log.info("✅ SSE连接关闭"));
     }
 }
+
+
 

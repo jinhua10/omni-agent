@@ -5,9 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.web.dto.ApiDtos.BatchIndexRequest;
 import top.yumbo.ai.omni.web.dto.DocumentRequest;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.HashMap;
@@ -35,7 +35,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RAGManagementController {
 
-    private final RAGService ragService;
+    private final RagService ragService;
     private final DocumentStorageService storageService;
 
     /**
@@ -138,7 +138,7 @@ public class RAGManagementController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            List<SearchResult> searchResults = ragService.searchByText(query, topK);
+            List<SearchResult> searchResults = ragService.semanticSearch(query, topK);
             result.put("status", "success");
             result.put("query", query);
             result.put("resultCount", searchResults.size());
@@ -197,4 +197,6 @@ public class RAGManagementController {
         return result;
     }
 }
+
+
 

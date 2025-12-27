@@ -11,8 +11,8 @@ import top.yumbo.ai.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.web.dto.ApiDtos.*;
 import top.yumbo.ai.omni.web.util.ContextBuilder;
 import top.yumbo.ai.omni.web.util.JsonUtil;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +42,7 @@ import java.util.Map;
 public class AIServiceController {
 
     private final AIService aiService;
-    private final RAGService ragService;
+    private final RagService ragService;
 
     /**
      * AI 简单对话
@@ -319,7 +319,7 @@ public class AIServiceController {
 
         try {
             // 1. 使用 RAG 检索相关文档
-            List<SearchResult> searchResults = ragService.searchByText(
+            List<SearchResult> searchResults = ragService.semanticSearch(
                     request.getQuestion(),
                     request.getTopK() != null ? request.getTopK() : 5
             );
@@ -404,4 +404,6 @@ public class AIServiceController {
         }
     }
 }
+
+
 

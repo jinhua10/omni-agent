@@ -10,8 +10,8 @@ import top.yumbo.ai.omni.core.role.Role;
 import top.yumbo.ai.omni.core.role.RoleService;
 import top.yumbo.ai.omni.web.dto.ApiDtos.*;
 import top.yumbo.ai.omni.web.util.ContextBuilder;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +37,7 @@ import java.util.Map;
 public class QAController {
 
     private final AIService aiService;
-    private final RAGService ragService;
+    private final RagService ragService;
     private final RoleService roleService;
 
     /**
@@ -77,7 +77,7 @@ public class QAController {
                     }
 
                     Role roleEntity = roleService.getRole(roleName);
-                    references = ragService.searchByText(question, 5);
+                    references = ragService.semanticSearch(question, 5);
 
                     String roleContext = ContextBuilder.buildRoleContext(references);
                     String rolePrompt = String.format(
@@ -90,7 +90,7 @@ public class QAController {
                 case "rag":
                 default:
                     // 传统 RAG 模式
-                    references = ragService.searchByText(question, 5);
+                    references = ragService.semanticSearch(question, 5);
                     String context = ContextBuilder.buildContext(references);
                     String prompt = String.format(
                             "基于以下知识回答问题：\n\n%s\n\n问题：%s",
@@ -209,7 +209,7 @@ public class QAController {
             // String hopeAnswer = hopeManager.query(question, sessionId);
 
             // 临时实现：使用 RAG
-            List<SearchResult> references = ragService.searchByText(question, 5);
+            List<SearchResult> references = ragService.semanticSearch(question, 5);
             String context = ContextBuilder.buildContext(references);
             String prompt = String.format(
                     "【HOPE 智能问答】基于以下知识回答问题：\n\n%s\n\n问题：%s",
@@ -248,7 +248,7 @@ public class QAController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            List<SearchResult> searchResults = ragService.searchByText(question, topK);
+            List<SearchResult> searchResults = ragService.semanticSearch(question, topK);
 
             result.put("status", "success");
             result.put("question", question);
@@ -274,14 +274,14 @@ public class QAController {
             return question;
         } else if ("role".equals(knowledgeMode) && roleName != null) {
             Role role = roleService.getRole(roleName);
-            List<SearchResult> references = ragService.searchByText(question, 5);
+            List<SearchResult> references = ragService.semanticSearch(question, 5);
             String context = ContextBuilder.buildRoleContext(references);
             return String.format(
                     "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
                     role.getName(), role.getDescription(), context, question
             );
         } else {
-            List<SearchResult> references = ragService.searchByText(question, 5);
+            List<SearchResult> references = ragService.semanticSearch(question, 5);
             String context = ContextBuilder.buildContext(references);
             return String.format("基于以下知识回答问题：\n\n%s\n\n问题：%s", context, question);
         }
@@ -312,4 +312,6 @@ public class QAController {
         }
     }
 }
+
+
 
