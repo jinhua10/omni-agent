@@ -1,8 +1,85 @@
 # Omni-Agent 知识网络架构重构方案
 
 > **文档创建时间：** 2025-12-27  
+> **最后更新时间：** 2025-12-27  
 > **目标：** 构建专业化的知识网络系统，支持多领域独立知识库和源码深度分析  
 > **作者：** 系统架构设计
+
+---
+
+## 📊 执行摘要
+
+### 🎯 总体进度
+
+| 阶段 | 状态 | 完成度 | 优先级 | 备注 |
+|------|------|--------|--------|------|
+| **Phase 1: 基础架构重构** | 🟢 进行中 | 70% | ⭐⭐⭐⭐⭐ | 基础模型完成，数据迁移未完成 |
+| **Phase 2: 角色知识库系统** | 🟡 进行中 | 40% | ⭐⭐⭐⭐ | 模型完成，服务层未实现 |
+| **Phase 3: 源码分析功能** | 🔴 未开始 | 0% | ⭐⭐⭐ | 完全未开始 |
+| **Phase 4: 知识网络与智能路由** | 🔴 未开始 | 0% | ⭐⭐⭐ | 依赖前期阶段 |
+| **Phase 5: 综合报告与评估** | 🔴 未开始 | 0% | ⭐⭐ | 依赖前期阶段 |
+
+### 🚨 关键问题
+
+1. **数据迁移未完成** - 当前仍使用旧的 `data/storage` 结构，未迁移到 `data/knowledge-network/domains/` 新架构
+2. **角色学习引擎未实现** - `RoleKnowledgeService` 完全缺失，角色无法学习知识
+3. **源码分析功能未启动** - Phase 3 完全未开始，包括：
+   - `SourceCodeProject` 实体
+   - `FileChangeDetector` 增量检测
+   - `GitSyncService` Git集成
+   - `SourceCodeAnalysisService` 分析服务
+4. **Web UI 功能不完整** - 多处存在 TODO 标记，P2P协作功能仅有前端骨架
+
+### ✅ 已完成核心功能
+
+1. **知识域模型** - `KnowledgeDomain` 实体完整实现
+2. **角色模型** - `KnowledgeRole` 实体完整实现
+3. **RAG服务工厂** - `RAGServiceFactory` 支持多域RAG实例管理
+4. **域管理服务** - `KnowledgeDomainService` 提供CRUD操作
+5. **领域路由器** - `DomainRouter` 基础路由逻辑完成
+6. **知识注册表** - `KnowledgeRegistry` 接口和多种实现（File/MongoDB/Redis/ES/H2/SQLite）
+
+### 📝 待办事项优先级
+
+#### 🔥 高优先级（阻塞后续开发）
+1. **完成数据迁移** - 实现从旧结构到新结构的迁移工具
+2. **实现 RoleKnowledgeService** - 角色管理和学习核心服务
+3. **补全 Web UI TODO** - 完成P2P协作、RAG索引删除等功能
+
+#### ⚡ 中优先级（核心功能）
+4. **实现 SourceCodeProject 相关功能** - 开始 Phase 3
+5. **实现跨域查询** - 开始 Phase 4
+6. **前端角色管理UI** - 支持角色创建和管理
+
+#### 💡 低优先级（增强功能）
+7. **知识网络可视化**
+8. **综合报告生成**
+9. **性能优化**
+
+### 🛠️ 代码质量状况
+
+**TODO 标记统计：** 20处
+- Workflow 相关：4处
+- Web UI 相关：13处（主要是P2P协作）
+- Image 提取：1处
+- RAG 删除功能：2处
+
+### 🎯 下一步行动建议
+
+1. **立即行动（本周）**：
+   - [ ] 实现数据迁移工具 `DataMigrationService`
+   - [ ] 实现 `RoleKnowledgeService` 核心功能
+   - [ ] 修复 Web UI 中的 TODO 项（RAG删除、P2P集成）
+
+2. **短期目标（2周内）**：
+   - [ ] 完成 Phase 1 剩余任务（数据迁移）
+   - [ ] 完成 Phase 2 核心功能（角色学习引擎）
+   - [ ] 开始 Phase 3 设计（源码分析架构）
+
+3. **中期目标（1个月内）**：
+   - [ ] 完成 Phase 3 基础功能
+   - [ ] 实现前端角色管理UI
+   - [ ] 实现跨域查询功能
 
 ---
 
@@ -973,83 +1050,119 @@ public class GitSyncService {
 
 ### Phase 1: 基础架构重构（2周）
 
+**状态：** 🟢 **部分完成 (70%)**
+
 **目标：** 实现多知识域的基础架构
 
 **任务：**
 1. ✅ 设计并实现 `KnowledgeDomain` 实体和数据库表
+   - ✅ 已实现：`omni-agent-knowledge-registry-api/model/KnowledgeDomain.java`
+   - ✅ 包含：domainId, domainName, domainType, storagePath, ragIndexPath 等
 2. ✅ 实现 `RAGServiceFactory` - 支持多RAG实例管理
-3. ✅ 重构 `data` 目录结构
+   - ✅ 已实现：`omni-agent-core/service/rag/RAGServiceFactory.java`
+   - ✅ 支持域隔离的RAG服务管理
+3. ⚠️ 重构 `data` 目录结构 - **部分完成**
+   - ✅ 当前结构：`data/storage/{documents,chunks,extracted,images,ppl}`
+   - ❌ 目标结构：`data/knowledge-network/domains/{domain-id}/...` - **未迁移**
+   - **现状**：仍使用旧的单一存储结构
 4. ✅ 实现 `KnowledgeDomainService` 基础API
-5. ✅ 数据迁移工具 - 将现有数据迁移到新结构
+   - ✅ 已实现：`omni-agent-core/service/domain/KnowledgeDomainService.java`
+   - ✅ 提供：创建域、查询域、更新域、删除域等功能
+5. ❌ 数据迁移工具 - 将现有数据迁移到新结构 - **未实现**
 
 **交付物：**
-- 新的数据库表结构
-- 多RAG实例管理器
-- 数据迁移脚本
+- ✅ 新的数据库表结构
+- ✅ 多RAG实例管理器
+- ❌ 数据迁移脚本 - **缺失**
 
 ### Phase 2: 角色知识库系统（2周）
+
+**状态：** 🟡 **进行中 (40%)**
 
 **目标：** 实现角色创建、学习和知识管理
 
 **任务：**
 1. ✅ 实现 `KnowledgeRole` 实体
-2. ✅ 实现角色创建和管理API
-3. ✅ 实现角色学习功能
+   - ✅ 已实现：`omni-agent-knowledge-registry-api/model/KnowledgeRole.java`
+   - ✅ 包含：roleId, roleName, responsibilities, knowledgeDomainId 等
+2. ⚠️ 实现角色创建和管理API - **部分完成**
+   - ✅ 基础模型已完成
+   - ❌ 角色创建API - **未完全实现**
+   - ❌ 角色管理服务 `RoleKnowledgeService` - **未实现**
+3. ❌ 实现角色学习功能 - **未实现**
+   - ❌ 从源域学习知识的机制
+   - ❌ 知识提炼和过滤
+   - ❌ AI模型集成
 4. ✅ 实现领域路由器
-5. ✅ 前端UI - 角色管理界面
+   - ✅ 已实现：`omni-agent-core/router/DomainRouter.java`
+   - ✅ 基础路由逻辑完成
+5. ❌ 前端UI - 角色管理界面 - **未实现**
 
 **交付物：**
-- 角色管理API
-- 角色学习引擎
-- 角色管理UI
+- ✅ 角色模型和注册表
+- ⚠️ 角色管理API（部分）
+- ❌ 角色学习引擎 - **缺失**
+- ❌ 角色管理UI - **缺失**
 
 ### Phase 3: 源码分析功能（3周）
+
+**状态：** 🔴 **未开始 (0%)**
 
 **目标：** 实现源码项目导入和分析
 
 **任务：**
-1. ✅ 实现 `SourceCodeProject` 实体
-2. ✅ 实现文件变更检测器
-3. ✅ 实现Git集成
-4. ✅ 实现源码分析服务
-5. ✅ 集成本地AI模型（Ollama）
-6. ✅ 实现分析报告生成
-7. ✅ 前端UI - 源码项目管理
+1. ❌ 实现 `SourceCodeProject` 实体 - **未实现**
+2. ❌ 实现文件变更检测器 `FileChangeDetector` - **未实现**
+3. ❌ 实现Git集成 `GitSyncService` - **未实现**
+4. ❌ 实现源码分析服务 `SourceCodeAnalysisService` - **未实现**
+5. ❌ 集成本地AI模型（Ollama） - **未实现**
+6. ❌ 实现分析报告生成 - **未实现**
+7. ❌ 前端UI - 源码项目管理 - **未实现**
 
 **交付物：**
-- 源码项目管理API
-- 增量分析引擎
-- 分析报告系统
-- 源码项目管理UI
+- ❌ 源码项目管理API - **缺失**
+- ❌ 增量分析引擎 - **缺失**
+- ❌ 分析报告系统 - **缺失**
+- ❌ 源码项目管理UI - **缺失**
+
+**备注：** 此阶段完全未开始，需要先完成Phase 1和Phase 2的遗留任务
 
 ### Phase 4: 知识网络与智能路由（2周）
+
+**状态：** 🔴 **未开始 (0%)**
 
 **目标：** 实现跨域查询和知识关联
 
 **任务：**
-1. ✅ 实现跨域查询功能
-2. ✅ 实现知识关联和迁移
-3. ✅ 优化领域路由算法
-4. ✅ 实现知识网络可视化
-5. ✅ 性能优化
+1. ❌ 实现跨域查询功能 - **未实现**
+2. ❌ 实现知识关联和迁移 - **未实现**
+3. ❌ 优化领域路由算法 - **未实现**
+4. ❌ 实现知识网络可视化 - **未实现**
+5. ❌ 性能优化 - **未实现**
 
 **交付物：**
-- 知识网络查询引擎
-- 知识网络可视化UI
+- ❌ 知识网络查询引擎 - **缺失**
+- ❌ 知识网络可视化UI - **缺失**
+
+**备注：** 依赖Phase 1-3的完成
 
 ### Phase 5: 综合报告与评估（1周）
+
+**状态：** 🔴 **未开始 (0%)**
 
 **目标：** 实现多角度分析报告汇总
 
 **任务：**
-1. ✅ 实现报告聚合引擎
-2. ✅ 实现综合评估算法
-3. ✅ 实现报告导出（PDF/Markdown）
-4. ✅ 前端UI - 综合报告展示
+1. ❌ 实现报告聚合引擎 - **未实现**
+2. ❌ 实现综合评估算法 - **未实现**
+3. ❌ 实现报告导出（PDF/Markdown） - **未实现**
+4. ❌ 前端UI - 综合报告展示 - **未实现**
 
 **交付物：**
-- 综合报告生成器
-- 报告展示UI
+- ❌ 综合报告生成器 - **缺失**
+- ❌ 报告展示UI - **缺失**
+
+**备注：** 依赖Phase 1-4的完成
 
 ---
 
@@ -1111,6 +1224,152 @@ public class GitSyncService {
 
 ---
 
-**下一步行动：** 开始 Phase 1 实施！
+## 🚀 当前状态与下一步
+
+### 📊 实施进度总览
+
+**整体完成度：** ~35%
+
+```
+Phase 1: ████████████░░░░░░░░ 70%  ✅ 基础完成，需数据迁移
+Phase 2: ████████░░░░░░░░░░░░ 40%  🟡 进行中，需实现服务层
+Phase 3: ░░░░░░░░░░░░░░░░░░░░  0%  🔴 未开始
+Phase 4: ░░░░░░░░░░░░░░░░░░░░  0%  🔴 未开始
+Phase 5: ░░░░░░░░░░░░░░░░░░░░  0%  🔴 未开始
+```
+
+### ✅ 已有成果
+
+**核心架构组件（已实现）：**
+```
+✅ KnowledgeDomain 实体 - 完整实现
+✅ KnowledgeRole 实体 - 完整实现
+✅ RAGServiceFactory - 多域RAG管理
+✅ KnowledgeDomainService - 域管理CRUD
+✅ DomainRouter - 基础路由逻辑
+✅ KnowledgeRegistry - 多种存储实现
+```
+
+**知识注册表实现：**
+- ✅ FileKnowledgeRegistry (JSON文件存储)
+- ✅ MongoDBKnowledgeRegistry
+- ✅ RedisKnowledgeRegistry
+- ✅ ElasticsearchKnowledgeRegistry
+- ✅ H2KnowledgeRegistry
+- ✅ SQLiteKnowledgeRegistry
+
+### 🚨 关键阻塞项
+
+| 优先级 | 项目 | 状态 | 影响 |
+|-------|------|------|------|
+| 🔥 P0 | 数据迁移工具 | 未实现 | 阻塞新架构使用 |
+| 🔥 P0 | RoleKnowledgeService | 未实现 | 角色功能无法使用 |
+| ⚡ P1 | Web UI TODO修复 | 部分完成 | 影响用户体验 |
+| ⚡ P1 | SourceCodeProject | 未实现 | 阻塞Phase 3 |
+
+### 📝 关键TODO清单
+
+#### 立即处理（本周）
+```java
+// TODO #1: 实现数据迁移服务
+public class DataMigrationService {
+    // 将 data/storage/* 迁移到 data/knowledge-network/domains/
+}
+
+// TODO #2: 实现角色知识库服务
+public class RoleKnowledgeService {
+    public KnowledgeRole createRole(CreateRoleRequest request);
+    public void learnFromDomains(String roleId, List<String> sourceDomainIds);
+    public String refineKnowledge(Document doc, KnowledgeRole role);
+}
+
+// TODO #3: 修复 Web UI 中的 RAG 删除功能
+// 文件: DocumentManagementController.java:605, 645
+ragService.deleteDocument(documentId); // 需实现
+
+// TODO #4: 集成真实的 P2P 服务
+// 文件: CollaborationController.java (13处TODO)
+// 将 mock 数据替换为真实的 P2P 服务调用
+```
+
+#### 短期目标（2周内）
+```java
+// TODO #5: 实现源码项目实体
+@Entity
+public class SourceCodeProject {
+    private String projectId;
+    private String gitRepository;
+    private IncrementalTracker incrementalTracker;
+}
+
+// TODO #6: 实现文件变更检测器
+public class FileChangeDetector {
+    public List<FileChange> detectChanges(SourceCodeProject project);
+}
+
+// TODO #7: 实现 Git 同步服务
+public class GitSyncService {
+    public SourceCodeProject cloneOrPullProject(String gitUrl, String branch);
+}
+```
+
+### 🎯 下一步行动计划
+
+#### 第1周：完成Phase 1遗留任务
+- [ ] Day 1-2: 设计并实现数据迁移工具
+- [ ] Day 3-4: 执行数据迁移，验证新架构
+- [ ] Day 5: 清理旧代码，更新文档
+
+#### 第2周：完成Phase 2核心功能
+- [ ] Day 1-3: 实现 `RoleKnowledgeService`
+  - 角色创建和域绑定
+  - 知识学习引擎
+  - AI模型集成
+- [ ] Day 4-5: 实现角色管理API和基础UI
+
+#### 第3-4周：启动Phase 3
+- [ ] Week 3: 实现源码项目管理基础设施
+  - `SourceCodeProject` 实体
+  - `FileChangeDetector`
+  - `GitSyncService`
+- [ ] Week 4: 实现源码分析服务
+  - `SourceCodeAnalysisService`
+  - 本地模型集成（Ollama）
+  - 基础报告生成
+
+### 💡 技术债务记录
+
+1. **存储架构不一致**
+   - 现状：混用旧结构和新结构
+   - 影响：无法充分利用多域隔离
+   - 解决：完成数据迁移
+
+2. **P2P功能未集成**
+   - 现状：前端有UI，后端仅有mock
+   - 影响：协作功能无法使用
+   - 解决：集成真实的P2P服务
+
+3. **RAG删除功能不完整**
+   - 现状：只能清空全部，无法删除单个文档
+   - 影响：文档管理不灵活
+   - 解决：实现 `ragService.deleteDocument(documentId)`
+
+4. **角色系统无服务层**
+   - 现状：只有数据模型，无业务逻辑
+   - 影响：角色功能完全不可用
+   - 解决：实现 `RoleKnowledgeService`
+
+### 📚 相关文档
+
+- [快速开始指南](../QUICK_START_REFACTORING.md)
+- [API设计文档](../API_DESIGN.md) - 待创建
+- [数据迁移指南](../DATA_MIGRATION_GUIDE.md) - 待创建
+- [角色系统使用指南](../ROLE_SYSTEM_GUIDE.md) - 待创建
+
+---
+
+**文档状态：** ✅ 已更新至最新实施状态  
+**下次审查：** 2025-12-30（3天后）  
+**负责人：** 系统架构团队
 
 
