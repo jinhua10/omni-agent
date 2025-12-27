@@ -41,14 +41,19 @@ import java.util.stream.Collectors;
 public class LuceneRAGService implements RagService {
 
     private final FileRAGProperties properties;
+    private final String domainId;
     private Directory directory;
     private Analyzer analyzer;
     private IndexWriter indexWriter;
-    private IndexReader indexReader;
     private SearcherManager searcherManager;
 
     public LuceneRAGService(FileRAGProperties properties) {
+        this(properties, "file-domain");
+    }
+
+    public LuceneRAGService(FileRAGProperties properties, String domainId) {
         this.properties = properties;
+        this.domainId = domainId;
     }
 
     @PostConstruct
@@ -415,7 +420,7 @@ public class LuceneRAGService implements RagService {
 
     @Override
     public String getDomainId() {
-        return "file-domain";
+        return domainId;
     }
 
     // ========== 文档管理 ==========
@@ -535,6 +540,7 @@ public class LuceneRAGService implements RagService {
                     .vectorSearchEnabled(false)
                     .healthy(true)
                     .timestamp(System.currentTimeMillis())
+                    .domainId(domainId)
                     .build();
 
         } catch (IOException e) {
@@ -543,6 +549,7 @@ public class LuceneRAGService implements RagService {
                     .indexType("Lucene-File")
                     .healthy(false)
                     .timestamp(System.currentTimeMillis())
+                    .domainId(domainId)
                     .build();
         }
     }
