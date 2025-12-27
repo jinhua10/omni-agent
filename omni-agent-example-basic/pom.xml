@@ -36,27 +36,12 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- ========== 七维可插拔 Starters - 冗余备份方案 ========== -->
+        <!-- ========== 可插拔 Starters ========== -->
 
-        <!-- 1. Persistence Starters - 异构冗余 -->
-        <!-- 主存储：SQLite（本地轻量级数据库） -->
+        <!-- 1. Knowledge Registry Starter（知识注册表） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-starter-sqlite</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- 备份1：File（文件系统备份） -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-starter-file</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- 备份2：H2（嵌入式数据库备份） -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-starter-h2</artifactId>
+            <artifactId>omni-agent-knowledge-registry-starter-file</artifactId>
             <version>${project.version}</version>
         </dependency>
 
