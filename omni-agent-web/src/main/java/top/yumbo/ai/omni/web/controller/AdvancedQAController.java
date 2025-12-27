@@ -2,15 +2,19 @@ package top.yumbo.ai.omni.web.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.core.hope.HOPEKnowledgeManager;
+import top.yumbo.ai.omni.core.qa.service.IntelligentQAService;
+import top.yumbo.ai.omni.core.qa.service.QAOrchestrationService;
 import top.yumbo.ai.omni.core.role.Role;
 import top.yumbo.ai.omni.core.role.RoleService;
 import top.yumbo.ai.omni.core.util.ContextBuilder;
 import top.yumbo.ai.omni.marketplace.EnhancedQueryService;
+import top.yumbo.ai.omni.web.service.AsyncStreamQAService;
 import top.yumbo.ai.omni.web.util.JsonUtil;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.SearchResult;
@@ -55,6 +59,15 @@ public class AdvancedQAController {
     private final EnhancedQueryService enhancedQueryService;
     private final SystemController systemController;
 
+    @Autowired(required = false)
+    private IntelligentQAService intelligentQAService;
+
+    @Autowired
+    private QAOrchestrationService orchestrationService;
+
+    @Autowired
+    private AsyncStreamQAService asyncStreamQAService;
+
     /**
      * 线程池（用于双轨并行处理）
      */
@@ -63,9 +76,10 @@ public class AdvancedQAController {
     /**
      * 双轨流式问答
      *
-     * <p>支持三种模式：</p>
+     * <p>支持四种模式：</p>
      * <ul>
      *   <li>none - 单轨LLM模式</li>
+     *   <li>intelligent - 智能问答模式（Phase 3）- 意图分析 + 知识缺口检测</li>
      *   <li>rag - 双轨RAG模式（左轨：RAG+LLM，右轨：HOPE智能系统）</li>
      *   <li>role - 双轨角色模式（左轨：RAG+LLM，右轨：角色专业回答）</li>
      * </ul>
@@ -74,6 +88,7 @@ public class AdvancedQAController {
      * @param userId        用户ID
      * @param knowledgeMode 知识模式
      * @param roleName      角色名称（role模式时需要）
+     * @param conversationId 对话ID（intelligent模式时使用）
      * @return SSE流
      */
     @GetMapping(value = "/dual-track/stream", produces = "text/event-stream")
@@ -81,13 +96,22 @@ public class AdvancedQAController {
             @RequestParam String question,
             @RequestParam String userId,
             @RequestParam(defaultValue = "none") String knowledgeMode,
-            @RequestParam(required = false) String roleName) {
+            @RequestParam(required = false) String roleName,
+            @RequestParam(required = false) String conversationId) {
 
-        log.info("🚂 双轨流式问答: question={}, userId={}, mode={}, role={}",
-                question, userId, knowledgeMode, roleName);
+        log.info("🚂 双轨流式问答: question={}, userId={}, mode={}, role={}, conversationId={}",
+                question, userId, knowledgeMode, roleName, conversationId);
 
         SseEmitter emitter = new SseEmitter(300000L);
         StringBuilder fullAnswerBuilder = new StringBuilder();
+
+        // 检查是否使用智能问答模式
+        if ("intelligent".equals(knowledgeMode) && asyncStreamQAService != null) {
+            log.info("🤖 使用智能问答模式（Phase 3）");
+            setupEmitterCallbacks(emitter);
+            asyncStreamQAService.processIntelligentStream(question, conversationId, userId, emitter);
+            return emitter;
+        }
 
         executorService.submit(() -> {
             try {
