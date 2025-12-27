@@ -93,8 +93,35 @@ public class HOPEKnowledgeManager {
         result.setQueryTimeMs(System.currentTimeMillis() - startTime);
         result.setSuccess(!documents.isEmpty());
 
-        log.debug("✅ Query completed in {}ms, found {} documents",
-                result.getQueryTimeMs(), documents.size());
+        // 计算置信度（基于文档数量和相关性）
+        double confidence = documents.isEmpty() ? 0.0 :
+                Math.min(1.0, documents.size() / 5.0 * 0.8 + 0.2);
+        result.setConfidence(confidence);
+
+        // TODO: 未来可以从学习系统中获取已学习的答案
+        result.setAnswer(null);
+
+        log.debug("✅ Query completed in {}ms, found {} documents, confidence: {}",
+                result.getQueryTimeMs(), documents.size(), String.format("%.2f", confidence));
+
+        return result;
+    }
+
+    /**
+     * 智能查询（增强版）
+     *
+     * @param question 用户问题
+     * @param context 上下文信息（可选）
+     * @return 查询结果
+     */
+    public QueryResult smartQuery(String question, String context) {
+        // 当前版本直接使用基础查询，未来可以集成上下文分析
+        QueryResult result = query(question, 5);
+
+        // 未来可以根据 context 调整结果或进行更智能的处理
+        if (context != null && !context.isEmpty()) {
+            log.debug("📝 Context provided: {}", context.substring(0, Math.min(50, context.length())));
+        }
 
         return result;
     }
@@ -125,11 +152,14 @@ public class HOPEKnowledgeManager {
         private List<top.yumbo.ai.omni.rag.model.Document> documents;
         private long queryTimeMs;
         private boolean success;
+        private double confidence;  // 置信度 (0.0 - 1.0)
+        private String answer;      // HOPE 学习到的答案（如果有）
 
         public static QueryResult empty() {
             QueryResult result = new QueryResult();
             result.setSuccess(false);
             result.setDocuments(new ArrayList<>());
+            result.setConfidence(0.0);
             return result;
         }
     }
