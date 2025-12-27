@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-import top.yumbo.ai.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.AIService;
 
 import java.time.Duration;
 

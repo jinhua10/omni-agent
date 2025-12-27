@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.ai.api.config.VisionLLMBatchProcessingProperties;
-import top.yumbo.ai.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.config.VisionLLMBatchProcessingProperties;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.core.document.DocumentProcessor;
 
 import java.util.*;
@@ -826,7 +826,7 @@ public class VisionLLMDocumentProcessor implements DocumentProcessor {
             if (finalStreamingEnabled && finalStreamCallback != null) {
                 log.info("🚀 [VisionLLM] 启动流式处理，页面 {}, 批次 {}", page.getPageNumber(), batchIndex);
 
-                List<top.yumbo.ai.ai.api.model.ChatMessage> visionMessages = new ArrayList<>();
+                List<ChatMessage> visionMessages = new ArrayList<>();
                 visionMessages.add(ChatMessage.userWithImages(visionPrompt, imagesData));
 
                 StringBuilder acc = new StringBuilder();

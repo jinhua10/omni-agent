@@ -3,7 +3,7 @@ package top.yumbo.ai.omni.ai.onnx;
 import ai.onnxruntime.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.ai.api.EmbeddingService;
 
 import java.io.IOException;
 import java.nio.file.Files;

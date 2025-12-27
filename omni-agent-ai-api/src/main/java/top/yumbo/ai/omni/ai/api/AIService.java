@@ -1,10 +1,10 @@
-package top.yumbo.ai.ai.api;
+package top.yumbo.ai.omni.ai.api;
 
 import reactor.core.publisher.Flux;
-import top.yumbo.ai.ai.api.model.AIRequest;
-import top.yumbo.ai.ai.api.model.AIResponse;
-import top.yumbo.ai.ai.api.model.ChatMessage;
-import top.yumbo.ai.ai.api.model.ModelInfo;
+import top.yumbo.ai.omni.ai.api.model.AIRequest;
+import top.yumbo.ai.omni.ai.api.model.AIResponse;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.ai.api.model.ModelInfo;
 
 import java.util.List;
 

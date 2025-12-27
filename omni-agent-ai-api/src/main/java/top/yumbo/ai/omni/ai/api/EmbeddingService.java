@@ -1,4 +1,4 @@
-package top.yumbo.ai.ai.api;
+package top.yumbo.ai.omni.ai.api;
 
 /**
  * Embedding 服务接口

@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import top.yumbo.ai.omni.rag.RagService;
-import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.ai.api.EmbeddingService;
 
 /**
  * File RAG 自动配置

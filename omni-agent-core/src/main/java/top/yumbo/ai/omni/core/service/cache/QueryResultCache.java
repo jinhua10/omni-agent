@@ -75,6 +75,11 @@ public class QueryResultCache {
 
     /**
      * 缓存数据（L1 内存缓存）
+     * -- GETTER --
+     *  获取内部缓存映射（用于自适应缓存管理器）
+     *
+     * @return 缓存映射
+
      */
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
 
@@ -270,6 +275,32 @@ public class QueryResultCache {
         long after = cache.size();
         if (before > after) {
             log.info("清除 {} 个过期缓存条目", before - after);
+        }
+    }
+
+    /**
+     * 清理缓存至指定大小（用于自适应调整）
+     *
+     * @param targetSize 目标大小
+     */
+    public void evictToSize(int targetSize) {
+        if (cache.size() <= targetSize) {
+            return;
+        }
+
+        int toRemove = cache.size() - targetSize;
+        log.info("🔄 缩减缓存: {} -> {} (移除 {} 个)", cache.size(), targetSize, toRemove);
+
+        // 移除最少使用的条目
+        for (int i = 0; i < toRemove && !accessOrder.isEmpty(); i++) {
+            String lruKey = accessOrder.removeLast();
+            cache.remove(lruKey);
+            queryFrequency.remove(lruKey);
+
+            // 同时删除持久化缓存
+            if (persistenceEnabled && storageService != null) {
+                deleteFromPersistence(lruKey);
+            }
         }
     }
 

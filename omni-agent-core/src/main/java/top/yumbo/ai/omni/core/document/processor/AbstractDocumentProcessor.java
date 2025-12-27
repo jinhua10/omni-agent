@@ -2,7 +2,7 @@ package top.yumbo.ai.omni.core.document.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import top.yumbo.ai.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.core.document.DocumentProcessor;
 
 import java.util.ArrayList;

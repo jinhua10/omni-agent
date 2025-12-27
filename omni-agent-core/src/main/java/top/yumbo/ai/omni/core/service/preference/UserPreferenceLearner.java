@@ -202,6 +202,15 @@ public class UserPreferenceLearner {
         return userPreferences.get(userId);
     }
 
+    /**
+     * 获取所有用户ID列表（用于协同过滤）
+     *
+     * @return 所有用户ID
+     */
+    public List<String> getAllUserIds() {
+        return new ArrayList<>(userPreferences.keySet());
+    }
+
     // ========== 持久化相关方法 ==========
 
     /**

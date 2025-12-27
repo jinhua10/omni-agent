@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import top.yumbo.ai.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;

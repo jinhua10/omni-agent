@@ -4,7 +4,8 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.storage.api.model.Chunk;
 import top.yumbo.ai.omni.rag.RagService;
@@ -184,8 +185,8 @@ public class DocumentQAService {
             context.append("问题：").append(question);
 
             // 4. 流式生成答案
-            List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
-                top.yumbo.ai.ai.api.model.ChatMessage.builder()
+            List<ChatMessage> messages = List.of(
+                ChatMessage.builder()
                     .role("user")
                     .content(context.toString())
                     .build()

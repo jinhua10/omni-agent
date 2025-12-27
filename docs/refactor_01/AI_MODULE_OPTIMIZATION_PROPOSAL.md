@@ -134,8 +134,8 @@ curl https://api.openai.com/v1/embeddings \
 ```java
 package top.yumbo.ai.omni.ai.ollama;
 
-import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.EmbeddingService;
 
 /**
  * Ollama AI 服务实现（同时支持问答和 Embedding）
@@ -215,8 +215,8 @@ public class OllamaAIService implements AIService, EmbeddingService {
 ```java
 package top.yumbo.ai.omni.ai.online;
 
-import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.EmbeddingService;
 
 /**
  * 在线 API AI 服务实现（同时支持问答和 Embedding）

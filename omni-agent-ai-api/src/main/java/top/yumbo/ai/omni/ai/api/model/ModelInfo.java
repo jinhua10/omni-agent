@@ -1,4 +1,4 @@
-package top.yumbo.ai.ai.api.model;
+package top.yumbo.ai.omni.ai.api.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

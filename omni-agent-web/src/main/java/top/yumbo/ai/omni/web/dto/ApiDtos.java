@@ -1,7 +1,7 @@
 package top.yumbo.ai.omni.web.dto;
 
 import lombok.Data;
-import top.yumbo.ai.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.rag.model.Document;
 
 import java.util.List;

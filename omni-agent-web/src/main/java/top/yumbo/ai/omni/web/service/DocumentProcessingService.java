@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.ai.api.EmbeddingService;
 import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
 import top.yumbo.ai.omni.storage.api.model.Chunk;

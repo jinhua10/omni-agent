@@ -10,7 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-import top.yumbo.ai.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.config.VisionLLMProperties;
 
 import java.time.Duration;
 
@@ -62,7 +63,7 @@ public class OnlineAPIAutoConfiguration {
     @ConditionalOnProperty(prefix = "omni-agent.vision-llm", name = "enabled", havingValue = "true")
     public AIService visionAIService(
             RestTemplate onlineApiRestTemplate,
-            @Autowired(required = false) top.yumbo.ai.ai.api.config.VisionLLMProperties visionLLMProperties) {
+            @Autowired(required = false) VisionLLMProperties visionLLMProperties) {
 
         if (visionLLMProperties == null) {
             log.warn("⚠️ Vision LLM 配置未找到，Vision 功能可能无法正常工作");

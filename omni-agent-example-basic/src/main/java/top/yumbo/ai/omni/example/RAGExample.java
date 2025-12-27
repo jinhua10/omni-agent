@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.ai.api.EmbeddingService;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.Document;
 

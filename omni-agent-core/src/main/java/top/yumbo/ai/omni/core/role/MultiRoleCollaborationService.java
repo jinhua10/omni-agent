@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.ai.api.AIService;
 
 import java.util.*;
 import java.util.concurrent.*;

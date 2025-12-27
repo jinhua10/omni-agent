@@ -10,7 +10,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import top.yumbo.ai.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.ai.api.EmbeddingService;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.Document;
 import top.yumbo.ai.omni.rag.model.IndexStatistics;
