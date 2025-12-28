@@ -76,7 +76,7 @@
 
         <!-- ========== 算法市场 (Algorithm Marketplace) ========== -->
 
-        <module>omni-agent-marketplace</module>
+<!--        <module>omni-agent-marketplace</module>-->
 
         <!-- ========== 工作流引擎 (Workflow Engine) ⭐ ========== -->
 
