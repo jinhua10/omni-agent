@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.benchmark;
+package top.yumbo.ai.omni.core.old.benchmark;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

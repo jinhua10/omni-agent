@@ -112,7 +112,7 @@ omni-agent-core → ❌ top.yumbo.ai.omni.web.util.ContextBuilder
 @Deprecated
 public class ContextBuilder {
     public static String buildContext(List<SearchResult> results) {
-        return top.yumbo.ai.omni.core.util.ContextBuilder.buildContext(results);
+        return top.yumbo.ai.omni.knowledge.registry.util.qa.ContextBuilder.buildContext(results);
     }
 }
 ```

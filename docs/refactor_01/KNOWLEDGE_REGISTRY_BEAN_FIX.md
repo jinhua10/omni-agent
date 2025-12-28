@@ -4,7 +4,7 @@
 
 启动应用时出现错误：
 ```
-Parameter 0 of constructor in top.yumbo.ai.omni.core.router.DomainRouter 
+Parameter 0 of constructor in top.yumbo.ai.omni.knowledge.registry.router.DomainRouter 
 required a bean of type 'top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry' 
 that could not be found.
 ```

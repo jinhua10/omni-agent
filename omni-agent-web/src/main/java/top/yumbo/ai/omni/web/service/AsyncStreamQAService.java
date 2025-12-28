@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
-import top.yumbo.ai.omni.core.qa.model.IntelligentQARequest;
-import top.yumbo.ai.omni.core.qa.model.IntelligentQAResponse;
-import top.yumbo.ai.omni.core.qa.service.IntelligentQAService;
-import top.yumbo.ai.omni.core.qa.service.QAOrchestrationService;
+import top.yumbo.ai.omni.knowledge.registry.qa.model.IntelligentQARequest;
+import top.yumbo.ai.omni.knowledge.registry.qa.model.IntelligentQAResponse;
+import top.yumbo.ai.omni.knowledge.registry.qa.service.IntelligentQAService;
+import top.yumbo.ai.omni.knowledge.registry.qa.service.QAOrchestrationService;
 
 import java.util.HashMap;
 import java.util.List;

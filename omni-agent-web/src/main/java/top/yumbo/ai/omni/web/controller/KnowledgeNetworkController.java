@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.core.service.knowledge.KnowledgeAssociationService;
-import top.yumbo.ai.omni.core.service.query.CrossDomainQueryService;
+import top.yumbo.ai.omni.knowledge.registry.service.query.CrossDomainQueryService;
 
 import java.util.HashMap;
 import java.util.List;
