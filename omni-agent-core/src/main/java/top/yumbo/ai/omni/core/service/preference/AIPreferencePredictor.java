@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.ai.api.EmbeddingService;
 
@@ -49,8 +50,10 @@ public class AIPreferencePredictor {
 
     /**
      * Embedding服务（用于语义分析）
+     * 优先使用 ONNX Embedding 服务
      */
     @Autowired(required = false)
+    @Qualifier("onnxEmbeddingService")
     private EmbeddingService embeddingService;
 
     /**

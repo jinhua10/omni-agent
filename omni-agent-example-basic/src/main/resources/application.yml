@@ -39,6 +39,16 @@ spring:
 # ========== OmniAgent 核心配置（按处理流程顺序）==========
 omni-agent:
 
+  # ========== 🎯 统一 ONNX 模型配置 ⭐ NEW ==========
+  # 作用：避免PPL分块和文本向量化重复加载同一个模型
+  # 注意：如果PPL和Embedding使用相同的模型，系统会自动共享模型实例
+  onnx:
+    # 共享模型配置
+    shared-model:
+      enabled: true                                 # 启用模型共享
+      model-path: ./models/bge-base-zh/model.onnx  # 统一模型路径
+      max-sequence-length: 512                      # 最大序列长度
+
   # ========== 知识注册表配置 (Knowledge Registry) ==========
   # 作用：管理知识域、角色、关联关系等元数据
   # 支持多种后端：file, sqlite, h2, memory, redis, mongodb, elasticsearch
@@ -270,8 +280,9 @@ omni-agent:
         # 启用 ONNX PPL 服务
         enabled: true
 
-        # ONNX 模型路径（BGE-base-zh）
-        model-path: ./models/bge-base-zh/model.onnx
+        # ⭐ 使用共享模型路径（与embedding.onnx.model-path保持一致）
+        # 系统会自动复用已加载的模型，避免重复加载
+        model-path: ${omni-agent.onnx.shared-model.model-path}
 
         # Tokenizer 路径
         tokenizer-path: ./models/bge-base-zh
@@ -298,24 +309,16 @@ omni-agent:
     # ONNX 本地向量化服务（默认禁用）
     onnx:
       # 是否启用 ONNX Embedding 服务
-      enabled: true
+      enabled: false  # 禁用，因为模型文件不存在
 
-      # ONNX 模型文件路径
-      # 推荐模型：
-      # - bge-base-zh-v1.5 (中文，768维，~400MB) - 推荐
-      # - bge-m3 (多语言，1024维，~2GB)
-      # - bge-large-zh (中文，1024维，~1.3GB)
-      # - text2vec-base-chinese (中文，768维，~400MB)
-      #
-      # 模型下载：
-      # 方式1: huggingface-cli download BAAI/bge-base-zh-v1.5 --local-dir ./models/bge-base-zh
-      # 方式2: git clone https://www.modelscope.cn/BAAI/bge-base-zh-v1.5.git ./models/bge-base-zh
-      model-path: ./models/bge-base-zh/model.onnx
+      # ⭐ 使用共享模型路径（与ppl.onnx.model-path保持一致）
+      # 系统会自动复用已加载的模型，避免重复加载
+      model-path: ${omni-agent.onnx.shared-model.model-path}
 
       # 最大序列长度
       # bge-base-zh-v1.5: 512
       # bge-m3: 8192
-      max-sequence-length: 512
+      max-sequence-length: ${omni-agent.onnx.shared-model.max-sequence-length}
 
       # 批处理大小（批量向量化时使用）
       batch-size: 32

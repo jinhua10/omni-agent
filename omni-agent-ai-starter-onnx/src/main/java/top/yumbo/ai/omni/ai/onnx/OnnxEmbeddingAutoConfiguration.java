@@ -1,6 +1,7 @@
 package top.yumbo.ai.omni.ai.onnx;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,9 +20,21 @@ import top.yumbo.ai.omni.ai.api.EmbeddingService;
 @Slf4j
 @Configuration
 @ConditionalOnClass(ai.onnxruntime.OrtEnvironment.class)
-@ConditionalOnProperty(prefix = "omni-agent.embedding.onnx", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "omni-agent.embedding.onnx", name = "enabled", havingValue = "true", matchIfMissing = false)
 @EnableConfigurationProperties(OnnxEmbeddingProperties.class)
 public class OnnxEmbeddingAutoConfiguration {
+
+    @Autowired(required = false)
+    private SharedOnnxModelManager sharedModelManager;
+
+    /**
+     * 创建共享模型管理器（如果不存在）
+     */
+    @Bean
+    @ConditionalOnMissingBean(SharedOnnxModelManager.class)
+    public SharedOnnxModelManager sharedOnnxModelManager() {
+        return new SharedOnnxModelManager();
+    }
 
     /**
      * 创建 ONNX Embedding 服务 Bean
@@ -34,7 +47,12 @@ public class OnnxEmbeddingAutoConfiguration {
             log.info("模型路径: {}", properties.getModelPath());
             log.info("最大序列长度: {}", properties.getMaxSequenceLength());
 
+            // 使用共享模型管理器（如果可用）
+            SharedOnnxModelManager modelManager = sharedModelManager != null ?
+                    sharedModelManager : new SharedOnnxModelManager();
+
             OnnxEmbeddingService service = new OnnxEmbeddingService(
+                    modelManager,
                     properties.getModelPath(),
                     properties.getMaxSequenceLength()
             );
@@ -42,6 +60,7 @@ public class OnnxEmbeddingAutoConfiguration {
             log.info("✅ ONNX Embedding 服务初始化成功");
             log.info("   模型: {}", service.getEmbeddingModel());
             log.info("   维度: {}", service.getDimension());
+            log.info("   共享模式: {}", sharedModelManager != null ? "已启用" : "未启用");
 
             return service;
 

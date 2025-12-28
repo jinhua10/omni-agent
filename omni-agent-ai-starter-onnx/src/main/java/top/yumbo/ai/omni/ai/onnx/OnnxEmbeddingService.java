@@ -40,6 +40,9 @@ public class OnnxEmbeddingService implements EmbeddingService, AutoCloseable {
 
     private final OrtEnvironment env;
     private final OrtSession session;
+    private final boolean useSharedModel;
+    private final SharedOnnxModelManager modelManager;
+    private final String modelPath;
 
     @Getter
     private final int dimension;
@@ -57,6 +60,40 @@ public class OnnxEmbeddingService implements EmbeddingService, AutoCloseable {
     private static final int VOCAB_SIZE = 21128; // BERT 词汇表大小
 
     /**
+     * 构造函数（使用共享模型管理器）- 推荐
+     *
+     * @param modelManager      共享模型管理器
+     * @param modelPath         ONNX 模型文件路径
+     * @param maxSequenceLength 最大序列长度
+     * @throws OrtException ONNX Runtime 异常
+     * @throws IOException IO 异常
+     */
+    public OnnxEmbeddingService(SharedOnnxModelManager modelManager, String modelPath, int maxSequenceLength)
+            throws OrtException, IOException {
+
+        this.maxSequenceLength = maxSequenceLength;
+        this.useSharedModel = true;
+        this.modelManager = modelManager;
+        this.modelPath = modelPath;
+
+        // 使用共享模型管理器获取session
+        SharedOnnxModelManager.ModelInfo modelInfo = modelManager.getOrCreateSession(modelPath);
+
+        this.env = modelManager.getEnvironment();
+        this.session = modelInfo.getSession();
+        this.embeddingModel = modelInfo.getModelName();
+
+        // 推断输出维度
+        this.dimension = inferEmbeddingDimension();
+
+        log.info("✅ ONNX Embedding 服务已初始化（共享模式）");
+        log.info("   - 模型: {}", embeddingModel);
+        log.info("   - 路径: {}", modelPath);
+        log.info("   - 维度: {}", dimension);
+        log.info("   - 最大序列长度: {}", maxSequenceLength);
+    }
+
+    /**
      * 构造函数
      *
      * @param modelPath ONNX 模型文件路径
@@ -68,7 +105,7 @@ public class OnnxEmbeddingService implements EmbeddingService, AutoCloseable {
     }
 
     /**
-     * 完整构造函数
+     * 完整构造函数（独立模式）
      *
      * @param modelPath         ONNX 模型文件路径
      * @param maxSequenceLength 最大序列长度
@@ -79,6 +116,9 @@ public class OnnxEmbeddingService implements EmbeddingService, AutoCloseable {
             throws OrtException, IOException {
 
         this.maxSequenceLength = maxSequenceLength;
+        this.useSharedModel = false;
+        this.modelManager = null;
+        this.modelPath = modelPath;
 
         // 解析模型路径
         String actualModelPath = resolveModelPath(modelPath);
@@ -103,7 +143,7 @@ public class OnnxEmbeddingService implements EmbeddingService, AutoCloseable {
         // 推断输出维度
         this.dimension = inferEmbeddingDimension();
 
-        log.info("✅ ONNX Embedding 模型已加载");
+        log.info("✅ ONNX Embedding 模型已加载（独立模式）");
         log.info("   - 模型: {}", embeddingModel);
         log.info("   - 路径: {}", modelPath);
         log.info("   - 维度: {}", dimension);
@@ -360,11 +400,16 @@ public class OnnxEmbeddingService implements EmbeddingService, AutoCloseable {
     @Override
     public void close() {
         try {
-            if (session != null) {
+            if (useSharedModel && modelManager != null) {
+                // 共享模式：释放模型引用
+                modelManager.releaseSession(modelPath);
+                log.info("ONNX Embedding 服务已关闭（共享模式）");
+            } else if (session != null) {
+                // 独立模式：直接关闭session
                 session.close();
+                log.info("ONNX Embedding 服务已关闭（独立模式）");
             }
-            log.info("ONNX Embedding 服务已关闭");
-        } catch (OrtException e) {
+        } catch (Exception e) {
             log.error("关闭 ONNX Embedding 服务失败", e);
         }
     }

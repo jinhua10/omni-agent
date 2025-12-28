@@ -22,6 +22,14 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
+        <!-- OmniAgent AI Starter ONNX (共享模型管理器) -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-ai-starter-onnx</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
+
         <!-- ONNX Runtime -->
         <dependency>
             <groupId>com.microsoft.onnxruntime</groupId>

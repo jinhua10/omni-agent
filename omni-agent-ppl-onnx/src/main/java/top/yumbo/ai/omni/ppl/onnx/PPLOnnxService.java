@@ -6,9 +6,11 @@ import ai.onnxruntime.*;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.ai.onnx.SharedOnnxModelManager;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -45,10 +47,14 @@ public class PPLOnnxService {
     @Value("${omni-agent.chunking.ppl.onnx.cache-ttl:3600}")
     private int cacheTtl;
 
+    @Autowired(required = false)
+    private SharedOnnxModelManager sharedModelManager;
+
     // ONNX Runtime 组件
     private OrtEnvironment env;
     private OrtSession session;
     private HuggingFaceTokenizer tokenizer;
+    private boolean useSharedModel;
 
     // PPL 缓存
     private Cache<String, Double> pplCache;
@@ -58,16 +64,26 @@ public class PPLOnnxService {
         log.info("🚀 初始化 ONNX PPL 服务");
 
         try {
-            // 1. 初始化 ONNX Runtime 环境
-            this.env = OrtEnvironment.getEnvironment();
-            log.info("✅ ONNX Environment 创建成功");
+            // 1. 检查是否使用共享模型管理器
+            if (sharedModelManager != null) {
+                useSharedModel = true;
+                SharedOnnxModelManager.ModelInfo modelInfo = sharedModelManager.getOrCreateSession(modelPath);
+                this.env = sharedModelManager.getEnvironment();
+                this.session = modelInfo.getSession();
+                log.info("✅ ONNX 模型加载成功（共享模式）: {}", modelPath);
+            } else {
+                useSharedModel = false;
+                // 独立模式：自己创建环境和session
+                this.env = OrtEnvironment.getEnvironment();
+                log.info("✅ ONNX Environment 创建成功");
 
-            // 2. 加载 ONNX 模型
-            OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
-            sessionOptions.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.BASIC_OPT);
+                // 2. 加载 ONNX 模型
+                OrtSession.SessionOptions sessionOptions = new OrtSession.SessionOptions();
+                sessionOptions.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.BASIC_OPT);
 
-            this.session = env.createSession(modelPath, sessionOptions);
-            log.info("✅ ONNX 模型加载成功: {}", modelPath);
+                this.session = env.createSession(modelPath, sessionOptions);
+                log.info("✅ ONNX 模型加载成功（独立模式）: {}", modelPath);
+            }
 
             // 3. 加载 Tokenizer
             this.tokenizer = HuggingFaceTokenizer.newInstance(Paths.get(tokenizerPath));
@@ -83,7 +99,7 @@ public class PPLOnnxService {
                 log.info("✅ PPL 缓存初始化: size={}, ttl={}s", cacheSize, cacheTtl);
             }
 
-            log.info("🎉 ONNX PPL 服务初始化完成");
+            log.info("🎉 ONNX PPL 服务初始化完成（共享模式: {}）", useSharedModel);
 
         } catch (Exception e) {
             log.error("❌ ONNX PPL 服务初始化失败", e);
@@ -205,13 +221,20 @@ public class PPLOnnxService {
     @PreDestroy
     public void destroy() {
         try {
-            if (session != null) {
-                session.close();
+            if (useSharedModel && sharedModelManager != null) {
+                // 共享模式：释放模型引用
+                sharedModelManager.releaseSession(modelPath);
+                log.info("✅ ONNX PPL 服务已关闭（共享模式）");
+            } else {
+                // 独立模式：直接关闭资源
+                if (session != null) {
+                    session.close();
+                }
+                if (env != null) {
+                    env.close();
+                }
+                log.info("✅ ONNX PPL 服务已关闭（独立模式）");
             }
-            if (env != null) {
-                env.close();
-            }
-            log.info("✅ ONNX PPL 服务已关闭");
         } catch (Exception e) {
             log.error("关闭 ONNX PPL 服务失败", e);
         }

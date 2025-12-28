@@ -42,7 +42,10 @@ public class CrossDomainQueryService {
 
     private final DomainRouter domainRouter;
     private final RAGServiceFactory ragServiceFactory;
-    private final KnowledgeRegistry knowledgeRegistry;
+
+    @Autowired(required = false)
+    private KnowledgeRegistry knowledgeRegistry;
+
     private final DomainWeightStrategy weightStrategy;
     private final ResultReRanker resultReRanker;
     private final CrossDomainQueryConfig config;
@@ -55,7 +58,6 @@ public class CrossDomainQueryService {
     public CrossDomainQueryService(
             DomainRouter domainRouter,
             RAGServiceFactory ragServiceFactory,
-            KnowledgeRegistry knowledgeRegistry,
             DomainWeightStrategy weightStrategy,
             ResultReRanker resultReRanker,
             CrossDomainQueryConfig config,
@@ -65,7 +67,7 @@ public class CrossDomainQueryService {
             QueryResultCache resultCache) {
         this.domainRouter = domainRouter;
         this.ragServiceFactory = ragServiceFactory;
-        this.knowledgeRegistry = knowledgeRegistry;
+        // knowledgeRegistry 通过字段注入
         this.weightStrategy = weightStrategy;
         this.resultReRanker = resultReRanker;
         this.config = config;
@@ -73,6 +75,18 @@ public class CrossDomainQueryService {
         this.qualityScorer = qualityScorer;
         this.preferenceLearner = preferenceLearner;
         this.resultCache = resultCache;
+    }
+
+    /**
+     * 初始化后检查依赖
+     */
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available - CrossDomainQueryService will use fallback mode");
+        } else {
+            log.info("✅ CrossDomainQueryService initialized with KnowledgeRegistry");
+        }
     }
 
     /**
