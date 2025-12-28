@@ -4,8 +4,8 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import top.yumbo.ai.omni.chunking.starter.ChunkingStrategyManager;
 import top.yumbo.ai.omni.web.model.ApiResponse;
-import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.*;
