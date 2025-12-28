@@ -36,7 +36,7 @@
         <module>omni-agent-p2p-api</module>
 
         <!-- Voting API (Voting System API) -->
-        <module>omni-agent-voting-api</module>
+<!--        <module>omni-agent-voting-api</module>-->
 
         <!-- Behavior API (Behavior Analysis API) -->
         <module>omni-agent-behavior-api</module>

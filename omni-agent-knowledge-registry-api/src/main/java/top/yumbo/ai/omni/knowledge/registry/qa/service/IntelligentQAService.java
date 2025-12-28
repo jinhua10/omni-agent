@@ -138,9 +138,9 @@ public class IntelligentQAService {
             Map<String, List<Document>> domainKnowledge = new HashMap<>();
             for (String domainId : relevantDomains) {
                 try {
-                    List<KnowledgeDocument> docs = extractionService.extractDocuments(
-                            domainId,
+                    List<KnowledgeDocument> docs = extractionService.extractDocumentsByQuery(
                             intent.getIntent(),
+                            List.of(domainId),
                             5
                     );
 
