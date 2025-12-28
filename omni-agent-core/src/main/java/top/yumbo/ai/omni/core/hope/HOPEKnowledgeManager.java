@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
 
 import java.util.*;
 
@@ -74,8 +75,7 @@ public class HOPEKnowledgeManager {
         log.debug("🎯 Question classified as: {} (suggested layer: {})", questionType, suggestedLayer);
 
         // 2. 使用 RAG 进行语义搜索
-        List<top.yumbo.ai.omni.rag.model.Document> documents =
-                ragService.semanticSearch(question, maxResults);
+        List<Document> documents = ragService.semanticSearch(question, maxResults);
 
         // 3. 更新统计信息
         LayerStats stats = layerStatsMap.get(suggestedLayer);
@@ -149,7 +149,7 @@ public class HOPEKnowledgeManager {
         private String question;
         private String questionType;
         private String suggestedLayer;
-        private List<top.yumbo.ai.omni.rag.model.Document> documents;
+        private List<Document> documents;
         private long queryTimeMs;
         private boolean success;
         private double confidence;  // 置信度 (0.0 - 1.0)
