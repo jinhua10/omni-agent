@@ -94,12 +94,6 @@
 
         <!-- RAG Starters (RAG Starters) -->
         <module>omni-agent-rag-starter-adapter</module>
-        <module>omni-agent-rag-starter-file</module>
-        <module>omni-agent-rag-starter-h2</module>
-        <module>omni-agent-rag-starter-sqlite</module>
-        <module>omni-agent-rag-starter-redis</module>
-        <module>omni-agent-rag-starter-mongodb</module>
-        <module>omni-agent-rag-starter-elasticsearch</module>
 
         <!-- AI Starters (AI Service Starters) -->
         <module>omni-agent-ai-starter-ollama</module>
