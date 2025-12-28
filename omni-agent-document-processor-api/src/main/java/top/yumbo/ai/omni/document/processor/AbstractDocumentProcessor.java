@@ -252,12 +252,14 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
      * 构建图片分析提示词
      */
     protected String buildImageAnalysisPrompt(ExtractedImage image) {
-        return "请描述这张图片的内容，包括：\n" +
-               "1. 主要内容和对象\n" +
-               "2. 图表数据（如果有）\n" +
-               "3. 文字信息（如果有）\n" +
-               "4. 整体含义和作用\n" +
-               "\n请用简洁的语言描述，便于理解。";
+        return """
+                请描述这张图片的内容，包括：
+                1. 主要内容和对象
+                2. 图表数据（如果有）
+                3. 文字信息（如果有）
+                4. 整体含义和作用
+                
+                请用简洁的语言描述，便于理解。""";
     }
 
     /**
@@ -324,7 +326,7 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
         List<PreProcessor> applicableProcessors = preProcessors.stream()
                 .filter(p -> p.isEnabled() && p.supports(getName()))
                 .sorted(java.util.Comparator.comparingInt(PreProcessor::getOrder))
-                .collect(Collectors.toList());
+                .toList();
 
         log.debug("📋 应用 {} 个前置处理器", applicableProcessors.size());
 
@@ -354,7 +356,7 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
         List<PostProcessor> applicableProcessors = postProcessors.stream()
                 .filter(p -> p.isEnabled() && p.supports(getName()))
                 .sorted(java.util.Comparator.comparingInt(PostProcessor::getOrder))
-                .collect(Collectors.toList());
+                .toList();
 
         log.debug("📋 应用 {} 个后置处理器", applicableProcessors.size());
 
@@ -385,7 +387,7 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
         List<ContentEnhancer> applicableEnhancers = contentEnhancers.stream()
                 .filter(e -> e.isEnabled() && e.supports(getName()))
                 .sorted(java.util.Comparator.comparingInt(ContentEnhancer::getOrder))
-                .collect(Collectors.toList());
+                .toList();
 
         log.debug("📋 应用 {} 个内容增强器", applicableEnhancers.size());
 
@@ -437,7 +439,7 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
         List<ImageHandler> applicableHandlers = imageHandlers.stream()
                 .filter(h -> h.isEnabled() && h.supports(getName()))
                 .sorted(java.util.Comparator.comparingInt(ImageHandler::getOrder))
-                .collect(Collectors.toList());
+                .toList();
 
         if (applicableHandlers.isEmpty()) {
             return image;
@@ -500,7 +502,7 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
         List<MetadataExtractor> applicableExtractors = metadataExtractors.stream()
                 .filter(e -> e.isEnabled() && e.supports(getName()))
                 .sorted(java.util.Comparator.comparingInt(MetadataExtractor::getOrder))
-                .collect(Collectors.toList());
+                .toList();
 
         log.debug("📋 应用 {} 个元数据提取器", applicableExtractors.size());
 
@@ -766,8 +768,8 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
         }
 
         log.error("❌ 图片分析失败（已重试{}次）: {}", maxRetries,
-                lastException != null ? lastException.getMessage() : "未知错误");
-        return "[图片分析失败: " + (lastException != null ? lastException.getMessage() : "未知错误") + "]";
+                lastException.getMessage());
+        return "[图片分析失败: " + lastException.getMessage() + "]";
     }
 
     /**
