@@ -82,6 +82,7 @@
 
         <module>omni-agent-workflow</module>
 
+
         <!-- ========== 以下模块待创建 ========== -->
 
 
@@ -110,6 +111,15 @@
         <module>omni-agent-ai-starter-online-api</module>
         <module>omni-agent-ai-starter-onnx</module>
 
+        <!-- Knowledge Registry Starters ⭐ (知识库网络) -->
+        <module>omni-agent-knowledge-registry-starter-file</module>
+        <module>omni-agent-knowledge-registry-starter-mongodb</module>
+        <module>omni-agent-knowledge-registry-starter-redis</module>
+        <module>omni-agent-knowledge-registry-starter-memory</module>
+        <module>omni-agent-knowledge-registry-starter-elasticsearch</module>
+        <module>omni-agent-knowledge-registry-starter-h2</module>
+        <module>omni-agent-knowledge-registry-starter-sqlite</module>
+
         <!-- 应用示例 (Application Examples) -->
         <module>omni-agent-example-basic</module>
         <module>omni-agent-example-production</module>
@@ -123,24 +133,17 @@
         <module>omni-agent-p2p-starter-elasticsearch</module>
 
         <!-- Voting Starters -->
-        <module>omni-agent-voting-starter-memory</module>
-        <module>omni-agent-voting-starter-redis</module>
-        <module>omni-agent-voting-starter-mongodb</module>
-        <module>omni-agent-voting-starter-elasticsearch</module>
+<!--        <module>omni-agent-voting-starter-memory</module>-->
+<!--        <module>omni-agent-voting-starter-redis</module>-->
+<!--        <module>omni-agent-voting-starter-mongodb</module>-->
+<!--        <module>omni-agent-voting-starter-elasticsearch</module>-->
 
         <!-- Behavior Starters -->
-        <module>omni-agent-behavior-starter-memory</module>
-        <module>omni-agent-behavior-starter-redis</module>
-        <module>omni-agent-behavior-starter-mongodb</module>
+<!--        <module>omni-agent-behavior-starter-memory</module>-->
+<!--        <module>omni-agent-behavior-starter-redis</module>-->
+<!--        <module>omni-agent-behavior-starter-mongodb</module>-->
 
-        <!-- Knowledge Registry Starters ⭐ Phase 1 -->
-        <module>omni-agent-knowledge-registry-starter-file</module>
-        <module>omni-agent-knowledge-registry-starter-mongodb</module>
-        <module>omni-agent-knowledge-registry-starter-redis</module>
-        <module>omni-agent-knowledge-registry-starter-memory</module>
-        <module>omni-agent-knowledge-registry-starter-elasticsearch</module>
-        <module>omni-agent-knowledge-registry-starter-h2</module>
-        <module>omni-agent-knowledge-registry-starter-sqlite</module>
+
     </modules>
 
     <!-- 开发者信息 -->
