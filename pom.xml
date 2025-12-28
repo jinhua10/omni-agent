@@ -44,6 +44,12 @@
         <!-- Knowledge Registry API (Knowledge Registry API) ⭐ Phase 1 -->
         <module>omni-agent-knowledge-registry-api</module>
 
+        <!-- Chunking API (文档分块 API) ⭐ 新增 -->
+        <module>omni-agent-chunking-api</module>
+
+        <!-- Document Processor API (文档处理 API) ⭐ 新增 -->
+        <module>omni-agent-document-processor-api</module>
+
         <!-- ========== 通用工具模块 (Common Module) ========== -->
 
         <module>omni-agent-common</module>
@@ -52,12 +58,21 @@
 
         <module>omni-agent-core</module>
 
+        <!-- PPL ONNX Service -->
+        <module>omni-agent-ppl-onnx</module>
+
+        <!-- ========== Starter 实现层 ========== -->
+
+        <!-- Chunking Starter (分块实现) ⭐ 新增 -->
+        <module>omni-agent-chunking-starter</module>
+
+        <!-- Document Processor Starter (文档处理实现) ⭐ 新增 -->
+        <module>omni-agent-document-processor-starter</module>
+
         <!-- ========== Web 层 (Web Layer) ========== -->
 
         <module>omni-agent-web</module>
 
-        <!-- PPL ONNX Service -->
-        <module>omni-agent-ppl-onnx</module>
 
         <!-- ========== 算法市场 (Algorithm Marketplace) ========== -->
 
