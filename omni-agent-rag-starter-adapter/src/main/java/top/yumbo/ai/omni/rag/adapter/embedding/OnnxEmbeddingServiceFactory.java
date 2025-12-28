@@ -27,22 +27,17 @@ public class OnnxEmbeddingServiceFactory {
         }
 
         try {
-            OnnxEmbeddingProperties properties = new OnnxEmbeddingProperties();
-            properties.setModelPath(onnxConfig.getModelPath());
-            properties.setVocabPath(onnxConfig.getVocabPath());
-            properties.setMaxLength(onnxConfig.getMaxLength() != null ?
-                    onnxConfig.getMaxLength() : 512);
-            properties.setPooling(onnxConfig.getPooling() != null ?
-                    onnxConfig.getPooling() : true);
-            properties.setUseSharedModel(true);
+            String modelPath = onnxConfig.getModelPath();
+            int maxLength = onnxConfig.getMaxLength() != null ?
+                    onnxConfig.getMaxLength() : 512;
 
-            EmbeddingService embeddingService = new OnnxEmbeddingService(properties);
+            // 使用模型路径构造
+            EmbeddingService embeddingService = new OnnxEmbeddingService(modelPath);
             RagService ragService = new EmbeddingServiceAdapter(embeddingService, domainId);
 
             log.info("✅ ONNX 嵌入服务创建成功");
-            log.info("  - 模型路径: {}", onnxConfig.getModelPath());
-            log.info("  - 词汇表: {}", onnxConfig.getVocabPath());
-            log.info("  - 最大长度: {}", properties.getMaxLength());
+            log.info("  - 模型路径: {}", modelPath);
+            log.info("  - 最大长度: {}", maxLength);
 
             return ragService;
 

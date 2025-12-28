@@ -1,7 +1,6 @@
 package top.yumbo.ai.omni.rag.adapter.embedding;
 
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.omni.ai.api.EmbeddingService;
 import top.yumbo.ai.omni.ai.ollama.OllamaAIService;
 import top.yumbo.ai.omni.ai.ollama.OllamaProperties;
 import top.yumbo.ai.omni.rag.RagService;
@@ -29,13 +28,16 @@ public class OllamaEmbeddingServiceFactory {
         try {
             OllamaProperties properties = new OllamaProperties();
             properties.setBaseUrl(ollamaConfig.getBaseUrl());
-            properties.setModel(ollamaConfig.getModel());
+            properties.setDefaultModel(ollamaConfig.getModel());
             properties.setTimeout(ollamaConfig.getTimeout() != null ?
                     ollamaConfig.getTimeout() : 30000);
 
-            OllamaAIService aiService = new OllamaAIService(properties);
-            EmbeddingService embeddingService = aiService;
-            RagService ragService = new EmbeddingServiceAdapter(embeddingService, domainId);
+            // 创建 RestTemplate
+            org.springframework.web.client.RestTemplate restTemplate =
+                    new org.springframework.web.client.RestTemplate();
+
+            OllamaAIService aiService = new OllamaAIService(restTemplate, properties);
+            RagService ragService = new EmbeddingServiceAdapter(aiService, domainId);
 
             log.info("✅ Ollama 嵌入服务创建成功");
             log.info("  - Base URL: {}", ollamaConfig.getBaseUrl());

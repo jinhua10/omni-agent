@@ -1,6 +1,7 @@
 package top.yumbo.ai.omni.rag.adapter.embedding;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.client.RestTemplate;
 import top.yumbo.ai.omni.ai.api.EmbeddingService;
 import top.yumbo.ai.omni.ai.online.OnlineAPIAIService;
 import top.yumbo.ai.omni.ai.online.OnlineAPIProperties;
@@ -35,12 +36,10 @@ public class OnlineEmbeddingServiceFactory {
                     onlineConfig.getTimeout() : 30000);
 
             // 创建 RestTemplate
-            org.springframework.web.client.RestTemplate restTemplate =
-                    new org.springframework.web.client.RestTemplate();
+            RestTemplate restTemplate = new RestTemplate();
 
             OnlineAPIAIService aiService = new OnlineAPIAIService(restTemplate, properties);
-            EmbeddingService embeddingService = aiService;
-            RagService ragService = new EmbeddingServiceAdapter(embeddingService, domainId);
+            RagService ragService = new EmbeddingServiceAdapter(aiService, domainId);
 
             log.info("✅ Online API 嵌入服务创建成功");
             log.info("  - Endpoint: {}", onlineConfig.getEndpoint());
