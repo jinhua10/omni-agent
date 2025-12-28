@@ -1,0 +1,55 @@
+package top.yumbo.ai.omni.rag.adapter.embedding;
+
+import lombok.extern.slf4j.Slf4j;
+import top.yumbo.ai.omni.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.ai.onnx.OnnxEmbeddingService;
+import top.yumbo.ai.omni.ai.onnx.OnnxEmbeddingProperties;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.adapter.RagAdapterProperties;
+
+/**
+ * ONNX 嵌入服务工厂
+ *
+ * @author OmniAgent Team
+ * @since 2.0.0
+ */
+@Slf4j
+public class OnnxEmbeddingServiceFactory {
+
+    public static RagService create(
+            RagAdapterProperties.EmbeddingConfig config,
+            String domainId) {
+
+        RagAdapterProperties.OnnxConfig onnxConfig = config.getOnnx();
+        if (onnxConfig == null) {
+            log.error("ONNX 配置为空");
+            return null;
+        }
+
+        try {
+            OnnxEmbeddingProperties properties = new OnnxEmbeddingProperties();
+            properties.setModelPath(onnxConfig.getModelPath());
+            properties.setVocabPath(onnxConfig.getVocabPath());
+            properties.setMaxLength(onnxConfig.getMaxLength() != null ?
+                    onnxConfig.getMaxLength() : 512);
+            properties.setPooling(onnxConfig.getPooling() != null ?
+                    onnxConfig.getPooling() : true);
+            properties.setUseSharedModel(true);
+
+            EmbeddingService embeddingService = new OnnxEmbeddingService(properties);
+            RagService ragService = new EmbeddingServiceAdapter(embeddingService, domainId);
+
+            log.info("✅ ONNX 嵌入服务创建成功");
+            log.info("  - 模型路径: {}", onnxConfig.getModelPath());
+            log.info("  - 词汇表: {}", onnxConfig.getVocabPath());
+            log.info("  - 最大长度: {}", properties.getMaxLength());
+
+            return ragService;
+
+        } catch (Exception e) {
+            log.error("创建 ONNX 嵌入服务失败", e);
+            return null;
+        }
+    }
+}
+

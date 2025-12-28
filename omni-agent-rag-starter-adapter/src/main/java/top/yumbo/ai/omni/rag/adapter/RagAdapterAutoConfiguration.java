@@ -1,5 +1,6 @@
 package top.yumbo.ai.omni.rag.adapter;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.RagServiceFactory;
@@ -30,13 +33,13 @@ import java.util.Map;
 public class RagAdapterAutoConfiguration {
 
     @Autowired(required = false)
-    private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
+    private MongoTemplate mongoTemplate;
 
     @Autowired(required = false)
-    private org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired(required = false)
-    private co.elastic.clients.elasticsearch.ElasticsearchClient elasticsearchClient;
+    private ElasticsearchClient elasticsearchClient;
 
     /**
      * 创建 RAG 服务实例（支持单实例和多实例）

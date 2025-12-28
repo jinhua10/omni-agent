@@ -69,7 +69,8 @@ public class RagInstanceBuilder {
         log.info("🔨 构建 RAG 实例: id={}, type={}", instanceId, type);
 
         try {
-            return switch (type) {
+            // 1. 创建存储服务
+            RagService storageService = switch (type) {
                 case "file", "lucene" -> buildFileRAG(instanceId);
                 case "sqlite" -> buildSQLiteRAG(instanceId);
                 case "mongodb", "mongo" -> buildMongoDBRAG(instanceId);
@@ -85,10 +86,94 @@ public class RagInstanceBuilder {
                     yield new MockRagService(instanceId);
                 }
             };
+
+            // 2. 如果配置了嵌入模型，包装嵌入功能
+            if (config.getEmbedding() != null && needsEmbeddingService(type)) {
+                RagService embeddingService = buildEmbeddingService(instanceId);
+                if (embeddingService != null) {
+                    log.info("🎨 为实例 {} 添加嵌入服务装饰器", instanceId);
+                    return new EmbeddingRagServiceDecorator(storageService, embeddingService, instanceId);
+                } else {
+                    log.warn("⚠️ 嵌入服务创建失败，使用纯存储服务（语义搜索不可用）");
+                }
+            }
+
+            return storageService;
+
         } catch (Exception e) {
             log.error("❌ 创建 RAG 实例失败: id={}, type={}", instanceId, type, e);
             return new MockRagService(instanceId);
         }
+    }
+
+    /**
+     * 判断是否需要嵌入服务
+     *
+     * <p>File/Lucene 可能内置了嵌入功能，其他都需要</p>
+     */
+    private boolean needsEmbeddingService(String type) {
+        return !type.equals("mock");
+    }
+
+    /**
+     * 构建嵌入服务
+     */
+    private RagService buildEmbeddingService(String instanceId) {
+        RagAdapterProperties.EmbeddingConfig embeddingConfig = config.getEmbedding();
+        String provider = embeddingConfig.getProvider().toLowerCase();
+
+        log.info("🧠 创建嵌入服务: provider={}, model={}", provider, embeddingConfig.getModel());
+
+        try {
+            return switch (provider) {
+                case "onnx" -> buildOnnxEmbeddingService(instanceId, embeddingConfig);
+                case "online" -> buildOnlineEmbeddingService(instanceId, embeddingConfig);
+                case "ollama" -> buildOllamaEmbeddingService(instanceId, embeddingConfig);
+                default -> {
+                    log.warn("⚠️ 未知的嵌入服务提供者: {}", provider);
+                    yield null;
+                }
+            };
+        } catch (Exception e) {
+            log.error("❌ 创建嵌入服务失败: provider={}", provider, e);
+            return null;
+        }
+    }
+
+    /**
+     * 创建 ONNX 嵌入服务
+     */
+    private RagService buildOnnxEmbeddingService(String instanceId, RagAdapterProperties.EmbeddingConfig config) {
+        log.info("✅ ONNX 嵌入服务: model={}, dimension={}",
+                config.getModel(), config.getDimension());
+
+        // TODO: 实现 ONNX 嵌入服务
+        // return new OnnxEmbeddingService(config.getOnnx());
+
+        log.warn("⚠️ ONNX 嵌入服务��未实现");
+        return null;
+    }
+
+    /**
+     * 创建 Online API 嵌入服务
+     */
+    private RagService buildOnlineEmbeddingService(String instanceId, RagAdapterProperties.EmbeddingConfig config) {
+        log.info("✅ Online API 嵌入服务: model={}, endpoint={}",
+                config.getModel(), config.getOnline().getEndpoint());
+
+        // TODO: 实现 Online API 嵌入服务
+        // return new OnlineEmbeddingService(config.getOnline());
+
+        log.warn("⚠️ Online API 嵌入服务尚未实现");
+        return null;
+    }
+
+    /**
+     * 创建 Ollama 嵌入服务
+     */
+    private RagService buildOllamaEmbeddingService(String instanceId, RagAdapterProperties.EmbeddingConfig config) {
+        return top.yumbo.ai.omni.rag.adapter.embedding.OllamaEmbeddingServiceFactory
+                .create(config, instanceId);
     }
 
     private RagService buildFileRAG(String instanceId) {
