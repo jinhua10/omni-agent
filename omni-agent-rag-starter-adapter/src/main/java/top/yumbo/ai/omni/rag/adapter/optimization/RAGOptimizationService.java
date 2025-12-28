@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.old.optimization;
+package top.yumbo.ai.omni.rag.adapter.optimization;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,10 +1,11 @@
-package top.yumbo.ai.omni.core.old.benchmark;
+package top.yumbo.ai.omni.rag.adapter.optimization.benchmark;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.core.old.optimization.RAGOptimizationService;
+import top.yumbo.ai.omni.rag.adapter.optimization.RAGOptimizationService;
+
 
 import java.util.*;
 import java.util.concurrent.*;

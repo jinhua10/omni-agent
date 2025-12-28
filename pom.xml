@@ -111,16 +111,7 @@
         <!-- P2P Starters -->
         <module>omni-agent-p2p-starter</module>
 
-        <!-- Voting Starters -->
-<!--        <module>omni-agent-voting-starter-memory</module>-->
-<!--        <module>omni-agent-voting-starter-redis</module>-->
-<!--        <module>omni-agent-voting-starter-mongodb</module>-->
-<!--        <module>omni-agent-voting-starter-elasticsearch</module>-->
 
-        <!-- Behavior Starters -->
-<!--        <module>omni-agent-behavior-starter-memory</module>-->
-<!--        <module>omni-agent-behavior-starter-redis</module>-->
-<!--        <module>omni-agent-behavior-starter-mongodb</module>-->
 
 
     </modules>
@@ -171,6 +162,7 @@
         <lucene.version>9.10.0</lucene.version>
         <poi.version>5.5.0</poi.version>
         <tika.version>3.2.3</tika.version>
+        <pdfbox.version>2.0.30</pdfbox.version>
         <jackson.version>2.15.3</jackson.version>
 
         <!-- 安全版本覆盖 -->
@@ -258,6 +250,13 @@
                 <groupId>org.apache.tika</groupId>
                 <artifactId>tika-core</artifactId>
                 <version>${tika.version}</version>
+            </dependency>
+
+            <!-- Apache PDFBox (for PDF processing) ⭐ -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
             </dependency>
 
             <!-- 修复安全漏洞 -->

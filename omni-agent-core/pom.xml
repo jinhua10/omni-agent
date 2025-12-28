@@ -17,12 +17,6 @@
     <description>核心业务逻辑层 - 只依赖API接口，不依赖具体实现</description>
 
     <dependencies>
-        <!-- Spring Boot Starter -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-
         <!-- ========== API 依赖（只依赖接口） ========== -->
 
         <!-- Document Storage API -->
@@ -154,6 +148,7 @@
             <version>1.37</version>
             <scope>test</scope>
         </dependency>
+
 
     </dependencies>
 
