@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.ai.api.config.VisionLLMBatchProcessingProperties;
 import top.yumbo.ai.omni.document.processor.extension.*;
+import top.yumbo.ai.omni.document.processor.model.DocumentExtractionResult;
+import top.yumbo.ai.omni.document.processor.service.DocumentExtractionResultService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +37,10 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
 
     @Autowired(required = false)
     protected AIService visionAIService;
+
+    // ⭐ 文档提取结果服务（可选，用于持久化提取结果）
+    @Autowired(required = false)
+    protected DocumentExtractionResultService extractionResultService;  // 使用 Object 避免循环依赖
 
     // ⭐ 批处理配置
     @Autowired(required = false)
@@ -164,6 +170,9 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
             // ⭐ 5. 后置处理（PostProcessor）
             result = applyPostProcessors(context, result);
 
+            // ⭐ 6. 保存提取结果到存储层（如果配置了服务）
+            saveExtractionResult(context, result, startTime);
+
             log.info("✅ [{}] 处理完成: 耗时={}ms, 文本长度={}, 图片数={}",
                     getName(), processingTime, finalText.length(), allImages.size());
 
@@ -171,6 +180,10 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
 
         } catch (Exception e) {
             log.error("❌ [{}] 处理失败: {}", getName(), e.getMessage(), e);
+
+            // ⭐ 保存失败记录
+            saveFailedExtractionResult(context, e, startTime);
+
             throw new DocumentProcessingException(getName() + " 处理失败", e);
         }
     }
@@ -723,6 +736,220 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
                 }
             }
         }
+    }
+
+    // ====================== 提取结果存储方法 ======================
+
+    /**
+     * 保存成功的提取结果
+     */
+    protected void saveExtractionResult(ProcessingContext context, ProcessingResult result, long startTime) {
+        if (extractionResultService == null) {
+            log.debug("⚠️ [Storage] DocumentExtractionResultService 未配置，跳过保存");
+            return;
+        }
+
+        try {
+            DocumentExtractionResult extractionResult = buildExtractionResult(
+                    context, result, startTime, "COMPLETED", null);
+
+            if (extractionResult != null) {
+                extractionResultService.save(extractionResult);
+                log.debug("✅ [Storage] 提取结果已保存: documentId={}", extractionResult.getDocumentId());
+            }
+
+        } catch (Exception e) {
+            log.warn("⚠️ [Storage] 保存提取结果失败: {}", e.getMessage());
+            // 不抛出异常，避免影响主流程
+        }
+    }
+
+    /**
+     * 保存失败的提取结果
+     */
+    protected void saveFailedExtractionResult(ProcessingContext context, Exception error, long startTime) {
+        if (extractionResultService == null) {
+            return;
+        }
+
+        try {
+            DocumentExtractionResult extractionResult = buildExtractionResult(
+                    context, null, startTime, "FAILED", error.getMessage());
+
+            if (extractionResult != null) {
+                extractionResultService.save(extractionResult);
+                log.debug("✅ [Storage] 失败记录已保存: documentId={}", extractionResult.getDocumentId());
+            }
+
+        } catch (Exception e) {
+            log.warn("⚠️ [Storage] 保存失败记录失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 构建 DocumentExtractionResult 对象
+     */
+    protected DocumentExtractionResult buildExtractionResult(
+            ProcessingContext context,
+            ProcessingResult result,
+            long startTime,
+            String status,
+            String errorMessage) {
+
+        try {
+            long completedTime = System.currentTimeMillis();
+            long duration = completedTime - startTime;
+
+            DocumentExtractionResult.DocumentExtractionResultBuilder builder = DocumentExtractionResult.builder()
+                    .documentId(getDocumentId(context))
+                    .fileName(context.getOriginalFileName())
+                    .fileExtension(context.getFileExtension())
+                    .extractionMethod(getName())
+                    .status(status)
+                    .startTime(startTime)
+                    .completedTime(completedTime)
+                    .duration(duration)
+                    .createdAt(completedTime)
+                    .updatedAt(completedTime);
+
+            // 文件大小
+            if (context.getFileSize() > 0) {
+                builder.fileSize(context.getFileSize());
+            }
+
+            // 文件MD5
+            if (context.getOptions() != null && context.getOptions().containsKey("fileMd5")) {
+                Object md5 = context.getOptions().get("fileMd5");
+                if (md5 != null) {
+                    builder.fileMd5(md5.toString());
+                }
+            }
+
+            // 提取的文本内容
+            if (result != null && result.getContent() != null) {
+                builder.extractedText(result.getContent());
+            }
+
+            // 提取模型
+            if (visionAIService != null) {
+                builder.extractionModel("vision-llm");
+            }
+
+            // 错误信息
+            if (errorMessage != null) {
+                builder.errorMessage(errorMessage);
+            }
+
+            // 页数和图片数
+            if (result != null && result.getMetadata() != null) {
+                Map<String, Object> metadata = result.getMetadata();
+
+                if (metadata.containsKey("totalPages")) {
+                    Object pages = metadata.get("totalPages");
+                    if (pages instanceof Number) {
+                        builder.pageCount(((Number) pages).intValue());
+                    }
+                }
+
+                if (metadata.containsKey("totalSlides")) {
+                    Object slides = metadata.get("totalSlides");
+                    if (slides instanceof Number) {
+                        builder.pageCount(((Number) slides).intValue());
+                    }
+                }
+
+                if (result.getImages() != null) {
+                    builder.imageCount(result.getImages().size());
+                }
+
+                // 元数据（转换为JSON字符串）
+                try {
+                    String metadataJson = convertMapToJson(metadata);
+                    builder.metadata(metadataJson);
+                } catch (Exception e) {
+                    log.debug("元数据转换失败: {}", e.getMessage());
+                }
+            }
+
+            return builder.build();
+
+        } catch (Exception e) {
+            log.error("❌ 构建 DocumentExtractionResult 失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 获取文档ID（从 context.options 中获取，或使用文件名哈希）
+     */
+    protected String getDocumentId(ProcessingContext context) {
+        if (context.getOptions() != null && context.getOptions().containsKey("documentId")) {
+            Object docId = context.getOptions().get("documentId");
+            if (docId != null) {
+                return docId.toString();
+            }
+        }
+
+        // 使用文件路径的哈希作为默认ID
+        if (context.getFilePath() != null && !context.getFilePath().isEmpty()) {
+            return String.valueOf(Math.abs(context.getFilePath().hashCode()));
+        }
+
+        // 使用文件名的哈希
+        if (context.getOriginalFileName() != null) {
+            return String.valueOf(Math.abs(context.getOriginalFileName().hashCode()));
+        }
+
+        // 使用时间戳作为最后的备选
+        return String.valueOf(System.currentTimeMillis());
+    }
+
+    /**
+     * 简单的 Map 转 JSON 字符串（避免依赖 Jackson）
+     */
+    protected String convertMapToJson(Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return "{}";
+        }
+
+        StringBuilder json = new StringBuilder("{");
+        boolean first = true;
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (!first) {
+                json.append(",");
+            }
+            first = false;
+
+            json.append("\"").append(entry.getKey()).append("\":");
+
+            Object value = entry.getValue();
+            if (value == null) {
+                json.append("null");
+            } else if (value instanceof String) {
+                json.append("\"").append(escapeJson((String) value)).append("\"");
+            } else if (value instanceof Number || value instanceof Boolean) {
+                json.append(value);
+            } else {
+                json.append("\"").append(escapeJson(value.toString())).append("\"");
+            }
+        }
+        json.append("}");
+
+        return json.toString();
+    }
+
+    /**
+     * 转义 JSON 字符串
+     */
+    protected String escapeJson(String str) {
+        if (str == null) {
+            return "";
+        }
+        return str.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     /**

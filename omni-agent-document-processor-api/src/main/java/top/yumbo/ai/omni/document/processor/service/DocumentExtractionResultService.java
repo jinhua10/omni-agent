@@ -1,7 +1,8 @@
-package top.yumbo.ai.omni.document.processor.starter.service;
+package top.yumbo.ai.omni.document.processor.service;
 
 
-import top.yumbo.ai.omni.document.processor.starter.model.DocumentExtractionResult;
+
+import top.yumbo.ai.omni.document.processor.model.DocumentExtractionResult;
 
 import java.util.List;
 import java.util.Optional;
