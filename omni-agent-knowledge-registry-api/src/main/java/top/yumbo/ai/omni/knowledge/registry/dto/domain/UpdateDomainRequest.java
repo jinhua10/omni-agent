@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.dto.domain;
+package top.yumbo.ai.omni.knowledge.registry.dto.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

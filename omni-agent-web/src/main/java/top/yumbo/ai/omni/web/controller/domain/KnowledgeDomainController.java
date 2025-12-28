@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
-import top.yumbo.ai.omni.core.dto.domain.CreateDomainRequest;
-import top.yumbo.ai.omni.core.dto.domain.UpdateDomainRequest;
+import top.yumbo.ai.omni.knowledge.registry.dto.domain.CreateDomainRequest;
+import top.yumbo.ai.omni.knowledge.registry.dto.domain.UpdateDomainRequest;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomainService;
 
 import java.util.HashMap;

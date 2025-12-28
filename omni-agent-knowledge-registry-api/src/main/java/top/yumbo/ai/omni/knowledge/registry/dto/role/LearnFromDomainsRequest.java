@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.dto.role;
+package top.yumbo.ai.omni.knowledge.registry.dto.role;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

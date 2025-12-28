@@ -3,15 +3,16 @@ package top.yumbo.ai.omni.knowledge.registry.role;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.dto.role.LearnFromDomainsRequest;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
 import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
-import top.yumbo.ai.omni.core.dto.role.LearnFromDomainsRequest;
-import top.yumbo.ai.omni.core.model.KnowledgeDocument;
-import top.yumbo.ai.omni.core.model.RefinedKnowledge;
-import top.yumbo.ai.omni.core.service.knowledge.KnowledgeExtractionService;
-import top.yumbo.ai.omni.core.service.knowledge.KnowledgeRefinementService;
-import top.yumbo.ai.omni.core.service.knowledge.KnowledgeStorageService;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeExtractionService;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRefinementService;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
+
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -144,9 +145,13 @@ public class RoleLearningService {
         try {
             // 1. 从源域提取文档
             log.info("📖 从域 {} 提取文档...", sourceDomainId);
-            List<KnowledgeDocument> documents = extractionService.extractDocuments(
-                    sourceDomainId,
-                    role.getResponsibilities(), // 使用职责作为查询关键词
+
+            // 将职责列表转换为查询字符串
+            String query = String.join(" ", role.getResponsibilities());
+
+            List<KnowledgeDocument> documents = extractionService.extractDocumentsByQuery(
+                    query,
+                    List.of(sourceDomainId),
                     request.getMaxDocuments()
             );
 
@@ -157,14 +162,11 @@ public class RoleLearningService {
 
             log.info("📄 提取到 {} 个文档", documents.size());
 
-            // 2. 根据角色职责筛选相关文档
-            log.info("🔍 根据职责筛选相关文档...");
-            List<KnowledgeDocument> relevantDocs = extractionService.filterRelevantDocuments(
-                    documents,
-                    role.getResponsibilities()
-            );
+            // 2. 文档已经根据查询进行了筛选，直接使用
+            log.info("🔍 使用提取的相关文档...");
+            List<KnowledgeDocument> relevantDocs = documents;
 
-            log.info("✓ 筛选出 {} 个相关文档", relevantDocs.size());
+            log.info("✓ 共 {} 个相关文档", relevantDocs.size());
 
             // 3. 对每个文档进行知识提炼
             int docCount = 0;

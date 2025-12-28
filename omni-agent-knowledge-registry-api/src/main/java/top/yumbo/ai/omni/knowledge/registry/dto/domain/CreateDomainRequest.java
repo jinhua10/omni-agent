@@ -1,17 +1,16 @@
-package top.yumbo.ai.omni.core.dto.role;
+package top.yumbo.ai.omni.knowledge.registry.dto.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
- * 创建知识角色请求
+ * 创建知识域请求
  *
  * @author OmniAgent Team
  * @since 1.0.0
@@ -20,28 +19,27 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateRoleRequest {
+public class CreateDomainRequest {
 
     /**
-     * 角色名称（必填）
+     * 域名称（必填）
      */
-    private String roleName;
+    private String domainName;
 
     /**
-     * 角色描述
+     * 域类型（必填）
+     */
+    private DomainType domainType;
+
+    /**
+     * 描述
      */
     private String description;
 
     /**
-     * 角色职责（必填）
+     * 关联的实体ID（可选）
      */
-    private String responsibilities;
-
-    /**
-     * 学习源域ID列表（可选）
-     */
-    @Builder.Default
-    private List<String> sourceDomainIds = new ArrayList<>();
+    private String linkedEntityId;
 
     /**
      * 配置信息（可选）

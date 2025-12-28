@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.knowledge.registry.model.CrossDomainQueryConfig;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.router.DomainRouter;
 import top.yumbo.ai.omni.knowledge.registry.service.cache.QueryResultCache;
