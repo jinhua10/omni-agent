@@ -47,6 +47,7 @@ public class DocumentProcessingService {
 
     // ⭐ 可选服务（如果没有配置相应的 starter，这些服务可能不存在）
     @Autowired(required = false)
+    @Qualifier("aiService")  // 使用主要的AI服务作为embedding服务
     private EmbeddingService embeddingService;  // ⭐ 向量化服务（可选）
 
     @Autowired(required = false)

@@ -1,7 +1,7 @@
 package top.yumbo.ai.omni.core.service.role;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
@@ -26,11 +26,22 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KnowledgeRoleService {
 
-    private final KnowledgeRegistry knowledgeRegistry;
-    private final KnowledgeDomainService domainService;
+    @Autowired(required = false)
+    private KnowledgeRegistry knowledgeRegistry;
+
+    @Autowired
+    private KnowledgeDomainService domainService;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available - KnowledgeRoleService will use fallback mode");
+        } else {
+            log.info("✅ KnowledgeRoleService initialized with KnowledgeRegistry");
+        }
+    }
 
     /**
      * 创建知识角色
