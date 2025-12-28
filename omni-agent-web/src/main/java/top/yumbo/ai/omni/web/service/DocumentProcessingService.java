@@ -13,7 +13,6 @@ import top.yumbo.ai.omni.document.processor.DocumentProcessor;
 import top.yumbo.ai.omni.document.processor.starter.DocumentProcessorManager;
 import top.yumbo.ai.omni.document.processor.starter.image.ImageCompressor;
 import top.yumbo.ai.omni.document.processor.starter.image.ImageHashCalculator;
-import top.yumbo.ai.omni.storage.api.model.Chunk;
 import top.yumbo.ai.omni.storage.api.model.Image;
 import top.yumbo.ai.omni.web.websocket.DocumentProcessingWebSocketHandler;
 import top.yumbo.ai.omni.rag.RagService;

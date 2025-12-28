@@ -4,10 +4,10 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
 import top.yumbo.ai.omni.chunking.starter.ChunkingStrategyManager;
 import top.yumbo.ai.omni.web.model.ApiResponse;
-import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -289,16 +289,17 @@ public class ChunkingConfigController {
             metadata.put("startPosition", chunkingChunk.getStartPosition());
             metadata.put("endPosition", chunkingChunk.getEndPosition());
             metadata.put("length", chunkingChunk.getLength());
+            metadata.put("index", chunkingChunk.getIndex());
 
             Chunk chunk = Chunk.builder()
-                    .id(chunkingChunk.getChunkId())
+                    .chunkId(chunkingChunk.getChunkId())
                     .documentId(chunkingChunk.getDocumentId())
                     .content(chunkingChunk.getContent())
-                    .sequence(chunkingChunk.getIndex())
+                    .index(chunkingChunk.getIndex())
                     .startPosition(chunkingChunk.getStartPosition())
                     .endPosition(chunkingChunk.getEndPosition())
-                    .metadata(metadata)
-                    .createdAt(System.currentTimeMillis())
+                    .length(chunkingChunk.getLength())
+                    .strategy(chunkingChunk.getStrategy())
                     .build();
             chunks.add(chunk);
         }
@@ -325,8 +326,6 @@ public class ChunkingConfigController {
             case PARAGRAPH -> "段落分块策略，按段落分割文本";
             case SEMANTIC -> "语义分块策略，基于语义相似度分割";
             case PPL -> "PPL分块策略，基于困惑度分割";
-            case MARKDOWN -> "Markdown分块策略，按Markdown结构分割";
-            default -> "未知策略";
         };
     }
 

@@ -9,7 +9,6 @@ import top.yumbo.ai.omni.chunking.ChunkingConfig;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.Document;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
-import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
-import top.yumbo.ai.omni.storage.api.model.Chunk;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.Document;
 import top.yumbo.ai.omni.rag.model.SearchResult;

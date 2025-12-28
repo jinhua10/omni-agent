@@ -1,6 +1,6 @@
 package top.yumbo.ai.omni.storage.api;
 
-import top.yumbo.ai.omni.storage.api.model.Chunk;
+import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.model.Image;
 import top.yumbo.ai.omni.storage.api.model.PPLData;
 import top.yumbo.ai.omni.storage.api.model.OptimizationData;

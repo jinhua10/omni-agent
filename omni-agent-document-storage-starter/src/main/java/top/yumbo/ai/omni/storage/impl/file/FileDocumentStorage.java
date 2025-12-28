@@ -1,6 +1,7 @@
 package top.yumbo.ai.omni.storage.impl.file;
 
 import lombok.extern.slf4j.Slf4j;
+import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.model.*;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
