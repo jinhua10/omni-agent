@@ -87,12 +87,7 @@
 
 
         <!-- 文档存储 Starters (Document Storage Starters) -->
-        <module>omni-agent-document-storage-starter-file</module>
-        <module>omni-agent-document-storage-starter-mongodb</module>
-        <module>omni-agent-document-storage-starter-redis</module>
-        <module>omni-agent-document-storage-starter-elasticsearch</module>
-        <module>omni-agent-document-storage-starter-s3</module>
-        <module>omni-agent-document-storage-starter-minio</module>
+        <module>omni-agent-document-storage-starter</module>
 
         <!-- OCR Starters (OCR 识别) -->
         <module>omni-agent-ocr-starter-tesseract</module>
