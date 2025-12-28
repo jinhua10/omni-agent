@@ -6,15 +6,14 @@ import top.yumbo.ai.omni.document.processor.*;
 import top.yumbo.ai.omni.document.processor.starter.config.DocumentProcessorProperties;
 
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.DecimalFormat;
+import java.util.*;
 
 /**
- * Excel 文档处理器
+ * Excel 文档处理器（增强版）
  *
  * <p>支持 .xls 和 .xlsx 格式</p>
+ * <p>功能：Markdown 表格转换、多种单元格类型处理、公式计算</p>
  *
  * @author OmniAgent Team
  * @since 1.0.0
@@ -23,6 +22,9 @@ import java.util.Map;
 public class ExcelProcessor implements DocumentProcessor {
 
     private final DocumentProcessorProperties properties;
+
+    private static final int MAX_ROWS_PER_SHEET = 1000;
+    private static final int MAX_COLS_PER_SHEET = 50;
 
     public ExcelProcessor(DocumentProcessorProperties properties) {
         this.properties = properties;
@@ -37,50 +39,26 @@ public class ExcelProcessor implements DocumentProcessor {
             StringBuilder text = new StringBuilder();
 
             int sheetCount = workbook.getNumberOfSheets();
-            int totalRows = 0;
-            int maxRows = properties.getExcel().getMaxRows();
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("totalSheets", sheetCount);
 
+            // 处理每个工作表
             for (int i = 0; i < sheetCount; i++) {
                 Sheet sheet = workbook.getSheetAt(i);
                 String sheetName = sheet.getSheetName();
 
-                text.append("## ").append(sheetName).append("\n\n");
+                // 添加工作表标题
+                text.append("\n\n## 工作表: ").append(sheetName).append("\n\n");
 
-                for (Row row : sheet) {
-                    if (totalRows >= maxRows) {
-                        text.append("\n... (已达到最大行数限制: ").append(maxRows).append(")\n");
-                        break;
-                    }
-
-                    StringBuilder rowText = new StringBuilder();
-                    for (Cell cell : row) {
-                        String cellValue = getCellValue(cell);
-                        if (cellValue != null && !cellValue.isEmpty()) {
-                            if (rowText.length() > 0) {
-                                rowText.append("\t");
-                            }
-                            rowText.append(cellValue);
-                        }
-                    }
-
-                    if (rowText.length() > 0) {
-                        text.append(rowText).append("\n");
-                    }
-                    totalRows++;
-                }
-
-                text.append("\n");
+                // 提取表格数据并转换为 Markdown
+                String tableMarkdown = extractSheetAsMarkdown(sheet);
+                text.append(tableMarkdown).append("\n");
             }
 
             workbook.close();
 
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put("sheetCount", sheetCount);
-            metadata.put("totalRows", totalRows);
-
             String content = text.toString();
-            log.info("✅ Excel 处理完成: {} ({} 个工作表, {} 行)",
-                documentId, sheetCount, totalRows);
+            log.info("✅ Excel 处理完成: {} ({} 个工作表)", documentId, sheetCount);
 
             return ProcessedDocument.builder()
                     .documentId(documentId)
@@ -97,30 +75,182 @@ public class ExcelProcessor implements DocumentProcessor {
         }
     }
 
-    private String getCellValue(Cell cell) {
+    /**
+     * 将工作表转换为 Markdown 表格
+     */
+    private String extractSheetAsMarkdown(Sheet sheet) {
+        StringBuilder markdown = new StringBuilder();
+
+        int firstRowNum = sheet.getFirstRowNum();
+        int lastRowNum = Math.min(sheet.getLastRowNum(), firstRowNum + MAX_ROWS_PER_SHEET - 1);
+
+        if (lastRowNum < firstRowNum) {
+            return "_（工作表为空）_\n";
+        }
+
+        // 计算最大列数
+        int maxCols = 0;
+        for (int rowIdx = firstRowNum; rowIdx <= lastRowNum; rowIdx++) {
+            Row row = sheet.getRow(rowIdx);
+            if (row != null) {
+                maxCols = Math.max(maxCols, row.getLastCellNum());
+            }
+        }
+        maxCols = Math.min(maxCols, MAX_COLS_PER_SHEET);
+
+        if (maxCols == 0) {
+            return "_（工作表为空）_\n";
+        }
+
+        // 收集表格数据
+        List<List<String>> tableData = new ArrayList<>();
+        for (int rowIdx = firstRowNum; rowIdx <= lastRowNum; rowIdx++) {
+            Row row = sheet.getRow(rowIdx);
+            List<String> rowData = new ArrayList<>();
+
+            for (int colIdx = 0; colIdx < maxCols; colIdx++) {
+                String cellValue = "";
+                if (row != null) {
+                    Cell cell = row.getCell(colIdx);
+                    cellValue = getCellValueAsString(cell);
+                }
+                rowData.add(cellValue);
+            }
+
+            // 只添加非空行
+            if (rowData.stream().anyMatch(v -> !v.trim().isEmpty())) {
+                tableData.add(rowData);
+            }
+        }
+
+        if (!tableData.isEmpty()) {
+            return convertToMarkdownTable(tableData) + "\n";
+        }
+
+        return "_（工作表无有效数据）_\n";
+    }
+
+    /**
+     * 获取单元格值（完整类型处理）
+     */
+    private String getCellValueAsString(Cell cell) {
         if (cell == null) {
             return "";
         }
 
-        switch (cell.getCellType()) {
+        try {
+            switch (cell.getCellType()) {
+                case STRING:
+                    return cell.getStringCellValue().trim();
+
+                case NUMERIC:
+                    // 处理日期
+                    if (DateUtil.isCellDateFormatted(cell)) {
+                        return cell.getDateCellValue().toString();
+                    }
+                    // 处理数字
+                    double numValue = cell.getNumericCellValue();
+                    if (numValue == (long) numValue) {
+                        return String.valueOf((long) numValue);
+                    } else {
+                        DecimalFormat df = new DecimalFormat("#.##");
+                        return df.format(numValue);
+                    }
+
+                case BOOLEAN:
+                    return String.valueOf(cell.getBooleanCellValue());
+
+                case FORMULA:
+                    // 尝试获取公式计算结果
+                    try {
+                        return getCellFormulaValue(cell);
+                    } catch (Exception e) {
+                        return cell.getCellFormula();
+                    }
+
+                case BLANK:
+                    return "";
+
+                default:
+                    return "";
+            }
+        } catch (Exception e) {
+            log.warn("获取单元格值失败: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    /**
+     * 获取公式单元格的计算值
+     */
+    private String getCellFormulaValue(Cell cell) {
+        CellType cachedType = cell.getCachedFormulaResultType();
+        switch (cachedType) {
             case STRING:
                 return cell.getStringCellValue();
             case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue().toString();
+                double numValue = cell.getNumericCellValue();
+                if (numValue == (long) numValue) {
+                    return String.valueOf((long) numValue);
+                } else {
+                    DecimalFormat df = new DecimalFormat("#.##");
+                    return df.format(numValue);
                 }
-                return String.valueOf(cell.getNumericCellValue());
             case BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA:
-                try {
-                    return String.valueOf(cell.getNumericCellValue());
-                } catch (Exception e) {
-                    return cell.getStringCellValue();
-                }
             default:
                 return "";
         }
+    }
+
+    /**
+     * 转换为 Markdown 表格
+     */
+    private String convertToMarkdownTable(List<List<String>> tableData) {
+        if (tableData.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder md = new StringBuilder();
+
+        // 表头（第一行）
+        List<String> header = tableData.get(0);
+        md.append("| ");
+        for (String cell : header) {
+            md.append(escapeMarkdown(cell)).append(" | ");
+        }
+        md.append("\n");
+
+        // 分隔线
+        md.append("|");
+        for (int i = 0; i < header.size(); i++) {
+            md.append(" --- |");
+        }
+        md.append("\n");
+
+        // 数据行
+        for (int i = 1; i < tableData.size(); i++) {
+            List<String> row = tableData.get(i);
+            md.append("| ");
+            for (String cell : row) {
+                md.append(escapeMarkdown(cell)).append(" | ");
+            }
+            md.append("\n");
+        }
+
+        return md.toString();
+    }
+
+    /**
+     * 转义 Markdown 特殊字符
+     */
+    private String escapeMarkdown(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        return text.replace("|", "\\|")
+                   .replace("\n", "<br>")
+                   .replace("\r", "");
     }
 
     @Override
