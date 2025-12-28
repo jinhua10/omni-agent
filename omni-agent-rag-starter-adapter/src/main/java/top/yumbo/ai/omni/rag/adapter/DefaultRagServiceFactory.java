@@ -256,18 +256,13 @@ public class DefaultRagServiceFactory implements RagServiceFactory {
      * 创建 H2 RAG 服务
      */
     private RagService createH2RAGService(String domainId) {
-        if (jdbcTemplate == null) {
-            log.warn("⚠️ JdbcTemplate 未配置，无法创建 H2 RAG 服务，使用 Mock 服务");
-            return createMockRagService(domainId);
-        }
-
         try {
             H2RAGProperties h2Props = new H2RAGProperties();
-            h2Props.setDatabasePath(properties.getH2().getDatabasePath());
-            h2Props.setInitDatabase(properties.getH2().getInitDatabase());
-            h2Props.setEnableFullText(properties.getH2().getEnableFullText());
+            // 使用配置中的数据库路径构建 URL
+            String dbPath = properties.getH2().getDatabasePath();
+            h2Props.setUrl("jdbc:h2:" + dbPath + ";AUTO_SERVER=TRUE");
 
-            H2RAGService service = new H2RAGService(jdbcTemplate, h2Props, domainId);
+            H2RAGService service = new H2RAGService(h2Props, domainId);
             service.init();
 
             log.info("✅ 创建 H2 RAG 服务成功 (域: {})", domainId);
