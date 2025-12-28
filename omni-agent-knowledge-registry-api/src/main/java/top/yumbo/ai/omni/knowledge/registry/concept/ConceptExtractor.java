@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.concept;
+package top.yumbo.ai.omni.knowledge.registry.concept;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * 概念提取器 - 从文本中提取知识概念

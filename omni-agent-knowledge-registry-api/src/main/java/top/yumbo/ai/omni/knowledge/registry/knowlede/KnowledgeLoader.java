@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.knowlede;
+package top.yumbo.ai.omni.knowledge.registry.knowlede;
 
 import lombok.Data;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.evolution;
+package top.yumbo.ai.omni.knowledge.registry.evolution;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
