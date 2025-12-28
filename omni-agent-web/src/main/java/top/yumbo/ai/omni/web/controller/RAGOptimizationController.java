@@ -7,8 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.core.old.optimization.AutoOptimizationSelector;
-import top.yumbo.ai.omni.core.old.optimization.RAGOptimizationService;
+import top.yumbo.ai.omni.rag.adapter.optimization.AutoOptimizationSelector;
+import top.yumbo.ai.omni.rag.adapter.optimization.RAGOptimizationService;
 import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 
 import java.util.List;

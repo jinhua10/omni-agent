@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.core.old.optimization.metrics.OptimizationMetricsCollector;
+import top.yumbo.ai.omni.rag.adapter.optimization.metrics.OptimizationMetricsCollector;
 
 import java.util.List;
 import java.util.Map;
