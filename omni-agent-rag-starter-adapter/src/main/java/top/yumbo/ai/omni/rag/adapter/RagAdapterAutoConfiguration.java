@@ -2,61 +2,163 @@ package top.yumbo.ai.omni.rag.adapter;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.RagServiceFactory;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
- * RAG 适配器自动配置
+ * RAG 适配器自动配置（统一配置方式）
  *
- * <p>提供 RAG 服务工厂，支持多域知识网络架构</p>
+ * <p>支持单实例和多实例配置，统一使用数组方式</p>
  *
  * @author OmniAgent Team
- * @since 1.0.0
+ * @since 2.0.0
  */
 @Slf4j
 @AutoConfiguration
 @EnableConfigurationProperties(RagAdapterProperties.class)
 public class RagAdapterAutoConfiguration {
 
+    @Autowired(required = false)
+    private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
+
+    @Autowired(required = false)
+    private org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired(required = false)
+    private co.elastic.clients.elasticsearch.ElasticsearchClient elasticsearchClient;
+
     /**
-     * 注册 RAG 服务工厂
-     *
-     * @param properties RAG 适配器配置
-     * @param ragServiceProvider RAG 服务提供者（从 Spring 容器注入）
-     * @return RAG 服务工厂实例
+     * 创建 RAG 服务实例（支持单实例和多实例）
+     */
+    @Bean
+    public Map<String, RagService> ragServices(
+            RagAdapterProperties properties,
+            ObjectProvider<JdbcTemplate> jdbcTemplate) {
+
+        Map<String, RagService> services = new HashMap<>();
+        List<RagAdapterProperties.RagInstanceConfig> instances = properties.getInstances();
+
+        // 如果没有配置任何实例，创建默认实例
+        if (instances.isEmpty()) {
+            log.info("📋 未配置 RAG 实例，创建默认 File 实例");
+
+            RagAdapterProperties.RagInstanceConfig defaultConfig = new RagAdapterProperties.RagInstanceConfig();
+            defaultConfig.setId("default");
+            defaultConfig.setName("默认 File 实例");
+            defaultConfig.setType("file");
+            defaultConfig.setPrimary(true);
+
+            RagAdapterProperties.FileConfig fileConfig = new RagAdapterProperties.FileConfig();
+            defaultConfig.setFile(fileConfig);
+
+            instances.add(defaultConfig);
+        }
+
+        log.info("🔧 配置 RAG 服务");
+        log.info("  - 实例数量: {}", instances.size());
+        log.info("  - 全局向量维度: {}", properties.getVectorDimension());
+
+        // 创建每个实例
+        for (RagAdapterProperties.RagInstanceConfig instanceConfig : instances) {
+            String instanceId = instanceConfig.getOrGenerateId();
+
+            log.info("📋 创建 RAG 实例: id={}, type={}, primary={}",
+                    instanceId, instanceConfig.getType(), instanceConfig.isPrimary());
+
+            try {
+                RagInstanceBuilder builder = new RagInstanceBuilder(instanceConfig, properties.getVectorDimension())
+                        .withJdbcTemplate(jdbcTemplate.getIfAvailable())
+                        .withMongoTemplate(mongoTemplate)
+                        .withRedisTemplate(redisTemplate)
+                        .withElasticsearchClient(elasticsearchClient);
+
+                RagService service = builder.build();
+                services.put(instanceId, service);
+
+                log.info("✅ RAG 实例创建成功: {}", instanceId);
+            } catch (Exception e) {
+                log.error("❌ 创建 RAG 实例失败: {}", instanceId, e);
+                // 降级为 Mock 服务
+                services.put(instanceId, new MockRagService(instanceId));
+            }
+        }
+
+        log.info("✅ 所有 RAG 实例创建完成，共 {} 个", services.size());
+        return services;
+    }
+
+    /**
+     * 创建主 RAG 服务（自动选择 primary 实例）
+     */
+    @Bean
+    @Primary
+    @ConditionalOnMissingBean(RagService.class)
+    public RagService ragService(
+            RagAdapterProperties properties,
+            Map<String, RagService> ragServices) {
+
+        log.info("🎯 选择主 RAG 服务实例");
+
+        // 查找标记为 primary 的实例
+        RagAdapterProperties.RagInstanceConfig primaryConfig = properties.getPrimaryInstance();
+        if (primaryConfig != null) {
+            String primaryId = primaryConfig.getOrGenerateId();
+            RagService service = ragServices.get(primaryId);
+            if (service != null) {
+                log.info("✅ 主 RAG 服务: {} (id={})", primaryConfig.getName(), primaryId);
+                return service;
+            }
+        }
+
+        // 如果没有标记为 primary 的，使用第一个
+        if (!ragServices.isEmpty()) {
+            String firstId = ragServices.keySet().iterator().next();
+            log.info("⚠️ 未找到标记为 primary 的实例，使用第一个: {}", firstId);
+            return ragServices.get(firstId);
+        }
+
+        // 降级为 Mock
+        log.warn("⚠️ 未找到任何 RAG 实例，使用 Mock 服务");
+        return new MockRagService("default");
+    }
+
+    /**
+     * RAG 服务注册表
+     */
+    @Bean
+    public RagServiceRegistry ragServiceRegistry(Map<String, RagService> ragServices) {
+        return new RagServiceRegistry(ragServices);
+    }
+
+    /**
+     * RAG 服务工厂（兼容旧版 API）
      */
     @Bean
     public RagServiceFactory ragServiceFactory(
             RagAdapterProperties properties,
-            ObjectProvider<RagService> ragServiceProvider) {
+            ObjectProvider<RagService> ragServiceProvider,
+            ObjectProvider<JdbcTemplate> jdbcTemplate) {
 
-        log.info("🔧 配置 RAG 服务工厂");
-        log.info("  - RAG 类型: {}", properties.getType());
-        log.info("  - 向量维度: {}", properties.getVectorDimension());
+        log.info("🔧 配置 RAG 服务工厂（兼容模式）");
 
-        // 根据类型显示具体配置
-        String type = properties.getType().toLowerCase();
-        switch (type) {
-            case "file", "lucene" ->
-                log.info("  - File 索引路径: {}", properties.getFile().getIndexPath());
-            case "sqlite" ->
-                log.info("  - SQLite 数据库: {}", properties.getSqlite().getDatabasePath());
-            case "mongodb", "mongo" ->
-                log.info("  - MongoDB 集合: {}", properties.getMongodb().getCollectionName());
-            case "redis" ->
-                log.info("  - Redis 前缀: {}", properties.getRedis().getKeyPrefix());
-            case "h2" ->
-                log.info("  - H2 数据库: {}", properties.getH2().getDatabasePath());
-            case "elasticsearch", "es" ->
-                log.info("  - Elasticsearch 前缀: {}", properties.getElasticsearch().getIndexPrefix());
-            default ->
-                log.info("  - 使用默认配置");
-        }
+        DefaultRagServiceFactory factory = new DefaultRagServiceFactory(
+                properties,
+                ragServiceProvider,
+                jdbcTemplate.getIfAvailable()
+        );
 
-        return new DefaultRagServiceFactory(properties, ragServiceProvider);
+        return factory;
     }
 }
 

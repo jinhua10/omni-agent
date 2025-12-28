@@ -1,5 +1,6 @@
 package top.yumbo.ai.omni.rag.adapter;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,8 @@ import top.yumbo.ai.omni.rag.adapter.impl.redis.RedisRAGProperties;
 import top.yumbo.ai.omni.rag.adapter.impl.redis.RedisRAGService;
 import top.yumbo.ai.omni.rag.adapter.impl.h2.H2RAGProperties;
 import top.yumbo.ai.omni.rag.adapter.impl.h2.H2RAGService;
+import top.yumbo.ai.omni.rag.adapter.impl.elasticsearch.ElasticsearchRAGProperties;
+import top.yumbo.ai.omni.rag.adapter.impl.elasticsearch.ElasticsearchRAGService;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,15 +73,27 @@ public class DefaultRagServiceFactory implements RagServiceFactory {
     @Autowired(required = false)
     private RedisTemplate<String, Object> redisTemplate;
 
+    /**
+     * Elasticsearch Client（可选）
+     */
+    @Autowired(required = false)
+    private ElasticsearchClient elasticsearchClient;
+
+    /**
+     * 主构造函数（只接收必需参数）
+     */
     public DefaultRagServiceFactory(
             RagAdapterProperties properties,
-            ObjectProvider<RagService> ragServiceProvider) {
+            ObjectProvider<RagService> ragServiceProvider,
+            JdbcTemplate jdbcTemplate) {
         this.properties = properties;
         this.ragServiceProvider = ragServiceProvider;
+        this.jdbcTemplate = jdbcTemplate;
 
-        log.info("✅ RAG 服务工厂初始化完成");
-        log.info("  - 配置类型: {}", properties.getType());
+        log.info("✅ RAG 服务工厂初始化完成（兼容模式）");
+        log.info("  - 实例数量: {}", properties.getInstances().size());
         log.info("  - 可用实现: {}", ragServiceProvider.stream().count());
+        log.info("  - JDBC 可用: {}", jdbcTemplate != null);
     }
 
     @Override
@@ -100,17 +115,12 @@ public class DefaultRagServiceFactory implements RagServiceFactory {
     }
 
     /**
-     * 创建 RAG 服务实例
+     * 创建 RAG 服务实例（兼容旧版 API）
      *
-     * <p>策略：</p>
-     * <ul>
-     *   <li>优先使用 Spring 容器中已注册的 RagService Bean</li>
-     *   <li>如果没有，根据配置的 type 创建对应实现</li>
-     *   <li>如果没有可用实现，返回 Mock 实现（开发阶段）</li>
-     * </ul>
+     * <p>注意：新版本建议直接使用 RagServiceRegistry 或注入 Map&lt;String, RagService&gt;</p>
      */
     private RagService createRagService(String domainId) {
-        log.info("📋 为域 {} 创建 RAG 服务，类型: {}", domainId, properties.getType());
+        log.info("📋 为域 {} 创建 RAG 服务（兼容模式）", domainId);
 
         // 优先从 Spring 容器获取
         RagService ragService = ragServiceProvider.getIfAvailable();
@@ -120,144 +130,25 @@ public class DefaultRagServiceFactory implements RagServiceFactory {
             return ragService;
         }
 
-        // 根据配置类型创建
-        String type = properties.getType().toLowerCase();
-        return switch (type) {
-            case "file", "lucene" -> createFileRAGService(domainId);
-            case "sqlite" -> createSQLiteRAGService(domainId);
-            case "mongodb", "mongo" -> createMongoDBRAGService(domainId);
-            case "redis" -> createRedisRAGService(domainId);
-            case "h2" -> createH2RAGService(domainId);
-            case "elasticsearch", "es" -> {
-                log.warn("Elasticsearch RAG 实现尚未迁移，使用 Mock 服务");
-                yield createMockRagService(domainId);
+        // 如果有配置实例，使用第一个配置创建
+        if (!properties.getInstances().isEmpty()) {
+            RagAdapterProperties.RagInstanceConfig config = properties.getInstances().get(0);
+            try {
+                RagInstanceBuilder builder = new RagInstanceBuilder(config, properties.getVectorDimension())
+                        .withJdbcTemplate(jdbcTemplate)
+                        .withMongoTemplate(mongoTemplate)
+                        .withRedisTemplate(redisTemplate)
+                        .withElasticsearchClient(elasticsearchClient);
+                return builder.build();
+            } catch (Exception e) {
+                log.error("创建 RAG 服务失败", e);
             }
-            default -> createMockRagService(domainId);
-        };
+        }
+
+        // 降级为 Mock
+        return createMockRagService(domainId);
     }
 
-    /**
-     * 创建 File/Lucene RAG 服务
-     */
-    private RagService createFileRAGService(String domainId) {
-        try {
-            FileRAGProperties fileProps = new FileRAGProperties();
-            fileProps.setIndexPath(properties.getFile().getIndexPath());
-            fileProps.setRamBufferSizeMb(properties.getFile().getRamBufferSizeMb());
-
-            LuceneRAGService service = new LuceneRAGService(fileProps, domainId);
-            service.init();
-
-            log.info("✅ 创建 File/Lucene RAG 服务成功 (域: {})", domainId);
-            return service;
-
-        } catch (Exception e) {
-            log.error("创建 File/Lucene RAG 服务失败", e);
-            return createMockRagService(domainId);
-        }
-    }
-
-    /**
-     * 创建 SQLite RAG 服务
-     */
-    private RagService createSQLiteRAGService(String domainId) {
-        if (jdbcTemplate == null) {
-            log.warn("⚠️ JdbcTemplate 未配置，无法创建 SQLite RAG 服务，使用 Mock 服务");
-            return createMockRagService(domainId);
-        }
-
-        try {
-            SQLiteRAGProperties sqliteProps = new SQLiteRAGProperties();
-            sqliteProps.setDatabasePath(properties.getSqlite().getDatabasePath());
-            sqliteProps.setInitDatabase(properties.getSqlite().getInitDatabase());
-            sqliteProps.setEnableFts(properties.getSqlite().getEnableFts());
-
-            SQLiteRAGService service = new SQLiteRAGService(jdbcTemplate, sqliteProps, domainId);
-            service.init();
-
-            log.info("✅ 创建 SQLite RAG 服务成功 (域: {})", domainId);
-            return service;
-
-        } catch (Exception e) {
-            log.error("创建 SQLite RAG 服务失败", e);
-            return createMockRagService(domainId);
-        }
-    }
-
-    /**
-     * 创建 MongoDB RAG 服务
-     */
-    private RagService createMongoDBRAGService(String domainId) {
-        if (mongoTemplate == null) {
-            log.warn("⚠️ MongoTemplate 未配置，无法创建 MongoDB RAG 服务，使用 Mock 服务");
-            return createMockRagService(domainId);
-        }
-
-        try {
-            MongoDBRAGProperties mongoProps = new MongoDBRAGProperties();
-            mongoProps.setCollectionName(properties.getMongodb().getCollectionName());
-            mongoProps.setEnableTextSearch(properties.getMongodb().getEnableTextSearch());
-
-            MongoDBRAGService service = new MongoDBRAGService(mongoTemplate, mongoProps, domainId);
-            service.init();
-
-            log.info("✅ 创建 MongoDB RAG 服务成功 (域: {})", domainId);
-            return service;
-
-        } catch (Exception e) {
-            log.error("创建 MongoDB RAG 服务失败", e);
-            return createMockRagService(domainId);
-        }
-    }
-
-    /**
-     * 创建 Redis RAG 服务
-     */
-    private RagService createRedisRAGService(String domainId) {
-        if (redisTemplate == null) {
-            log.warn("⚠️ RedisTemplate 未配置，无法创建 Redis RAG 服务，使用 Mock 服务");
-            return createMockRagService(domainId);
-        }
-
-        try {
-            RedisRAGProperties redisProps = new RedisRAGProperties();
-            redisProps.setKeyPrefix(properties.getRedis().getKeyPrefix());
-            redisProps.setDocumentTtl(properties.getRedis().getDocumentTtl());
-            redisProps.setEnableTextIndex(properties.getRedis().getEnableTextIndex());
-
-            RedisRAGService service = new RedisRAGService(redisTemplate, redisProps, domainId);
-            service.init();
-
-            log.info("✅ 创建 Redis RAG 服务成功 (域: {})", domainId);
-            return service;
-
-        } catch (Exception e) {
-            log.error("创建 Redis RAG 服务失败", e);
-            return createMockRagService(domainId);
-        }
-    }
-
-    /**
-     * 创建 H2 RAG 服务
-     */
-    private RagService createH2RAGService(String domainId) {
-        try {
-            H2RAGProperties h2Props = new H2RAGProperties();
-            // 使用配置中的数据库路径构建 URL
-            String dbPath = properties.getH2().getDatabasePath();
-            h2Props.setUrl("jdbc:h2:" + dbPath + ";AUTO_SERVER=TRUE");
-
-            H2RAGService service = new H2RAGService(h2Props, domainId);
-            service.init();
-
-            log.info("✅ 创建 H2 RAG 服务成功 (域: {})", domainId);
-            return service;
-
-        } catch (Exception e) {
-            log.error("创建 H2 RAG 服务失败", e);
-            return createMockRagService(domainId);
-        }
-    }
 
     /**
      * 创建 Mock RAG 服务（用于开发和测试）

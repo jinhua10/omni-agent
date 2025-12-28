@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.example;
+package top.yumbo.ai.omni.example.basic.rag;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
