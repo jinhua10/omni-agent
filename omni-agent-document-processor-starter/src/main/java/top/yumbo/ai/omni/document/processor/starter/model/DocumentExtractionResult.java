@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.document.model;
+package top.yumbo.ai.omni.document.processor.starter.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

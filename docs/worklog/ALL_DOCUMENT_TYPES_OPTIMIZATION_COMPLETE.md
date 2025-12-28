@@ -317,7 +317,7 @@ thread-pool:
 ```yaml
 logging:
   level:
-    top.yumbo.ai.omni.core.document.processor.VisionLLMDocumentProcessor: DEBUG
+    top.yumbo.ai.omni.document.processor.starter.processor.VisionLLMDocumentProcessor: DEBUG
 ```
 
 观察关键日志：

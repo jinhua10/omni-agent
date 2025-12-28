@@ -28,7 +28,7 @@ logging:
     # 核心功能日志
     top.yumbo.ai.omni.core: DEBUG
     # 特定组件日志（更细粒度控制）
-    top.yumbo.ai.omni.core.document.processor.VisionLLMDocumentProcessor: DEBUG
+    top.yumbo.ai.omni.document.processor.starter.processor.VisionLLMDocumentProcessor: DEBUG
     top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager: DEBUG
     top.yumbo.ai.omni.core.query.QueryService: DEBUG
 ```
@@ -175,7 +175,7 @@ logging:
 ```yaml
 logging:
   level:
-    top.yumbo.ai.omni.core.document.processor.VisionLLMDocumentProcessor: DEBUG
+    top.yumbo.ai.omni.document.processor.starter.processor.VisionLLMDocumentProcessor: DEBUG
     top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager: DEBUG
 ```
 
@@ -232,7 +232,7 @@ Get-Content logs.txt -Wait -Tail 50
 ```yaml
 logging:
   level:
-    top.yumbo.ai.omni.core.document.processor.VisionLLMDocumentProcessor: DEBUG
+    top.yumbo.ai.omni.document.processor.starter.processor.VisionLLMDocumentProcessor: DEBUG
     top.yumbo.ai.omni.ai.ollama.OllamaAIService: DEBUG
 ```
 

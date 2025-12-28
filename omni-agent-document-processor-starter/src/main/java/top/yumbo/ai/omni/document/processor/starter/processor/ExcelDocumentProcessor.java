@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.document.processor;
+package top.yumbo.ai.omni.document.processor.starter.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.hssf.usermodel.*;
@@ -6,6 +6,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import top.yumbo.ai.omni.document.processor.AbstractDocumentProcessor;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;

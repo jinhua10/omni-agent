@@ -1,6 +1,5 @@
-package top.yumbo.ai.omni.core.document.processor;
+package top.yumbo.ai.omni.document.processor;
 
-import top.yumbo.ai.omni.core.document.DocumentProcessor;
 import java.util.List;
 
 /**

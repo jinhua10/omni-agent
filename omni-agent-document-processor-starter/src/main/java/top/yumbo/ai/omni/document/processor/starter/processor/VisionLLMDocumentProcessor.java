@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.document.processor;
+package top.yumbo.ai.omni.document.processor.starter.processor;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.ai.api.config.VisionLLMBatchProcessingProperties;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
-import top.yumbo.ai.omni.core.document.DocumentProcessor;
+import top.yumbo.ai.omni.document.processor.DocumentProcessor;
 
 import java.util.*;
 import java.util.concurrent.*;

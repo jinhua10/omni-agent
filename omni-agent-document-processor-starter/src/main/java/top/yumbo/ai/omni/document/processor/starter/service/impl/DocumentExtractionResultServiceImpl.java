@@ -1,11 +1,11 @@
-package top.yumbo.ai.omni.core.document.service.impl;
+package top.yumbo.ai.omni.document.processor.starter.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.omni.core.document.model.DocumentExtractionResult;
-import top.yumbo.ai.omni.core.document.service.DocumentExtractionResultService;
+import top.yumbo.ai.omni.document.processor.starter.model.DocumentExtractionResult;
+import top.yumbo.ai.omni.document.processor.starter.service.DocumentExtractionResultService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.*;

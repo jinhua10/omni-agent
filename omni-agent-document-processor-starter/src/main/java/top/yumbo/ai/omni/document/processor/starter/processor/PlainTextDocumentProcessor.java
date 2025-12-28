@@ -1,8 +1,8 @@
-package top.yumbo.ai.omni.core.document.processor;
+package top.yumbo.ai.omni.document.processor.starter.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.core.document.DocumentProcessor;
+import top.yumbo.ai.omni.document.processor.DocumentProcessor;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
