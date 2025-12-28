@@ -122,33 +122,18 @@ public class DefaultRagServiceFactory implements RagServiceFactory {
 
         // 根据配置类型创建
         String type = properties.getType().toLowerCase();
-        switch (type) {
-            case "file":
-            case "lucene":
-                return createFileRAGService(domainId);
-
-            case "sqlite":
-                return createSQLiteRAGService(domainId);
-
-            case "mongodb":
-            case "mongo":
-                return createMongoDBRAGService(domainId);
-
-            case "redis":
-                return createRedisRAGService(domainId);
-
-            case "h2":
-                return createH2RAGService(domainId);
-
-            case "elasticsearch":
-            case "es":
+        return switch (type) {
+            case "file", "lucene" -> createFileRAGService(domainId);
+            case "sqlite" -> createSQLiteRAGService(domainId);
+            case "mongodb", "mongo" -> createMongoDBRAGService(domainId);
+            case "redis" -> createRedisRAGService(domainId);
+            case "h2" -> createH2RAGService(domainId);
+            case "elasticsearch", "es" -> {
                 log.warn("Elasticsearch RAG 实现尚未迁移，使用 Mock 服务");
-                return createMockRagService(domainId);
-
-            case "mock":
-            default:
-                return createMockRagService(domainId);
-        }
+                yield createMockRagService(domainId);
+            }
+            default -> createMockRagService(domainId);
+        };
     }
 
     /**
