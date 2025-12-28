@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import top.yumbo.ai.omni.chunking.ChunkingStrategy;
 import top.yumbo.ai.omni.chunking.starter.ChunkingStrategyManager;
 import top.yumbo.ai.omni.web.model.ApiResponse;
 import top.yumbo.ai.omni.storage.api.model.Chunk;
@@ -39,16 +40,16 @@ public class ChunkingConfigController {
     @GetMapping("/strategies")
     public ApiResponse<List<StrategyInfo>> getAvailableStrategies() {
         try {
-            List<String> strategyNames = strategyManager.getAvailableStrategies();
+            List<top.yumbo.ai.omni.chunking.ChunkingStrategy> strategyEnums = strategyManager.getAvailableStrategies();
 
-            List<StrategyInfo> strategies = strategyNames.stream()
-                .map(name -> {
-                    Map<String, String> info = strategyManager.getStrategyInfo(name);
+            List<StrategyInfo> strategies = strategyEnums.stream()
+                .map(strategy -> {
+                    String name = strategy.name();
                     return new StrategyInfo(
-                        name,
-                        info.getOrDefault("name", name),
-                        info.getOrDefault("description", ""),
-                        parseDefaultParams(info.getOrDefault("defaultParams", "{}"))
+                        name.toLowerCase().replace("_", "-"),
+                        formatStrategyName(name),
+                        getStrategyDescription(strategy),
+                        getDefaultParams(strategy)
                     );
                 })
                 .collect(Collectors.toList());
@@ -71,17 +72,21 @@ public class ChunkingConfigController {
     @GetMapping("/strategies/{strategyName}")
     public ApiResponse<StrategyInfo> getStrategyInfo(@PathVariable String strategyName) {
         try {
-            Map<String, String> info = strategyManager.getStrategyInfo(strategyName);
+            // 将 kebab-case 转换为 UPPER_SNAKE_CASE
+            String enumName = strategyName.toUpperCase().replace("-", "_");
+            top.yumbo.ai.omni.chunking.ChunkingStrategy strategy;
 
-            if (info.isEmpty()) {
+            try {
+                strategy = top.yumbo.ai.omni.chunking.ChunkingStrategy.valueOf(enumName);
+            } catch (IllegalArgumentException e) {
                 return ApiResponse.error("策略不存在: " + strategyName);
             }
 
             StrategyInfo strategyInfo = new StrategyInfo(
                 strategyName,
-                info.getOrDefault("name", strategyName),
-                info.getOrDefault("description", ""),
-                parseDefaultParams(info.getOrDefault("defaultParams", "{}"))
+                formatStrategyName(strategy.name()),
+                getStrategyDescription(strategy),
+                getDefaultParams(strategy)
             );
 
             return ApiResponse.success(strategyInfo);
@@ -110,13 +115,22 @@ public class ChunkingConfigController {
 
             long startTime = System.currentTimeMillis();
 
+            // 转换策略名称为枚举
+            ChunkingStrategy strategy = parseStrategy(request.getStrategy());
+
+            // 构建配置对象
+            top.yumbo.ai.omni.chunking.ChunkingConfig config = buildChunkingConfig(request.getParams());
+
             // 执行分块
-            List<Chunk> chunks = strategyManager.chunkWithStrategy(
+            List<top.yumbo.ai.omni.chunking.Chunk> chunkingChunks = strategyManager.chunkWithStrategy(
                 "preview_" + System.currentTimeMillis(),
                 request.getContent(),
-                request.getStrategy(),
-                request.getParams()
+                strategy,
+                config
             );
+
+            // 转换为存储模型
+            List<Chunk> chunks = convertChunks(chunkingChunks);
 
             long elapsedTime = System.currentTimeMillis() - startTime;
 
@@ -156,12 +170,21 @@ public class ChunkingConfigController {
             for (StrategyComparison comparison : request.getStrategies()) {
                 long startTime = System.currentTimeMillis();
 
-                List<Chunk> chunks = strategyManager.chunkWithStrategy(
+                // 转换策略名称为枚举
+                top.yumbo.ai.omni.chunking.ChunkingStrategy strategy = parseStrategy(comparison.getStrategy());
+
+                // 构建配置对象
+                top.yumbo.ai.omni.chunking.ChunkingConfig config = buildChunkingConfig(comparison.getParams());
+
+                List<Chunk> chunkingChunks = strategyManager.chunkWithStrategy(
                     "compare_" + System.currentTimeMillis(),
                     request.getContent(),
-                    comparison.getStrategy(),
-                    comparison.getParams()
+                    strategy,
+                    config
                 );
+
+                // 转换为存储模型
+                List<Chunk> chunks = convertChunks(chunkingChunks);
 
                 long elapsedTime = System.currentTimeMillis() - startTime;
 
@@ -188,6 +211,160 @@ public class ChunkingConfigController {
     }
 
     // ========== 辅助方法 ==========
+
+    /**
+     * 将策略名称字符串转换为ChunkingStrategy枚举
+     */
+    private ChunkingStrategy parseStrategy(String strategyName) {
+        try {
+            String enumName = strategyName.toUpperCase().replace("-", "_");
+            return ChunkingStrategy.valueOf(enumName);
+        } catch (IllegalArgumentException e) {
+            log.warn("⚠️ 未知策略: {}, 使用默认策略 FIXED_LENGTH", strategyName);
+            return ChunkingStrategy.FIXED_LENGTH;
+        }
+    }
+
+    /**
+     * 构建ChunkingConfig对象
+     */
+    private top.yumbo.ai.omni.chunking.ChunkingConfig buildChunkingConfig(Map<String, Object> params) {
+        if (params == null) {
+            params = new HashMap<>();
+        }
+
+        return top.yumbo.ai.omni.chunking.ChunkingConfig.builder()
+                .fixedLengthSize(getIntParam(params, "chunkSize", 500))
+                .overlap(getIntParam(params, "overlapSize", 50))
+                .minChunkSize(getIntParam(params, "minChunkSize", 100))
+                .maxChunkSize(getIntParam(params, "maxChunkSize", 2000))
+                .semanticThreshold(getDoubleParam(params, "semanticThreshold", 0.7))
+                .build();
+    }
+
+    /**
+     * 从参数Map中获取整数值
+     */
+    private int getIntParam(Map<String, Object> params, String key, int defaultValue) {
+        if (params == null || !params.containsKey(key)) {
+            return defaultValue;
+        }
+        Object value = params.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * 从参数Map中获取双精度浮点数值
+     */
+    private double getDoubleParam(Map<String, Object> params, String key, double defaultValue) {
+        if (params == null || !params.containsKey(key)) {
+            return defaultValue;
+        }
+        Object value = params.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        try {
+            return Double.parseDouble(value.toString());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * 转换chunking.Chunk列表为storage.Chunk列表
+     */
+    private List<Chunk> convertChunks(List<top.yumbo.ai.omni.chunking.Chunk> chunkingChunks) {
+        List<Chunk> chunks = new ArrayList<>();
+        for (top.yumbo.ai.omni.chunking.Chunk chunkingChunk : chunkingChunks) {
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("strategy", chunkingChunk.getStrategy() != null ? chunkingChunk.getStrategy().name() : "UNKNOWN");
+            metadata.put("startPosition", chunkingChunk.getStartPosition());
+            metadata.put("endPosition", chunkingChunk.getEndPosition());
+            metadata.put("length", chunkingChunk.getLength());
+
+            Chunk chunk = Chunk.builder()
+                    .id(chunkingChunk.getChunkId())
+                    .documentId(chunkingChunk.getDocumentId())
+                    .content(chunkingChunk.getContent())
+                    .sequence(chunkingChunk.getIndex())
+                    .startPosition(chunkingChunk.getStartPosition())
+                    .endPosition(chunkingChunk.getEndPosition())
+                    .metadata(metadata)
+                    .createdAt(System.currentTimeMillis())
+                    .build();
+            chunks.add(chunk);
+        }
+        return chunks;
+    }
+
+    /**
+     * 格式化策略名称
+     */
+    private String formatStrategyName(String enumName) {
+        // 将 FIXED_LENGTH 转换为 "Fixed Length"
+        return Arrays.stream(enumName.split("_"))
+                .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase())
+                .collect(Collectors.joining(" "));
+    }
+
+    /**
+     * 获取策略描述
+     */
+    private String getStrategyDescription(ChunkingStrategy strategy) {
+        return switch (strategy) {
+            case FIXED_LENGTH -> "固定长度分块策略，按指定字符数分割文本";
+            case SENTENCE -> "句子边界分块策略，在句子边界处分割";
+            case PARAGRAPH -> "段落分块策略，按段落分割文本";
+            case SEMANTIC -> "语义分块策略，基于语义相似度分割";
+            case PPL -> "PPL分块策略，基于困惑度分割";
+            case MARKDOWN -> "Markdown分块策略，按Markdown结构分割";
+            default -> "未知策略";
+        };
+    }
+
+    /**
+     * 获取策略默认参数
+     */
+    private Map<String, Object> getDefaultParams(ChunkingStrategy strategy) {
+        Map<String, Object> params = new HashMap<>();
+        switch (strategy) {
+            case FIXED_LENGTH:
+                params.put("chunkSize", 500);
+                params.put("overlapSize", 50);
+                break;
+            case SENTENCE:
+                params.put("maxChunkSize", 1000);
+                params.put("minChunkSize", 100);
+                break;
+            case PARAGRAPH:
+                params.put("maxChunkSize", 2000);
+                params.put("minChunkSize", 200);
+                break;
+            case SEMANTIC:
+                params.put("semanticThreshold", 0.7);
+                params.put("maxChunkSize", 1500);
+                break;
+            case PPL:
+                params.put("perplexityThreshold", 10.0);
+                params.put("maxChunkSize", 1000);
+                break;
+            case MARKDOWN:
+                params.put("maxChunkSize", 2000);
+                break;
+            default:
+                params.put("chunkSize", 500);
+                break;
+        }
+        return params;
+    }
 
     /**
      * 解析默认参数字符串
