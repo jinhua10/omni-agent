@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.mongodb;
+package top.yumbo.ai.omni.knowledge.registry.impl.mongodb;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.h2;
+package top.yumbo.ai.omni.knowledge.registry.impl.h2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

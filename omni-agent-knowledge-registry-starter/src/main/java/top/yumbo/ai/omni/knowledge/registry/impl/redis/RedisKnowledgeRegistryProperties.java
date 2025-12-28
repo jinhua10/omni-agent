@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.redis;
+package top.yumbo.ai.omni.knowledge.registry.impl.redis;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.file;
+package top.yumbo.ai.omni.knowledge.registry.impl.file;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

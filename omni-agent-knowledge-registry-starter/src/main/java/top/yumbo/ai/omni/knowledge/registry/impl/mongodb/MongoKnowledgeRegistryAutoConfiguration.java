@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.mongodb;
+package top.yumbo.ai.omni.knowledge.registry.impl.mongodb;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;

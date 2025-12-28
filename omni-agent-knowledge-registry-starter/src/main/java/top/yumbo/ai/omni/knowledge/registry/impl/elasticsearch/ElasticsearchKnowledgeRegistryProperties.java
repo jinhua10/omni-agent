@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.elasticsearch;
+package top.yumbo.ai.omni.knowledge.registry.impl.elasticsearch;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

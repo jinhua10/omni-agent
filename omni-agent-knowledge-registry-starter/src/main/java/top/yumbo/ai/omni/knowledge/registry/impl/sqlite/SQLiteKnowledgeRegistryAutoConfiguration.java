@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
-import top.yumbo.ai.omni.knowledge.registry.sqlite.SQLiteKnowledgeRegistryProperties;
 
 /**
  * SQLite 知识注册表自动配置

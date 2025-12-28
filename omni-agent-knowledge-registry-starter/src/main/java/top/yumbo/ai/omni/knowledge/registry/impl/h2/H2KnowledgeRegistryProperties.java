@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.h2;
+package top.yumbo.ai.omni.knowledge.registry.impl.h2;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

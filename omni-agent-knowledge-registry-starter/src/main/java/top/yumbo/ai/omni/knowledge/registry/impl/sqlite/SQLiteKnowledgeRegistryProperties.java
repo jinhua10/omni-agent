@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.sqlite;
+package top.yumbo.ai.omni.knowledge.registry.impl.sqlite;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
