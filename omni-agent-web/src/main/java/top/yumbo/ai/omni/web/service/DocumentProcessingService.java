@@ -14,6 +14,7 @@ import top.yumbo.ai.omni.web.websocket.DocumentProcessingWebSocketHandler;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
+import jakarta.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,9 +47,11 @@ public class DocumentProcessingService {
     private final ChunkingStrategyManager chunkingStrategyManager;  // ⭐ 分块策略管理器
 
     // ⭐ 可选服务（如果没有配置相应的 starter，这些服务可能不存在）
+    // 注入所有可用的 EmbeddingService，然后智能选择最合适的
     @Autowired(required = false)
-    @Qualifier("aiService")  // 使用主要的AI服务作为embedding服务
-    private EmbeddingService embeddingService;  // ⭐ 向量化服务（可选）
+    private List<EmbeddingService> embeddingServices;  // ⭐ 所有可用的向量化服务
+
+    private EmbeddingService embeddingService;  // ⭐ 实际使用的向量化服务（智能选择）
 
     @Autowired(required = false)
     private RagService ragService;  // ⭐ RAG索引服务（可选）
@@ -75,6 +78,47 @@ public class DocumentProcessingService {
         this.storageService = storageService;
         this.documentProcessorManager = documentProcessorManager;
         this.chunkingStrategyManager = chunkingStrategyManager;
+    }
+
+    /**
+     * 初始化：智能选择最合适的 EmbeddingService
+     * <p>
+     * 优先级：
+     * 1. onnxEmbeddingService（专用的 Embedding 服务，性能最好）
+     * 2. aiService（通用 AI 服务，支持 Ollama/Online API）
+     * 3. 其他实现了 EmbeddingService 的服务
+     */
+    @PostConstruct
+    public void init() {
+        if (embeddingServices == null || embeddingServices.isEmpty()) {
+            log.warn("⚠️ 未找到任何 EmbeddingService，向量化功能将不可用");
+            this.embeddingService = null;
+            return;
+        }
+
+        // 优先级 1：查找名为 onnxEmbeddingService 的 bean（ONNX 专用服务）
+        for (EmbeddingService service : embeddingServices) {
+            String beanName = service.getClass().getSimpleName();
+            if (beanName.contains("OnnxEmbedding") || beanName.contains("ONNX")) {
+                this.embeddingService = service;
+                log.info("✅ 选择 ONNX Embedding 服务: {}", service.getClass().getSimpleName());
+                return;
+            }
+        }
+
+        // 优先级 2：查找名为 aiService 的 bean（非 Vision 的通用 AI 服务）
+        for (EmbeddingService service : embeddingServices) {
+            String beanName = service.getClass().getSimpleName();
+            if (!beanName.toLowerCase().contains("vision")) {
+                this.embeddingService = service;
+                log.info("✅ 选择 AI Embedding 服务: {}", service.getClass().getSimpleName());
+                return;
+            }
+        }
+
+        // 优先级 3：使用第一个可用的服务
+        this.embeddingService = embeddingServices.get(0);
+        log.info("✅ 选择默认 Embedding 服务: {}", embeddingService.getClass().getSimpleName());
     }
 
     /**

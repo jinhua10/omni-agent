@@ -82,6 +82,7 @@
         <module>omni-agent-ocr-starter-tesseract</module>
 
         <!-- RAG Starters (RAG Starters) -->
+        <module>omni-agent-rag-starter-adapter</module>
         <module>omni-agent-rag-starter-file</module>
         <module>omni-agent-rag-starter-h2</module>
         <module>omni-agent-rag-starter-sqlite</module>
