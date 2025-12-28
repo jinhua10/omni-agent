@@ -180,14 +180,14 @@ public class SemanticStrategy implements ChunkingStrategyExecutor {
                 }
 
                 chunks.add(Chunk.builder()
-                        .chunkId(UUID.randomUUID().toString())
+                        .id(UUID.randomUUID().toString())
                         .documentId(documentId)
                         .content(content.toString())
-                        .index(i)
+                        .sequence(i)
                         .startPosition(chunkStart)
                         .endPosition(chunkEnd)
-                        .length(content.length())
                         .strategy(ChunkingStrategy.SEMANTIC)
+                        .createdAt(System.currentTimeMillis())
                         .build());
             }
         }

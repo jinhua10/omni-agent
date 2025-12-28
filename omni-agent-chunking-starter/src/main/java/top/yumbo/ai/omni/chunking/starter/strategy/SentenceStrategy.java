@@ -45,14 +45,14 @@ public class SentenceStrategy implements ChunkingStrategyExecutor {
             }
 
             Chunk chunk = Chunk.builder()
-                    .chunkId(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID().toString())
                     .documentId(documentId)
                     .content(sentence)
-                    .index(index++)
+                    .sequence(index++)
                     .startPosition(matcher.start())
                     .endPosition(matcher.end())
-                    .length(sentence.length())
                     .strategy(ChunkingStrategy.SENTENCE)
+                    .createdAt(System.currentTimeMillis())
                     .build();
 
             chunks.add(chunk);

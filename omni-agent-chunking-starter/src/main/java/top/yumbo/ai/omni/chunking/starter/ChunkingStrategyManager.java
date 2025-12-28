@@ -70,7 +70,7 @@ public class ChunkingStrategyManager {
         for (int i = 0; i < Math.min(chunks.size(), 3); i++) {
             Chunk chunk = chunks.get(i);
             log.debug("📄 [Chunking] Chunk #{}: id={}, content length={}, preview: {}",
-                    i + 1, chunk.getChunkId(), chunk.getContent().length(),
+                    i + 1, chunk.getId(), chunk.getContent().length(),
                     chunk.getContent().substring(0, Math.min(100, chunk.getContent().length())) + "...");
         }
         if (chunks.size() > 3) {

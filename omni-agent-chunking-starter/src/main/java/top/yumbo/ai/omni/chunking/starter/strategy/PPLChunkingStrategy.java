@@ -198,14 +198,14 @@ public class PPLChunkingStrategy implements ChunkingStrategyExecutor {
                 }
 
                 chunks.add(Chunk.builder()
-                        .chunkId(UUID.randomUUID().toString())
+                        .id(UUID.randomUUID().toString())
                         .documentId(documentId)
                         .content(content.toString().trim())
-                        .index(i)
+                        .sequence(i)
                         .startPosition(chunkStart)
                         .endPosition(chunkEnd)
-                        .length(content.length())
                         .strategy(ChunkingStrategy.PPL)
+                        .createdAt(System.currentTimeMillis())
                         .build());
             }
         }

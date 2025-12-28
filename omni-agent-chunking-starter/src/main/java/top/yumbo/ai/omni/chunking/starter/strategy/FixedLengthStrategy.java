@@ -42,14 +42,14 @@ public class FixedLengthStrategy implements ChunkingStrategyExecutor {
             String chunkContent = content.substring(position, endPosition);
 
             Chunk chunk = Chunk.builder()
-                    .chunkId(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID().toString())
                     .documentId(documentId)
                     .content(chunkContent)
-                    .index(index++)
+                    .sequence(index++)
                     .startPosition(position)
                     .endPosition(endPosition)
-                    .length(chunkContent.length())
                     .strategy(ChunkingStrategy.FIXED_LENGTH)
+                    .createdAt(System.currentTimeMillis())
                     .build();
 
             chunks.add(chunk);

@@ -60,14 +60,14 @@ public class ParagraphStrategy implements ChunkingStrategyExecutor {
             if (paragraphCount >= maxParagraphs && currentChunk.length() > 0) {
                 String chunkContent = currentChunk.toString().trim();
                 chunks.add(Chunk.builder()
-                        .chunkId(UUID.randomUUID().toString())
+                        .id(UUID.randomUUID().toString())
                         .documentId(documentId)
                         .content(chunkContent)
-                        .index(index++)
+                        .sequence(index++)
                         .startPosition(startPosition)
                         .endPosition(startPosition + chunkContent.length())
-                        .length(chunkContent.length())
                         .strategy(ChunkingStrategy.PARAGRAPH)
+                        .createdAt(System.currentTimeMillis())
                         .build());
 
                 startPosition += chunkContent.length();
@@ -86,14 +86,14 @@ public class ParagraphStrategy implements ChunkingStrategyExecutor {
         if (currentChunk.length() > 0) {
             String chunkContent = currentChunk.toString().trim();
             chunks.add(Chunk.builder()
-                    .chunkId(UUID.randomUUID().toString())
+                    .id(UUID.randomUUID().toString())
                     .documentId(documentId)
                     .content(chunkContent)
-                    .index(index)
+                    .sequence(index)
                     .startPosition(startPosition)
                     .endPosition(startPosition + chunkContent.length())
-                    .length(chunkContent.length())
                     .strategy(ChunkingStrategy.PARAGRAPH)
+                    .createdAt(System.currentTimeMillis())
                     .build());
         }
 
