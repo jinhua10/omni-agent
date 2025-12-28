@@ -6,8 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.core.optimization.metrics.OptimizationMetricsCollector;
-import top.yumbo.ai.omni.core.optimization.metrics.OptimizationMetricsCollector.*;
+import top.yumbo.ai.omni.core.old.optimization.metrics.OptimizationMetricsCollector;
 
 import java.util.List;
 import java.util.Map;
@@ -35,9 +34,9 @@ public class OptimizationDashboardController {
      */
     @GetMapping("/dashboard")
     @Operation(summary = "获取Dashboard数据", description = "获取包含算法统计、趋势和最近指标的完整Dashboard数据")
-    public ResponseEntity<DashboardData> getDashboardData() {
+    public ResponseEntity<OptimizationMetricsCollector.DashboardData> getDashboardData() {
         log.debug("Fetching dashboard data");
-        DashboardData data = metricsCollector.getDashboardData();
+        OptimizationMetricsCollector.DashboardData data = metricsCollector.getDashboardData();
         return ResponseEntity.ok(data);
     }
 
@@ -46,9 +45,9 @@ public class OptimizationDashboardController {
      */
     @GetMapping("/statistics")
     @Operation(summary = "获取所有算法统计", description = "获取所有算法的执行统计数据")
-    public ResponseEntity<Map<String, AlgorithmStatistics>> getAllStatistics() {
+    public ResponseEntity<Map<String, OptimizationMetricsCollector.AlgorithmStatistics>> getAllStatistics() {
         log.debug("Fetching all algorithm statistics");
-        Map<String, AlgorithmStatistics> stats = metricsCollector.getAllAlgorithmStatistics();
+        Map<String, OptimizationMetricsCollector.AlgorithmStatistics> stats = metricsCollector.getAllAlgorithmStatistics();
         return ResponseEntity.ok(stats);
     }
 
@@ -57,10 +56,10 @@ public class OptimizationDashboardController {
      */
     @GetMapping("/statistics/{algorithmType}")
     @Operation(summary = "获取特定算法统计", description = "获取指定算法的详细统计数据")
-    public ResponseEntity<AlgorithmStatistics> getAlgorithmStatistics(
+    public ResponseEntity<OptimizationMetricsCollector.AlgorithmStatistics> getAlgorithmStatistics(
             @PathVariable String algorithmType) {
         log.debug("Fetching statistics for algorithm: {}", algorithmType);
-        AlgorithmStatistics stats = metricsCollector.getAlgorithmStatistics(algorithmType);
+        OptimizationMetricsCollector.AlgorithmStatistics stats = metricsCollector.getAlgorithmStatistics(algorithmType);
         return ResponseEntity.ok(stats);
     }
 
@@ -69,10 +68,10 @@ public class OptimizationDashboardController {
      */
     @GetMapping("/metrics/recent")
     @Operation(summary = "获取最近指标", description = "获取最近N条优化指标记录")
-    public ResponseEntity<List<OptimizationMetric>> getRecentMetrics(
+    public ResponseEntity<List<OptimizationMetricsCollector.OptimizationMetric>> getRecentMetrics(
             @RequestParam(defaultValue = "100") int limit) {
         log.debug("Fetching recent metrics, limit: {}", limit);
-        List<OptimizationMetric> metrics = metricsCollector.getRecentMetrics(limit);
+        List<OptimizationMetricsCollector.OptimizationMetric> metrics = metricsCollector.getRecentMetrics(limit);
         return ResponseEntity.ok(metrics);
     }
 
@@ -81,7 +80,7 @@ public class OptimizationDashboardController {
      */
     @PostMapping("/metrics")
     @Operation(summary = "记录优化指标", description = "记录单条优化算法的性能指标")
-    public ResponseEntity<String> recordMetric(@RequestBody OptimizationMetric metric) {
+    public ResponseEntity<String> recordMetric(@RequestBody OptimizationMetricsCollector.OptimizationMetric metric) {
         log.debug("Recording new metric for algorithm: {}", metric.getAlgorithmType());
         metricsCollector.recordMetric(metric);
         return ResponseEntity.ok("Metric recorded successfully");
@@ -92,7 +91,7 @@ public class OptimizationDashboardController {
      */
     @PostMapping("/metrics/batch")
     @Operation(summary = "批量记录指标", description = "批量记录多条优化指标")
-    public ResponseEntity<String> recordMetrics(@RequestBody List<OptimizationMetric> metrics) {
+    public ResponseEntity<String> recordMetrics(@RequestBody List<OptimizationMetricsCollector.OptimizationMetric> metrics) {
         log.debug("Recording {} metrics", metrics.size());
         metricsCollector.recordMetrics(metrics);
         return ResponseEntity.ok(metrics.size() + " metrics recorded successfully");

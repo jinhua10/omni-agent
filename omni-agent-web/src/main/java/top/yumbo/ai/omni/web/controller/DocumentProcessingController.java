@@ -5,6 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import top.yumbo.ai.omni.chunking.starter.ChunkingStrategyManager;
+import top.yumbo.ai.omni.document.processor.DocumentProcessor;
+import top.yumbo.ai.omni.document.processor.model.DocumentExtractionResult;
+import top.yumbo.ai.omni.document.processor.service.DocumentExtractionResultService;
+import top.yumbo.ai.omni.document.processor.starter.DocumentProcessorManager;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.web.model.ApiResponse;
 import top.yumbo.ai.omni.web.model.DocumentProcessStep;
@@ -41,10 +46,10 @@ public class DocumentProcessingController {
 
     private final SystemRAGConfigService configService;
     private final top.yumbo.ai.omni.web.service.DocumentProcessingService processingService;
-    private final top.yumbo.ai.omni.core.document.DocumentProcessorManager documentProcessorManager;
-    private final top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager chunkingStrategyManager;
+    private final DocumentProcessorManager documentProcessorManager;
+    private final ChunkingStrategyManager chunkingStrategyManager;
     private final DocumentStorageService storageService;
-    private final top.yumbo.ai.omni.core.document.service.DocumentExtractionResultService extractionResultService;
+    private final DocumentExtractionResultService extractionResultService;
 
     /**
      * 触发文本提取（流式SSE）
@@ -89,7 +94,7 @@ public class DocumentProcessingController {
 
                 // ⭐ 2. 创建提取记录
                 long startTime = System.currentTimeMillis();
-                var extractionResult = top.yumbo.ai.omni.core.document.model.DocumentExtractionResult.builder()
+                var extractionResult = DocumentExtractionResult.builder()
                         .documentId(documentId)
                         .fileName(documentId)
                         .fileExtension(getFileExtension(documentId))
@@ -641,8 +646,8 @@ public class DocumentProcessingController {
             String fileExtension = getFileExtension(documentId);
 
             // 创建处理上下文
-            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
-                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+            DocumentProcessor.ProcessingContext context =
+                   DocumentProcessor.ProcessingContext.builder()
                             .fileBytes(content)
                             .fileExtension(fileExtension)
                             .originalFileName(documentId)
@@ -651,7 +656,7 @@ public class DocumentProcessingController {
                             .build();
 
             // 调用文档处理器
-            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
+            DocumentProcessor.ProcessingResult result =
                     documentProcessorManager.processDocument(context);
 
             if (result.isSuccess() && result.getContent() != null) {
@@ -687,8 +692,8 @@ public class DocumentProcessingController {
                 options.put("streamCallback", streamCallback);
             }
 
-            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
-                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+            DocumentProcessor.ProcessingContext context =
+                    DocumentProcessor.ProcessingContext.builder()
                             .fileBytes(content)
                             .fileExtension(fileExtension)
                             .originalFileName(documentId)
@@ -696,7 +701,7 @@ public class DocumentProcessingController {
                             .options(options)
                             .build();
 
-            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
+            DocumentProcessor.ProcessingResult result =
                     documentProcessorManager.processDocument(context);
 
             return result.isSuccess() && result.getContent() != null ? result.getContent() : "";

@@ -10,15 +10,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import top.yumbo.ai.omni.chunking.starter.ChunkingStrategyManager;
+import top.yumbo.ai.omni.document.processor.starter.DocumentProcessorManager;
+import top.yumbo.ai.omni.document.processor.starter.image.ImageStorageService;
 import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
 import top.yumbo.ai.omni.web.util.FileStorageUtil;
 import top.yumbo.ai.omni.rag.model.SearchResult;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.Document;
-import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
-import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
-import top.yumbo.ai.omni.core.image.ImageStorageService;
 import top.yumbo.ai.omni.web.service.FileWatcherService;
 import org.springframework.beans.factory.annotation.Value;
 
