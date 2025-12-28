@@ -41,7 +41,7 @@
         <!-- 1. Knowledge Registry Starter（知识注册表） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-knowledge-registry-starter-file</artifactId>
+            <artifactId>omni-agent-knowledge-registry-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -49,7 +49,7 @@
         <!-- 主存储：File（本地文件系统） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-document-storage-starter-file</artifactId>
+            <artifactId>omni-agent-document-storage-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -57,14 +57,7 @@
         <!-- 主检索：Lucene（高性能全文检索） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-rag-starter-file</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- 备份检索：SQLite FTS5（备用全文检索） -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-rag-starter-sqlite</artifactId>
+            <artifactId>omni-agent-rag-starter-adapter</artifactId>
             <version>${project.version}</version>
         </dependency>
 

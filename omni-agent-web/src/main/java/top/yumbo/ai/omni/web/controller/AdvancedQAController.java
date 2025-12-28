@@ -54,6 +54,7 @@ public class AdvancedQAController {
 
     private final AIService aiService;
     private final RagService ragService;
+    @Autowired(required = false)
     private final RoleService roleService;
     private final HOPEKnowledgeManager hopeManager;
     private final EnhancedQueryService enhancedQueryService;

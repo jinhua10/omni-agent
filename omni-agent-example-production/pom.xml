@@ -28,7 +28,7 @@
         <!-- 使用 S3 作为文档存储 -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-document-storage-starter-s3</artifactId>
+            <artifactId>omni-agent-document-storage-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -36,7 +36,7 @@
         <!-- 使用 Elasticsearch 作为向量检索 -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-rag-starter-elasticsearch</artifactId>
+            <artifactId>omni-agent-rag-starter-adapter</artifactId>
             <version>${project.version}</version>
         </dependency>
 

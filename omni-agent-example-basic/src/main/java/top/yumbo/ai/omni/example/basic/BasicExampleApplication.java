@@ -39,7 +39,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ComponentScan(basePackages = {
     "top.yumbo.ai.omni.p2p.basic",
     "top.yumbo.ai.omni.core",
-    "top.yumbo.ai.omni.marketplace",
+    "top.yumbo.ai.omni.knowledge",
     "top.yumbo.ai.omni.web",
     "top.yumbo.ai.omni.workflow"  // 添加 workflow 包扫描
 })
