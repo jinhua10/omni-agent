@@ -4,6 +4,7 @@ package top.yumbo.ai.omni.document.processor.starter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.document.processor.DocumentProcessor;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
