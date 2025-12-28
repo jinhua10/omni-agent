@@ -2,13 +2,17 @@ package top.yumbo.ai.omni.document.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.config.VisionLLMBatchProcessingProperties;
 import top.yumbo.ai.omni.document.processor.extension.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +35,15 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
 
     @Autowired(required = false)
     protected AIService visionAIService;
+
+    // ⭐ 批处理配置
+    @Autowired(required = false)
+    protected VisionLLMBatchProcessingProperties batchProcessingConfig;
+
+    // ⭐ Vision LLM 线程池（用于并行处理）
+    @Autowired(required = false)
+    @Qualifier("visionLlmExecutor")
+    protected Executor visionLlmExecutor;
 
     // ⭐ 扩展接口自动注入（类似于 Spring 的扩展机制）
     @Autowired(required = false)
@@ -172,41 +185,45 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
 
     /**
      * 处理图片（调用 Vision LLM + ImageHandler）
+     * ⭐ 优化：支持智能批处理和并行处理
      */
     protected void processImages(ExtractedContent content, ProcessingContext context) {
         if (visionAIService == null) {
             log.warn("⚠️ Vision AI Service 未配置，图片将不被处理");
+            return;
         }
 
-        for (ContentBlock block : content.getBlocks()) {
-            if (block.isImage()) {
-                for (ExtractedImage image : block.getImages()) {
-                    try {
-                        // ⭐ 先应用 ImageHandler
-                        image = applyImageHandlers(image, context);
+        // 收集所有图片块
+        List<ContentBlock> imageBlocks = content.getBlocks().stream()
+                .filter(ContentBlock::isImage)
+                .collect(Collectors.toList());
 
-                        // 调用 Vision LLM 分析图片（如果配置了）
-                        if (visionAIService != null) {
-                            String imageDescription = analyzeImage(image);
+        if (imageBlocks.isEmpty()) {
+            log.debug("📋 没有图片需要处理");
+            return;
+        }
 
-                            // 将描述保存到图片元数据
-                            if (image.getMetadata() == null) {
-                                image.setMetadata(new HashMap<>());
-                            }
-                            image.getMetadata().put("visionDescription", imageDescription);
+        // 统计总图片数
+        int totalImages = imageBlocks.stream()
+                .mapToInt(block -> block.getImages().size())
+                .sum();
 
-                            log.debug("🖼️ 图片分析完成: {} 字符", imageDescription.length());
-                        }
+        log.info("🖼️ 准备处理 {} 个图片块，共 {} 张图片", imageBlocks.size(), totalImages);
 
-                    } catch (Exception e) {
-                        log.error("❌ 图片分析失败: {}", e.getMessage());
-                        if (image.getMetadata() == null) {
-                            image.setMetadata(new HashMap<>());
-                        }
-                        image.getMetadata().put("visionDescription", "[图片分析失败]");
-                    }
-                }
-            }
+        // ⭐ 智能分批：将图片块分组
+        List<List<ContentBlock>> batches = smartBatchingForImages(imageBlocks);
+        log.info("📦 智能分批完成: {} 个批次", batches.size());
+
+        // ⭐ 发送批次信息（流式模式）
+        sendBatchInfo(context, batches.size(), totalImages);
+
+        // ⭐ 选择处理方式：并行或串行
+        if (visionLlmExecutor != null && batches.size() > 1) {
+            log.info("🚀 并行处理 {} 个批次", batches.size());
+            processImageBatchesInParallel(batches, context);
+        } else {
+            log.info("🔄 串行处理 {} 个批次", batches.size());
+            processImageBatchesSequentially(batches, context);
         }
     }
 
@@ -529,6 +546,294 @@ public abstract class AbstractDocumentProcessor implements DocumentProcessor {
                 log.error("❌ 元数据提取器执行失败: {}", extractor.getName(), e);
                 // 不抛出异常，继续处理
             }
+        }
+    }
+
+    // ====================== 批处理方法 ======================
+
+    /**
+     * 智能分批：根据配置动态决定批次大小
+     */
+    protected List<List<ContentBlock>> smartBatchingForImages(List<ContentBlock> imageBlocks) {
+        // 如果没有配置或未启用批处理，使用默认批次大小
+        int batchSize = 5; // 默认值
+        if (batchProcessingConfig != null && batchProcessingConfig.isEnabled()) {
+            batchSize = batchProcessingConfig.getMaxBatchSize();
+        }
+
+        List<List<ContentBlock>> batches = new ArrayList<>();
+        List<ContentBlock> currentBatch = new ArrayList<>();
+
+        for (ContentBlock block : imageBlocks) {
+            if (currentBatch.size() < batchSize) {
+                currentBatch.add(block);
+            } else {
+                if (!currentBatch.isEmpty()) {
+                    batches.add(new ArrayList<>(currentBatch));
+                    currentBatch.clear();
+                }
+                currentBatch.add(block);
+            }
+        }
+
+        if (!currentBatch.isEmpty()) {
+            batches.add(currentBatch);
+        }
+
+        log.debug("📦 智能分批: {} 个图片块 -> {} 个批次，每批最多 {} 个",
+                imageBlocks.size(), batches.size(), batchSize);
+
+        return batches;
+    }
+
+    /**
+     * 发送批次信息（流式模式）
+     */
+    protected void sendBatchInfo(ProcessingContext context, int totalBatches, int totalImages) {
+        if (context == null || context.getOptions() == null) {
+            return;
+        }
+
+        boolean isStreaming = Boolean.TRUE.equals(context.getOptions().get("streaming"));
+        Object callbackObj = context.getOptions().get("streamCallback");
+
+        if (isStreaming && callbackObj instanceof java.util.function.Consumer) {
+            @SuppressWarnings("unchecked")
+            java.util.function.Consumer<String> callback =
+                    (java.util.function.Consumer<String>) callbackObj;
+
+            String batchInfo = String.format(
+                    "BATCH_INFO:{\"totalBatches\":%d,\"totalImages\":%d}\n",
+                    totalBatches, totalImages
+            );
+            callback.accept(batchInfo);
+            log.debug("📤 已发送批次信息: {} 批次, {} 张图片", totalBatches, totalImages);
+        }
+    }
+
+    /**
+     * 并行处理图片批次
+     */
+    protected void processImageBatchesInParallel(List<List<ContentBlock>> batches, ProcessingContext context) {
+        log.info("🚀 开始并行处理 {} 个批次", batches.size());
+        long startTime = System.currentTimeMillis();
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        for (int i = 0; i < batches.size(); i++) {
+            final int batchIndex = i;
+            final List<ContentBlock> batch = batches.get(i);
+
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                try {
+                    log.debug("⚙️ [Thread: {}] 处理批次 #{}",
+                            Thread.currentThread().getName(), batchIndex + 1);
+
+                    // 发送批次开始标记
+                    sendBatchStartMarker(context, batchIndex, batches.size());
+
+                    // 处理批次中的所有图片
+                    processImageBatch(batch, context, batchIndex);
+
+                    // 发送批次结束标记
+                    sendBatchEndMarker(context, batchIndex);
+
+                    log.debug("✅ [Thread: {}] 批次 #{} 完成",
+                            Thread.currentThread().getName(), batchIndex + 1);
+
+                } catch (Exception e) {
+                    log.error("❌ 批次 #{} 处理失败", batchIndex + 1, e);
+                }
+            }, visionLlmExecutor);
+
+            futures.add(future);
+        }
+
+        // 等待所有批次完成
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        long elapsed = System.currentTimeMillis() - startTime;
+        log.info("✅ 并行处理完成: 耗时 {}ms, 平均每批次 {}ms",
+                elapsed, elapsed / batches.size());
+    }
+
+    /**
+     * 串行处理图片批次
+     */
+    protected void processImageBatchesSequentially(List<List<ContentBlock>> batches, ProcessingContext context) {
+        log.info("🔄 开始串行处理 {} 个批次", batches.size());
+        long startTime = System.currentTimeMillis();
+
+        for (int i = 0; i < batches.size(); i++) {
+            try {
+                log.debug("⚙️ 处理批次 #{}/{}", i + 1, batches.size());
+
+                // 发送批次开始标记
+                sendBatchStartMarker(context, i, batches.size());
+
+                // 处理批次
+                processImageBatch(batches.get(i), context, i);
+
+                // 发送批次结束标记
+                sendBatchEndMarker(context, i);
+
+                log.debug("✅ 批次 #{} 完成", i + 1);
+
+            } catch (Exception e) {
+                log.error("❌ 批次 #{} 处理失败", i + 1, e);
+            }
+        }
+
+        long elapsed = System.currentTimeMillis() - startTime;
+        log.info("✅ 串行处理完成: 耗时 {}ms, 平均每批次 {}ms",
+                elapsed, elapsed / batches.size());
+    }
+
+    /**
+     * 处理单个图片批次
+     */
+    protected void processImageBatch(List<ContentBlock> batch, ProcessingContext context, int batchIndex) {
+        for (ContentBlock block : batch) {
+            for (ExtractedImage image : block.getImages()) {
+                try {
+                    // 先应用 ImageHandler
+                    ExtractedImage processedImage = applyImageHandlers(image, context);
+
+                    // 调用 Vision LLM 分析图片
+                    String imageDescription = analyzeImageWithRetry(processedImage, context, batchIndex);
+
+                    // 将描述保存到图片元数据
+                    if (processedImage.getMetadata() == null) {
+                        processedImage.setMetadata(new HashMap<>());
+                    }
+                    processedImage.getMetadata().put("visionDescription", imageDescription);
+                    processedImage.getMetadata().put("batchIndex", batchIndex);
+
+                    log.debug("🖼️ 图片分析完成: {} 字符 (批次 {})",
+                            imageDescription.length(), batchIndex);
+
+                } catch (Exception e) {
+                    log.error("❌ 图片分析失败 (批次 {}): {}", batchIndex, e.getMessage());
+                    if (image.getMetadata() == null) {
+                        image.setMetadata(new HashMap<>());
+                    }
+                    image.getMetadata().put("visionDescription", "[图片分析失败: " + e.getMessage() + "]");
+                }
+            }
+        }
+    }
+
+    /**
+     * 分析图片（带重试机制）
+     */
+    protected String analyzeImageWithRetry(ExtractedImage image, ProcessingContext context, int batchIndex) {
+        int maxRetries = 3;
+        Exception lastException = null;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                if (attempt > 1) {
+                    log.debug("🔄 重试图片分析 (第 {}/{} 次，批次 {})",
+                            attempt, maxRetries, batchIndex);
+                    Thread.sleep(2000L * attempt); // 递增等待：2s, 4s, 6s
+                }
+
+                String result = analyzeImage(image);
+
+                // 流式模式下发送内容
+                sendBatchContent(context, batchIndex, result);
+
+                return result;
+
+            } catch (UnsupportedOperationException e) {
+                log.error("❌ 当前AI服务不支持Vision功能: {}", e.getMessage());
+                return "[当前AI服务不支持Vision功能]";
+
+            } catch (Exception e) {
+                lastException = e;
+
+                boolean isTimeout = e.getMessage() != null &&
+                        (e.getMessage().contains("timeout") ||
+                         e.getMessage().contains("Connection timed out"));
+
+                if (isTimeout && attempt < maxRetries) {
+                    log.warn("⚠️ 图片分析超时，将重试... (尝试 {}/{})", attempt, maxRetries);
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        log.error("❌ 图片分析失败（已重试{}次）: {}", maxRetries,
+                lastException != null ? lastException.getMessage() : "未知错误");
+        return "[图片分析失败: " + (lastException != null ? lastException.getMessage() : "未知错误") + "]";
+    }
+
+    /**
+     * 发送批次开始标记
+     */
+    protected void sendBatchStartMarker(ProcessingContext context, int batchIndex, int totalBatches) {
+        if (context == null || context.getOptions() == null) {
+            return;
+        }
+
+        Object callbackObj = context.getOptions().get("streamCallback");
+        if (callbackObj instanceof java.util.function.Consumer) {
+            @SuppressWarnings("unchecked")
+            java.util.function.Consumer<String> callback =
+                    (java.util.function.Consumer<String>) callbackObj;
+
+            String marker = String.format(
+                    "BATCH_START:{\"batchIndex\":%d,\"batchNumber\":%d,\"totalBatches\":%d}\n",
+                    batchIndex, batchIndex + 1, totalBatches
+            );
+            callback.accept(marker);
+            log.debug("📤 批次 {} 开始", batchIndex + 1);
+        }
+    }
+
+    /**
+     * 发送批次结束标记
+     */
+    protected void sendBatchEndMarker(ProcessingContext context, int batchIndex) {
+        if (context == null || context.getOptions() == null) {
+            return;
+        }
+
+        Object callbackObj = context.getOptions().get("streamCallback");
+        if (callbackObj instanceof java.util.function.Consumer) {
+            @SuppressWarnings("unchecked")
+            java.util.function.Consumer<String> callback =
+                    (java.util.function.Consumer<String>) callbackObj;
+
+            String marker = String.format(
+                    "BATCH_END:{\"batchIndex\":%d,\"batchNumber\":%d}\n",
+                    batchIndex, batchIndex + 1
+            );
+            callback.accept(marker);
+            log.debug("✅ 批次 {} 结束", batchIndex + 1);
+        }
+    }
+
+    /**
+     * 发送批次内容
+     */
+    protected void sendBatchContent(ProcessingContext context, int batchIndex, String content) {
+        if (context == null || context.getOptions() == null) {
+            return;
+        }
+
+        boolean isStreaming = Boolean.TRUE.equals(context.getOptions().get("streaming"));
+        Object callbackObj = context.getOptions().get("streamCallback");
+
+        if (isStreaming && callbackObj instanceof java.util.function.Consumer) {
+            @SuppressWarnings("unchecked")
+            java.util.function.Consumer<String> callback =
+                    (java.util.function.Consumer<String>) callbackObj;
+
+            // 使用 BATCH_CONTENT 格式发送
+            callback.accept("BATCH_CONTENT:" + batchIndex + ":" + content);
         }
     }
 }
