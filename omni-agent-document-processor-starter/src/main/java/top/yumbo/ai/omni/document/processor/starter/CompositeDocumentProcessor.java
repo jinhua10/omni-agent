@@ -1,69 +1,69 @@
 package top.yumbo.ai.omni.document.processor.starter;
-}
-    }
-        return lastDot > 0 ? filename.substring(lastDot) : "";
-        int lastDot = filename.lastIndexOf('.');
-    private String getExtension(String filename) {
 
-    }
-        return processors.stream().anyMatch(p -> p.supportsExtension(extension));
-    public boolean supportsExtension(String extension) {
-    @Override
+import lombok.extern.slf4j.Slf4j;
+import top.yumbo.ai.omni.document.processor.*;
 
-    }
-        return processors.stream().anyMatch(p -> p.supports(type));
-    public boolean supports(DocumentType type) {
-    @Override
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
-    }
-        return allTypes;
-        }
-            allTypes.addAll(processor.getSupportedTypes());
-        for (DocumentProcessor processor : processors) {
-        List<DocumentType> allTypes = new ArrayList<>();
-    public List<DocumentType> getSupportedTypes() {
-    @Override
-
-    }
-        throw new ProcessorException("不支持的文档类型: " + type);
-
-        }
-            }
-                return processor.process(documentId, input);
-                log.debug("📄 使用 {} 处理文档: {}", processor.getClass().getSimpleName(), documentId);
-            if (processor.supports(type)) {
-        for (DocumentProcessor processor : processors) {
-        // 查找支持该类型的处理器
-
-        DocumentType type = DocumentType.fromExtension(extension);
-        String extension = getExtension(documentId);
-        // 从文档ID推断类型
-    public ProcessedDocument process(String documentId, InputStream input) throws ProcessorException {
-    @Override
-
-    }
-        log.info("✅ 组合文档处理器初始化完成，注册了 {} 个处理器", this.processors.size());
-        this.processors = processors != null ? processors : new ArrayList<>();
-    public CompositeDocumentProcessor(List<DocumentProcessor> processors) {
-
-    private final List<DocumentProcessor> processors;
-
-public class CompositeDocumentProcessor implements DocumentProcessor {
-@Slf4j
- */
- * @since 1.0.0
- * @author OmniAgent Team
+/**
+ * 组合文档处理器
  *
  * <p>根据文档类型自动选择合适的处理器</p>
  *
- * 组合文档处理器
-/**
+ * @author OmniAgent Team
+ * @since 1.0.0
+ */
+@Slf4j
+public class CompositeDocumentProcessor implements DocumentProcessor {
 
-import java.util.List;
-import java.util.ArrayList;
-import java.io.InputStream;
+    private final List<DocumentProcessor> processors;
 
-import top.yumbo.ai.omni.document.processor.*;
-import lombok.extern.slf4j.Slf4j;
+    public CompositeDocumentProcessor(List<DocumentProcessor> processors) {
+        this.processors = processors != null ? processors : new ArrayList<>();
+        log.info("✅ 组合文档处理器初始化完成，注册了 {} 个处理器", this.processors.size());
+    }
 
+    @Override
+    public ProcessedDocument process(String documentId, InputStream input) throws ProcessorException {
+        // 从文档ID推断类型
+        String extension = getExtension(documentId);
+        DocumentType type = DocumentType.fromExtension(extension);
+
+        // 查找支持该类型的处理器
+        for (DocumentProcessor processor : processors) {
+            if (processor.supports(type)) {
+                log.debug("📄 使用 {} 处理文档: {}", processor.getClass().getSimpleName(), documentId);
+                return processor.process(documentId, input);
+            }
+        }
+
+        throw new ProcessorException("不支持的文档类型: " + type);
+    }
+
+    @Override
+    public List<DocumentType> getSupportedTypes() {
+        List<DocumentType> allTypes = new ArrayList<>();
+        for (DocumentProcessor processor : processors) {
+            allTypes.addAll(processor.getSupportedTypes());
+        }
+        return allTypes;
+    }
+
+    @Override
+    public boolean supports(DocumentType type) {
+        return processors.stream().anyMatch(p -> p.supports(type));
+    }
+
+    @Override
+    public boolean supportsExtension(String extension) {
+        return processors.stream().anyMatch(p -> p.supportsExtension(extension));
+    }
+
+    private String getExtension(String filename) {
+        int lastDot = filename.lastIndexOf('.');
+        return lastDot > 0 ? filename.substring(lastDot) : "";
+    }
+}
 
