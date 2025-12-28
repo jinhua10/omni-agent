@@ -2,15 +2,17 @@ package top.yumbo.ai.omni.document.processor.starter.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.text.PDFTextStripper;
 import top.yumbo.ai.omni.document.processor.*;
 import top.yumbo.ai.omni.document.processor.starter.config.DocumentProcessorProperties;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * PDF 文档处理器（增强版）
@@ -131,6 +133,87 @@ public class PDFProcessor implements DocumentProcessor {
     @Override
     public boolean supportsExtension(String extension) {
         return ".pdf".equalsIgnoreCase(extension);
+    }
+
+    /**
+     * 提取页面中的图片
+     */
+    private List<ExtractedImage> extractImagesFromPage(PDPage page, int pageNumber) {
+        List<ExtractedImage> images = new ArrayList<>();
+        int imageIndex = 0;
+
+        try {
+            if (page.getResources() != null && page.getResources().getXObjectNames() != null) {
+                for (org.apache.pdfbox.cos.COSName name : page.getResources().getXObjectNames()) {
+                    try {
+                        org.apache.pdfbox.pdmodel.graphics.PDXObject xObject =
+                                page.getResources().getXObject(name);
+
+                        if (xObject instanceof PDImageXObject) {
+                            PDImageXObject imageObject = (PDImageXObject) xObject;
+                            ExtractedImage image = extractPDFImage(imageObject, pageNumber, imageIndex++);
+                            if (image != null) {
+                                images.add(image);
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("提取 PDF 图片失败: page={}, name={}", pageNumber, name, e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("提取 PDF 第 {} 页图片失败", pageNumber, e);
+        }
+
+        return images;
+    }
+
+    /**
+     * 提取 PDF 图片对象
+     */
+    private ExtractedImage extractPDFImage(PDImageXObject imageObject, int pageNumber, int imageIndex) {
+        try {
+            BufferedImage bufferedImage = imageObject.getImage();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            String format = detectImageFormat(imageObject);
+            ImageIO.write(bufferedImage, format, baos);
+            byte[] imageData = baos.toByteArray();
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("pageNumber", pageNumber);
+            metadata.put("imageIndex", imageIndex);
+            metadata.put("documentType", "PDF");
+            metadata.put("colorSpace", imageObject.getColorSpace().getName());
+
+            return ExtractedImage.builder()
+                    .imageId(UUID.randomUUID().toString())
+                    .data(imageData)
+                    .format(format)
+                    .pageNumber(pageNumber)
+                    .width(bufferedImage.getWidth())
+                    .height(bufferedImage.getHeight())
+                    .metadata(metadata)
+                    .createdAt(System.currentTimeMillis())
+                    .build();
+        } catch (Exception e) {
+            log.warn("提取 PDF 图片失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 检测图片格式
+     */
+    private String detectImageFormat(PDImageXObject imageObject) {
+        try {
+            String suffix = imageObject.getSuffix();
+            if (suffix != null && !suffix.isEmpty()) {
+                return suffix.toLowerCase();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+        return "png";
     }
 }
 

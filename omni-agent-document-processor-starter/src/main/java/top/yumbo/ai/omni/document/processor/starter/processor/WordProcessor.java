@@ -3,6 +3,7 @@ package top.yumbo.ai.omni.document.processor.starter.processor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.usermodel.Paragraph;
+import org.apache.poi.hwpf.usermodel.Picture;
 import org.apache.poi.hwpf.usermodel.Range;
 import org.apache.poi.xwpf.usermodel.*;
 import top.yumbo.ai.omni.document.processor.*;
@@ -229,6 +230,78 @@ public class WordProcessor implements DocumentProcessor {
     private String getExtension(String filename) {
         int lastDot = filename.lastIndexOf('.');
         return lastDot > 0 ? filename.substring(lastDot) : "";
+    }
+
+    /**
+     * 提取 XWPF 图片（.docx）
+     */
+    private ExtractedImage extractXWPFPicture(XWPFPicture picture, int imageIndex) {
+        try {
+            XWPFPictureData pictureData = picture.getPictureData();
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("fileName", pictureData.getFileName());
+            metadata.put("imageIndex", imageIndex);
+            metadata.put("documentType", "Word");
+
+            return ExtractedImage.builder()
+                    .imageId(UUID.randomUUID().toString())
+                    .data(pictureData.getData())
+                    .format(extractFormat(pictureData.getFileName()))
+                    .pageNumber(imageIndex + 1)
+                    .metadata(metadata)
+                    .createdAt(System.currentTimeMillis())
+                    .build();
+        } catch (Exception e) {
+            log.warn("提取 Word 图片失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 提取 HWPF 图片（.doc）
+     */
+    private ExtractedImage extractHWPFPicture(Picture picture, int imageIndex) {
+        try {
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("imageIndex", imageIndex);
+            metadata.put("documentType", "Word");
+            metadata.put("mimeType", picture.getMimeType());
+
+            String format = "png";
+            if (picture.getMimeType() != null) {
+                if (picture.getMimeType().contains("jpeg") || picture.getMimeType().contains("jpg")) {
+                    format = "jpg";
+                } else if (picture.getMimeType().contains("png")) {
+                    format = "png";
+                } else if (picture.getMimeType().contains("gif")) {
+                    format = "gif";
+                }
+            }
+
+            return ExtractedImage.builder()
+                    .imageId(UUID.randomUUID().toString())
+                    .data(picture.getContent())
+                    .format(format)
+                    .pageNumber(imageIndex + 1)
+                    .metadata(metadata)
+                    .createdAt(System.currentTimeMillis())
+                    .build();
+        } catch (Exception e) {
+            log.warn("提取 Word 图片失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 从文件名提取格式
+     */
+    private String extractFormat(String fileName) {
+        if (fileName == null || !fileName.contains(".")) {
+            return "png";
+        }
+        String ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+        return ext.isEmpty() ? "png" : ext;
     }
 }
 

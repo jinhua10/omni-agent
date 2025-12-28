@@ -1,7 +1,9 @@
 package top.yumbo.ai.omni.document.processor.starter.processor;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
 import top.yumbo.ai.omni.document.processor.*;
 import top.yumbo.ai.omni.document.processor.starter.config.DocumentProcessorProperties;
 
@@ -267,6 +269,107 @@ public class ExcelProcessor implements DocumentProcessor {
     public boolean supportsExtension(String extension) {
         return ".xls".equalsIgnoreCase(extension) ||
                ".xlsx".equalsIgnoreCase(extension);
+    }
+
+    /**
+     * 提取工作表中的图片
+     */
+    private List<ExtractedImage> extractImagesFromSheet(Sheet sheet, int sheetIndex) {
+        List<ExtractedImage> images = new ArrayList<>();
+
+        try {
+            if (sheet instanceof XSSFSheet) {
+                XSSFDrawing drawing = ((XSSFSheet) sheet).getDrawingPatriarch();
+                if (drawing != null) {
+                    for (XSSFShape shape : drawing.getShapes()) {
+                        if (shape instanceof XSSFPicture) {
+                            ExtractedImage image = extractXSSFPicture((XSSFPicture) shape, sheet, sheetIndex);
+                            if (image != null) {
+                                images.add(image);
+                            }
+                        }
+                    }
+                }
+            } else if (sheet instanceof HSSFSheet) {
+                HSSFPatriarch patriarch = ((HSSFSheet) sheet).getDrawingPatriarch();
+                if (patriarch != null) {
+                    for (HSSFShape shape : patriarch.getChildren()) {
+                        if (shape instanceof HSSFPicture) {
+                            ExtractedImage image = extractHSSFPicture((HSSFPicture) shape, sheet, sheetIndex);
+                            if (image != null) {
+                                images.add(image);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("提取工作表图片失败: {}", sheet.getSheetName(), e);
+        }
+
+        return images;
+    }
+
+    private ExtractedImage extractXSSFPicture(XSSFPicture picture, Sheet sheet, int sheetIndex) {
+        try {
+            XSSFPictureData pictureData = picture.getPictureData();
+            XSSFClientAnchor anchor = picture.getClientAnchor();
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("sheetName", sheet.getSheetName());
+            metadata.put("sheetIndex", sheetIndex);
+            metadata.put("location", String.format("第%d行, 第%d列",
+                    anchor.getRow1() + 1, anchor.getCol1() + 1));
+
+            return ExtractedImage.builder()
+                    .imageId(UUID.randomUUID().toString())
+                    .data(pictureData.getData())
+                    .format(pictureData.suggestFileExtension())
+                    .pageNumber(sheetIndex)
+                    .position(ExtractedImage.ImagePosition.builder()
+                            .row((int) anchor.getRow1())
+                            .column((int) anchor.getCol1())
+                            .description(String.format("第%d行, 第%d列",
+                                    anchor.getRow1() + 1, anchor.getCol1() + 1))
+                            .build())
+                    .metadata(metadata)
+                    .createdAt(System.currentTimeMillis())
+                    .build();
+        } catch (Exception e) {
+            log.warn("提取 Excel 图片失败", e);
+            return null;
+        }
+    }
+
+    private ExtractedImage extractHSSFPicture(HSSFPicture picture, Sheet sheet, int sheetIndex) {
+        try {
+            HSSFPictureData pictureData = picture.getPictureData();
+            HSSFClientAnchor anchor = picture.getClientAnchor();
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("sheetName", sheet.getSheetName());
+            metadata.put("sheetIndex", sheetIndex);
+            metadata.put("location", String.format("第%d行, 第%d列",
+                    anchor.getRow1() + 1, anchor.getCol1() + 1));
+
+            return ExtractedImage.builder()
+                    .imageId(UUID.randomUUID().toString())
+                    .data(pictureData.getData())
+                    .format(pictureData.suggestFileExtension())
+                    .pageNumber(sheetIndex)
+                    .position(ExtractedImage.ImagePosition.builder()
+                            .row((int) anchor.getRow1())
+                            .column((int) anchor.getCol1())
+                            .description(String.format("第%d行, 第%d列",
+                                    anchor.getRow1() + 1, anchor.getCol1() + 1))
+                            .build())
+                    .metadata(metadata)
+                    .createdAt(System.currentTimeMillis())
+                    .build();
+        } catch (Exception e) {
+            log.warn("提取 Excel 图片失败", e);
+            return null;
+        }
     }
 }
 

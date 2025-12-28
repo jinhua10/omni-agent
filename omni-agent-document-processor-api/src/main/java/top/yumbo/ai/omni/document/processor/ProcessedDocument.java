@@ -7,7 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,6 +61,12 @@ public class ProcessedDocument implements Serializable {
      * 字符数
      */
     private Integer characterCount;
+
+    /**
+     * 提取的图片列表
+     */
+    @Builder.Default
+    private List<ExtractedImage> images = new ArrayList<>();
 
     /**
      * 元数据
