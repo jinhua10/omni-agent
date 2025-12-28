@@ -1,6 +1,8 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
 import org.springframework.stereotype.Component;
+import top.yumbo.ai.omni.chunking.ChunkingStrategy;
+import top.yumbo.ai.omni.chunking.starter.strategy.FixedLengthStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.UsageExample;
 
@@ -16,8 +18,8 @@ import java.util.Map;
 @Component
 public class FixedSizeChunkingMarketAdapter extends ChunkingStrategyAdapter {
 
-    public FixedSizeChunkingMarketAdapter(FixedSizeChunkingStrategy delegate) {
-        super(delegate);
+    public FixedSizeChunkingMarketAdapter(FixedLengthStrategy executor) {
+        super(executor, ChunkingStrategy.FIXED_LENGTH);
     }
 
     @Override
