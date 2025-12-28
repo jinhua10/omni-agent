@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.p2p.api.p2p;
+package top.yumbo.ai.omni.p2p;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,7 +123,7 @@ public class P2PCollaborationManager implements P2PCollaborationService {
         userConnections.computeIfAbsent(codeInfo.userId, k -> ConcurrentHashMap.newKeySet())
                 .add(connectionId);
 
-        log.info("Established P2P connection: {} between {} and {}",
+        log.info("Established P2P connection: connectionId={}, localUser={}, remoteUser={}",
                 connectionId, userId, codeInfo.userId);
 
         // 更新统计
@@ -157,7 +157,7 @@ public class P2PCollaborationManager implements P2PCollaborationService {
         // 清理共享知识
         sharedKnowledge.remove(connectionId);
 
-        log.info("Disconnected P2P connection: {}", connectionId);
+        log.info("Disconnected P2P connection: connectionId={}", connectionId);
 
         return true;
     }
@@ -209,7 +209,7 @@ public class P2PCollaborationManager implements P2PCollaborationService {
         // 更新统计
         updateStatistics(knowledge.getSourceUserId(), "knowledge_shared", 1);
 
-        log.info("Shared knowledge: {} on connection: {}", encrypted.getKnowledgeId(), connectionId);
+        log.info("Shared knowledge: knowledgeId={} on connectionId={}", encrypted.getKnowledgeId(), connectionId);
 
         return encrypted;
     }
@@ -239,7 +239,7 @@ public class P2PCollaborationManager implements P2PCollaborationService {
                                 .tags(k.getTags())
                                 .build();
                     } catch (Exception e) {
-                        log.error("Failed to decrypt knowledge: {}", k.getKnowledgeId(), e);
+                        log.error("Failed to decrypt knowledge: knowledgeId={}", k.getKnowledgeId(), e);
                         return null;
                     }
                 })
@@ -255,7 +255,7 @@ public class P2PCollaborationManager implements P2PCollaborationService {
                 if (k.getKnowledgeId().equals(knowledgeId)) {
                     k.setQualityScore(qualityScore);
                     k.setVerified(true);
-                    log.info("Verified knowledge: {} with score: {}", knowledgeId, qualityScore);
+                    log.info("Verified knowledge: knowledgeId={}, score={}", knowledgeId, qualityScore);
                     return true;
                 }
             }

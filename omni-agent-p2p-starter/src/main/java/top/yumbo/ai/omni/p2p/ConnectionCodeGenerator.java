@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.p2p.api.p2p;
+package top.yumbo.ai.omni.p2p;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
