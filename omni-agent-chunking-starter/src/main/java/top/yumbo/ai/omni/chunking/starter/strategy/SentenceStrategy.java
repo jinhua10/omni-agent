@@ -1,9 +1,11 @@
 package top.yumbo.ai.omni.chunking.starter.strategy;
 
+import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.chunking.ChunkingConfig;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
 import top.yumbo.ai.omni.chunking.starter.config.ChunkingProperties;
+import top.yumbo.ai.omni.chunking.starter.util.ChunkingParamUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,9 +16,12 @@ import java.util.regex.Pattern;
 /**
  * 句子分块策略
  *
+ * <p>按句子边界分块，每个句子一个分块</p>
+ *
  * @author OmniAgent Team
  * @since 1.0.0
  */
+@Slf4j
 public class SentenceStrategy implements ChunkingStrategyExecutor {
 
     private final ChunkingProperties properties;
@@ -53,6 +58,7 @@ public class SentenceStrategy implements ChunkingStrategyExecutor {
             chunks.add(chunk);
         }
 
+        log.debug("📋 句子分块完成: {} chunks", chunks.size());
         return chunks;
     }
 }

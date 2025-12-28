@@ -37,8 +37,7 @@ public class SentenceBoundaryStrategy implements ChunkingStrategyExecutor {
             return new ArrayList<>();
         }
 
-        int targetSize = config.getMaxChunkSize() != null ?
-                config.getMaxChunkSize() : DEFAULT_TARGET_SIZE;
+        int targetSize = ChunkingParamUtils.getMaxChunkSize(config, DEFAULT_TARGET_SIZE);
 
         // 按句子分割
         List<String> sentences = splitIntoSentences(content);

@@ -4,6 +4,7 @@ import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.chunking.ChunkingConfig;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
 import top.yumbo.ai.omni.chunking.starter.config.ChunkingProperties;
+import top.yumbo.ai.omni.chunking.starter.util.ChunkingParamUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +28,11 @@ public class FixedLengthStrategy implements ChunkingStrategyExecutor {
     public List<Chunk> execute(String documentId, String content, ChunkingConfig config) {
         List<Chunk> chunks = new ArrayList<>();
 
-        int chunkSize = config.getFixedLengthSize() != null ?
-                config.getFixedLengthSize() : properties.getFixedLength().getSize();
-        int overlap = config.getOverlap() != null ?
-                config.getOverlap() : properties.getFixedLength().getOverlap();
+        // 使用 ChunkingParamUtils 获取参数
+        int chunkSize = ChunkingParamUtils.getFixedLengthSize(config,
+                properties.getFixedLength().getSize());
+        int overlap = ChunkingParamUtils.getOverlap(config,
+                properties.getFixedLength().getOverlap());
 
         int index = 0;
         int position = 0;

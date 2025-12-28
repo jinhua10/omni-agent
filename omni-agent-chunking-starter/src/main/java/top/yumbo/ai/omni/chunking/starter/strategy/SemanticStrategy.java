@@ -60,12 +60,13 @@ public class SemanticStrategy implements ChunkingStrategyExecutor {
         List<Double> similarities = calculator.calculateSimilarities(paragraphs);
 
         // 根据相似度找到分块边界
-        int maxSize = config.getMaxChunkSize() != null ?
-                config.getMaxChunkSize() : properties.getGeneral().getMaxChunkSize();
-        int minSize = config.getMinChunkSize() != null ?
-                config.getMinChunkSize() : properties.getGeneral().getMinChunkSize();
+        int maxSize = ChunkingParamUtils.getMaxChunkSize(config,
+                properties.getGeneral().getMaxChunkSize());
+        int minSize = ChunkingParamUtils.getMinChunkSize(config,
+                properties.getGeneral().getMinChunkSize());
 
-        double threshold = properties.getSemantic().getThreshold();
+        double threshold = ChunkingParamUtils.getSemanticThreshold(config,
+                properties.getSemantic().getThreshold());
         List<Integer> boundaries = findBoundaries(similarities, paragraphs, minSize, maxSize, threshold);
 
         // 创建分块
