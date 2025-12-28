@@ -3,7 +3,7 @@ package top.yumbo.ai.omni.example.optimization;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.core.optimization.RAGOptimizationService;
+import top.yumbo.ai.omni.core.old.optimization.RAGOptimizationService;
 import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 import top.yumbo.ai.omni.storage.api.model.OptimizationType;
 

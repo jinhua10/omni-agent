@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.core.hope.model.QuestionTypeConfig;
 import top.yumbo.ai.omni.core.hope.persistence.HopePersistence;
-import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 
 import java.util.*;
 import java.util.stream.Collectors;

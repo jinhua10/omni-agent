@@ -149,6 +149,12 @@
             <version>1.37</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-knowledge-registry-api</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 </project>

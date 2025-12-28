@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import top.yumbo.ai.omni.core.hope.persistence.HopePersistence;
 import top.yumbo.ai.omni.core.hope.persistence.impl.InMemoryHopePersistence;
 import top.yumbo.ai.omni.core.hope.persistence.impl.KnowledgeRegistryHopePersistence;
-import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 
 /**
  * HOPE 持久化自动配置
