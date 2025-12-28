@@ -60,7 +60,13 @@
             <version>${project.version}</version>
             <optional>true</optional>
         </dependency>
-
+        <!-- Knowledge Registry API      -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-knowledge-registry-api</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
         <!-- Voting API -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
@@ -112,7 +118,6 @@
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>2.0.30</version>
         </dependency>
 
         <!-- Apache Tika (for document parsing) -->
@@ -149,12 +154,7 @@
             <version>1.37</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-knowledge-registry-api</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
+
     </dependencies>
 
 </project>
