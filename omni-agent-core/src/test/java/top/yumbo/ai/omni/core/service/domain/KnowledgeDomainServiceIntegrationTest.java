@@ -41,8 +41,9 @@ class KnowledgeDomainServiceIntegrationTest {
         }
 
         @Bean
-        public KnowledgeDomainService knowledgeDomainService(KnowledgeRegistry registry) {
-            return new KnowledgeDomainService(registry);
+        public KnowledgeDomainService knowledgeDomainService() {
+            // KnowledgeDomainService 现在使用字段注入，Spring 会自动注入 KnowledgeRegistry
+            return new KnowledgeDomainService();
         }
     }
 

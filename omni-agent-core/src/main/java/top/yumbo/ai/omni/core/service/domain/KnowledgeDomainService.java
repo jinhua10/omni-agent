@@ -1,7 +1,7 @@
 package top.yumbo.ai.omni.core.service.domain;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
@@ -12,6 +12,7 @@ import top.yumbo.ai.omni.core.dto.domain.UpdateDomainRequest;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,10 +26,22 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KnowledgeDomainService {
 
-    private final KnowledgeRegistry knowledgeRegistry;
+    @Autowired(required = false)
+    private KnowledgeRegistry knowledgeRegistry;
+
+    /**
+     * 初始化后检查依赖
+     */
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available - KnowledgeDomainService will use fallback mode");
+        } else {
+            log.info("✅ KnowledgeDomainService initialized with KnowledgeRegistry");
+        }
+    }
 
     /**
      * 创建知识域

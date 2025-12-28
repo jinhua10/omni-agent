@@ -27,13 +27,26 @@ import java.util.stream.Collectors;
 @Service
 public class KnowledgeExtractionService {
 
-    private final KnowledgeRegistry knowledgeRegistry;
+    @Autowired(required = false)
+    private KnowledgeRegistry knowledgeRegistry;
 
     @Autowired(required = false)
     private RAGServiceFactory ragServiceFactory;
 
-    public KnowledgeExtractionService(KnowledgeRegistry knowledgeRegistry) {
-        this.knowledgeRegistry = knowledgeRegistry;
+    public KnowledgeExtractionService() {
+        log.info("🔧 KnowledgeExtractionService initialized");
+    }
+
+    /**
+     * 初始化后检查依赖
+     */
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available - KnowledgeExtractionService will use fallback mode");
+        } else {
+            log.info("✅ KnowledgeExtractionService initialized with KnowledgeRegistry");
+        }
     }
 
     /**
@@ -46,6 +59,12 @@ public class KnowledgeExtractionService {
      */
     public List<KnowledgeDocument> extractDocuments(String domainId, String query, int maxDocuments) {
         log.info("从域 {} 提取文档，查询: {}, 最大数量: {}", domainId, query, maxDocuments);
+
+        // 检查依赖是否可用
+        if (knowledgeRegistry == null) {
+            log.warn("KnowledgeRegistry not available, returning empty list");
+            return new ArrayList<>();
+        }
 
         // 1. 获取域信息
         KnowledgeDomain domain = knowledgeRegistry.findDomainById(domainId)
@@ -60,7 +79,7 @@ public class KnowledgeExtractionService {
                 return simulateDocumentExtraction(domain, query, maxDocuments);
             }
         } else {
-            log.warn("RAG 服务���可用，使用模拟提取");
+            log.warn("RAG 服务不可用，使用模拟提取");
             return simulateDocumentExtraction(domain, query, maxDocuments);
         }
     }

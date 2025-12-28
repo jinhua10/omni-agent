@@ -1,7 +1,7 @@
 package top.yumbo.ai.omni.core.service.knowledge;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
@@ -29,10 +29,22 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KnowledgeAssociationService {
 
-    private final KnowledgeRegistry knowledgeRegistry;
+    @Autowired(required = false)
+    private KnowledgeRegistry knowledgeRegistry;
+
+    /**
+     * 初始化后检查依赖
+     */
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available - KnowledgeAssociationService will use fallback mode");
+        } else {
+            log.info("✅ KnowledgeAssociationService initialized with KnowledgeRegistry");
+        }
+    }
 
     /**
      * 发现与指定域相关的其他域
@@ -43,6 +55,11 @@ public class KnowledgeAssociationService {
      */
     public List<DomainAssociation> findRelatedDomains(String domainId, int topK) {
         log.info("🔗 查找与域 {} 相关的其他域", domainId);
+
+        if (knowledgeRegistry == null) {
+            log.warn("KnowledgeRegistry not available, returning empty list");
+            return Collections.emptyList();
+        }
 
         KnowledgeDomain sourceDomain = knowledgeRegistry.findDomainById(domainId).orElse(null);
         if (sourceDomain == null) {

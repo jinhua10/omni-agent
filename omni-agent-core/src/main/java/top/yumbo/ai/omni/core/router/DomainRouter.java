@@ -37,14 +37,21 @@ import java.util.stream.Collectors;
 @Service
 public class DomainRouter {
 
-    private final KnowledgeRegistry knowledgeRegistry;
+    @Autowired(required = false)
+    private KnowledgeRegistry knowledgeRegistry;
 
     /**
-     * 构造函数 - KnowledgeRegistry 为可选依赖
+     * 构造函数
      */
-    @Autowired(required = false)
-    public DomainRouter(KnowledgeRegistry knowledgeRegistry) {
-        this.knowledgeRegistry = knowledgeRegistry;
+    public DomainRouter() {
+        log.info("🔧 DomainRouter initialized");
+    }
+
+    /**
+     * 初始化后检查依赖
+     */
+    @jakarta.annotation.PostConstruct
+    public void init() {
         if (knowledgeRegistry == null) {
             log.warn("⚠️ KnowledgeRegistry not available - DomainRouter will use fallback mode");
         } else {

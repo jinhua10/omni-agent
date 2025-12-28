@@ -6,11 +6,13 @@ import co.elastic.clients.transport.rest_client.RestClientTransport;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import top.yumbo.ai.omni.rag.RagService;
 
 /**
@@ -31,6 +33,7 @@ import top.yumbo.ai.omni.rag.RagService;
 public class ElasticsearchRAGAutoConfiguration {
 
     @Bean
+    @Primary
     @ConditionalOnMissingBean(name = "ragElasticsearchClient")
     public ElasticsearchClient ragElasticsearchClient(
             org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchProperties esProperties) {
@@ -76,7 +79,7 @@ public class ElasticsearchRAGAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(RagService.class)
     public RagService elasticsearchRAGService(
-            ElasticsearchClient ragElasticsearchClient,
+            @Qualifier("ragElasticsearchClient") ElasticsearchClient ragElasticsearchClient,
             ElasticsearchRAGProperties properties) {
         
         log.info("创建 Elasticsearch RAG Service");

@@ -30,13 +30,22 @@ import java.util.Map;
 @Service
 public class KnowledgeStorageService {
 
-    private final KnowledgeRegistry knowledgeRegistry;
+    @Autowired(required = false)
+    private KnowledgeRegistry knowledgeRegistry;
 
     @Autowired(required = false)
     private RAGServiceFactory ragServiceFactory;
 
-    public KnowledgeStorageService(KnowledgeRegistry knowledgeRegistry) {
-        this.knowledgeRegistry = knowledgeRegistry;
+    /**
+     * 初始化后检查依赖
+     */
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available - KnowledgeStorageService will use fallback mode");
+        } else {
+            log.info("✅ KnowledgeStorageService initialized with KnowledgeRegistry");
+        }
     }
 
     /**
