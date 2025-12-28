@@ -4,9 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import top.yumbo.ai.omni.core.evolution.EvolutionService;
 import top.yumbo.ai.omni.core.feedback.FeedbackService;
-import top.yumbo.ai.omni.core.knowledge.KnowledgeLoader;
-import top.yumbo.ai.omni.core.role.Role;
-import top.yumbo.ai.omni.core.role.RoleService;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeLoader;
+import top.yumbo.ai.omni.knowledge.registry.role.Role;
+import top.yumbo.ai.omni.knowledge.registry.role.RoleService;
 
 import java.util.*;
 

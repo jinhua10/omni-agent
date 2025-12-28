@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.exception.KnowledgeRegistryException;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;

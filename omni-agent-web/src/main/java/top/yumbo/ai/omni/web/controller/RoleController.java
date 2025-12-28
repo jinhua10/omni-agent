@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.core.role.RoleService;
-import top.yumbo.ai.omni.core.role.Role;
+import top.yumbo.ai.omni.knowledge.registry.role.RoleService;
+import top.yumbo.ai.omni.knowledge.registry.role.Role;
 
 import java.util.*;
 import java.util.stream.Collectors;

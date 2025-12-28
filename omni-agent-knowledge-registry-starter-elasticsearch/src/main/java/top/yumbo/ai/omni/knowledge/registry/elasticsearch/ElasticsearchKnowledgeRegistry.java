@@ -7,7 +7,7 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.query.Criteria;
 import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.data.elasticsearch.core.query.Query;
-import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.exception.KnowledgeRegistryException;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;

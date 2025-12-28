@@ -1,7 +1,7 @@
 package top.yumbo.ai.omni.benchmark;
 
 import org.junit.jupiter.api.Test;
-import top.yumbo.ai.omni.core.knowledge.KnowledgeLoader;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeLoader;
 
 import static org.junit.jupiter.api.Assertions.*;
 

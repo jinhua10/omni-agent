@@ -1,17 +1,10 @@
-package top.yumbo.ai.omni.core.knowledge.network;
+package top.yumbo.ai.omni.knowledge.registry.model;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.ai.api.AIService;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
-import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeBuildResult;
-import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeBuildStatus;
-import top.yumbo.ai.omni.core.service.domain.KnowledgeDomainService;
-import top.yumbo.ai.omni.core.model.RefinedKnowledge;
-import top.yumbo.ai.omni.core.service.knowledge.KnowledgeStorageService;
-import top.yumbo.ai.omni.document.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.time.LocalDateTime;
 import java.util.*;

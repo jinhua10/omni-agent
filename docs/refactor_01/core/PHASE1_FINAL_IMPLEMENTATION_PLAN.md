@@ -138,7 +138,7 @@ package top.yumbo.ai.knowledge.registry.file;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 
 import java.io.File;
 import java.nio.file.*;
@@ -313,7 +313,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 
 @Configuration
 @ConditionalOnProperty(

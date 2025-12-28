@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry;
+package top.yumbo.ai.omni.knowledge.registry.network;
 
 import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
 import top.yumbo.ai.omni.knowledge.registry.model.DomainType;

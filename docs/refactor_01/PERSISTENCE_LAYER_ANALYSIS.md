@@ -267,7 +267,7 @@ public class HealthController {
 ```java
 /**
  * @deprecated 已被 {@link KnowledgeRegistry} 替代
- * @see top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry
+ * @see top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry
  */
 @Deprecated
 public interface QuestionClassifierPersistence {

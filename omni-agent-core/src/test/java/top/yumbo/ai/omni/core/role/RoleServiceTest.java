@@ -3,6 +3,8 @@ package top.yumbo.ai.omni.core.role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import top.yumbo.ai.omni.knowledge.registry.role.Role;
+import top.yumbo.ai.omni.knowledge.registry.role.RoleService;
 
 import java.util.Arrays;
 import java.util.List;

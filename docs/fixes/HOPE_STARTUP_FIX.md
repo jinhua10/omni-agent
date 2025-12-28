@@ -7,7 +7,7 @@
 ```
 Parameter 0 of method hopePersistence in 
 top.yumbo.ai.omni.core.hope.config.HopePersistenceAutoConfiguration 
-required a bean of type 'top.yumbo.ai.omni.knowledge.registry.KnowledgeRegistry' 
+required a bean of type 'top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry' 
 that could not be found.
 ```
 

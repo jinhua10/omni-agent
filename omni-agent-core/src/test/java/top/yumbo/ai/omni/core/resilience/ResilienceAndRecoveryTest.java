@@ -10,8 +10,8 @@ import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
 import top.yumbo.ai.omni.core.evolution.EvolutionService;
 import top.yumbo.ai.omni.core.evolution.ConceptVersion;
 import top.yumbo.ai.omni.core.feedback.FeedbackService;
-import top.yumbo.ai.omni.core.knowledge.KnowledgeLoader;
-import top.yumbo.ai.omni.core.role.RoleService;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeLoader;
+import top.yumbo.ai.omni.knowledge.registry.role.RoleService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.ArrayList;

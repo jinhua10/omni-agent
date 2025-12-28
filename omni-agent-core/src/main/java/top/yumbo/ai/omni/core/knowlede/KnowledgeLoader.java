@@ -1,6 +1,7 @@
-package top.yumbo.ai.omni.core.knowledge;
+package top.yumbo.ai.omni.core.knowlede;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +41,14 @@ public class KnowledgeLoader {
     /** LRU缓存 */
     private final LRUCache<String, KnowledgeEntry> cache;
 
-    /** 统计信息 */
+    /** 统计信息
+     * -- GETTER --
+     *  获取统计信息
+     *  (Get statistics)
+     *
+     * @return 统计信息
+     */
+    @Getter
     private final LoadStatistics statistics;
 
     /** 预加载策略 */
@@ -186,16 +194,6 @@ public class KnowledgeLoader {
      */
     public int getCacheSize() {
         return cache.size();
-    }
-
-    /**
-     * 获取统计信息
-     * (Get statistics)
-     *
-     * @return 统计信息
-     */
-    public LoadStatistics getStatistics() {
-        return statistics;
     }
 
     /**

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.network;
+package top.yumbo.ai.omni.knowledge.registry.model;
 
 /**
  * 知识构建状态

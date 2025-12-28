@@ -1,8 +1,8 @@
-package top.yumbo.ai.omni.knowledge.registry.service;
+package top.yumbo.ai.omni.knowledge.registry.network;
 
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument;
 import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
+import java.util.List;
 
 /**
  * 知识提炼服务接口
@@ -24,7 +24,7 @@ public interface KnowledgeRefinementService {
      */
     RefinedKnowledge refineKnowledge(
             KnowledgeDocument document,
-            KnowledgeRole role,
+            top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole role,
             boolean useAI
     );
 
@@ -36,9 +36,10 @@ public interface KnowledgeRefinementService {
      * @param useAI 是否使用 AI
      * @return 提炼后的知识列表
      */
-    java.util.List<RefinedKnowledge> batchRefineKnowledge(
-            java.util.List<KnowledgeDocument> documents,
-            KnowledgeRole role,
+    List<RefinedKnowledge> batchRefineKnowledge(
+            List<KnowledgeDocument> documents,
+            top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole role,
             boolean useAI
     );
 }
+

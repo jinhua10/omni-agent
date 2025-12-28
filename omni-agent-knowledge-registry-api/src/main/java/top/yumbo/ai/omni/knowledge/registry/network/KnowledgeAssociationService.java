@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.service;
+package top.yumbo.ai.omni.knowledge.registry.network;
 
 import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
 

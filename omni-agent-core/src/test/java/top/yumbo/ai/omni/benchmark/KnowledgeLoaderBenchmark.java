@@ -5,7 +5,7 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import top.yumbo.ai.omni.core.knowledge.KnowledgeLoader;
+import top.yumbo.ai.omni.knowledge.registry.KnowledgeLoader;
 
 import java.util.concurrent.TimeUnit;
 
