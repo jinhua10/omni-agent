@@ -210,17 +210,85 @@ public class SemanticStrategy implements ChunkingStrategyExecutor {
 
     /**
      * 简化版语义计算器
-     * 固定返回高相似度，效果等同于段落分块
+     * 使用 TF-IDF + 余弦相似度计算段落间语义相似度
      */
     class SimplifiedSemanticCalculator implements SemanticCalculator {
         @Override
         public List<Double> calculateSimilarities(List<Paragraph> paragraphs) {
-            // 简化版：所有段落相似度都设为 1.0（总是聚合）
+            // 1. 计算段落的词频向量（TF-IDF）
+            List<Map<String, Integer>> vectors = calculateWordVectors(paragraphs);
+
+            // 2. 计算相邻段落的余弦相似度
             List<Double> similarities = new ArrayList<>();
-            for (int i = 0; i < paragraphs.size() - 1; i++) {
-                similarities.add(1.0);
+            for (int i = 0; i < vectors.size() - 1; i++) {
+                double similarity = cosineSimilarity(vectors.get(i), vectors.get(i + 1));
+                similarities.add(similarity);
             }
+
             return similarities;
+        }
+
+        /**
+         * 计算段落的词频向量（简化的 TF-IDF）
+         */
+        private List<Map<String, Integer>> calculateWordVectors(List<Paragraph> paragraphs) {
+            List<Map<String, Integer>> vectors = new ArrayList<>();
+
+            for (Paragraph paragraph : paragraphs) {
+                Map<String, Integer> wordCount = new HashMap<>();
+
+                // 分词并统计词频（支持中英文）
+                String[] words = paragraph.text.toLowerCase()
+                        .replaceAll("[^a-zA-Z0-9\\s\u4e00-\u9fa5]", " ")
+                        .split("\\s+");
+
+                for (String word : words) {
+                    if (word.length() > 1) {  // 忽略单字符
+                        wordCount.merge(word, 1, Integer::sum);
+                    }
+                }
+
+                vectors.add(wordCount);
+            }
+
+            return vectors;
+        }
+
+        /**
+         * 余弦相似度计算
+         */
+        private double cosineSimilarity(Map<String, Integer> vec1, Map<String, Integer> vec2) {
+            if (vec1.isEmpty() || vec2.isEmpty()) {
+                return 0.0;
+            }
+
+            // 计算点积
+            double dotProduct = 0.0;
+            Set<String> commonKeys = new HashSet<>(vec1.keySet());
+            commonKeys.retainAll(vec2.keySet());
+
+            for (String key : commonKeys) {
+                dotProduct += vec1.get(key) * vec2.get(key);
+            }
+
+            // 计算向量长度
+            double magnitude1 = 0.0;
+            for (int count : vec1.values()) {
+                magnitude1 += count * count;
+            }
+            magnitude1 = Math.sqrt(magnitude1);
+
+            double magnitude2 = 0.0;
+            for (int count : vec2.values()) {
+                magnitude2 += count * count;
+            }
+            magnitude2 = Math.sqrt(magnitude2);
+
+            if (magnitude1 == 0.0 || magnitude2 == 0.0) {
+                return 0.0;
+            }
+
+            return dotProduct / (magnitude1 * magnitude2);
         }
     }
 
