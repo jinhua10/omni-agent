@@ -164,6 +164,9 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
 
+        <!-- Maven 编译器配置 -->
+        <maven.compiler.showWarnings>false</maven.compiler.showWarnings>
+
         <!-- 依赖版本 -->
         <spring-boot.version>3.4.1</spring-boot.version>
         <lombok.version>1.18.34</lombok.version>
