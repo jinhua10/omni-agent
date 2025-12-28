@@ -1,5 +1,9 @@
 package top.yumbo.ai.omni.knowledge.registry.network;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
 
 import java.util.List;
@@ -71,5 +75,72 @@ public interface KnowledgeAssociationService {
             String sourceKnowledgeId,
             String targetKnowledgeId
     );
+
+    /**
+     * 查找相关域
+     *
+     * @param domainId 域ID
+     * @param topK 返回Top K个相关域
+     * @return 相关域列表
+     */
+    List<DomainAssociation> findRelatedDomains(String domainId, int topK);
+
+    /**
+     * 推荐知识域
+     *
+     * @param query 查询文本
+     * @param topK 返回Top K个推荐
+     * @return 推荐域列表
+     */
+    List<DomainRecommendation> recommendDomains(String query, int topK);
+
+    /**
+     * 域关联信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    class DomainAssociation {
+        /** 关联域ID */
+        private String domainId;
+
+        /** 关联域名称 */
+        private String domainName;
+
+        /** 关联强度 (0.0-1.0) */
+        private double strength;
+
+        /** 关联类型 */
+        private String relationType;
+
+        /** 共享知识数量 */
+        private int sharedKnowledgeCount;
+    }
+
+    /**
+     * 域推荐信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    class DomainRecommendation {
+        /** 推荐域ID */
+        private String domainId;
+
+        /** 推荐域名称 */
+        private String domainName;
+
+        /** 推荐分数 (0.0-1.0) */
+        private double score;
+
+        /** 推荐原因 */
+        private String reason;
+
+        /** 匹配的关键词 */
+        private List<String> matchedKeywords;
+    }
 }
+
 

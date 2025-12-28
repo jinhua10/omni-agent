@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.core.service.knowledge.KnowledgeAssociationService;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeAssociationService;
 import top.yumbo.ai.omni.knowledge.registry.service.query.CrossDomainQueryService;
 
 import java.util.HashMap;

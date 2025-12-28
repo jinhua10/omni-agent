@@ -90,7 +90,10 @@ public class KnowledgeNetworkManager {
 
         try {
             // 获取所有已提取文本的文档列表
-            List<String> documentIds = documentStorage.listExtractedDocuments();
+            // 使用 listAllDocuments 替代 listExtractedDocuments
+            List<String> documentIds = documentStorage.listAllDocuments().stream()
+                    .map(metadata -> metadata.getDocumentId())
+                    .toList();
 
             if (documentIds.isEmpty()) {
                 log.info("📭 未发现已提取文本，跳过知识网络构建");
@@ -171,7 +174,9 @@ public class KnowledgeNetworkManager {
         log.debug("🔍 定期检查新增提取文本...");
 
         try {
-            List<String> allDocumentIds = documentStorage.listExtractedDocuments();
+            List<String> allDocumentIds = documentStorage.listAllDocuments().stream()
+                    .map(metadata -> metadata.getDocumentId())
+                    .toList();
 
             // 找出新增的文档
             List<String> newDocuments = allDocumentIds.stream()
@@ -213,10 +218,10 @@ public class KnowledgeNetworkManager {
      */
     private String getDefaultDomainId() {
         // 尝试获取默认文档域
-        List<KnowledgeDomain> domains = domainService.listDomains();
+        List<KnowledgeDomain> domains = domainService.listAllDomains();
 
         return domains.stream()
-                .filter(d -> "DOCUMENT".equals(d.getDomainType()))
+                .filter(d -> DomainType.DOCUMENT.equals(d.getDomainType()))
                 .findFirst()
                 .map(KnowledgeDomain::getDomainId)
                 .orElse("default-domain");
@@ -225,7 +230,6 @@ public class KnowledgeNetworkManager {
     /**
      * 启用/禁用知识网络构建
      */
-    @Override
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
         log.info("🔧 知识网络构建已{}", enabled ? "启用" : "禁用");
@@ -234,7 +238,6 @@ public class KnowledgeNetworkManager {
     /**
      * 获取知识网络统计信息
      */
-    @Override
     public KnowledgeNetworkStatistics getStatistics() {
         return KnowledgeNetworkStatistics.builder()
                 .processedDocuments(processedDocuments.size())
