@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.chunking.ChunkingConfig;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
 import top.yumbo.ai.omni.chunking.starter.ChunkingStrategyManager;
@@ -758,13 +759,13 @@ public class DocumentProcessingService {
                 metadata.put("strategy", chunkingChunk.getStrategy() != null ? chunkingChunk.getStrategy().name() : "UNKNOWN");
                 metadata.put("startPosition", chunkingChunk.getStartPosition());
                 metadata.put("endPosition", chunkingChunk.getEndPosition());
-                metadata.put("length", chunkingChunk.getLength());
+                metadata.put("length", chunkingChunk.getSize());
 
                 Chunk chunk = Chunk.builder()
-                        .id(chunkingChunk.getChunkId())
+                        .id(chunkingChunk.getId())
                         .documentId(chunkingChunk.getDocumentId())
                         .content(chunkingChunk.getContent())
-                        .sequence(chunkingChunk.getIndex())
+                        .sequence(chunkingChunk.getSequence())
                         .startPosition(chunkingChunk.getStartPosition())
                         .endPosition(chunkingChunk.getEndPosition())
                         .metadata(metadata)

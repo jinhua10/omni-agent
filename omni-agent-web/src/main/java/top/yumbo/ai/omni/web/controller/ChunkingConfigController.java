@@ -288,18 +288,19 @@ public class ChunkingConfigController {
             metadata.put("strategy", chunkingChunk.getStrategy() != null ? chunkingChunk.getStrategy().name() : "UNKNOWN");
             metadata.put("startPosition", chunkingChunk.getStartPosition());
             metadata.put("endPosition", chunkingChunk.getEndPosition());
-            metadata.put("length", chunkingChunk.getLength());
-            metadata.put("index", chunkingChunk.getIndex());
+            metadata.put("size", chunkingChunk.getSize());
+            metadata.put("sequence", chunkingChunk.getSequence());
 
             Chunk chunk = Chunk.builder()
-                    .chunkId(chunkingChunk.getChunkId())
+                    .id(chunkingChunk.getId())
                     .documentId(chunkingChunk.getDocumentId())
                     .content(chunkingChunk.getContent())
-                    .index(chunkingChunk.getIndex())
+                    .sequence(chunkingChunk.getSequence())
                     .startPosition(chunkingChunk.getStartPosition())
                     .endPosition(chunkingChunk.getEndPosition())
-                    .length(chunkingChunk.getLength())
                     .strategy(chunkingChunk.getStrategy())
+                    .metadata(metadata)
+                    .createdAt(System.currentTimeMillis())
                     .build();
             chunks.add(chunk);
         }
@@ -326,6 +327,7 @@ public class ChunkingConfigController {
             case PARAGRAPH -> "段落分块策略，按段落分割文本";
             case SEMANTIC -> "语义分块策略，基于语义相似度分割";
             case PPL -> "PPL分块策略，基于困惑度分割";
+            case MARKDOWN -> "Markdown分块策略，按Markdown结构分割";
         };
     }
 

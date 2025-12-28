@@ -59,6 +59,11 @@ public class Chunk implements Serializable {
     private Integer endPosition;
 
     /**
+     * 分块策略
+     */
+    private ChunkingStrategy strategy;
+
+    /**
      * 元数据
      */
     private Map<String, Object> metadata;

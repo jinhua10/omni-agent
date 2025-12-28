@@ -31,7 +31,12 @@ public enum ChunkingStrategy {
     /**
      * 句子分块
      */
-    SENTENCE("句子分块");
+    SENTENCE("句子分块"),
+
+    /**
+     * Markdown 分块
+     */
+    MARKDOWN("Markdown 分块");
 
     private final String description;
 
