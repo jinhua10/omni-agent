@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>top.yumbo.ai.omni</groupId>
+        <artifactId>omni-agent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>omni-agent-p2p-starter</artifactId>
+    <name>OmniAgent P2P Starter</name>
+    <description>Unified P2P Collaboration Starter with Multiple Data Source Implementations</description>
+
+    <dependencies>
+        <!-- P2P API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-p2p-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- H2 Database (Optional) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- SQLite (Optional) -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Redis (Optional) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- MongoDB (Optional) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Elasticsearch (Optional) -->
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Jackson for JSON -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-elasticsearch</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
+
