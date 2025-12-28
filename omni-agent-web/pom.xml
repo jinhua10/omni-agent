@@ -41,7 +41,7 @@
         <!-- Knowledge Registry File Starter ⭐ Phase 1 -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-knowledge-registry-starter-file</artifactId>
+            <artifactId>omni-agent-knowledge-registry-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
 

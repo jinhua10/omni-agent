@@ -1,13 +1,13 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.omni.core.chunking.strategy.ChunkingStrategy;
+import top.yumbo.ai.omni.chunking.Chunk;
+import top.yumbo.ai.omni.chunking.ChunkingStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.AbstractMarketplaceStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyExecutionException;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.*;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingOutput;
-import top.yumbo.ai.omni.storage.api.model.Chunk;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ public abstract class ChunkingStrategyAdapter extends AbstractMarketplaceStrateg
 
     protected ChunkingStrategyAdapter(ChunkingStrategy delegate) {
         this.delegate = delegate;
-        log.debug("创建分块策略适配器: {}", delegate.getStrategyName());
+        log.debug("创建分块策略适配器: {}", delegate.name());
     }
 
     @Override
@@ -41,12 +41,12 @@ public abstract class ChunkingStrategyAdapter extends AbstractMarketplaceStrateg
     @Override
     public String getStrategyId() {
         // 使用原策略名称生成ID
-        return "top.yumbo.ai.omni.chunking." + delegate.getStrategyName() + ".v1";
+        return "top.yumbo.ai.omni.chunking." + delegate.name() + ".v1";
     }
 
     @Override
     public String getStrategyName() {
-        return delegate.getStrategyName();
+        return delegate.name();
     }
 
     @Override
@@ -71,7 +71,7 @@ public abstract class ChunkingStrategyAdapter extends AbstractMarketplaceStrateg
 
     @Override
     public List<String> getTags() {
-        return List.of("chunking", delegate.getStrategyName(), "built-in", "text-processing");
+        return List.of("chunking", delegate.name(), "built-in", "text-processing");
     }
 
     @Override

@@ -61,12 +61,7 @@
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
-        <!-- Voting API -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-voting-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
 
 
         <!-- ========== 工具库 ========== -->

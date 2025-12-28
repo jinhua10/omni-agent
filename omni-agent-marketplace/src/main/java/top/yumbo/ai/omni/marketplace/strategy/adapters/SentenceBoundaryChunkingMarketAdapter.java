@@ -1,6 +1,7 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
 import org.springframework.stereotype.Component;
+import top.yumbo.ai.omni.chunking.starter.strategy.SentenceBoundaryStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.UsageExample;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 
@@ -16,7 +17,7 @@ import java.util.Map;
 @Component
 public class SentenceBoundaryChunkingMarketAdapter extends ChunkingStrategyAdapter {
 
-    public SentenceBoundaryChunkingMarketAdapter(SentenceBoundaryChunkingStrategy delegate) {
+    public SentenceBoundaryChunkingMarketAdapter(SentenceBoundaryStrategy delegate) {
         super(delegate);
     }
 

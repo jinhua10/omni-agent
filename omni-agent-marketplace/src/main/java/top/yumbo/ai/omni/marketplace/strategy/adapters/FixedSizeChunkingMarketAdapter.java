@@ -1,7 +1,6 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.core.chunking.strategy.FixedSizeChunkingStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.UsageExample;
 
