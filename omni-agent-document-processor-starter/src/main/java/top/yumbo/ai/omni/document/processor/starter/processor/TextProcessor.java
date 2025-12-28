@@ -28,7 +28,7 @@ import java.util.*;
  */
 @Slf4j
 @Component
-public class PlainTextDocumentProcessor implements DocumentProcessor {
+public class TextProcessor implements DocumentProcessor {
 
     /**
      * 支持的文件扩展名

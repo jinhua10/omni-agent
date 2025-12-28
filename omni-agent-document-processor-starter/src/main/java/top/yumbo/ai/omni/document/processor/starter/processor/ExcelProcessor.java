@@ -44,7 +44,7 @@ import java.util.*;
     havingValue = "true",
     matchIfMissing = true  // 默认启用，无需配置
 )
-public class ExcelDocumentProcessor extends AbstractDocumentProcessor {
+public class ExcelProcessor extends AbstractDocumentProcessor {
 
     private static final Set<String> SUPPORTED_EXTENSIONS = Set.of("xls", "xlsx");
     private static final int MAX_ROWS_PER_SHEET = 1000;

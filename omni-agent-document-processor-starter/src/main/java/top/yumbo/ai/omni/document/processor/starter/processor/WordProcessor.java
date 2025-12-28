@@ -44,7 +44,7 @@ import java.util.*;
     havingValue = "true",
     matchIfMissing = true  // 默认启用，无需配置
 )
-public class WordDocumentProcessor extends AbstractDocumentProcessor {
+public class WordProcessor extends AbstractDocumentProcessor {
 
     private static final Set<String> SUPPORTED_EXTENSIONS = Set.of("doc", "docx");
 

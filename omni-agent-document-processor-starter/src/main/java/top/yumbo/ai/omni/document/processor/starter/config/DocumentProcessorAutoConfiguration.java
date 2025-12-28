@@ -25,28 +25,28 @@ import java.util.List;
 public class DocumentProcessorAutoConfiguration {
 
     @Bean
-    public PDFDocumentProcessor pdfProcessor(DocumentProcessorProperties properties) {
+    public PDFProcessor pdfProcessor(DocumentProcessorProperties properties) {
         log.info("✅ 注册 PDF 处理器");
-        return new PDFDocumentProcessor();
+        return new PDFProcessor();
     }
 
     @Bean
-    public WordDocumentProcessor wordProcessor(DocumentProcessorProperties properties) {
+    public WordProcessor wordProcessor(DocumentProcessorProperties properties) {
         log.info("✅ 注册 Word 处理器");
-        return new WordDocumentProcessor();
+        return new WordProcessor();
     }
 
     @Bean
-    public ExcelDocumentProcessor excelProcessor(DocumentProcessorProperties properties) {
+    public ExcelProcessor excelProcessor(DocumentProcessorProperties properties) {
         log.info("✅ 注册 Excel 处理器");
-        return new ExcelDocumentProcessor();
+        return new ExcelProcessor();
     }
 
 
     @Bean
-    public PlainTextDocumentProcessor textProcessor() {
+    public TextProcessor textProcessor() {
         log.info("✅ 注册 Text 处理器");
-        return new PlainTextDocumentProcessor();
+        return new TextProcessor();
     }
 
     @Bean

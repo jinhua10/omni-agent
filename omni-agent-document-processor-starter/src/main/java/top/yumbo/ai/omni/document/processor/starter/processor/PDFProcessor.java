@@ -51,7 +51,7 @@ import java.util.*;
     havingValue = "true",
     matchIfMissing = true  // 默认启用，无需配置
 )
-public class PDFDocumentProcessor extends AbstractDocumentProcessor {
+public class PDFProcessor extends AbstractDocumentProcessor {
 
     private static final Set<String> SUPPORTED_EXTENSIONS = Set.of("pdf");
 
