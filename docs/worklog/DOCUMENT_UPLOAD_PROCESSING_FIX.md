@@ -150,7 +150,7 @@ for (Chunk chunk : chunks) {
 
 ```java
 @ComponentScan(basePackages = {
-    "top.yumbo.ai.omni.example.basic",
+    "top.yumbo.ai.omni.p2p.basic",
     "top.yumbo.ai.omni.core",           // 核心模块
     "top.yumbo.ai.omni.marketplace",    // 算法市场
     "top.yumbo.ai.omni.web"             // Web控制器
@@ -164,7 +164,7 @@ for (Chunk chunk : chunks) {
 ### 编译验证
 
 ```bash
-mvn clean compile -pl omni-agent-example-basic -am
+mvn clean compile -pl omni-agent-p2p-basic -am
 
 [INFO] BUILD SUCCESS ✅
 ```
@@ -335,7 +335,7 @@ omni-agent:
 ### 1. 启动应用
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

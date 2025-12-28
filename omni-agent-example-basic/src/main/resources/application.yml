@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: omni-agent-example-basic
+    name: omni-agent-p2p-basic
 
   # 文件上传配置 (File Upload Configuration)
   servlet:

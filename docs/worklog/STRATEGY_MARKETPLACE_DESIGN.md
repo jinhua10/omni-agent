@@ -78,7 +78,7 @@ public interface MarketplaceStrategy {
 **解决方案**：
 ```java
 // 策略ID包含版本信息
-String getStrategyId(); // com.example.chunking.semantic.v1
+String getStrategyId(); // com.p2p.chunking.semantic.v1
 
 // 声明框架版本要求
 String getRequiredFrameworkVersion(); // >=3.0.0 <4.0.0
@@ -177,7 +177,7 @@ ResourceUsage getResourceUsage();
 ```java
 // 声明式依赖
 StrategyDependency {
-    dependencyId: "com.example.tokenizer.v1"
+    dependencyId: "com.p2p.tokenizer.v1"
     versionRange: ">=1.0.0 <2.0.0"
     optional: false
     type: STRATEGY | LIBRARY | SERVICE | MODEL

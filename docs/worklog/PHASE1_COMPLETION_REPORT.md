@@ -299,7 +299,7 @@ description: "Hello World 工作流"
 author: "OmniAgent Team"
 status: "active"
 tags:
-  - "example"
+  - "p2p"
   - "test"
 createdAt: 1734691234000
 updatedAt: 1734691234000

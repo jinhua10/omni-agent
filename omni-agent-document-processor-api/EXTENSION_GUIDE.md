@@ -234,7 +234,7 @@ public class MyCustomPreProcessor implements PreProcessor {
 @SpringBootApplication
 @ComponentScan(basePackages = {
     "top.yumbo.ai.omni",      // OmniAgent 包
-    "com.example.myapp"       // 你的应用包
+    "com.p2p.myapp"       // 你的应用包
 })
 public class MyApplication {
     public static void main(String[] args) {

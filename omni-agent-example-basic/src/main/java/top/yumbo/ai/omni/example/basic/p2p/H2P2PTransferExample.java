@@ -1,4 +1,4 @@
-package top.yumbo.ai.example;
+package top.yumbo.ai.omni.example.basic.p2p;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

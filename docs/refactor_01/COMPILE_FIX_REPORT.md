@@ -114,7 +114,7 @@ mvn compile -pl omni-agent-web -am
 ### 示例模块 ✅
 
 ```bash
-mvn compile -pl omni-agent-example-basic -am
+mvn compile -pl omni-agent-p2p-basic -am
 ```
 
 **结果：** ✅ 预期可编译（已修复导入）

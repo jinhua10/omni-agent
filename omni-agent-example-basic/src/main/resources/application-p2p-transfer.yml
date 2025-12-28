@@ -4,7 +4,7 @@
 
 spring:
   application:
-    name: p2p-transfer-example
+    name: p2p-transfer-p2p
 
 # SQLite Configuration (Source)
 omni-agent:

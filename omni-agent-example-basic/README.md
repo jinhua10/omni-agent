@@ -19,7 +19,7 @@
 
 ```bash
 # 进入项目根目录
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 
 # 运行应用
 mvn spring-boot:run

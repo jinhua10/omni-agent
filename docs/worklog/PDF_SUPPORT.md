@@ -216,7 +216,7 @@ omni-agent:
 
 ```bash
 # 启动应用
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 
 # 访问 http://localhost:8080

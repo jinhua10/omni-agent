@@ -288,7 +288,7 @@ void testCombinedAlgorithm() { }
 
 ```bash
 # 1. 启动应用
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 
 # 2. 测试增强查询（对比左右轨差异）

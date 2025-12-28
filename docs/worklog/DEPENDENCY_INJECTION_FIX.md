@@ -96,7 +96,7 @@ omni-agent:
 
 ```bash
 cd D:\Jetbrains\omni-agent
-mvn clean install -pl omni-agent-example-basic -am -Dmaven.test.skip=true
+mvn clean install -pl omni-agent-p2p-basic -am -Dmaven.test.skip=true
 ```
 
 **结果**：✅ 编译成功
@@ -104,7 +104,7 @@ mvn clean install -pl omni-agent-example-basic -am -Dmaven.test.skip=true
 ### 2. 启动验证
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

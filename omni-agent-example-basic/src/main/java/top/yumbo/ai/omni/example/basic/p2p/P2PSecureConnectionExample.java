@@ -1,4 +1,4 @@
-package top.yumbo.ai.example;
+package top.yumbo.ai.omni.example.basic.p2p;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

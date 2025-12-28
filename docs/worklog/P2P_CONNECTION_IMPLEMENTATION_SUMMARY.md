@@ -423,7 +423,7 @@ TransferResult result = connectionManager.transferThroughConnection(
 
 1. **运行示例**:
    ```bash
-   cd omni-agent-example-basic
+   cd omni-agent-p2p-basic
    mvn spring-boot:run
    ```
 

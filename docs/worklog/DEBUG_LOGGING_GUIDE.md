@@ -42,14 +42,14 @@ $env:LOGGING_LEVEL_TOP_YUMBO_AI_RAG="DEBUG"
 $env:LOGGING_LEVEL_TOP_YUMBO_AI_OMNI_CORE="DEBUG"
 
 # 启动应用
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 
 ### 方法 3: 命令行参数
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run -Dspring-boot.run.arguments="--logging.level.top.yumbo.ai.ai.ollama=DEBUG --logging.level.top.yumbo.ai.rag=DEBUG --logging.level.top.yumbo.ai.omni.core=DEBUG"
 ```
 
@@ -304,7 +304,7 @@ logging:
 使用：
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run -Dspring-boot.run.profiles=debug
 ```
 

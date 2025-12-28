@@ -54,7 +54,7 @@ public class RAGManagementController {
                     .title(request.getTitle())
                     .content(request.getContent())
                     .summary(request.getSummary())
-                    .type("example")
+                    .type("p2p")
                     .source("api")
                     .build();
 

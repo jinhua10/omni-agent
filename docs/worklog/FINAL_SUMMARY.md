@@ -230,7 +230,7 @@ mvn clean compile -pl omni-agent-core,omni-agent-marketplace,omni-agent-web -am 
 
 ```bash
 # 启动应用
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 
 # 测试单轨模式

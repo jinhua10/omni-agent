@@ -228,7 +228,7 @@ omni-agent:
   workflow:
     storage-type: mongodb
     mongodb:
-      uri: mongodb://cluster.example.com:27017
+      uri: mongodb://cluster.p2p.com:27017
       database: omniagent
 ```
 

@@ -31,7 +31,7 @@ description: "我的第一个工作流"
 author: "Your Name"
 status: "active"
 tags:
-  - "example"
+  - "p2p"
 
 steps:
   - id: "step1"

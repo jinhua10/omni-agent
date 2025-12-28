@@ -1,5 +1,5 @@
 # 不使用向量模型的 RAG 配置示例
-# Configuration example for RAG without embedding model
+# Configuration p2p for RAG without embedding model
 
 # ================================================
 # 方案 1：使用 Lucene (推荐)

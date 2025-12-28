@@ -305,7 +305,7 @@ P001   | 螺栓
 
 ```bash
 # 启动应用
-cd D:\Jetbrains\omni-agent\omni-agent-example-basic
+cd D:\Jetbrains\omni-agent\omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

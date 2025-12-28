@@ -45,7 +45,7 @@ mvn clean install
 ### 启动应用
 
 ```bash
-cd D:\Jetbrains\omni-agent\omni-agent-example-basic
+cd D:\Jetbrains\omni-agent\omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 
@@ -61,7 +61,7 @@ curl http://localhost:8080/api/example/workflow/list
 # 执行数据处理工作流
 curl -X POST http://localhost:8080/api/example/workflow/execute/data-processing \
   -H "Content-Type: application/json" \
-  -d '{"name": "张三", "age": 25, "email": "zhangsan@example.com"}'
+  -d '{"name": "张三", "age": 25, "email": "zhangsan@p2p.com"}'
 ```
 
 ---
