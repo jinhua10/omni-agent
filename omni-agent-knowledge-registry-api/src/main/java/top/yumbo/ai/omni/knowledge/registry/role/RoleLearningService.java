@@ -163,16 +163,13 @@ public class RoleLearningService {
             log.info("📄 提取到 {} 个文档", documents.size());
 
             // 2. 文档已经根据查询进行了筛选，直接使用
-            log.info("🔍 使用提取的相关文档...");
-            List<KnowledgeDocument> relevantDocs = documents;
-
-            log.info("✓ 共 {} 个相关文档", relevantDocs.size());
+            log.info("🔍 使用提取的相关文档，共 {} 个", documents.size());
 
             // 3. 对每个文档进行知识提炼
             int docCount = 0;
-            for (KnowledgeDocument doc : relevantDocs) {
+            for (KnowledgeDocument doc : documents) {
                 docCount++;
-                log.info("⚙️ 提炼文档 {}/{}: {}", docCount, relevantDocs.size(), doc.getTitle());
+                log.info("⚙️ 提炼文档 {}/{}: {}", docCount, documents.size(), doc.getTitle());
 
                 try {
                     // 使用 AI 提炼知识（如果启用）

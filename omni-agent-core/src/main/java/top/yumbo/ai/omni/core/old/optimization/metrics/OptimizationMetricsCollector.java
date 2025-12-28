@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.optimization.metrics;
+package top.yumbo.ai.omni.core.old.optimization.metrics;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

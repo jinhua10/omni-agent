@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.feedback;
+package top.yumbo.ai.omni.core.old.feedback;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

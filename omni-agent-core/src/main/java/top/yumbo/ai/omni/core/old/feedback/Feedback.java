@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.feedback;
+package top.yumbo.ai.omni.core.old.feedback;
 
 import lombok.Builder;
 import lombok.Data;
