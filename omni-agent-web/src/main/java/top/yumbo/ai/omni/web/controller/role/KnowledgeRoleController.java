@@ -4,11 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
-import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.CreateRoleRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.LearnFromDomainsRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.UpdateRoleRequest;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
 import top.yumbo.ai.omni.knowledge.registry.role.KnowledgeRoleService;
 import top.yumbo.ai.omni.knowledge.registry.role.RoleLearningService;
 
