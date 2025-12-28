@@ -1,4 +1,0 @@
-# Spring Boot Auto-Configuration
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  top.yumbo.ai.omni.knowledge.registry.mongodb.MongoKnowledgeRegistryAutoConfiguration
-
