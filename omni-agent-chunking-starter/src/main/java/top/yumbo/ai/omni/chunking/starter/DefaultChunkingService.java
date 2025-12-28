@@ -20,11 +20,11 @@ import java.util.*;
  * @version 2.0.0 - 重构为完整的分块服务，集成存储功能
  */
 @Slf4j
+@Getter
 public class DefaultChunkingService implements ChunkingService {
 
     private final ChunkingProperties properties;
     private final Map<ChunkingStrategy, ChunkingStrategyExecutor> strategies;
-    @Getter
     private final ChunkingStrategyManager strategyManager;
     @Autowired(required = false)
     private DocumentStorageService storageService;
@@ -41,7 +41,7 @@ public class DefaultChunkingService implements ChunkingService {
         registerStrategy(ChunkingStrategy.FIXED_LENGTH, new FixedLengthStrategy(properties));
         registerStrategy(ChunkingStrategy.PARAGRAPH, new ParagraphStrategy(properties));
         registerStrategy(ChunkingStrategy.SENTENCE, new SentenceStrategy(properties));
-
+        registerStrategy(ChunkingStrategy.MARKDOWN, new MarkdownStrategy(properties));
         // PPL 和 SEMANTIC 策略可选（需要额外依赖）
         try {
             registerStrategy(ChunkingStrategy.PPL, new PPLChunkingStrategy(properties));
@@ -55,15 +55,6 @@ public class DefaultChunkingService implements ChunkingService {
             log.info("✅ 语义分块策略已注册");
         } catch (Exception e) {
             log.warn("⚠️ 语义分块策略不可用: {}", e.getMessage());
-        }
-
-        // 添加 MARKDOWN 策略（如果可用）
-        try {
-            // TODO: 实现 MarkdownStrategy
-            // registerStrategy(ChunkingStrategy.MARKDOWN, new MarkdownStrategy(properties));
-            log.debug("⚠️ Markdown 分块策略尚未实现");
-        } catch (Exception e) {
-            log.debug("⚠️ Markdown 分块策略不可用: {}", e.getMessage());
         }
 
         // 初始化策略管理器
