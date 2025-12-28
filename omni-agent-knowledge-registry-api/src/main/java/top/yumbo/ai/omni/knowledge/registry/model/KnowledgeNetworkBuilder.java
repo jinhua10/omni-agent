@@ -3,6 +3,8 @@ package top.yumbo.ai.omni.knowledge.registry.model;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
@@ -55,7 +57,7 @@ public class KnowledgeNetworkBuilder {
      * 构建任务追踪
      * key: documentId, value: 构建状态
      */
-    private final Map<String, BuildStatus> buildStatusMap = new ConcurrentHashMap<>();
+    private final Map<String, KnowledgeBuildStatus> buildStatusMap = new ConcurrentHashMap<>();
 
     /**
      * 为指定文档构建知识网络（异步）
@@ -70,13 +72,13 @@ public class KnowledgeNetworkBuilder {
 
         try {
             // 更新构建状态
-            buildStatusMap.put(documentId, BuildStatus.PROCESSING);
+            buildStatusMap.put(documentId, KnowledgeBuildStatus.PROCESSING);
 
             // 1. 获取已提取的文本
             Optional<String> extractedTextOpt = documentStorage.getExtractedText(documentId);
             if (extractedTextOpt.isEmpty()) {
                 log.warn("⚠️ 文档 {} 未找到提取文本，跳过知识构建", documentId);
-                buildStatusMap.put(documentId, BuildStatus.FAILED);
+                buildStatusMap.put(documentId, KnowledgeBuildStatus.FAILED);
                 return CompletableFuture.completedFuture(false);
             }
 
@@ -84,14 +86,15 @@ public class KnowledgeNetworkBuilder {
             log.debug("📄 已获取文档 {} 的提取文本，长度: {}", documentId, extractedText.length());
 
             // 2. 获取知识域配置
-            Optional<KnowledgeDomain> domainOpt = domainService.getDomain(domainId);
-            if (domainOpt.isEmpty()) {
-                log.warn("⚠️ 知识域 {} 不存在，跳过知识构建", domainId);
-                buildStatusMap.put(documentId, BuildStatus.FAILED);
+            KnowledgeDomain domain;
+            try {
+                domain = domainService.getDomain(domainId);
+            } catch (Exception e) {
+                log.warn("⚠️ 知识域 {} 不存在，跳过知识构建: {}", domainId, e.getMessage());
+                buildStatusMap.put(documentId, KnowledgeBuildStatus.FAILED);
                 return CompletableFuture.completedFuture(false);
             }
 
-            KnowledgeDomain domain = domainOpt.get();
 
             // 3. 使用AI服务分析文本，提取知识
             List<RefinedKnowledge> knowledgeList = extractKnowledgeWithAI(
@@ -102,7 +105,7 @@ public class KnowledgeNetworkBuilder {
 
             if (knowledgeList.isEmpty()) {
                 log.warn("⚠️ 从文档 {} 未提取到任何知识", documentId);
-                buildStatusMap.put(documentId, BuildStatus.COMPLETED);
+                buildStatusMap.put(documentId, KnowledgeBuildStatus.COMPLETED);
                 return CompletableFuture.completedFuture(true);
             }
 
@@ -110,13 +113,13 @@ public class KnowledgeNetworkBuilder {
             knowledgeStorage.batchStoreKnowledge(knowledgeList, domainId);
 
             log.info("✅ 文档 {} 知识网络构建完成，提取了 {} 条知识", documentId, knowledgeList.size());
-            buildStatusMap.put(documentId, BuildStatus.COMPLETED);
+            buildStatusMap.put(documentId, KnowledgeBuildStatus.COMPLETED);
 
             return CompletableFuture.completedFuture(true);
 
         } catch (Exception e) {
             log.error("❌ 文档 {} 知识网络构建失败", documentId, e);
-            buildStatusMap.put(documentId, BuildStatus.FAILED);
+            buildStatusMap.put(documentId, KnowledgeBuildStatus.FAILED);
             return CompletableFuture.completedFuture(false);
         }
     }
@@ -235,7 +238,7 @@ public class KnowledgeNetworkBuilder {
             knowledge.setSourceDocumentId(documentId);
             knowledge.setSourceDomainId(domain.getDomainId());
             knowledge.setImportance(0.7);
-            knowledge.setCreatedAt(new Date());
+            knowledge.setCreatedAt(LocalDateTime.now());
 
             knowledgeList.add(knowledge);
 
@@ -277,7 +280,7 @@ public class KnowledgeNetworkBuilder {
             knowledge.setSourceDocumentId(documentId);
             knowledge.setSourceDomainId(domain.getDomainId());
             knowledge.setImportance(0.5 + (Math.random() * 0.3)); // 0.5-0.8
-            knowledge.setCreatedAt(new Date());
+            knowledge.setCreatedAt(LocalDateTime.now());
 
             knowledgeList.add(knowledge);
         }
