@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.chunking.ChunkingService;
 import top.yumbo.ai.omni.chunking.ChunkingConfig;
 import top.yumbo.ai.omni.rag.RagService;
@@ -155,7 +156,7 @@ public class RAGRebuildService {
                     RagService.batchIndex(batch);
                     indexed.addAndGet(batch.size());
                     double progress = indexed.get() * 100.0 / total;
-                    log.info("   - 进度: {}/{} ({:.1f}%)",
+                    log.info("   - 进度: {}/{} ({}%)",
                             indexed.get(), total, String.format("%.1f", progress));
                 } catch (Exception e) {
                     log.error("批量索引失败: batch {}-{}", i, end, e);
@@ -268,12 +269,10 @@ public class RAGRebuildService {
         log.warn("💡 建议：在 DocumentStorageService 中添加 getAllChunks() 方法");
 
         // 临时方案：通过文档ID加载
-        List<Chunk> allChunks = new ArrayList<>();
-
         // 这里需要一个获取所有文档ID的方法
         // 简化实现：假设已知文档ID
 
-        return allChunks;
+        return new ArrayList<>();
     }
 
     /**
@@ -311,16 +310,24 @@ public class RAGRebuildService {
         for (top.yumbo.ai.omni.chunking.Chunk chunkingChunk : chunkingChunks) {
             // 构建元数据
             java.util.Map<String, Object> metadata = new java.util.HashMap<>();
-            if (chunkingChunk.getStrategy() != null) {
-                metadata.put("strategy", chunkingChunk.getStrategy().toString());
+            // 将原有的元数据复制过来
+            if (chunkingChunk.getMetadata() != null) {
+                metadata.putAll(chunkingChunk.getMetadata());
             }
-            metadata.put("length", chunkingChunk.getLength());
+            // 添加位置和大小信息
+            if (chunkingChunk.getStartPosition() != null) {
+                metadata.put("startPosition", chunkingChunk.getStartPosition());
+            }
+            if (chunkingChunk.getEndPosition() != null) {
+                metadata.put("endPosition", chunkingChunk.getEndPosition());
+            }
+            metadata.put("size", chunkingChunk.getSize());
 
             Chunk storageChunk = Chunk.builder()
-                    .id(chunkingChunk.getChunkId())
+                    .id(chunkingChunk.getId())
                     .documentId(documentId)
                     .content(chunkingChunk.getContent())
-                    .sequence(chunkingChunk.getIndex())  // index -> sequence
+                    .sequence(chunkingChunk.getSequence())
                     .startPosition(chunkingChunk.getStartPosition())
                     .endPosition(chunkingChunk.getEndPosition())
                     .metadata(metadata)
