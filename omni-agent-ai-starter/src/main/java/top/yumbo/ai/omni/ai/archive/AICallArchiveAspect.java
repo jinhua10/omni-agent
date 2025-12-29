@@ -90,17 +90,16 @@ public class AICallArchiveAspect {
         if (result instanceof Flux) {
             Flux<?> flux = (Flux<?>) result;
 
-            // 创建基础归档记录
-            AICallArchive.AICallArchiveBuilder builder = createBaseArchive(target, methodName, args, startTime);
-            builder.isStream(true);
+            // 创建基础归档数据
+            ArchiveContext context = new ArchiveContext(target, methodName, args, startTime, true);
 
             // 判断Flux类型
             if (methodName.contains("Response")) {
                 // Flux<AIResponse>
-                return handleAIResponseFlux(flux, builder);
+                return handleAIResponseFlux(flux, context);
             } else {
                 // Flux<String>
-                return handleStringFlux(flux, builder);
+                return handleStringFlux(flux, context);
             }
         }
 
@@ -108,9 +107,9 @@ public class AICallArchiveAspect {
     }
 
     /**
-     * 处理 Flux<String> 流
+     * 处理 Flux&lt;String&gt; 流
      */
-    private Flux<String> handleStringFlux(Flux<?> flux, AICallArchive.AICallArchiveBuilder builder) {
+    private Flux<String> handleStringFlux(Flux<?> flux, ArchiveContext context) {
         @SuppressWarnings("unchecked")
         Flux<String> stringFlux = (Flux<String>) flux;
 
@@ -120,11 +119,14 @@ public class AICallArchiveAspect {
                 .doOnNext(chunk -> fullResponse.append(chunk))
                 .doOnComplete(() -> {
                     // 流完成后异步归档
-                    AICallArchive archive = builder
-                            .responseText(fullResponse.toString())
-                            .success(true)
-                            .durationMs(System.currentTimeMillis() - builder.build().getTimestamp())
-                            .build();
+                    AICallArchive archive = context.buildArchive(
+                            fullResponse.toString(),
+                            true,
+                            null,
+                            null,
+                            null,
+                            System.currentTimeMillis() - context.startTime
+                    );
 
                     archiveService.archiveAsync(archive)
                             .subscribe(
@@ -134,21 +136,23 @@ public class AICallArchiveAspect {
                 })
                 .doOnError(error -> {
                     // 流失败时也归档
-                    AICallArchive archive = builder
-                            .responseText(fullResponse.toString())
-                            .success(false)
-                            .error(error.getMessage())
-                            .durationMs(System.currentTimeMillis() - builder.build().getTimestamp())
-                            .build();
+                    AICallArchive archive = context.buildArchive(
+                            fullResponse.toString(),
+                            false,
+                            error.getMessage(),
+                            null,
+                            null,
+                            System.currentTimeMillis() - context.startTime
+                    );
 
                     archiveService.archiveAsync(archive).subscribe();
                 });
     }
 
     /**
-     * 处理 Flux<AIResponse> 流
+     * 处理 Flux&lt;AIResponse&gt; 流
      */
-    private Flux<?> handleAIResponseFlux(Flux<?> flux, AICallArchive.AICallArchiveBuilder builder) {
+    private Flux<?> handleAIResponseFlux(Flux<?> flux, ArchiveContext context) {
         @SuppressWarnings("unchecked")
         Flux<AIResponse> responseFlux = (Flux<AIResponse>) flux;
 
@@ -158,25 +162,28 @@ public class AICallArchiveAspect {
                 .doOnNext(response -> lastResponse[0] = response)
                 .doOnComplete(() -> {
                     if (lastResponse[0] != null) {
-                        AICallArchive archive = builder
-                                .responseText(lastResponse[0].getText())
-                                .success(lastResponse[0].isSuccess())
-                                .error(lastResponse[0].getError())
-                                .model(lastResponse[0].getModel())
-                                .tokenUsage(convertTokenUsage(lastResponse[0]))
-                                .durationMs(System.currentTimeMillis() - builder.build().getTimestamp())
-                                .build();
+                        AIResponse resp = lastResponse[0];
+                        AICallArchive archive = context.buildArchive(
+                                resp.getText(),
+                                resp.isSuccess(),
+                                resp.getError(),
+                                resp.getModel(),
+                                convertTokenUsage(resp),
+                                System.currentTimeMillis() - context.startTime
+                        );
 
                         archiveService.archiveAsync(archive).subscribe();
                     }
                 })
                 .doOnError(error -> {
-                    AICallArchive archive = builder
-                            .responseText(lastResponse[0] != null ? lastResponse[0].getText() : "")
-                            .success(false)
-                            .error(error.getMessage())
-                            .durationMs(System.currentTimeMillis() - builder.build().getTimestamp())
-                            .build();
+                    AICallArchive archive = context.buildArchive(
+                            lastResponse[0] != null ? lastResponse[0].getText() : "",
+                            false,
+                            error.getMessage(),
+                            null,
+                            null,
+                            System.currentTimeMillis() - context.startTime
+                    );
 
                     archiveService.archiveAsync(archive).subscribe();
                 });
@@ -188,28 +195,32 @@ public class AICallArchiveAspect {
     private void handleNonStreamResult(Object result, Object target, String methodName, Object[] args, long startTime) {
         long durationMs = System.currentTimeMillis() - startTime;
 
-        AICallArchive.AICallArchiveBuilder builder = createBaseArchive(target, methodName, args, startTime);
-        builder.isStream(false)
-               .durationMs(durationMs);
+        ArchiveContext context = new ArchiveContext(target, methodName, args, startTime, false);
 
         // 解析响应
+        String responseText = null;
+        Boolean success = true;
+        String error = null;
+        String model = null;
+        AICallArchive.TokenUsage tokenUsage = null;
+
         if (result instanceof AIResponse) {
             AIResponse response = (AIResponse) result;
-            builder.responseText(response.getText())
-                   .success(response.isSuccess())
-                   .error(response.getError())
-                   .model(response.getModel())
-                   .tokenUsage(convertTokenUsage(response));
+            responseText = response.getText();
+            success = response.isSuccess();
+            error = response.getError();
+            model = response.getModel();
+            tokenUsage = convertTokenUsage(response);
         } else if (result instanceof String) {
-            builder.responseText((String) result)
-                   .success(true);
+            responseText = (String) result;
         }
 
         // 异步归档
-        archiveService.archiveAsync(builder.build())
+        AICallArchive archive = context.buildArchive(responseText, success, error, model, tokenUsage, durationMs);
+        archiveService.archiveAsync(archive)
                 .subscribe(
                         id -> log.debug("✅ AI调用已归档: {}", id),
-                        error -> log.error("❌ AI调用归档失败", error)
+                        error2 -> log.error("❌ AI调用归档失败", error2)
                 );
     }
 
@@ -219,49 +230,93 @@ public class AICallArchiveAspect {
     private void handleFailedCall(Throwable throwable, Object target, String methodName, Object[] args, long startTime) {
         long durationMs = System.currentTimeMillis() - startTime;
 
-        AICallArchive.AICallArchiveBuilder builder = createBaseArchive(target, methodName, args, startTime);
-        AICallArchive archive = builder
-                .isStream(isStreamMethod(methodName))
-                .success(false)
-                .error(throwable.getMessage())
-                .durationMs(durationMs)
-                .build();
+        ArchiveContext context = new ArchiveContext(target, methodName, args, startTime, isStreamMethod(methodName));
+        AICallArchive archive = context.buildArchive(null, false, throwable.getMessage(), null, null, durationMs);
 
         archiveService.archiveAsync(archive).subscribe();
     }
 
     /**
-     * 创建基础归档记录
+     * 归档上下文（内部辅助类，避免在方法签名中暴露 Builder）
      */
-    private AICallArchive.AICallArchiveBuilder createBaseArchive(Object target, String methodName, Object[] args, long startTime) {
-        AICallArchive.AICallArchiveBuilder builder = AICallArchive.builder()
-                .archiveId(AICallArchive.generateArchiveId())
-                .timestamp(startTime)
-                .callTime(AICallArchive.getCurrentTimeISO())
-                .serviceType(getServiceType(target))
-                .callType(getCallType(methodName))
-                .source("aop");
+    private class ArchiveContext {
+        final Object target;
+        final String methodName;
+        final Object[] args;
+        final long startTime;
+        final boolean isStream;
+        final String serviceType;
+        final AICallArchive.CallType callType;
+        final String model;
+        final String systemPrompt;
+        final String userInput;
+        final List<ChatMessage> messages;
 
-        // 解析参数
-        parseArguments(builder, methodName, args, target);
+        ArchiveContext(Object target, String methodName, Object[] args, long startTime, boolean isStream) {
+            this.target = target;
+            this.methodName = methodName;
+            this.args = args;
+            this.startTime = startTime;
+            this.isStream = isStream;
+            this.serviceType = getServiceType(target);
+            this.callType = getCallType(methodName);
 
-        return builder;
+            // 解析参数
+            ParsedArguments parsed = parseMethodArguments(args, target);
+            this.model = parsed.model;
+            this.systemPrompt = parsed.systemPrompt;
+            this.userInput = parsed.userInput;
+            this.messages = parsed.messages;
+        }
+
+        AICallArchive buildArchive(String responseText, Boolean success, String error,
+                                   String modelOverride, AICallArchive.TokenUsage tokenUsage, long durationMs) {
+            return AICallArchive.builder()
+                    .archiveId(AICallArchive.generateArchiveId())
+                    .timestamp(startTime)
+                    .callTime(AICallArchive.getCurrentTimeISO())
+                    .serviceType(serviceType)
+                    .callType(callType)
+                    .source("aop")
+                    .isStream(isStream)
+                    .model(modelOverride != null ? modelOverride : model)
+                    .systemPrompt(systemPrompt)
+                    .userInput(userInput)
+                    .messages(messages)
+                    .responseText(responseText)
+                    .success(success)
+                    .error(error)
+                    .tokenUsage(tokenUsage)
+                    .durationMs(durationMs)
+                    .build();
+        }
+    }
+
+    /**
+     * 解析后的参数（内部辅助类）
+     */
+    private static class ParsedArguments {
+        String model;
+        String systemPrompt;
+        String userInput;
+        List<ChatMessage> messages;
     }
 
     /**
      * 解析方法参数
      */
     @SuppressWarnings("unchecked")
-    private void parseArguments(AICallArchive.AICallArchiveBuilder builder, String methodName, Object[] args, Object target) {
+    private ParsedArguments parseMethodArguments(Object[] args, Object target) {
+        ParsedArguments result = new ParsedArguments();
+
         if (args == null || args.length == 0) {
-            return;
+            return result;
         }
 
         // 获取当前模型
         if (target instanceof AIService) {
             try {
-                String model = ((AIService) target).getCurrentModel();
-                builder.model(model);
+                result.model = ((AIService) target).getCurrentModel();
             } catch (Exception e) {
                 // ignore
             }
@@ -271,18 +326,20 @@ public class AICallArchiveAspect {
         for (Object arg : args) {
             if (arg instanceof String) {
                 // 系统提示或用户输入
-                if (builder.build().getSystemPrompt() == null) {
-                    builder.systemPrompt((String) arg);
-                } else if (builder.build().getUserInput() == null) {
-                    builder.userInput((String) arg);
+                if (result.systemPrompt == null) {
+                    result.systemPrompt = (String) arg;
+                } else if (result.userInput == null) {
+                    result.userInput = (String) arg;
                 }
             } else if (arg instanceof List) {
                 List<?> list = (List<?>) arg;
                 if (!list.isEmpty() && list.get(0) instanceof ChatMessage) {
-                    builder.messages((List<ChatMessage>) list);
+                    result.messages = (List<ChatMessage>) list;
                 }
             }
         }
+
+        return result;
     }
 
     /**
