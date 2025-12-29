@@ -59,12 +59,30 @@ public class RagAdapterAutoConfiguration {
             String instanceId = config.getOrGenerateId();
 
             try {
-                RagService service = new RagInstanceBuilder(config, properties.getVectorDimension())
-                        .withJdbcTemplate(jdbcTemplate.getIfAvailable())
-                        .withMongoTemplate(mongoTemplate.getIfAvailable())
-                        .withRedisTemplate(redisTemplate.getIfAvailable())
-                        .withElasticsearchClient(elasticsearchClient.getIfAvailable())
-                        .build();
+                RagInstanceBuilder builder = new RagInstanceBuilder(config, properties.getVectorDimension());
+
+                // 条件注入依赖
+                JdbcTemplate jdbc = jdbcTemplate.getIfAvailable();
+                if (jdbc != null) {
+                    builder.withJdbcTemplate(jdbc);
+                }
+
+                MongoTemplate mongo = mongoTemplate.getIfAvailable();
+                if (mongo != null) {
+                    builder.withMongoTemplate(mongo);
+                }
+
+                RedisTemplate<String, Object> redis = redisTemplate.getIfAvailable();
+                if (redis != null) {
+                    builder.withRedisTemplate(redis);
+                }
+
+                ElasticsearchClient es = elasticsearchClient.getIfAvailable();
+                if (es != null) {
+                    builder.withElasticsearchClient(es);
+                }
+
+                RagService service = builder.build();
 
                 services.put(instanceId, service);
                 log.info("✅ 实例创建成功: id={}, type={}", instanceId, config.getType());
