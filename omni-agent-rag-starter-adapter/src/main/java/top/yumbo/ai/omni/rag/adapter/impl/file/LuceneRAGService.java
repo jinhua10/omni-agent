@@ -68,13 +68,15 @@ public class LuceneRAGService implements RagService {
             }
 
             // 清理可能残留的锁文件（处理异常退出情况）
+            // 在重启时可以安全删除，因为旧进程已经退出
             Path lockFile = indexPath.resolve("write.lock");
             if (Files.exists(lockFile)) {
                 try {
                     Files.delete(lockFile);
-                    log.warn("检测到旧的索引锁文件，已自动清理: {}", lockFile);
+                    log.warn("⚠️ 检测到旧的索引锁文件，已自动清理: {}", lockFile);
                 } catch (IOException e) {
-                    log.warn("无法删除锁文件: {}, 将尝试继续初始化", lockFile);
+                    log.error("❌ 无法删除锁文件: {}, 请手动删除后重启", lockFile, e);
+                    throw new RuntimeException("无法删除索引锁文件，请手动删除: " + lockFile);
                 }
             }
 
@@ -93,7 +95,7 @@ public class LuceneRAGService implements RagService {
             // 初始化 SearcherManager
             this.searcherManager = new SearcherManager(directory, null);
 
-            log.info("Lucene RAG 服务初始化完成，文档总数: {}", indexWriter.getDocStats().numDocs);
+            log.info("✅ Lucene RAG 服务初始化完成，文档总数: {}", indexWriter.getDocStats().numDocs);
         } catch (IOException e) {
             log.error("初始化 Lucene RAG 服务失败", e);
             throw new RuntimeException("初始化 Lucene RAG 服务失败: " + e.getMessage(), e);
