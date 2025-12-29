@@ -85,8 +85,7 @@ public class DocumentStorageAutoConfiguration {
      */
     @Bean
     @Primary
-    @ConditionalOnMissingBean(DocumentStorageService.class)
-    public DocumentStorageService primaryDocumentStorageService(
+    public DocumentStorageService documentStorageService(
             DocumentStorageProperties properties,
             Map<String, DocumentStorageService> documentStorageServices) {
 
