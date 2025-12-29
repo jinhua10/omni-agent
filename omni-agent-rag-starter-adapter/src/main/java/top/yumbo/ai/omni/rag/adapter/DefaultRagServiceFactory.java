@@ -10,18 +10,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.RagServiceFactory;
-import top.yumbo.ai.omni.rag.adapter.impl.file.FileRAGProperties;
-import top.yumbo.ai.omni.rag.adapter.impl.file.LuceneRAGService;
-import top.yumbo.ai.omni.rag.adapter.impl.sqlite.SQLiteRAGProperties;
-import top.yumbo.ai.omni.rag.adapter.impl.sqlite.SQLiteRAGService;
-import top.yumbo.ai.omni.rag.adapter.impl.mongodb.MongoDBRAGProperties;
-import top.yumbo.ai.omni.rag.adapter.impl.mongodb.MongoDBRAGService;
-import top.yumbo.ai.omni.rag.adapter.impl.redis.RedisRAGProperties;
-import top.yumbo.ai.omni.rag.adapter.impl.redis.RedisRAGService;
-import top.yumbo.ai.omni.rag.adapter.impl.h2.H2RAGProperties;
-import top.yumbo.ai.omni.rag.adapter.impl.h2.H2RAGService;
-import top.yumbo.ai.omni.rag.adapter.impl.elasticsearch.ElasticsearchRAGProperties;
-import top.yumbo.ai.omni.rag.adapter.impl.elasticsearch.ElasticsearchRAGService;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,19 +69,19 @@ public class DefaultRagServiceFactory implements RagServiceFactory {
 
     /**
      * 主构造函数（只接收必需参数）
+     *
+     * <p>注意：所有存储依赖（JDBC、MongoDB、Redis、Elasticsearch）都是可选的，
+     * 通过字段注入方式提供，以支持纯 File 存储等场景</p>
      */
     public DefaultRagServiceFactory(
             RagAdapterProperties properties,
-            ObjectProvider<RagService> ragServiceProvider,
-            JdbcTemplate jdbcTemplate) {
+            ObjectProvider<RagService> ragServiceProvider) {
         this.properties = properties;
         this.ragServiceProvider = ragServiceProvider;
-        this.jdbcTemplate = jdbcTemplate;
 
         log.info("✅ RAG 服务工厂初始化完成（兼容模式）");
         log.info("  - 实例数量: {}", properties.getInstances().size());
         log.info("  - 可用实现: {}", ragServiceProvider.stream().count());
-        log.info("  - JDBC 可用: {}", jdbcTemplate != null);
     }
 
     @Override

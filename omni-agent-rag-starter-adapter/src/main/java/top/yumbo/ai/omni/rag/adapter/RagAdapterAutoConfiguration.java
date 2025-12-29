@@ -1,6 +1,5 @@
 package top.yumbo.ai.omni.rag.adapter;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,8 +8,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.RagServiceFactory;
@@ -32,14 +29,25 @@ import java.util.Map;
 @EnableConfigurationProperties(RagAdapterProperties.class)
 public class RagAdapterAutoConfiguration {
 
-    @Autowired(required = false)
-    private MongoTemplate mongoTemplate;
+    // 可选依赖使用字段注入，避免类型加载问题
+    private Object mongoTemplate;
+    private Object redisTemplate;
+    private Object elasticsearchClient;
 
     @Autowired(required = false)
-    private RedisTemplate<String, Object> redisTemplate;
+    public void setMongoTemplate(Object mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
+    }
 
     @Autowired(required = false)
-    private ElasticsearchClient elasticsearchClient;
+    public void setRedisTemplate(Object redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
+
+    @Autowired(required = false)
+    public void setElasticsearchClient(Object elasticsearchClient) {
+        this.elasticsearchClient = elasticsearchClient;
+    }
 
     /**
      * 创建 RAG 服务实例（支持单实例和多实例）
@@ -148,20 +156,17 @@ public class RagAdapterAutoConfiguration {
      * RAG 服务工厂（兼容旧版 API）
      */
     @Bean
+    @ConditionalOnMissingBean
     public RagServiceFactory ragServiceFactory(
             RagAdapterProperties properties,
-            ObjectProvider<RagService> ragServiceProvider,
-            ObjectProvider<JdbcTemplate> jdbcTemplate) {
+            ObjectProvider<RagService> ragServiceProvider) {
 
         log.info("🔧 配置 RAG 服务工厂（兼容模式）");
 
-        DefaultRagServiceFactory factory = new DefaultRagServiceFactory(
+        return new DefaultRagServiceFactory(
                 properties,
-                ragServiceProvider,
-                jdbcTemplate.getIfAvailable()
+                ragServiceProvider
         );
-
-        return factory;
     }
 }
 

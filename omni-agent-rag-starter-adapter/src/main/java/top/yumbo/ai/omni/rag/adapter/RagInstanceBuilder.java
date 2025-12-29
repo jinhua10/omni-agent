@@ -30,9 +30,9 @@ public class RagInstanceBuilder {
     private final RagAdapterProperties.RagInstanceConfig config;
     private final int globalVectorDimension;
     private JdbcTemplate jdbcTemplate;
-    private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
-    private org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
-    private co.elastic.clients.elasticsearch.ElasticsearchClient elasticsearchClient;
+    private Object mongoTemplate;  // 使用 Object 避免类加载问题
+    private Object redisTemplate;  // 使用 Object 避免类加载问题
+    private Object elasticsearchClient;  // 使用 Object 避免类加载问题
 
     public RagInstanceBuilder(RagAdapterProperties.RagInstanceConfig config, int globalVectorDimension) {
         this.config = config;
@@ -44,18 +44,18 @@ public class RagInstanceBuilder {
         return this;
     }
 
-    public RagInstanceBuilder withMongoTemplate(org.springframework.data.mongodb.core.MongoTemplate mongoTemplate) {
+    public RagInstanceBuilder withMongoTemplate(Object mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
         return this;
     }
 
-    public RagInstanceBuilder withRedisTemplate(org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate) {
+    public RagInstanceBuilder withRedisTemplate(Object redisTemplate) {
         this.redisTemplate = redisTemplate;
         return this;
     }
 
-    public RagInstanceBuilder withElasticsearchClient(co.elastic.clients.elasticsearch.ElasticsearchClient client) {
-        this.elasticsearchClient = client;
+    public RagInstanceBuilder withElasticsearchClient(Object elasticsearchClient) {
+        this.elasticsearchClient = elasticsearchClient;
         return this;
     }
 
@@ -220,11 +220,15 @@ public class RagInstanceBuilder {
             throw new IllegalArgumentException("MongoDB 配置不能为空");
         }
 
+        // 类型转换
+        org.springframework.data.mongodb.core.MongoTemplate template =
+                (org.springframework.data.mongodb.core.MongoTemplate) mongoTemplate;
+
         MongoDBRAGProperties props = new MongoDBRAGProperties();
         props.setCollectionName(config.getMongodb().getCollectionName());
         props.setEnableTextSearch(config.getMongodb().getEnableTextSearch());
 
-        MongoDBRAGService service = new MongoDBRAGService(mongoTemplate, props, instanceId);
+        MongoDBRAGService service = new MongoDBRAGService(template, props, instanceId);
         service.init();
 
         log.info("✅ 创建 MongoDB RAG 实例成功: {}", instanceId);
@@ -239,12 +243,17 @@ public class RagInstanceBuilder {
             throw new IllegalArgumentException("Redis 配置不能为空");
         }
 
+        // 类型转换
+        @SuppressWarnings("unchecked")
+        org.springframework.data.redis.core.RedisTemplate<String, Object> template =
+                (org.springframework.data.redis.core.RedisTemplate<String, Object>) redisTemplate;
+
         RedisRAGProperties props = new RedisRAGProperties();
         props.setKeyPrefix(config.getRedis().getKeyPrefix());
         props.setDocumentTtl(config.getRedis().getDocumentTtl());
         props.setEnableTextIndex(config.getRedis().getEnableTextIndex());
 
-        RedisRAGService service = new RedisRAGService(redisTemplate, props, instanceId);
+        RedisRAGService service = new RedisRAGService(template, props, instanceId);
         service.init();
 
         log.info("✅ 创建 Redis RAG 实例成功: {}", instanceId);
@@ -275,6 +284,10 @@ public class RagInstanceBuilder {
             throw new IllegalArgumentException("Elasticsearch 配置不能为空");
         }
 
+        // 类型转换
+        co.elastic.clients.elasticsearch.ElasticsearchClient client =
+                (co.elastic.clients.elasticsearch.ElasticsearchClient) elasticsearchClient;
+
         ElasticsearchRAGProperties props = new ElasticsearchRAGProperties();
         props.setIndexName(config.getElasticsearch().getIndexPrefix() + instanceId);
         props.setNumberOfShards(3);
@@ -283,7 +296,7 @@ public class RagInstanceBuilder {
         props.setRefreshAfterWrite(false);
 
         ElasticsearchRAGService service = new ElasticsearchRAGService(
-                elasticsearchClient,
+                client,
                 props,
                 instanceId
         );
