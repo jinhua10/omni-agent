@@ -43,9 +43,9 @@ public class KnowledgeRegistryAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean(KnowledgeAssociationService.class)
-    public KnowledgeAssociationService knowledgeAssociationService() {
-        log.info("🔗 创建默认知识关联服务");
-        return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeAssociationService();
+    public KnowledgeAssociationService knowledgeAssociationService(KnowledgeStorageService storageService) {
+        log.info("🔗 创建默认知识关联服务（基于 KnowledgeStorageService）");
+        return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeAssociationService(storageService);
     }
 }
 
