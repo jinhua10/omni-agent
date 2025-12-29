@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeAssociationService;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeExtractionService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
@@ -46,6 +47,16 @@ public class KnowledgeRegistryAutoConfiguration {
     public KnowledgeAssociationService knowledgeAssociationService(KnowledgeStorageService storageService) {
         log.info("🔗 创建默认知识关联服务（基于 KnowledgeStorageService）");
         return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeAssociationService(storageService);
+    }
+
+    /**
+     * 创建默认的知识提取服务
+     */
+    @Bean
+    @ConditionalOnMissingBean(KnowledgeExtractionService.class)
+    public KnowledgeExtractionService knowledgeExtractionService(KnowledgeStorageService storageService) {
+        log.info("🔍 创建默认知识提取服务（基于 KnowledgeStorageService）");
+        return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeExtractionService(storageService);
     }
 }
 
