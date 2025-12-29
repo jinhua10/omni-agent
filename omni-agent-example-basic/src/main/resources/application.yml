@@ -67,56 +67,50 @@ omni-agent:
   # 位置：文档处理流程的第1步 - 文档上传和归档
   # 支持多种后端：file, minio, s3, redis, mongodb, elasticsearch
   document-storage:
-    # ========== 当前使用的后端类型 ==========
-    type: file
+    instances:
+      # File 存储（开发环境）
+      - id: dev-storage
+        type: file
+        primary: true
+        file:
+          base-directory: data/documents/dev
 
-    # ========== File 配置（推荐：简单、直接）==========
-    file:
-      base-path: ./data/documents       # 文档存储根目录
-      chunk-path: ./data/chunks         # 分块存储目录
-      image-path: ./data/images         # 图片存储目录
-      ppl-path: ./data/ppl              # PPL数据存储目录
-      max-file-size: 104857600          # 最大文件大小（100MB）
+      # MongoDB 存储（生产环境）
+      - id: prod-mongo
+        type: mongodb
+        mongodb:
+          database: prod-documents
 
-    # ========== MinIO 配置（对象存储、推荐生产环境）==========
-    # type: minio
-    minio:
-      endpoint: http://localhost:9000   # MinIO服务地址
-      access-key: minioadmin            # 访问密钥
-      secret-key: minioadmin            # 密钥
-      bucket: omni-agent                # 存储桶名称
-      auto-create-bucket: true          # 自动创建存储桶
+      # Redis 存储（缓存）
+      - id: cache
+        type: redis
+        redis:
+          key-prefix: "doc:cache:"
+          ttl: 3600
 
-    # ========== AWS S3 配置（云存储）==========
-    # type: s3
-    s3:
-      region: us-east-1                 # AWS区域
-      access-key: your-access-key       # AWS访问密钥
-      secret-key: your-secret-key       # AWS密钥
-      bucket: omni-agent                # S3存储桶名称
-      endpoint:                         # 自定义端点（可选，用于兼容S3的服务）
+      # S3 存储（云端备份）
+      - id: s3-backup
+        type: s3
+        s3:
+          bucket-name: prod-backup
+          region: us-east-1
+          access-key: ${AWS_ACCESS_KEY}
+          secret-key: ${AWS_SECRET_KEY}
 
-    # ========== Redis 配置（缓存式存储）==========
-    # type: redis
-    redis:
-      host: localhost
-      port: 6379
-      database: 1                       # 使用不同的数据库
-      key-prefix: "docs:"                 # 键前缀
+      # MinIO 存储（私有云）
+      - id: minio-storage
+        type: minio
+        minio:
+          endpoint: http://minio.local:9000
+          bucket-name: documents
+          access-key: minioadmin
+          secret-key: minioadmin
 
-    # ========== MongoDB 配置（文档数据库）==========
-    # type: mongodb
-    mongodb:
-      uri: mongodb://localhost:27017
-      database: omni-agent-docs
-      collection: documents             # 集合名称
-
-    # ========== Elasticsearch 配置（全文索引）==========
-    # type: elasticsearch
-    elasticsearch:
-      hosts:
-        - localhost:9200
-      index-name: omni-agent-docs       # 索引名称
+      # Elasticsearch 存储（搜索）
+      - id: search-storage
+        type: elasticsearch
+        elasticsearch:
+          chunk-index: searchable-chunks
   # ========== 步骤2️⃣ Vision LLM配置 (文本提取) ==========
   # 作用：从图片/PDF/office文档中提取文本
   vision-llm:

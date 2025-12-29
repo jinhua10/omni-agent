@@ -1,16 +1,22 @@
 package top.yumbo.ai.omni.storage;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import io.minio.MinioClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
+import software.amazon.awssdk.services.s3.S3Client;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.storage.impl.elasticsearch.ElasticsearchDocumentStorage;
 import top.yumbo.ai.omni.storage.impl.elasticsearch.ElasticsearchStorageProperties;
 import top.yumbo.ai.omni.storage.impl.file.FileDocumentStorage;
+import top.yumbo.ai.omni.storage.impl.minio.MinIODocumentStorage;
+import top.yumbo.ai.omni.storage.impl.minio.MinIOStorageProperties;
 import top.yumbo.ai.omni.storage.impl.mongodb.MongoDBDocumentStorage;
 import top.yumbo.ai.omni.storage.impl.redis.RedisDocumentStorage;
 import top.yumbo.ai.omni.storage.impl.redis.RedisStorageProperties;
+import top.yumbo.ai.omni.storage.impl.s3.S3DocumentStorage;
+import top.yumbo.ai.omni.storage.impl.s3.S3StorageProperties;
 
 /**
  * 文档存储实例构建器
@@ -138,9 +144,26 @@ public class DocumentStorageInstanceBuilder {
             throw new IllegalStateException("S3Client 未配置，无法创建 S3 存储实例");
         }
 
-        log.info("✅ 创建 S3 存储实例");
-        // TODO: 实现 S3 存储创建逻辑
-        throw new UnsupportedOperationException("S3 存储暂未实现");
+        S3Client client = (S3Client) s3Client;
+        S3StorageProperties props = new S3StorageProperties();
+
+        if (config.getS3() != null) {
+            DocumentStorageProperties.S3Config s3Config = config.getS3();
+            props.setBucketName(s3Config.getBucketName());
+            props.setRegion(s3Config.getRegion());
+            if (s3Config.getAccessKey() != null) {
+                props.setAccessKeyId(s3Config.getAccessKey());
+            }
+            if (s3Config.getSecretKey() != null) {
+                props.setSecretAccessKey(s3Config.getSecretKey());
+            }
+            if (s3Config.getEndpoint() != null) {
+                props.setEndpoint(s3Config.getEndpoint());
+            }
+        }
+
+        log.info("✅ 创建 S3 存储实例，bucket: {}", props.getBucketName());
+        return new S3DocumentStorage(client, props);
     }
 
     private DocumentStorageService buildMinIOStorage() {
@@ -148,9 +171,23 @@ public class DocumentStorageInstanceBuilder {
             throw new IllegalStateException("MinioClient 未配置，无法创建 MinIO 存储实例");
         }
 
-        log.info("✅ 创建 MinIO 存储实例");
-        // TODO: 实现 MinIO 存储创建逻辑
-        throw new UnsupportedOperationException("MinIO 存储暂未实现");
+        MinioClient client = (MinioClient) minioClient;
+        MinIOStorageProperties props = new MinIOStorageProperties();
+
+        if (config.getMinio() != null) {
+            DocumentStorageProperties.MinIOConfig minioConfig = config.getMinio();
+            props.setEndpoint(minioConfig.getEndpoint());
+            props.setBucketName(minioConfig.getBucketName());
+            if (minioConfig.getAccessKey() != null) {
+                props.setAccessKey(minioConfig.getAccessKey());
+            }
+            if (minioConfig.getSecretKey() != null) {
+                props.setSecretKey(minioConfig.getSecretKey());
+            }
+        }
+
+        log.info("✅ 创建 MinIO 存储实例，bucket: {}", props.getBucketName());
+        return new MinIODocumentStorage(client, props);
     }
 
     private DocumentStorageService buildElasticsearchStorage() {
@@ -172,4 +209,3 @@ public class DocumentStorageInstanceBuilder {
         return new ElasticsearchDocumentStorage(client, props);
     }
 }
-
