@@ -57,10 +57,10 @@ function AppContent() {
     return { dockPosition: DOCK_POSITIONS.NONE }
   })
 
-  // 处理进入应用（从Landing Page跳转到Demo）
+  // 处理进入应用（从Landing Page跳转到主应用）
   const handleEnterApp = () => {
-    // 跳转到Demo路由
-    window.location.hash = '#/demo/qa'
+    // 跳转到问答页面（新路由格式）
+    window.location.hash = '#/qa'
   }
 
   // 监听URL hash变化，判断显示Landing Page还是主应用
@@ -68,14 +68,35 @@ function AppContent() {
     const handleHashChange = () => {
       const hash = window.location.hash
 
-      // 如果hash以 #/demo/ 开头，显示主应用
+      // 定义主应用的所有有效路由
+      const appRoutes = [
+        'qa', 'documents', 'roles', 'feedback', 'collaboration',
+        'wish', 'aiService', 'workflowMarket', 'workflowBuilder',
+        'profile', 'admin'
+      ]
+
+      // 如果hash以 #/demo/ 开头，显示主应用（兼容旧路由）
       if (hash.startsWith('#/demo/')) {
         setCurrentView('app')
         // 解析实际的菜单路径
         const path = hash.replace('#/demo/', '').split('?')[0]
         setActiveMenu(path || 'qa')
-      } else {
-        // 否则显示Landing Page
+      }
+      // 如果hash直接匹配主应用路由（如 #/documents）
+      else if (hash.startsWith('#/')) {
+        const path = hash.substring(2).split('?')[0] // 去掉 #/
+
+        // 检查是否是有效的应用路由
+        if (appRoutes.includes(path)) {
+          setCurrentView('app')
+          setActiveMenu(path)
+        } else {
+          // 不是有效路由，显示Landing Page
+          setCurrentView('landing')
+        }
+      }
+      // 空hash或仅 # 显示Landing Page
+      else {
         setCurrentView('landing')
       }
     }
@@ -170,9 +191,9 @@ function AppContent() {
   const handleMenuClick = (key) => {
     setActiveMenu(key)
     console.log('Navigate to:', key)
-    // 使用/demo/路由前缀
+    // 使用新的路由格式（不带 /demo/ 前缀）
     if (typeof key === 'string' && key.length > 0) {
-      const nextHash = `#/demo/${key}`
+      const nextHash = `#/${key}`
       if (window.location.hash !== nextHash) {
         window.location.hash = nextHash
       }
