@@ -223,7 +223,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public void deleteExtractedText(String documentId) {
         try {
-            Path textFile = extractedPath.resolve(documentId + ".txt");
+            Path textFile = extractedPath.resolve(documentId + ".md");
 
             if (Files.exists(textFile)) {
                 Files.delete(textFile);

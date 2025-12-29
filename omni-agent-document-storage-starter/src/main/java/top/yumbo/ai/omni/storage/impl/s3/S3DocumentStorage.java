@@ -648,7 +648,7 @@ public class S3DocumentStorage implements DocumentStorageService {
     @Override
     public void deleteExtractedText(String documentId) {
         try {
-            String key = "extracted/" + documentId + ".txt";
+            String key = "extracted/" + documentId + ".md";
 
             DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
                     .bucket(properties.getBucketName())

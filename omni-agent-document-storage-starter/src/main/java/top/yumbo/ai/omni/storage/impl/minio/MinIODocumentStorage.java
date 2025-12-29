@@ -229,7 +229,7 @@ public class MinIODocumentStorage implements DocumentStorageService {
     @Override
     public void deleteExtractedText(String documentId) {
         try {
-            String key = "extracted/" + documentId + ".txt";
+            String key = "extracted/" + documentId + ".md";
 
             minioClient.removeObject(
                 RemoveObjectArgs.builder()
