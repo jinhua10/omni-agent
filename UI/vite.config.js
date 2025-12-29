@@ -34,9 +34,17 @@ export default defineConfig({
     minify: 'terser', // 使用terser压缩
     terserOptions: {
       compress: {
-        drop_console: false, // 保留console用于调试
-        drop_debugger: true,
-        pure_funcs: ['console.debug'] // 移除console.debug
+        drop_console: true, // 移除所有console
+        drop_debugger: true, // 移除debugger
+        pure_funcs: [
+          'console.log',
+          'console.info',
+          'console.debug',
+          'console.trace'
+        ] // 明确移除这些console方法
+      },
+      format: {
+        comments: false // 移除注释
       }
     },
     rollupOptions: {
