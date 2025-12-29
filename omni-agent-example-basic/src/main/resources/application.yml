@@ -94,7 +94,7 @@ omni-agent:
         type: file
         primary: true
         file:
-          base-directory: data/documents/
+          base-directory: data/storage/
 #
 #      # MongoDB 存储（生产环境）
 #      - id: prod-mongo

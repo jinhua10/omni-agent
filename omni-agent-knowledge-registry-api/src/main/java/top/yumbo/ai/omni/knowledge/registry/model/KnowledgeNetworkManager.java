@@ -105,6 +105,12 @@ public class KnowledgeNetworkManager {
             // 获取默认知识域
             String defaultDomainId = getDefaultDomainId();
 
+            // 如果无法获取默认域，跳过构建
+            if (defaultDomainId == null || defaultDomainId.equals("default-domain")) {
+                log.warn("⚠️ 未找到有效的知识域，跳过知识网络构建");
+                return;
+            }
+
             // 过滤出未处理的文档
             List<String> unprocessedDocs = documentIds.stream()
                     .filter(docId -> !processedDocuments.containsKey(docId))

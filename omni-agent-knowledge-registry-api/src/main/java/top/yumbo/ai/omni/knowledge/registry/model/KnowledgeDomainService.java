@@ -47,6 +47,10 @@ public class KnowledgeDomainService {
      * @return 创建的知识域
      */
     public KnowledgeDomain createDomain(CreateDomainRequest request) {
+        if (knowledgeRegistry == null) {
+            throw new IllegalStateException("KnowledgeRegistry not available");
+        }
+
         log.info("创建知识域: {}", request.getDomainName());
 
         // 生成域ID
@@ -96,6 +100,9 @@ public class KnowledgeDomainService {
      * @return 知识域
      */
     public KnowledgeDomain getDomain(String domainId) {
+        if (knowledgeRegistry == null) {
+            throw new IllegalStateException("KnowledgeRegistry not available");
+        }
         return knowledgeRegistry.findDomainById(domainId)
                 .orElseThrow(() -> new RuntimeException("Domain not found: " + domainId));
     }
@@ -106,6 +113,10 @@ public class KnowledgeDomainService {
      * @return 知识域列表
      */
     public List<KnowledgeDomain> listAllDomains() {
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available, returning empty list");
+            return List.of();
+        }
         return knowledgeRegistry.findAllDomains();
     }
 
@@ -116,6 +127,10 @@ public class KnowledgeDomainService {
      * @return 知识域列表
      */
     public List<KnowledgeDomain> listDomainsByType(DomainType type) {
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available, returning empty list");
+            return List.of();
+        }
         return knowledgeRegistry.findDomainsByType(type);
     }
 
@@ -126,6 +141,10 @@ public class KnowledgeDomainService {
      * @return 知识域列表
      */
     public List<KnowledgeDomain> listDomainsByStatus(DomainStatus status) {
+        if (knowledgeRegistry == null) {
+            log.warn("⚠️ KnowledgeRegistry not available, returning empty list");
+            return List.of();
+        }
         return knowledgeRegistry.findDomainsByStatus(status);
     }
 
@@ -137,6 +156,10 @@ public class KnowledgeDomainService {
      * @return 更新后的知识域
      */
     public KnowledgeDomain updateDomain(String domainId, UpdateDomainRequest request) {
+        if (knowledgeRegistry == null) {
+            throw new IllegalStateException("KnowledgeRegistry not available");
+        }
+
         log.info("更新知识域: {}", domainId);
 
         KnowledgeDomain domain = getDomain(domainId);
@@ -165,6 +188,10 @@ public class KnowledgeDomainService {
      * @param domainId 域ID
      */
     public void deleteDomain(String domainId) {
+        if (knowledgeRegistry == null) {
+            throw new IllegalStateException("KnowledgeRegistry not available");
+        }
+
         log.info("删除知识域: {}", domainId);
 
         // 检查域是否存在
@@ -186,6 +213,9 @@ public class KnowledgeDomainService {
      * @return 总数量
      */
     public long countDomains() {
+        if (knowledgeRegistry == null) {
+            return 0;
+        }
         return knowledgeRegistry.countDomains();
     }
 
@@ -196,6 +226,9 @@ public class KnowledgeDomainService {
      * @return 数量
      */
     public long countDomainsByType(DomainType type) {
+        if (knowledgeRegistry == null) {
+            return 0;
+        }
         return knowledgeRegistry.countDomainsByType(type);
     }
 }
