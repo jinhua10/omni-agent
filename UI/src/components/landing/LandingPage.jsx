@@ -732,11 +732,11 @@ const LandingPage = ({ onEnterApp }) => {
       <section className="quickstart-section">
         <div className="container">
           <Title level={2} className="section-title">
-            三步启动
+            快速开始
           </Title>
 
           <Row gutter={[32, 32]} justify="center">
-            <Col xs={24} md={8}>
+            <Col xs={24} sm={12} md={6}>
               <Card className="quickstart-card">
                 <div className="step-number">1</div>
                 <Title level={4}>克隆项目</Title>
@@ -748,10 +748,10 @@ const LandingPage = ({ onEnterApp }) => {
               </Card>
             </Col>
 
-            <Col xs={24} md={8}>
+            <Col xs={24} sm={12} md={6}>
               <Card className="quickstart-card">
                 <div className="step-number">2</div>
-                <Title level={4}>编译项目</Title>
+                <Title level={4}>编译后端</Title>
                 <div className="code-block">
                   <code>
                     mvn clean install -DskipTests
@@ -760,13 +760,28 @@ const LandingPage = ({ onEnterApp }) => {
               </Card>
             </Col>
 
-            <Col xs={24} md={8}>
+            <Col xs={24} sm={12} md={6}>
               <Card className="quickstart-card">
                 <div className="step-number">3</div>
-                <Title level={4}>运行示例</Title>
+                <Title level={4}>启动后端</Title>
                 <div className="code-block">
                   <code>
+                    cd omni-agent-web<br/>
                     mvn spring-boot:run
+                  </code>
+                </div>
+              </Card>
+            </Col>
+
+            <Col xs={24} sm={12} md={6}>
+              <Card className="quickstart-card">
+                <div className="step-number">4</div>
+                <Title level={4}>启动前端</Title>
+                <div className="code-block">
+                  <code>
+                    cd UI<br/>
+                    npm install<br/>
+                    npm run dev
                   </code>
                 </div>
               </Card>
