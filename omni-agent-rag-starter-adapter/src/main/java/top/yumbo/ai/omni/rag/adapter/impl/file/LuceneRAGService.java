@@ -72,17 +72,21 @@ public class LuceneRAGService implements RagService {
             // 清理可能残留的锁文件（处理异常退出情况）
             Path lockFile = indexPath.resolve("write.lock");
             if (Files.exists(lockFile)) {
-                log.warn("⚠️ 检测到旧的索引锁文件，尝试清理: {}", lockFile);
+                log.warn("⚠️ 检测到旧的索引锁文件: {}", lockFile);
                 try {
                     Files.delete(lockFile);
                     log.info("✅ 锁文件已删除");
-                } catch (IOException e) {
-                    log.warn("无法删除锁文件: {}, 将尝试使用强制解锁", lockFile);
+                    // 等待一小段时间确保文件系统完成删除
+                    Thread.sleep(100);
+                } catch (IOException | InterruptedException e) {
+                    log.warn("清理锁文件时出现问题: {}", e.getMessage());
                 }
             }
 
-            // 初始化 Lucene 组件
-            this.directory = FSDirectory.open(indexPath);
+            // 使用 SimpleFSLockFactory 避免锁问题
+            // 这种锁工厂在重启时更容易恢复
+            log.info("使用 SimpleFSLockFactory 初始化索引...");
+            this.directory = FSDirectory.open(indexPath, SimpleFSLockFactory.INSTANCE);
             this.analyzer = new StandardAnalyzer();
 
             // 配置 IndexWriter
@@ -90,47 +94,10 @@ public class LuceneRAGService implements RagService {
             config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
             config.setRAMBufferSizeMB(properties.getRamBufferSizeMb());
 
-            // 尝试创建 IndexWriter
-            try {
-                this.indexWriter = new IndexWriter(directory, config);
-                this.indexWriter.commit();
-                log.info("✅ IndexWriter 创建成功");
-            } catch (org.apache.lucene.store.LockObtainFailedException e) {
-                // 锁获取失败，强制清理并重试
-                log.error("❌ 无法获取索引锁，尝试强制清理...", e);
-
-                // 关闭 directory
-                if (directory != null) {
-                    try {
-                        directory.close();
-                    } catch (Exception ex) {
-                        // ignore
-                    }
-                }
-
-                // 强制删除锁文件
-                if (Files.exists(lockFile)) {
-                    try {
-                        Files.delete(lockFile);
-                        log.info("✅ 强制删除锁文件成功");
-                    } catch (IOException ex) {
-                        log.error("❌ 无法删除锁文件: {}", lockFile, ex);
-                    }
-                }
-
-                // 使用 SimpleFSLockFactory 重新打开
-                log.info("尝试使用 SimpleFSLockFactory 重新初始化...");
-                this.directory = FSDirectory.open(indexPath, SimpleFSLockFactory.INSTANCE);
-
-                // 重新创建 IndexWriter
-                IndexWriterConfig retryConfig = new IndexWriterConfig(analyzer);
-                retryConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-                retryConfig.setRAMBufferSizeMB(properties.getRamBufferSizeMb());
-
-                this.indexWriter = new IndexWriter(directory, retryConfig);
-                this.indexWriter.commit();
-                log.info("✅ 使用 SimpleFSLockFactory 重新初始化成功");
-            }
+            // 创建 IndexWriter
+            this.indexWriter = new IndexWriter(directory, config);
+            this.indexWriter.commit();
+            log.info("✅ IndexWriter 创建成功");
 
             // 初始化 SearcherManager
             this.searcherManager = new SearcherManager(directory, null);
