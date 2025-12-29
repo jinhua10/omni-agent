@@ -3,7 +3,6 @@ package top.yumbo.ai.omni.document.processor.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.document.processor.model.DocumentExtractionResult;
 import top.yumbo.ai.omni.document.processor.service.DocumentExtractionResultService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
@@ -22,7 +21,6 @@ import java.util.stream.Collectors;
  * @since 3.0.0
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class DocumentExtractionResultServiceImpl implements DocumentExtractionResultService {
 
