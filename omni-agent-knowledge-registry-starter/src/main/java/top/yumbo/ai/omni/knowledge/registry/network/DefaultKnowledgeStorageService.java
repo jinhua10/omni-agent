@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,18 +114,45 @@ public class DefaultKnowledgeStorageService implements KnowledgeStorageService {
     @Override
     public List<RefinedKnowledge> searchKnowledge(String query, String domainId, int maxResults) {
         try {
-            // TODO: 实现基于 DocumentStorage 的搜索逻辑
-            // 可以利用 DocumentStorage.searchDocuments() 方法
             log.debug("搜索知识: query={}, domain={}, maxResults={}", query, domainId, maxResults);
 
-            // 临时实现：返回空列表
-            // 完整实现需要：
-            // 1. 调用 documentStorage.searchDocuments(query) 搜索文档
-            // 2. 过滤出指定 domain 的知识
-            // 3. 反序列化为 RefinedKnowledge 对象
-            // 4. 限制结果数量为 maxResults
+            // 1. 调用 DocumentStorage.searchDocuments() 搜索文档
+            List<DocumentMetadata> searchResults = documentStorage.searchDocuments(query);
 
-            return new ArrayList<>();
+            // 2. 过滤出指定 domain 的知识，并反序列化
+            List<RefinedKnowledge> knowledgeList = new ArrayList<>();
+            String domainPrefix = KNOWLEDGE_PREFIX + "/" + domainId + "/";
+
+            for (DocumentMetadata metadata : searchResults) {
+                // 检查是否属于指定域
+                if (!metadata.getDocumentId().startsWith(domainPrefix)) {
+                    continue;
+                }
+
+                try {
+                    // 读取文档内容
+                    var docOpt = documentStorage.getDocument(metadata.getDocumentId());
+                    if (docOpt.isEmpty()) {
+                        continue;
+                    }
+
+                    // 反序列化为 RefinedKnowledge
+                    RefinedKnowledge knowledge = objectMapper.readValue(docOpt.get(), RefinedKnowledge.class);
+                    knowledgeList.add(knowledge);
+
+                    // 限制结果数量
+                    if (knowledgeList.size() >= maxResults) {
+                        break;
+                    }
+                } catch (Exception e) {
+                    log.warn("反序列化知识失败: documentId={}", metadata.getDocumentId(), e);
+                    continue;
+                }
+            }
+
+            log.debug("✅ 搜索知识完成: 找到 {} 条结果, domain={}", knowledgeList.size(), domainId);
+            return knowledgeList;
+
         } catch (Exception e) {
             log.error("❌ 搜索知识失败: query={}, domain={}", query, domainId, e);
             return new ArrayList<>();
