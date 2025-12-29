@@ -9,6 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import top.yumbo.ai.omni.document.processor.DocumentProcessor;
 import top.yumbo.ai.omni.document.processor.starter.CompositeDocumentProcessor;
+import top.yumbo.ai.omni.document.processor.starter.DocumentProcessorManager;
 
 import java.util.List;
 
@@ -38,7 +39,10 @@ import java.util.List;
 @Slf4j
 @Configuration
 @EnableConfigurationProperties(DocumentProcessorProperties.class)
-@ComponentScan(basePackages = "top.yumbo.ai.omni.document.processor.starter.processor")
+@ComponentScan(basePackages = {
+    "top.yumbo.ai.omni.document.processor.starter.processor",
+    "top.yumbo.ai.omni.document.processor.starter"
+})
 @ConditionalOnProperty(
     prefix = "omni-agent.document-processor",
     name = "enabled",
@@ -46,6 +50,19 @@ import java.util.List;
     matchIfMissing = true
 )
 public class DocumentProcessorAutoConfiguration {
+
+    /**
+     * 文档处理器管理器
+     *
+     * @param processors 所有已注册的文档处理器
+     * @return 文档处理器管理器
+     */
+    @Bean
+    @ConditionalOnMissingBean(DocumentProcessorManager.class)
+    public DocumentProcessorManager documentProcessorManager(List<DocumentProcessor> processors) {
+        log.info("🔧 初始化文档处理器管理器");
+        return new DocumentProcessorManager(processors);
+    }
 
     /**
      * 组合文档处理器

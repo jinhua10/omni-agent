@@ -32,7 +32,7 @@ public class ChunkingAutoConfiguration {
      * 注意：需要在 ChunkingService 之前创建
      */
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(ChunkingStrategyManager.class)
     public ChunkingStrategyManager chunkingStrategyManager(ChunkingProperties properties) {
         log.info("🔧 初始化分块策略管理器");
 
@@ -62,7 +62,7 @@ public class ChunkingAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(ChunkingService.class)
     public ChunkingService chunkingService(ChunkingProperties properties) {
         log.info("✅ 初始化分块服务，默认策略: {}", properties.getStrategy());
         return new DefaultChunkingService(properties);
