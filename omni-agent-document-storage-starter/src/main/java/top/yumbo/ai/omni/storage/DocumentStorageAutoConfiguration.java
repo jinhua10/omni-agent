@@ -1,7 +1,5 @@
 package top.yumbo.ai.omni.storage;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import io.minio.MinioClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -11,9 +9,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.redis.core.RedisTemplate;
-import software.amazon.awssdk.services.s3.S3Client;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.HashMap;
@@ -64,35 +59,13 @@ public class DocumentStorageAutoConfiguration {
             String instanceId = config.getOrGenerateId();
 
             try {
-                DocumentStorageInstanceBuilder builder = new DocumentStorageInstanceBuilder(config);
-
-                // 条件注入依赖
-                MongoTemplate mongo = mongoTemplate.getIfAvailable();
-                if (mongo != null) {
-                    builder.withMongoTemplate(mongo);
-                }
-
-                RedisTemplate<String, Object> redis = redisTemplate.getIfAvailable();
-                if (redis != null) {
-                    builder.withRedisTemplate(redis);
-                }
-
-                S3Client s3 = s3Client.getIfAvailable();
-                if (s3 != null) {
-                    builder.withS3Client(s3);
-                }
-
-                MinioClient minio = minioClient.getIfAvailable();
-                if (minio != null) {
-                    builder.withMinioClient(minio);
-                }
-
-                ElasticsearchClient es = elasticsearchClient.getIfAvailable();
-                if (es != null) {
-                    builder.withElasticsearchClient(es);
-                }
-
-                DocumentStorageService service = builder.build();
+                DocumentStorageService service = new DocumentStorageInstanceBuilder(config)
+                        .withMongoTemplate(mongoTemplate.getIfAvailable())
+                        .withRedisTemplate(redisTemplate.getIfAvailable())
+                        .withS3Client(s3Client.getIfAvailable())
+                        .withMinioClient(minioClient.getIfAvailable())
+                        .withElasticsearchClient(elasticsearchClient.getIfAvailable())
+                        .build();
 
                 services.put(instanceId, service);
                 log.info("✅ 实例创建成功: id={}, type={}", instanceId, config.getType());

@@ -1,6 +1,5 @@
 package top.yumbo.ai.omni.rag.adapter.config;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -8,8 +7,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.adapter.impl.mock.MockRagService;
@@ -35,14 +32,16 @@ public class RagAdapterAutoConfiguration {
 
     /**
      * 创建所有 RAG 服务实例
+     *
+     * <p>注意：使用 Object 类型避免可选依赖的 ClassNotFoundException</p>
      */
     @Bean
     public Map<String, RagService> ragServices(
             RagAdapterProperties properties,
             ObjectProvider<JdbcTemplate> jdbcTemplate,
-            ObjectProvider<MongoTemplate> mongoTemplate,
-            ObjectProvider<RedisTemplate<String, Object>> redisTemplate,
-            ObjectProvider<ElasticsearchClient> elasticsearchClient) {
+            ObjectProvider<Object> mongoTemplate,
+            ObjectProvider<Object> redisTemplate,
+            ObjectProvider<Object> elasticsearchClient) {
 
         Map<String, RagService> services = new HashMap<>();
         List<RagAdapterProperties.RagInstanceConfig> instances = properties.getInstances();
@@ -59,30 +58,12 @@ public class RagAdapterAutoConfiguration {
             String instanceId = config.getOrGenerateId();
 
             try {
-                RagInstanceBuilder builder = new RagInstanceBuilder(config, properties.getVectorDimension());
-
-                // 条件注入依赖
-                JdbcTemplate jdbc = jdbcTemplate.getIfAvailable();
-                if (jdbc != null) {
-                    builder.withJdbcTemplate(jdbc);
-                }
-
-                MongoTemplate mongo = mongoTemplate.getIfAvailable();
-                if (mongo != null) {
-                    builder.withMongoTemplate(mongo);
-                }
-
-                RedisTemplate<String, Object> redis = redisTemplate.getIfAvailable();
-                if (redis != null) {
-                    builder.withRedisTemplate(redis);
-                }
-
-                ElasticsearchClient es = elasticsearchClient.getIfAvailable();
-                if (es != null) {
-                    builder.withElasticsearchClient(es);
-                }
-
-                RagService service = builder.build();
+                RagService service = new RagInstanceBuilder(config, properties.getVectorDimension())
+                        .withJdbcTemplate(jdbcTemplate.getIfAvailable())
+                        .withMongoTemplate(mongoTemplate.getIfAvailable())
+                        .withRedisTemplate(redisTemplate.getIfAvailable())
+                        .withElasticsearchClient(elasticsearchClient.getIfAvailable())
+                        .build();
 
                 services.put(instanceId, service);
                 log.info("✅ 实例创建成功: id={}, type={}", instanceId, config.getType());
