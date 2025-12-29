@@ -1,7 +1,6 @@
 package top.yumbo.ai.omni.chunking.starter;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.chunking.*;
 import top.yumbo.ai.omni.chunking.starter.config.ChunkingProperties;
 import top.yumbo.ai.omni.chunking.starter.strategy.ChunkingStrategyExecutor;
@@ -19,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 1.0.0
  */
 @Slf4j
-@Component
 public class ChunkingStrategyManager {
 
     private final ChunkingProperties properties;
