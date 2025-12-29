@@ -13,6 +13,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.SimpleFSLockFactory;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.Document;
@@ -58,25 +59,25 @@ public class LuceneRAGService implements RagService {
 
     @PostConstruct
     public void init() {
+        Path indexPath = null;
         try {
             log.info("初始化 Lucene RAG 服务，索引路径: {}", properties.getIndexPath());
 
             // 创建索引目录
-            Path indexPath = Paths.get(properties.getIndexPath());
+            indexPath = Paths.get(properties.getIndexPath());
             if (!Files.exists(indexPath)) {
                 Files.createDirectories(indexPath);
             }
 
             // 清理可能残留的锁文件（处理异常退出情况）
-            // 在重启时可以安全删除，因为旧进程已经退出
             Path lockFile = indexPath.resolve("write.lock");
             if (Files.exists(lockFile)) {
+                log.warn("⚠️ 检测到旧的索引锁文件，尝试清理: {}", lockFile);
                 try {
                     Files.delete(lockFile);
-                    log.warn("⚠️ 检测到旧的索引锁文件，已自动清理: {}", lockFile);
+                    log.info("✅ 锁文件已删除");
                 } catch (IOException e) {
-                    log.error("❌ 无法删除锁文件: {}, 请手动删除后重启", lockFile, e);
-                    throw new RuntimeException("无法删除索引锁文件，请手动删除: " + lockFile);
+                    log.warn("无法删除锁文件: {}, 将尝试使用强制解锁", lockFile);
                 }
             }
 
@@ -89,16 +90,95 @@ public class LuceneRAGService implements RagService {
             config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
             config.setRAMBufferSizeMB(properties.getRamBufferSizeMb());
 
-            this.indexWriter = new IndexWriter(directory, config);
-            this.indexWriter.commit();
+            // 尝试创建 IndexWriter
+            try {
+                this.indexWriter = new IndexWriter(directory, config);
+                this.indexWriter.commit();
+                log.info("✅ IndexWriter 创建成功");
+            } catch (org.apache.lucene.store.LockObtainFailedException e) {
+                // 锁获取失败，强制清理并重试
+                log.error("❌ 无法获取索引锁，尝试强制清理...", e);
+
+                // 关闭 directory
+                if (directory != null) {
+                    try {
+                        directory.close();
+                    } catch (Exception ex) {
+                        // ignore
+                    }
+                }
+
+                // 强制删除锁文件
+                if (Files.exists(lockFile)) {
+                    try {
+                        Files.delete(lockFile);
+                        log.info("✅ 强制删除锁文件成功");
+                    } catch (IOException ex) {
+                        log.error("❌ 无法删除锁文件: {}", lockFile, ex);
+                    }
+                }
+
+                // 使用 SimpleFSLockFactory 重新打开
+                log.info("尝试使用 SimpleFSLockFactory 重新初始化...");
+                this.directory = FSDirectory.open(indexPath, SimpleFSLockFactory.INSTANCE);
+
+                // 重新创建 IndexWriter
+                IndexWriterConfig retryConfig = new IndexWriterConfig(analyzer);
+                retryConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+                retryConfig.setRAMBufferSizeMB(properties.getRamBufferSizeMb());
+
+                this.indexWriter = new IndexWriter(directory, retryConfig);
+                this.indexWriter.commit();
+                log.info("✅ 使用 SimpleFSLockFactory 重新初始化成功");
+            }
 
             // 初始化 SearcherManager
             this.searcherManager = new SearcherManager(directory, null);
 
             log.info("✅ Lucene RAG 服务初始化完成，文档总数: {}", indexWriter.getDocStats().numDocs);
+
         } catch (IOException e) {
-            log.error("初始化 Lucene RAG 服务失败", e);
-            throw new RuntimeException("初始化 Lucene RAG 服务失败: " + e.getMessage(), e);
+            log.error("❌ 初始化 Lucene RAG 服务失败", e);
+
+            // 最后的尝试：删除所有索引文件并重新创建
+            if (indexPath != null) {
+                log.warn("尝试删除损坏的索引并重新创建...");
+                try {
+                    // 删除索引目录下的所有文件
+                    final Path finalIndexPath = indexPath;
+                    Files.walk(indexPath)
+                        .sorted(Comparator.reverseOrder())
+                        .forEach(path -> {
+                            try {
+                                if (!path.equals(finalIndexPath)) {
+                                    Files.deleteIfExists(path);
+                                }
+                            } catch (IOException ex) {
+                                // ignore
+                            }
+                        });
+
+                    // 重新初始化
+                    this.directory = FSDirectory.open(indexPath);
+                    this.analyzer = new StandardAnalyzer();
+
+                    IndexWriterConfig newConfig = new IndexWriterConfig(analyzer);
+                    newConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+                    newConfig.setRAMBufferSizeMB(properties.getRamBufferSizeMb());
+
+                    this.indexWriter = new IndexWriter(directory, newConfig);
+                    this.indexWriter.commit();
+
+                    this.searcherManager = new SearcherManager(directory, null);
+
+                    log.info("✅ 重新创建索引成功");
+                } catch (IOException ex) {
+                    log.error("❌ 重新创建索引失败", ex);
+                    throw new RuntimeException("初始化 Lucene RAG 服务失败: " + ex.getMessage(), ex);
+                }
+            } else {
+                throw new RuntimeException("初始化 Lucene RAG 服务失败: " + e.getMessage(), e);
+            }
         }
     }
 
