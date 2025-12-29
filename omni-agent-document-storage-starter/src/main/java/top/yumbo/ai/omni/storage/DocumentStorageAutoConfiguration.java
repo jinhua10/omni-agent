@@ -3,10 +3,12 @@ package top.yumbo.ai.omni.storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.Ordered;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.HashMap;
@@ -19,11 +21,14 @@ import java.util.Map;
  * <p>根据配置动态创建多个文档存储服务实例</p>
  * <p>如果没有配置，默认使用 File 存储作为兜底</p>
  *
+ * <p>使用 HIGHEST_PRECEDENCE 确保在其他服务（如知识网络）之前初始化</p>
+ *
  * @author OmniAgent Team
  * @since 2.0.0
  */
 @Slf4j
 @AutoConfiguration
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @EnableConfigurationProperties(DocumentStorageProperties.class)
 public class DocumentStorageAutoConfiguration {
 
