@@ -2,6 +2,7 @@ package top.yumbo.ai.omni.chunking.starter.strategy;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import top.yumbo.ai.omni.ai.starter.impl.OnnxEmbeddingService;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.chunking.ChunkingConfig;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
@@ -31,7 +32,7 @@ public class SemanticStrategy implements ChunkingStrategyExecutor {
 
     // ONNX Embedding 服务（可选依赖）
     @Autowired(required = false)
-    private top.yumbo.ai.omni.ai.onnx.OnnxEmbeddingService onnxEmbeddingService;
+    private OnnxEmbeddingService onnxEmbeddingService;
 
     // AI 服务（可选依赖）
     @Autowired(required = false)
@@ -299,9 +300,9 @@ public class SemanticStrategy implements ChunkingStrategyExecutor {
      * 使用 ONNX Embedding 模型计算向量相似度
      */
     class OnnxSemanticCalculator implements SemanticCalculator {
-        private final top.yumbo.ai.omni.ai.onnx.OnnxEmbeddingService embeddingService;
+        private final OnnxEmbeddingService embeddingService;
 
-        OnnxSemanticCalculator(top.yumbo.ai.omni.ai.onnx.OnnxEmbeddingService embeddingService) {
+        OnnxSemanticCalculator(OnnxEmbeddingService embeddingService) {
             this.embeddingService = embeddingService;
         }
 

@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import top.yumbo.ai.omni.ai.api.AIService;
-import top.yumbo.ai.omni.ai.api.config.VisionLLMBatchProcessingProperties;
+import top.yumbo.ai.omni.ai.starter.config.VisionLLMBatchProcessingProperties;
 import top.yumbo.ai.omni.document.processor.extension.*;
 import top.yumbo.ai.omni.document.processor.model.DocumentExtractionResult;
 import top.yumbo.ai.omni.document.processor.service.DocumentExtractionResultService;
