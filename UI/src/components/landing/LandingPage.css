@@ -741,6 +741,8 @@
   text-align: center;
   padding: 32px 24px;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .quickstart-card:hover {
@@ -765,7 +767,7 @@
 
 .quickstart-card h4 {
   font-size: 20px !important;
-  margin-bottom: 24px !important;
+  margin-bottom: 16px !important;
 }
 
 .code-block {
@@ -774,12 +776,36 @@
   padding: 16px;
   margin-top: 16px;
   overflow-x: auto;
+  text-align: left;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 0;
+  color: #1890ff;
+  font-family: 'Monaco', 'Menlo', 'Consolas', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 2;
+  white-space: pre;
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* 代码注释样式 */
+.code-block pre::first-line {
+  color: #8c8c8c;
 }
 
 .code-block code {
   color: #1890ff;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 14px;
+  font-family: 'Monaco', 'Menlo', 'Consolas', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  display: block;
 }
 
 .quickstart-action {
