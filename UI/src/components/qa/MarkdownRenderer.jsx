@@ -87,7 +87,7 @@ const sanitizeStreamingContent = (content) => {
   return sanitized;
 };
 
-function MarkdownRenderer(props) {
+const MarkdownRenderer = React.memo(function MarkdownRenderer(props) {
   const { content, isStreaming } = props
   
   // 如果是流式输出，清理不完整的Markdown结构
@@ -98,7 +98,7 @@ function MarkdownRenderer(props) {
     return content || '';
   }, [content, isStreaming])
 
-  // 自定义组件渲染
+  // ⚡ 性能优化：缓存components对象，避免每次渲染都创建
   const components = useMemo(() => ({
     // 代码块 - 使用自定义 CodeBlock 组件
     code({ node, inline, className, children, ...props }) {
@@ -225,7 +225,11 @@ function MarkdownRenderer(props) {
       </ReactMarkdown>
     </div>
   )
-}
+}, (prevProps, nextProps) => {
+  // ⚡ 性能优化：自定义比较函数，只在内容或streaming状态变化时才重渲染
+  return prevProps.content === nextProps.content &&
+         prevProps.isStreaming === nextProps.isStreaming
+})
 
 export default MarkdownRenderer
 

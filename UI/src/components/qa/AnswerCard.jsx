@@ -22,8 +22,9 @@ const { Panel } = Collapse
 
 /**
  * 答案卡片组件
+ * ⚡ 性能优化：使用React.memo避免父组件重渲染时的不必要更新
  */
-function AnswerCard(props) {
+const AnswerCard = React.memo(function AnswerCard(props) {
   const { answer, onFeedback } = props
   const { t } = useLanguage()
   const [feedback, setFeedback] = useState(null)
@@ -189,7 +190,20 @@ function AnswerCard(props) {
       </div>
     </div>
   )
-}
+}, (prevProps, nextProps) => {
+  // ⚡ 性能优化：只在answer内容真正变化时才重渲染
+  // 比较answer的关键属性而不是整个对象
+  const prevAnswer = prevProps.answer
+  const nextAnswer = nextProps.answer
+
+  return prevAnswer.id === nextAnswer.id &&
+         prevAnswer.content === nextAnswer.content &&
+         prevAnswer.leftPanel === nextAnswer.leftPanel &&
+         prevAnswer.rightPanel === nextAnswer.rightPanel &&
+         prevAnswer.streaming === nextAnswer.streaming &&
+         prevAnswer.thinking === nextAnswer.thinking &&
+         prevAnswer.type === nextAnswer.type
+})
 
 export default AnswerCard
 

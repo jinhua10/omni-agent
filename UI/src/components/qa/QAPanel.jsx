@@ -8,7 +8,7 @@
  * @since 2025-12-12
  */
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import { Layout } from 'antd'
 import ChatBox from './ChatBox'
 import QuestionInput from './QuestionInput'
@@ -42,8 +42,17 @@ function QAPanel() {
   const [currentEventSource, setCurrentEventSource] = useState(null) // 当前 EventSource 连接
   
   // 使用ref追踪当前流式消息的内容，避免React批量更新导致重复累加
-  const streamingContentRef = useRef('')
+  const streamingContentRef = useRef({ leftPanel: '', rightPanel: '' })
   const streamingLLMAnswerRef = useRef('')
+
+  // ⚡ 性能优化：批量更新缓冲
+  const updateBatchRef = useRef({
+    pending: false,
+    leftPanel: '',
+    rightPanel: '',
+    llmAnswer: '',
+    type: null
+  })
 
   // 从 localStorage 读取流式模式偏好（默认为 true）
   const [isStreamingMode, setIsStreamingMode] = useState(() => {
@@ -90,6 +99,41 @@ function QAPanel() {
     localStorage.setItem('qa_role_name', role)
     console.log(`🔄 Switched role to: ${role}`)
   }
+
+  /**
+   * ⚡ 性能优化：批量更新UI（使用requestAnimationFrame）
+   * 将多次小更新合并成一次大更新，降低渲染频率
+   */
+  const flushUpdate = useCallback(() => {
+    setMessages(prev => {
+      const newMessages = [...prev]
+      const lastMessage = newMessages[newMessages.length - 1]
+
+      if (lastMessage && lastMessage.streaming) {
+        if (updateBatchRef.current.type === 'dual') {
+          // 双轨模式
+          lastMessage.dualTrack = true
+          lastMessage.leftPanel = updateBatchRef.current.leftPanel
+          lastMessage.rightPanel = updateBatchRef.current.rightPanel
+        } else if (updateBatchRef.current.type === 'llm') {
+          // 单轨LLM模式
+          lastMessage.dualTrack = false
+          lastMessage.content = updateBatchRef.current.llmAnswer
+        }
+      }
+
+      return newMessages
+    })
+
+    updateBatchRef.current.pending = false
+  }, [setMessages])
+
+  const scheduleUpdate = useCallback(() => {
+    if (!updateBatchRef.current.pending) {
+      updateBatchRef.current.pending = true
+      requestAnimationFrame(flushUpdate)
+    }
+  }, [flushUpdate])
 
   /**
    * 处理问题提交
@@ -145,75 +189,59 @@ function QAPanel() {
           // 调试日志
           console.log('📨 Received data:', data.type, data)
 
-          // 累加到ref
+          // ⚡ 性能优化：累加到ref并使用批量更新
           if (data.type === 'left') {
             // 左面板：纯 LLM
             console.log('⬅️ Left panel:', data.content)
             streamingContentRef.current.leftPanel += data.content
+            updateBatchRef.current.leftPanel = streamingContentRef.current.leftPanel
+            updateBatchRef.current.type = 'dual'
+            scheduleUpdate() // 批量更新，约60fps
           } else if (data.type === 'right') {
             // 右面板：RAG 增强 / 角色知识库
             console.log('➡️ Right panel:', data.content)
             streamingContentRef.current.rightPanel += data.content
+            updateBatchRef.current.rightPanel = streamingContentRef.current.rightPanel
+            updateBatchRef.current.type = 'dual'
+            scheduleUpdate() // 批量更新，约60fps
           } else if (data.type === 'llm') {
             // 单轨 LLM（不使用 RAG）
             console.log('📦 LLM chunk:', data.content)
             streamingLLMAnswerRef.current += data.content
+            updateBatchRef.current.llmAnswer = streamingLLMAnswerRef.current
+            updateBatchRef.current.type = 'llm'
+            scheduleUpdate() // 批量更新，约60fps
           }
 
-          // 🔥 立即更新 UI - 实现真正的流式渲染
-          setMessages(prev => {
-            const newMessages = [...prev]
-            const lastMessage = newMessages[newMessages.length - 1]
+          // 🔥 处理流式控制事件（complete/error）- 立即更新
+          if (data.type === 'complete' || data.type === 'error') {
+            // 先刷新pending的批量更新
+            if (updateBatchRef.current.pending) {
+              flushUpdate()
+            }
 
-            if (lastMessage && lastMessage.streaming) {
-              switch (data.type) {
-                case 'left':
-                case 'right':
-                  // 双轨模式
-                  lastMessage.dualTrack = true
-                  lastMessage.leftPanel = streamingContentRef.current.leftPanel || ''
-                  lastMessage.rightPanel = streamingContentRef.current.rightPanel || ''
-                  lastMessage.content = `[${t('qa.dualTrack.dualTrackOutput')}]\n${t('qa.dualTrack.leftPanel')}: ${lastMessage.leftPanel.substring(0, 50)}...\n${t('qa.dualTrack.rightPanel')}: ${lastMessage.rightPanel.substring(0, 50)}...`
-                  break
+            // 然后处理完成/错误事件
+            setMessages(prev => {
+              const newMessages = [...prev]
+              const lastMessage = newMessages[newMessages.length - 1]
 
-                case 'llm':
-                  // 单轨模式（不使用 RAG）
-                  lastMessage.dualTrack = false
-                  lastMessage.content = streamingLLMAnswerRef.current
-                  break
-
-                case 'complete':
-                  // 完成
+              if (lastMessage && lastMessage.streaming) {
+                if (data.type === 'complete') {
                   lastMessage.streaming = false
                   lastMessage.sessionId = data.sessionId
-                  // 清除 EventSource 引用
                   setCurrentEventSource(null)
                   setLoading(false)
-                  break
-
-                case 'error':
-                  // 错误
+                } else if (data.type === 'error') {
                   lastMessage.type = 'error'
                   lastMessage.content = data.error || t('qa.error.failed')
                   lastMessage.streaming = false
-                  // 清除 EventSource 引用
                   setCurrentEventSource(null)
                   setLoading(false)
-                  break
-
-                default:
-                  // 兼容旧版
-                  if (data.content) {
-                    streamingLLMAnswerRef.current += data.content
-                    lastMessage.content = streamingLLMAnswerRef.current
-                  }
-                  if (data.done) {
-                    lastMessage.streaming = false
-                  }
+                }
               }
-            }
-            return newMessages
-          })
+              return newMessages
+            })
+          }
         }
       )
 
