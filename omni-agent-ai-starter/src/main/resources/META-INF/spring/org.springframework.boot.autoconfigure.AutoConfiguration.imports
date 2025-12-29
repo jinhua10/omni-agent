@@ -1,2 +1,5 @@
+top.yumbo.ai.omni.ai.starter.config.AIAPIAutoConfiguration
+top.yumbo.ai.omni.ai.starter.config.OllamaAutoConfiguration
+top.yumbo.ai.omni.ai.starter.config.OnlineAPIAutoConfiguration
 top.yumbo.ai.omni.ai.archive.model.AIArchiveAutoConfiguration
 
