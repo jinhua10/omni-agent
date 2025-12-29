@@ -23,7 +23,10 @@ import {
   CheckCircleOutlined,
   CodeOutlined,
   FileTextOutlined,
-  ShareAltOutlined
+  ShareAltOutlined,
+  UserOutlined,
+  LeftOutlined,
+  RightOutlined
 } from '@ant-design/icons'
 import './LandingPage.css'
 
@@ -36,6 +39,40 @@ const LandingPage = ({ onEnterApp }) => {
     formats: 0,
     strategies: 0
   })
+
+  const [currentStatsPage, setCurrentStatsPage] = useState(0)
+
+  // 扩展的统计数据 - 根据系统架构
+  const statsPages = [
+    // 第一页：核心架构
+    [
+      { title: 'Maven模块', value: 20, suffix: '+', icon: 'ApiOutlined', color: '#667eea' },
+      { title: '代码行数', value: 15000, suffix: '+', icon: 'CodeOutlined', color: '#52c41a' },
+      { title: '支持格式', value: 10, suffix: '+ 类型', icon: 'FileTextOutlined', color: '#faad14' },
+      { title: '分块策略', value: 6, suffix: '种', icon: 'ThunderboltOutlined', color: '#f5222d' },
+    ],
+    // 第二页：RAG能力
+    [
+      { title: 'RAG策略', value: 5, suffix: '+ 种', icon: 'DatabaseOutlined', color: '#1890ff' },
+      { title: '向量维度', value: 4, suffix: '种支持', icon: 'ThunderboltOutlined', color: '#722ed1' },
+      { title: '存储方案', value: 3, suffix: '种', icon: 'SafetyOutlined', color: '#eb2f96' },
+      { title: '灾备冗余', value: 100, suffix: '%', icon: 'CheckCircleOutlined', color: '#52c41a' },
+    ],
+    // 第三页：AI增强
+    [
+      { title: 'AI模型', value: 10, suffix: '+ 种', icon: 'BulbOutlined', color: '#faad14' },
+      { title: '知识网络', value: 1, suffix: '套', icon: 'ShareAltOutlined', color: '#13c2c2' },
+      { title: 'HOPE架构', value: 1, suffix: '套', icon: 'RocketOutlined', color: '#f5222d' },
+      { title: '角色系统', value: 1, suffix: '套', icon: 'UserOutlined', color: '#722ed1' },
+    ],
+    // 第四页：企业级特性
+    [
+      { title: 'Spring Boot', value: 3.4, suffix: '', icon: 'CloudOutlined', color: '#52c41a' },
+      { title: 'Java版本', value: 21, suffix: '', icon: 'CodeOutlined', color: '#fa8c16' },
+      { title: '编译通过', value: 100, suffix: '%', icon: 'CheckCircleOutlined', color: '#52c41a' },
+      { title: '生产就绪', value: 100, suffix: '%', icon: 'SafetyOutlined', color: '#1890ff' },
+    ],
+  ]
 
   // 数字动画效果
   useEffect(() => {
@@ -71,6 +108,20 @@ const LandingPage = ({ onEnterApp }) => {
     return () => clearInterval(timer)
   }, [])
 
+  // 自动轮播统计数据
+  useEffect(() => {
+    const autoScroll = setInterval(() => {
+      setCurrentStatsPage((prev) => (prev + 1) % statsPages.length)
+    }, 5000) // 每5秒切换一次
+
+    return () => clearInterval(autoScroll)
+  }, [statsPages.length])
+
+  // 手动切换统计页
+  const handleStatsPageChange = (index) => {
+    setCurrentStatsPage(index)
+  }
+
   return (
     <div className="landing-page">
       {/* Hero Section - 英雄区 */}
@@ -92,6 +143,12 @@ const LandingPage = ({ onEnterApp }) => {
           <Title level={2} className="hero-subtitle">
             全场景企业级Agent框架
           </Title>
+
+          <div className="hero-slogan">
+            <Text className="hero-slogan-text">
+              🚀 让Agent遍地开花，Agent元年正式开启！
+            </Text>
+          </div>
 
           <Paragraph className="hero-description">
             基于知识域隔离的智能Agent平台 | 构建分布式企业级AI应用
@@ -162,73 +219,72 @@ const LandingPage = ({ onEnterApp }) => {
             </Button>
           </Space>
 
-          {/* 统计数据 */}
-          <Row gutter={[24, 24]} className="stats-row">
-            <Col xs={12} sm={6}>
-              <div className="stat-item">
-                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-                  <ApiOutlined style={{ fontSize: 24, color: '#fff' }} />
-                </div>
-                <Statistic
-                  title="Maven模块"
-                  value={animatedStats.modules}
-                  suffix="+"
-                  styles={{
-                    value: { color: '#fff', fontSize: 28, fontWeight: 700 },
-                    title: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 13, marginBottom: 4 }
-                  }}
-                />
+          {/* 统计数据 - 轮播展示 */}
+          <div className="stats-carousel-container">
+            <div className="stats-carousel-wrapper">
+              <Button
+                className="stats-nav-btn stats-nav-prev"
+                icon={<LeftOutlined />}
+                onClick={() => handleStatsPageChange((currentStatsPage - 1 + statsPages.length) % statsPages.length)}
+                shape="circle"
+              />
+
+              <div className="stats-row-wrapper">
+                <Row gutter={[24, 24]} className="stats-row">
+                  {statsPages[currentStatsPage].map((stat, index) => {
+                    const IconComponent = eval(stat.icon)
+                    return (
+                      <Col xs={12} sm={6} key={index}>
+                        <div className="stat-item">
+                          <div className="stat-icon" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
+                            <IconComponent style={{ fontSize: 24, color: '#fff' }} />
+                          </div>
+                          <Statistic
+                            title={stat.title}
+                            value={stat.value}
+                            suffix={stat.suffix}
+                            precision={stat.value < 10 ? 1 : 0}
+                            styles={{
+                              value: { color: '#fff', fontSize: 28, fontWeight: 700 },
+                              title: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 13, marginBottom: 4 }
+                            }}
+                          />
+                        </div>
+                      </Col>
+                    )
+                  })}
+                </Row>
               </div>
-            </Col>
-            <Col xs={12} sm={6}>
-              <div className="stat-item">
-                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #52c41a 0%, #95de64 100%)' }}>
-                  <CodeOutlined style={{ fontSize: 24, color: '#fff' }} />
-                </div>
-                <Statistic
-                  title="代码行数"
-                  value={animatedStats.codeLines}
-                  suffix="+"
-                  styles={{
-                    value: { color: '#fff', fontSize: 28, fontWeight: 700 },
-                    title: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 13, marginBottom: 4 }
-                  }}
+
+              <Button
+                className="stats-nav-btn stats-nav-next"
+                icon={<RightOutlined />}
+                onClick={() => handleStatsPageChange((currentStatsPage + 1) % statsPages.length)}
+                shape="circle"
+              />
+            </div>
+
+            {/* 指示器 */}
+            <div className="stats-indicators">
+              {statsPages.map((_, index) => (
+                <div
+                  key={index}
+                  className={`stats-indicator ${index === currentStatsPage ? 'active' : ''}`}
+                  onClick={() => handleStatsPageChange(index)}
                 />
-              </div>
-            </Col>
-            <Col xs={12} sm={6}>
-              <div className="stat-item">
-                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)' }}>
-                  <FileTextOutlined style={{ fontSize: 24, color: '#fff' }} />
-                </div>
-                <Statistic
-                  title="支持格式"
-                  value={animatedStats.formats}
-                  suffix="+ 类型"
-                  styles={{
-                    value: { color: '#fff', fontSize: 28, fontWeight: 700 },
-                    title: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 13, marginBottom: 4 }
-                  }}
-                />
-              </div>
-            </Col>
-            <Col xs={12} sm={6}>
-              <div className="stat-item">
-                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #f5222d 0%, #ff7875 100%)' }}>
-                  <ThunderboltOutlined style={{ fontSize: 24, color: '#fff' }} />
-                </div>
-                <Statistic
-                  title="分块策略"
-                  value={animatedStats.strategies}
-                  suffix="种"
-                  styles={{
-                    value: { color: '#fff', fontSize: 28, fontWeight: 700 },
-                    title: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 13, marginBottom: 4 }
-                  }}
-                />
-              </div>
-            </Col>
-          </Row>
+              ))}
+            </div>
+
+            {/* 说明文字 */}
+            <div className="stats-description">
+              <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 13 }}>
+                {currentStatsPage === 0 && '核心架构 - 模块化设计，企业级代码质量'}
+                {currentStatsPage === 1 && 'RAG能力 - 多策略并行，多维度向量，灾备冗余'}
+                {currentStatsPage === 2 && 'AI增强 - 知识网络，HOPE自学习，智能角色系统'}
+                {currentStatsPage === 3 && '企业级特性 - 最新技术栈，生产就绪，高可用'}
+              </Text>
+            </div>
+          </div>
         </div>
       </section>
 
