@@ -69,11 +69,11 @@ omni-agent:
   document-storage:
     instances:
 #      # File 存储（开发环境）
-#      - id: dev-storage
-#        type: file
-#        primary: true
-#        file:
-#          base-directory: data/documents/dev
+      - id: dev-storage
+        type: file
+        primary: true
+        file:
+          base-directory: data/documents/
 #
 #      # MongoDB 存储（生产环境）
 #      - id: prod-mongo
