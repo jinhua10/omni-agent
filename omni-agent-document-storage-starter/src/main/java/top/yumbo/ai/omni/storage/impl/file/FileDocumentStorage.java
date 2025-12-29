@@ -181,8 +181,8 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public String saveExtractedText(String documentId, String text) {
         try {
-            // 使用 documentId.txt 作为文件名
-            Path textFile = extractedPath.resolve(documentId + ".txt");
+            // 使用 documentId.md 作为文件名
+            Path textFile = extractedPath.resolve(documentId + ".md");
 
             // 确保父目录存在
             Path parentDir = textFile.getParent();
@@ -204,7 +204,7 @@ public class FileDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<String> getExtractedText(String documentId) {
         try {
-            Path textFile = extractedPath.resolve(documentId + ".txt");
+            Path textFile = extractedPath.resolve(documentId + ".md");
 
             if (Files.exists(textFile)) {
                 String text = Files.readString(textFile, java.nio.charset.StandardCharsets.UTF_8);

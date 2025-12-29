@@ -595,7 +595,7 @@ public class S3DocumentStorage implements DocumentStorageService {
     @Override
     public String saveExtractedText(String documentId, String text) {
         try {
-            String key = "extracted/" + documentId + ".txt";
+            String key = "extracted/" + documentId + ".md";
             byte[] data = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
             PutObjectRequest putRequest = PutObjectRequest.builder()
@@ -618,7 +618,7 @@ public class S3DocumentStorage implements DocumentStorageService {
     @Override
     public Optional<String> getExtractedText(String documentId) {
         try {
-            String key = "extracted/" + documentId + ".txt";
+            String key = "extracted/" + documentId + ".md";
 
             GetObjectRequest getRequest = GetObjectRequest.builder()
                     .bucket(properties.getBucketName())
