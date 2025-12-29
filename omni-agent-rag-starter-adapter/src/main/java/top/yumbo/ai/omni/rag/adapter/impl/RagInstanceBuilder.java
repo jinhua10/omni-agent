@@ -5,6 +5,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.adapter.config.RagAdapterProperties;
 import top.yumbo.ai.omni.rag.adapter.embedding.EmbeddingRagServiceDecorator;
+import top.yumbo.ai.omni.rag.adapter.embedding.OllamaEmbeddingServiceFactory;
+import top.yumbo.ai.omni.rag.adapter.embedding.OnnxEmbeddingServiceFactory;
+import top.yumbo.ai.omni.rag.adapter.embedding.OnlineEmbeddingServiceFactory;
 import top.yumbo.ai.omni.rag.adapter.impl.elasticsearch.ElasticsearchRAGProperties;
 import top.yumbo.ai.omni.rag.adapter.impl.elasticsearch.ElasticsearchRAGService;
 import top.yumbo.ai.omni.rag.adapter.impl.file.FileRAGProperties;
@@ -120,6 +123,13 @@ public class RagInstanceBuilder {
 
     /**
      * 构建嵌入服务
+     *
+     * <p>支持三种嵌入服务提供者：</p>
+     * <ul>
+     *   <li>ONNX - 本地 ONNX 模型（需要模型文件）</li>
+     *   <li>Ollama - 本地 Ollama 服务</li>
+     *   <li>Online - 云端 API（OpenAI 等）</li>
+     * </ul>
      */
     private RagService buildEmbeddingService(String instanceId) {
         RagAdapterProperties.EmbeddingConfig embeddingConfig = config.getEmbedding();
@@ -129,9 +139,12 @@ public class RagInstanceBuilder {
 
         try {
             return switch (provider) {
-                case "onnx" -> buildOnnxEmbeddingService(instanceId, embeddingConfig);
-                case "online" -> buildOnlineEmbeddingService(instanceId, embeddingConfig);
-                case "ollama" -> buildOllamaEmbeddingService(instanceId, embeddingConfig);
+                case "onnx" -> OnnxEmbeddingServiceFactory
+                        .create(embeddingConfig, instanceId);
+                case "ollama" -> OllamaEmbeddingServiceFactory
+                        .create(embeddingConfig, instanceId);
+                case "online" -> OnlineEmbeddingServiceFactory
+                        .create(embeddingConfig, instanceId);
                 default -> {
                     log.warn("⚠️ 未知的嵌入服务提供者: {}", provider);
                     yield null;
@@ -143,41 +156,7 @@ public class RagInstanceBuilder {
         }
     }
 
-    /**
-     * 创建 ONNX 嵌入服务
-     */
-    private RagService buildOnnxEmbeddingService(String instanceId, RagAdapterProperties.EmbeddingConfig config) {
-        log.info("✅ ONNX 嵌入服务: model={}, dimension={}",
-                config.getModel(), config.getDimension());
-
-        // TODO: 实现 ONNX 嵌入服务
-        // return new OnnxEmbeddingService(config.getOnnx());
-
-        log.warn("⚠️ ONNX 嵌入服务��未实现");
-        return null;
-    }
-
-    /**
-     * 创建 Online API 嵌入服务
-     */
-    private RagService buildOnlineEmbeddingService(String instanceId, RagAdapterProperties.EmbeddingConfig config) {
-        log.info("✅ Online API 嵌入服务: model={}, endpoint={}",
-                config.getModel(), config.getOnline().getEndpoint());
-
-        // TODO: 实现 Online API 嵌入服务
-        // return new OnlineEmbeddingService(config.getOnline());
-
-        log.warn("⚠️ Online API 嵌入服务尚未实现");
-        return null;
-    }
-
-    /**
-     * 创建 Ollama 嵌入服务
-     */
-    private RagService buildOllamaEmbeddingService(String instanceId, RagAdapterProperties.EmbeddingConfig config) {
-        return top.yumbo.ai.omni.rag.adapter.embedding.OllamaEmbeddingServiceFactory
-                .create(config, instanceId);
-    }
+    // ========== 存储服务构建方法 ==========
 
     private RagService buildFileRAG(String instanceId) {
         if (config.getFile() == null) {
@@ -309,4 +288,3 @@ public class RagInstanceBuilder {
         return service;
     }
 }
-
