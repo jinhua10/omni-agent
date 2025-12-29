@@ -107,13 +107,34 @@
     </dependencies>
 
     <build>
+        <finalName>${project.artifactId}-${project.version}</finalName>
         <plugins>
+            <!-- Spring Boot Maven Plugin - 打包成可执行JAR，包含所有依赖 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>top.yumbo.ai.omni.example.basic.BasicExampleApplication</mainClass>
+                    <!-- 包含所有依赖 -->
+                    <includeSystemScope>true</includeSystemScope>
+                    <!-- 生成可执行JAR -->
+                    <executable>true</executable>
+                    <!-- 排除devtools（生产环境不需要） -->
+                    <excludes>
+                        <exclude>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-devtools</artifactId>
+                        </exclude>
+                    </excludes>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <!-- repackage目标会将所有依赖打包进JAR -->
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
