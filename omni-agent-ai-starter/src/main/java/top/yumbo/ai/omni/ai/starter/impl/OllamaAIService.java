@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.ollama;
+package top.yumbo.ai.omni.ai.starter.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -11,8 +11,12 @@ import top.yumbo.ai.omni.ai.api.model.AIRequest;
 import top.yumbo.ai.omni.ai.api.model.AIResponse;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.ai.api.model.ModelInfo;
+import top.yumbo.ai.omni.ai.starter.properties.OllamaProperties;
+import top.yumbo.ai.omni.common.http.HttpClientAdapter;
+import top.yumbo.ai.omni.common.http.RestTemplateAdapter;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +39,7 @@ import java.util.stream.Collectors;
 public class OllamaAIService implements AIService, EmbeddingService {
 
     private final RestTemplate restTemplate;
-    private final top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter;
+    private final HttpClientAdapter httpClientAdapter;
     private final OllamaProperties properties;
     private String currentModel;
 
@@ -50,14 +54,14 @@ public class OllamaAIService implements AIService, EmbeddingService {
      * 构造函数（支持自定义 HttpClientAdapter）
      */
     public OllamaAIService(RestTemplate restTemplate, OllamaProperties properties,
-                          top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter) {
+                          HttpClientAdapter httpClientAdapter) {
         this.restTemplate = restTemplate;
         this.properties = properties;
         this.currentModel = properties.getDefaultModel();
 
         // 如果没有提供 httpClientAdapter，使用默认的 RestTemplateAdapter
         if (httpClientAdapter == null && restTemplate != null) {
-            this.httpClientAdapter = new top.yumbo.ai.omni.common.http.RestTemplateAdapter(restTemplate);
+            this.httpClientAdapter = new RestTemplateAdapter(restTemplate);
         } else {
             this.httpClientAdapter = httpClientAdapter;
         }
@@ -121,7 +125,7 @@ public class OllamaAIService implements AIService, EmbeddingService {
 
     @Override
     @Deprecated
-    public void generateStream(AIRequest request, java.util.function.Consumer<String> callback) {
+    public void generateStream(AIRequest request, Consumer<String> callback) {
         log.warn("Stream generation not fully implemented, falling back to sync");
         AIResponse response = generate(request);
         callback.accept(response.getText());

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.archive.impl;
+package top.yumbo.ai.omni.ai.starter.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import top.yumbo.ai.omni.ai.archive.AICallArchive;
+import top.yumbo.ai.omni.ai.archive.model.AICallArchive;
 import top.yumbo.ai.omni.ai.archive.AICallArchiveService;
 
 import java.io.IOException;

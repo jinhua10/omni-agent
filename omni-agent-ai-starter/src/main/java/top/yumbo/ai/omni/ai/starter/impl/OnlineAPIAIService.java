@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.online;
+package top.yumbo.ai.omni.ai.starter.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -11,6 +11,7 @@ import top.yumbo.ai.omni.ai.api.model.AIRequest;
 import top.yumbo.ai.omni.ai.api.model.AIResponse;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.ai.api.model.ModelInfo;
+import top.yumbo.ai.omni.ai.starter.properties.OnlineAPIProperties;
 
 import java.util.*;
 import java.util.stream.Collectors;

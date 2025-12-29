@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.onnx;
+package top.yumbo.ai.omni.ai.starter.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +9,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import top.yumbo.ai.omni.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.ai.starter.impl.OnnxEmbeddingService;
+import top.yumbo.ai.omni.ai.starter.impl.SharedOnnxModelManager;
+import top.yumbo.ai.omni.ai.starter.properties.OnnxEmbeddingProperties;
 
 /**
  * ONNX Embedding 自动配置

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.onnx;
+package top.yumbo.ai.omni.ai.starter.impl;
 
 import ai.onnxruntime.OrtEnvironment;
 import ai.onnxruntime.OrtException;

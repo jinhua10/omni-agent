@@ -3,6 +3,7 @@ package top.yumbo.ai.omni.ai.archive;
 import lombok.Data;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import top.yumbo.ai.omni.ai.archive.model.AICallArchive;
 
 import java.util.List;
 import java.util.Optional;

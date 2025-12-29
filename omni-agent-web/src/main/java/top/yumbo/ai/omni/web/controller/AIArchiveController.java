@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.ai.archive.AICallArchive;
+import top.yumbo.ai.omni.ai.archive.model.AICallArchive;
 import top.yumbo.ai.omni.ai.archive.AICallArchiveService;
 
 import java.util.HashMap;

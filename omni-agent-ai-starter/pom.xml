@@ -85,18 +85,21 @@
             <version>1.16.0</version>
             <optional>true</optional>
         </dependency>
+
+        <!-- DJL Tokenizers (ONNX需要) -->
         <dependency>
             <groupId>ai.djl.huggingface</groupId>
             <artifactId>tokenizers</artifactId>
             <version>0.34.0</version>
-            <scope>compile</scope>
+            <optional>true</optional>
         </dependency>
+
+        <!-- Caffeine 缓存 -->
         <dependency>
-            <groupId>ai.djl.huggingface</groupId>
-            <artifactId>tokenizers</artifactId>
-            <version>0.34.0</version>
-            <scope>compile</scope>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
+
     </dependencies>
 </project>
 

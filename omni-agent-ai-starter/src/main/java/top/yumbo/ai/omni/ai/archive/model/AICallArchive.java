@@ -1,8 +1,8 @@
-package top.yumbo.ai.omni.ai.archive;
+package top.yumbo.ai.omni.ai.archive.model;
 
 import lombok.Builder;
 import lombok.Data;
-import top.yumbo.ai.ai.api.ChatMessage;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 
 import java.time.Instant;
 import java.util.List;

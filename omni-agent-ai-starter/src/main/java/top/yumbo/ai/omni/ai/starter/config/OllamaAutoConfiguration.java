@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.ollama;
+package top.yumbo.ai.omni.ai.starter.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.starter.impl.OllamaAIService;
+import top.yumbo.ai.omni.ai.starter.properties.OllamaProperties;
 
 import java.time.Duration;
 

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.online;
+package top.yumbo.ai.omni.ai.starter.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +11,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import top.yumbo.ai.omni.ai.api.AIService;
-import top.yumbo.ai.omni.ai.api.config.VisionLLMProperties;
+import top.yumbo.ai.omni.ai.starter.config.VisionLLMProperties;
+import top.yumbo.ai.omni.ai.starter.impl.OnlineAPIAIService;
+import top.yumbo.ai.omni.ai.starter.properties.OnlineAPIProperties;
 
 import java.time.Duration;
 

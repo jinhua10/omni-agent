@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.archive.aspect;
+package top.yumbo.ai.omni.ai.archive;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,17 +9,12 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import top.yumbo.ai.ai.api.AIResponse;
-import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.ai.api.ChatMessage;
-import top.yumbo.ai.omni.ai.archive.AICallArchive;
-import top.yumbo.ai.omni.ai.archive.AICallArchiveService;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.model.AIResponse;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.ai.archive.model.AICallArchive;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * AI调用归档切面

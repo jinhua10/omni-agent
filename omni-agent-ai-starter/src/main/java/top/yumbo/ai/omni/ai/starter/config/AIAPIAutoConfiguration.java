@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.api.config;
+package top.yumbo.ai.omni.ai.starter.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

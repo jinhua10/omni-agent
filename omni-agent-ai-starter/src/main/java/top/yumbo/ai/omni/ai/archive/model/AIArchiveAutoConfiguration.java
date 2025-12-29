@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.ai.archive.config;
+package top.yumbo.ai.omni.ai.archive.model;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import top.yumbo.ai.omni.ai.archive.AICallArchiveAspect;
 import top.yumbo.ai.omni.ai.archive.AICallArchiveService;
-import top.yumbo.ai.omni.ai.archive.aspect.AICallArchiveAspect;
-import top.yumbo.ai.omni.ai.archive.impl.FileAICallArchiveService;
+import top.yumbo.ai.omni.ai.starter.impl.FileAICallArchiveService;
 
 import java.util.concurrent.Executor;
 

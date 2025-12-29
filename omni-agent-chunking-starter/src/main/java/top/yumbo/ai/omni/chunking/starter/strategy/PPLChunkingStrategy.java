@@ -2,6 +2,7 @@ package top.yumbo.ai.omni.chunking.starter.strategy;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import top.yumbo.ai.omni.ai.starter.impl.PPLOnnxService;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.chunking.ChunkingConfig;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
@@ -34,7 +35,7 @@ public class PPLChunkingStrategy implements ChunkingStrategyExecutor {
 
     // ONNX 服务（可选依赖）
     @Autowired(required = false)
-    private top.yumbo.ai.omni.ppl.onnx.PPLOnnxService pplOnnxService;
+    private PPLOnnxService pplOnnxService;
 
     public PPLChunkingStrategy(ChunkingProperties properties) {
         this.properties = properties;
@@ -255,9 +256,9 @@ public class PPLChunkingStrategy implements ChunkingStrategyExecutor {
      * 使用真实语言模型计算困惑度
      */
     class OnnxPPLCalculator implements PPLCalculator {
-        private final top.yumbo.ai.omni.ppl.onnx.PPLOnnxService pplService;
+        private final PPLOnnxService pplService;
 
-        OnnxPPLCalculator(top.yumbo.ai.omni.ppl.onnx.PPLOnnxService pplService) {
+        OnnxPPLCalculator(PPLOnnxService pplService) {
             this.pplService = pplService;
         }
 
