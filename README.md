@@ -9,7 +9,9 @@
 
 **基于知识域隔离的智能文档处理与RAG系统**
 
-[快速开始](#-快速开始) • [核心特性](#-核心特性) • [架构设计](#-架构设计) • [文档](#-文档)
+### 📖 [**5分钟快速开始 →**](QUICKSTART.md)
+
+[核心特性](#-核心特性) • [架构设计](#-架构设计) • [使用示例](#-使用示例) • [路线图](#-开发路线图)
 
 </div>
 
@@ -22,7 +24,7 @@ OmniAgent 是一个现代化的企业级知识管理平台，通过**知识域�
 | 维度 | 状态 |
 |------|------|
 | **当前版本** | 1.0.0 |
-| **模块总数** | 21个模块 |
+| **模块总数** | 20个Maven模块 + 1个前端项目 |
 | **代码量** | ~15,000+ 行 |
 | **架构状态** | ✅ 重构完成 |
 | **编译状态** | ✅ BUILD SUCCESS |
@@ -125,19 +127,106 @@ OmniAgent 是一个现代化的企业级知识管理平台，通过**知识域�
 
 ---
 
+## 💡 使用示例
+
+### 示例1：处理文档
+
+```java
+// 完整流程：文档 → 分块 → 索引
+@Service
+public class DocumentService {
+    @Autowired private DocumentProcessor processor;
+    @Autowired private ChunkingService chunking;
+    @Autowired private RagService rag;
+    
+    public void process(File file) {
+        // 1. 提取文本（自动识别格式）
+        String text = processor.extractText(file).getText();
+        
+        // 2. 智能分块（自动选择策略）
+        List<Chunk> chunks = chunking.chunk(text);
+        
+        // 3. 索引到知识库
+        List<Document> docs = chunks.stream()
+            .map(chunk -> Document.builder()
+                .content(chunk.getText())
+                .build())
+            .collect(Collectors.toList());
+        rag.batchIndex(docs);
+    }
+}
+```
+
+### 示例2：搜索与问答
+
+```java
+// 简单搜索
+@GetMapping("/search")
+public List<String> search(@RequestParam String query) {
+    return ragService.search(query, 5)
+        .stream()
+        .map(Document::getContent)
+        .collect(Collectors.toList());
+}
+
+// AI问答（可选）
+@GetMapping("/qa")
+public String qa(@RequestParam String question) {
+    // 检索相关文档
+    List<Document> docs = ragService.search(question, 3);
+    String context = docs.stream()
+        .map(Document::getContent)
+        .collect(Collectors.joining("\n"));
+    
+    // AI生成答案（需要配置AI服务）
+    return aiService.generate("根据以下内容回答：" + context + "\n问题：" + question);
+}
+```
+
+### 示例3：知识域管理
+
+```java
+// 创建专门的知识域
+@Service
+public class DomainService {
+    @Autowired private KnowledgeDomainService domainService;
+    
+    public void createTechDomain() {
+        KnowledgeDomain domain = KnowledgeDomain.builder()
+            .domainId("tech-docs")
+            .name("技术文档域")
+            .domainType(DomainType.DOCUMENT)
+            .build();
+        domainService.createDomain(domain);
+    }
+    
+    // 智能路由
+    @Autowired private DomainRouter router;
+    
+    public void smartRoute(String query) {
+        QueryRouteResult result = router.route(query);
+        System.out.println("推荐域: " + result.getDomainIds());
+    }
+}
+```
+
+> 💡 **更多示例**: 查看 [QUICKSTART.md](QUICKSTART.md) 获取完整教程
+
+---
+
 ## 🏗️ 架构设计
 
-### 模块结构（21个模块）
+### 模块结构（20个Maven模块 + 1个前端项目）
 
 ```
 omni-agent/
 │
-├── ========== API层（接口定义）6个模块 ==========
+├── ========== API层（接口定义）7个模块 ==========
 │
 ├── omni-agent-document-storage-api       # 文档存储接口
 ├── omni-agent-rag-api                    # RAG检索接口
 ├── omni-agent-ai-api                     # AI服务接口
-├── omni-agent-p2p-api                    # P2P协作接口（待激活）
+├── omni-agent-p2p-api                    # P2P协作接口
 ├── omni-agent-knowledge-registry-api     # 知识域注册接口
 ├── omni-agent-chunking-api               # 文档分块接口
 ├── omni-agent-document-processor-api     # 文档处理接口
@@ -162,7 +251,7 @@ omni-agent/
 ├── omni-agent-rag-starter-adapter        # RAG适配器实现
 ├── omni-agent-ai-starter                 # AI服务实现
 ├── omni-agent-knowledge-registry-starter # 知识域实现
-├── omni-agent-p2p-starter                # P2P实现（待激活）
+├── omni-agent-p2p-starter                # P2P实现
 │
 ├── ========== Web层 1个模块 ==========
 │
@@ -176,10 +265,20 @@ omni-agent/
 │
 ├── omni-agent-marketplace                # 算法插件市场
 │
-└── ========== 应用示例 2个模块 ==========
+├── ========== 应用示例 2个模块 ==========
+│
+├── omni-agent-example-basic              # 基础示例
+├── omni-agent-example-production         # 生产示例
+│
+└── ========== 前端项目（独立） ==========
     │
-    ├── omni-agent-example-basic          # 基础示例
-    └── omni-agent-example-production     # 生产示例
+    └── UI/                                # React + Vite 前端应用
+        ├── 问答模块
+        ├── 文档管理
+        ├── 统计分析
+        ├── 反馈系统
+        ├── 角色管理
+        └── 协作网络
 ```
 
 ### 架构层次图
@@ -217,203 +316,92 @@ omni-agent/
 
 ## 🚀 快速开始
 
-### 环境要求
+> **💡 完整教程请查看**: **[QUICKSTART.md](QUICKSTART.md)** - 5分钟快速上手指南
 
-- **Java** 21+
-- **Maven** 3.8+
-- **Spring Boot** 3.4.1+
-
-### 安装步骤
-
-#### 1. 克隆项目
+### 三步启动
 
 ```bash
+# 1. 克隆项目
 git clone https://github.com/jinhua10/omni-agent.git
 cd omni-agent
-```
 
-#### 2. 编译项目
-
-```bash
+# 2. 编译项目
 mvn clean install -DskipTests
-```
 
-#### 3. 配置应用
-
-创建 `application.yml`：
-
-```yaml
-# 文档存储配置
-omni:
-  document-storage:
-    file:
-      base-path: ./data/storage
-      enable-metadata: true
-
-# RAG检索配置
-  rag:
-    file:
-      enabled: true
-      index-path: ./data/rag/lucene
-      default-domain-id: default
-
-# 分块策略配置
-  chunking:
-    default-strategy: sentence-boundary
-    ppl-enabled: false
-    semantic-enabled: false
-
-# AI Embedding配置（可选）
-embedding:
-  onnx:
-    enabled: true
-    model-path: ./models/bge-base-zh-v1.5/model.onnx
-    max-sequence-length: 512
-
-# 知识网络配置（可选）
-omni-agent:
-  knowledge-network:
-    enabled: true
-    auto-scan: true
-    scan-interval: 300000  # 5分钟
-```
-
-#### 4. 运行示例
-
-```bash
-# 运行基础示例
+# 3. 运行示例
 cd omni-agent-example-basic
 mvn spring-boot:run
-
-# 或运行生产示例
-cd omni-agent-example-production
-mvn spring-boot:run
 ```
 
-### 基础使用示例
-
-#### 文档上传与处理
+### 核心使用
 
 ```java
 @Service
-public class DocumentService {
+public class MyService {
+    @Autowired private DocumentProcessor documentProcessor;
+    @Autowired private ChunkingService chunkingService;
+    @Autowired private RagService ragService;
     
-    @Autowired
-    private DocumentProcessor documentProcessor;
-    
-    @Autowired
-    private ChunkingService chunkingService;
-    
-    @Autowired
-    private RagService ragService;
-    
-    public void processDocument(File file, String domainId) {
+    public void process(File file) {
         // 1. 提取文本
-        ExtractionResult result = documentProcessor.extractText(file);
-        String text = result.getText();
+        String text = documentProcessor.extractText(file).getText();
         
         // 2. 智能分块
-        List<Chunk> chunks = chunkingService.chunk(
-            text, 
-            ChunkingParams.forDocType(DocumentType.TECHNICAL)
-        );
+        List<Chunk> chunks = chunkingService.chunk(text);
         
-        // 3. 索引到RAG（指定知识域）
-        List<Document> docs = chunks.stream()
-            .map(chunk -> Document.builder()
-                .id(UUID.randomUUID().toString())
-                .content(chunk.getText())
-                .metadata(Map.of("domainId", domainId))
-                .build())
-            .collect(Collectors.toList());
-        
-        ragService.batchIndex(docs);
+        // 3. 索引到RAG
+        ragService.batchIndex(toDocuments(chunks));
     }
-}
-```
-
-#### 知识检索
-
-```java
-@Service
-public class SearchService {
     
-    @Autowired
-    private RagService ragService;
-    
-    public List<String> search(String query, String domainId, int topK) {
-        // 语义搜索（自动使用Embedding）
-        List<Document> results = ragService.semanticSearch(query, topK);
-        
-        // 提取文本
-        return results.stream()
+    public List<String> search(String query) {
+        return ragService.search(query, 5)
+            .stream()
             .map(Document::getContent)
             .collect(Collectors.toList());
     }
 }
 ```
 
-#### AI问答集成
+### REST API快速测试
 
-```java
-@Service
-public class QAService {
-    
-    @Autowired
-    private RagService ragService;
-    
-    @Autowired
-    private AIService aiService;
-    
-    public String answerQuestion(String question, String domainId) {
-        // 1. 检索相关文档
-        List<Document> docs = ragService.semanticSearch(question, 5);
-        
-        // 2. 构建上下文
-        String context = docs.stream()
-            .map(Document::getContent)
-            .collect(Collectors.joining("\n\n"));
-        
-        // 3. AI生成答案
-        String prompt = String.format(
-            "根据以下上下文回答问题：\n\n%s\n\n问题：%s", 
-            context, 
-            question
-        );
-        
-        AIResponse response = aiService.generate(AIRequest.builder()
-            .prompt(prompt)
-            .maxTokens(500)
-            .build());
-        
-        return response.getContent();
-    }
-}
+```bash
+# 搜索文档
+curl -X POST http://localhost:8080/api/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "关键词", "topK": 5}'
 ```
+
+> 📖 **更多示例和详细说明**: [QUICKSTART.md](QUICKSTART.md)
 
 ---
 
-## 📚 文档
+## 📚 文档与资源
 
-### 核心文档
+### 快速开始
+
+- **[📖 5分钟快速开始](QUICKSTART.md)** ⭐ **推荐首选** - 从零开始的完整教程
+
+### 架构文档
 
 - **[知识网络架构设计](docs/refactor_01/core/KNOWLEDGE_NETWORK_ARCHITECTURE.md)** - 知识域隔离架构详解
 - **[RAG重构总结](docs/refactor_01/PROJECT_FINAL_SUMMARY.md)** - RAG架构重构完整记录
-- **[Phase 1 完成报告](docs/refactor_01/FINAL_SUMMARY.md)** - 分块与文档处理模块
-- **[新模块设计](docs/refactor_01/NEW_MODULES_DESIGN.md)** - 新增模块设计文档
 
-### API文档
+### API参考
 
-- **[分块API](omni-agent-chunking-api/README.md)** - 文档分块接口定义
-- **[文档处理API](omni-agent-document-processor-api/README.md)** - 文档处理接口定义
-- **[RAG API](omni-agent-rag-api/README.md)** - RAG检索接口定义
-- **[知识域API](omni-agent-knowledge-registry-api/README.md)** - 知识域管理接口
+各模块的详细API文档请查看对应模块目录下的README.md文件：
 
-### 使用指南
+```
+omni-agent-chunking-api/README.md           # 分块API
+omni-agent-document-processor-api/README.md # 文档处理API
+omni-agent-rag-api/README.md                # RAG检索API
+omni-agent-knowledge-registry-api/README.md # 知识域API
+```
 
-- **[快速开始指南](docs/QUICKSTART.md)** - 5分钟上手指南
-- **[配置参考](docs/CONFIGURATION.md)** - 详细配置说明
-- **[最佳实践](docs/BEST_PRACTICES.md)** - 生产环境最佳实践
+### 示例代码
+
+完整的示例代码位于：
+- `omni-agent-example-basic/` - 基础功能示例
+- `omni-agent-example-production/` - 生产环境配置示例
 
 ---
 
@@ -427,34 +415,68 @@ public class QAService {
 - ✅ RAG统一接口
 - ✅ 向量化集成（ONNX）
 
-### 🔄 Phase 2: 知识网络（进行中）
+### ✅ Phase 2: 知识网络（已完成）
 
 - ✅ 知识域管理服务
 - ✅ 知识网络API定义
-- ⏳ AI知识提取服务
-- ⏳ 跨域关联分析
-- ⏳ 知识图谱构建
+- ✅ 知识网络构建器（KnowledgeNetworkBuilder）
+- ✅ 知识网络管理器（KnowledgeNetworkManager）
+- ✅ AI知识提取服务
+- ✅ 异步构建与后台扫描
+- ✅ 知识存储服务
 
-### 📋 Phase 3: 源码分析（计划中）
+### ✅ Phase 3: 智能路由（已完成）
 
-- ⬜ 源码域定义
-- ⬜ 多角度分析（安全、架构、质量）
-- ⬜ Git深度集成
-- ⬜ 代码知识提取
+- ✅ 意图识别引擎（基于关键词匹配）
+- ✅ 领域路由器（DomainRouter）
+- ✅ 多域查询支持
+- ✅ 角色匹配机制
+- ✅ 跨域查询优化
+- ✅ REST API接口（/api/router/route）
 
-### 📋 Phase 4: 智能路由（计划中）
+### 🔄 Phase 4: Web界面（部分完成）
 
-- ⬜ 意图识别引擎
-- ⬜ 领域路由器
-- ⬜ 多域查询优化
-- ⬜ 结果聚合与排序
+- ✅ React + Vite 前端框架
+- ✅ 问答模块（QA）
+- ✅ 文档管理模块
+- ✅ 统计模块
+- ✅ 反馈系统
+- ✅ 角色管理
+- ✅ 协作网络
+- ⏳ AI服务市场（进行中）
+- ⏳ 个人中心（进行中）
+- ⏳ 系统管理（进行中）
 
-### 📋 Phase 5: 可视化与UI（计划中）
+### 📋 Phase 5: 高级功能（规划中）
+
+#### 5.1 应用场景扩展
+
+- ⬜ **源码分析域** - 基于现有框架的应用场景
+  - 源码域定义与配置
+  - 多角度分析（安全、架构、质量）
+  - Git深度集成
+  - 代码知识自动提取
+  
+- ⬜ **更多领域场景**
+  - 财务分析域
+  - 法律合同域
+  - 医疗知识域
+  - 电商产品域
+
+#### 5.2 功能增强
 
 - ⬜ 知识图谱可视化
-- ⬜ 知识域管理界面
+- ⬜ 更智能的意图识别（LLM驱动）
 - ⬜ 实时监控仪表板
-- ⬜ 配置管理界面
+- ⬜ 多模态支持（图片、音频、视频）
+- ⬜ 知识推理引擎
+
+#### 5.3 性能优化
+
+- ⬜ 分布式RAG检索
+- ⬜ 向量索引优化
+- ⬜ 缓存策略增强
+- ⬜ 并发处理优化
 
 ---
 
@@ -491,16 +513,18 @@ public class QAService {
 ### 代码规模
 
 ```
-总模块数:    21个
+总模块数:    20个Maven模块 + 1个前端项目
 API模块:     7个
-Starter模块: 8个
+Starter模块: 7个
 核心模块:    1个
 工具模块:    1个
 Web模块:     1个
 工作流模块:  1个
 示例模块:    2个
+前端项目:    1个（React + Vite）
 
-总代码量:    ~15,000+行
+总代码量:    ~15,000+行（后端Java）
+前端代码:    ~5,000+行（React/JavaScript）
 文档数量:    30+份
 ```
 
