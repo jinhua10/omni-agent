@@ -128,38 +128,70 @@ const LandingPage = ({ onEnterApp }) => {
           </Space>
 
           {/* 统计数据 */}
-          <Row gutter={32} className="stats-row">
+          <Row gutter={[24, 24]} className="stats-row">
             <Col xs={12} sm={6}>
-              <Statistic
-                title="Maven模块"
-                value={animatedStats.modules}
-                suffix="+"
-                styles={{ value: { color: '#1890ff' } }}
-              />
+              <div className="stat-item">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                  <ApiOutlined style={{ fontSize: 24, color: '#fff' }} />
+                </div>
+                <Statistic
+                  title="Maven模块"
+                  value={animatedStats.modules}
+                  suffix="+"
+                  styles={{
+                    value: { color: '#fff', fontSize: 28, fontWeight: 700 },
+                    title: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 13, marginBottom: 4 }
+                  }}
+                />
+              </div>
             </Col>
             <Col xs={12} sm={6}>
-              <Statistic
-                title="代码行数"
-                value={animatedStats.codeLines}
-                suffix="+"
-                styles={{ value: { color: '#52c41a' } }}
-              />
+              <div className="stat-item">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #52c41a 0%, #95de64 100%)' }}>
+                  <CodeOutlined style={{ fontSize: 24, color: '#fff' }} />
+                </div>
+                <Statistic
+                  title="代码行数"
+                  value={animatedStats.codeLines}
+                  suffix="+"
+                  styles={{
+                    value: { color: '#fff', fontSize: 28, fontWeight: 700 },
+                    title: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 13, marginBottom: 4 }
+                  }}
+                />
+              </div>
             </Col>
             <Col xs={12} sm={6}>
-              <Statistic
-                title="支持格式"
-                value={animatedStats.formats}
-                suffix="+ 类型"
-                styles={{ value: { color: '#faad14' } }}
-              />
+              <div className="stat-item">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)' }}>
+                  <FileTextOutlined style={{ fontSize: 24, color: '#fff' }} />
+                </div>
+                <Statistic
+                  title="支持格式"
+                  value={animatedStats.formats}
+                  suffix="+ 类型"
+                  styles={{
+                    value: { color: '#fff', fontSize: 28, fontWeight: 700 },
+                    title: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 13, marginBottom: 4 }
+                  }}
+                />
+              </div>
             </Col>
             <Col xs={12} sm={6}>
-              <Statistic
-                title="分块策略"
-                value={animatedStats.strategies}
-                suffix="种"
-                styles={{ value: { color: '#f5222d' } }}
-              />
+              <div className="stat-item">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #f5222d 0%, #ff7875 100%)' }}>
+                  <ThunderboltOutlined style={{ fontSize: 24, color: '#fff' }} />
+                </div>
+                <Statistic
+                  title="分块策略"
+                  value={animatedStats.strategies}
+                  suffix="种"
+                  styles={{
+                    value: { color: '#fff', fontSize: 28, fontWeight: 700 },
+                    title: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 13, marginBottom: 4 }
+                  }}
+                />
+              </div>
             </Col>
           </Row>
         </div>
