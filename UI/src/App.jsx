@@ -29,6 +29,7 @@ import { ServiceMarket } from './components/service'
 import { UserProfile } from './components/profile'
 import { AdminPanel } from './components/admin'
 import { WorkflowMarket, WorkflowBuilder } from './components/workflow'
+import { LandingPage } from './components/landing'
 import { initializeUserId } from './utils/userManager'
 import './assets/css/main.css'
 import './assets/css/error-boundary.css'
@@ -41,6 +42,12 @@ function AppContent() {
   const { t } = useLanguage()
   const { theme: currentTheme, themeName } = useTheme()
   const [activeMenu, setActiveMenu] = useState('qa')
+  const [showLanding, setShowLanding] = useState(() => {
+    // 检查是否首次访问，或者URL中没有hash
+    const hasVisited = localStorage.getItem('omni_has_visited')
+    const hasHash = window.location.hash && window.location.hash.length > 1
+    return !hasVisited && !hasHash
+  })
   const [aiPanelConfig, setAIPanelConfig] = useState(() => {
     // 从localStorage读取AI面板配置
     try {
@@ -54,6 +61,19 @@ function AppContent() {
     }
     return { dockPosition: DOCK_POSITIONS.NONE }
   })
+
+  // 处理进入应用
+  const handleEnterApp = () => {
+    setShowLanding(false)
+    localStorage.setItem('omni_has_visited', 'true')
+    // 设置默认路由
+    window.location.hash = '#/qa'
+  }
+
+  // 如果显示Landing Page，直接返回
+  if (showLanding) {
+    return <LandingPage onEnterApp={handleEnterApp} />
+  }
 
   // 监听URL hash变化，自动切换菜单
   React.useEffect(() => {
