@@ -161,6 +161,32 @@
         <pdfbox.version>2.0.30</pdfbox.version>
         <jackson.version>2.15.3</jackson.version>
 
+        <!-- HTTP客户端 -->
+        <okhttp.version>4.12.0</okhttp.version>
+
+        <!-- 数据库相关 -->
+        <mongodb.version>5.2.1</mongodb.version>
+        <jedis.version>5.2.0</jedis.version>
+        <h2.version>2.3.232</h2.version>
+        <sqlite.version>3.47.1.0</sqlite.version>
+        <elasticsearch.version>8.17.0</elasticsearch.version>
+
+        <!-- AI模型相关 -->
+        <onnxruntime.version>1.20.1</onnxruntime.version>
+
+        <!-- OCR相关 -->
+        <tesseract.version>5.15.0</tesseract.version>
+
+        <!-- 云存储 -->
+        <minio.version>8.5.14</minio.version>
+        <aws-s3.version>1.12.778</aws-s3.version>
+
+        <!-- 工具类 -->
+        <commons-io.version>2.18.0</commons-io.version>
+        <commons-lang3.version>3.17.0</commons-lang3.version>
+        <commons-compress.version>1.27.1</commons-compress.version>
+        <guava.version>33.3.1-jre</guava.version>
+
         <!-- 安全版本覆盖 -->
         <logback.version>1.5.19</logback.version>
 
@@ -259,7 +285,245 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-compress</artifactId>
-                <version>1.27.1</version>
+                <version>${commons-compress.version}</version>
+            </dependency>
+
+            <!-- ========== HTTP 客户端 ========== -->
+
+            <!-- OkHttp3 -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+
+            <!-- ========== 数据库驱动 ========== -->
+
+            <!-- MongoDB Driver -->
+            <dependency>
+                <groupId>org.mongodb</groupId>
+                <artifactId>mongodb-driver-sync</artifactId>
+                <version>${mongodb.version}</version>
+            </dependency>
+
+            <!-- Redis Jedis -->
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>${jedis.version}</version>
+            </dependency>
+
+            <!-- H2 Database -->
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+            </dependency>
+
+            <!-- SQLite JDBC -->
+            <dependency>
+                <groupId>org.xerial</groupId>
+                <artifactId>sqlite-jdbc</artifactId>
+                <version>${sqlite.version}</version>
+            </dependency>
+
+            <!-- Elasticsearch Java Client -->
+            <dependency>
+                <groupId>co.elastic.clients</groupId>
+                <artifactId>elasticsearch-java</artifactId>
+                <version>${elasticsearch.version}</version>
+            </dependency>
+
+            <!-- ========== AI 模型相关 ========== -->
+
+            <!-- ONNX Runtime -->
+            <dependency>
+                <groupId>com.microsoft.onnxruntime</groupId>
+                <artifactId>onnxruntime</artifactId>
+                <version>${onnxruntime.version}</version>
+            </dependency>
+
+            <!-- ========== OCR 相关 ========== -->
+
+            <!-- Tesseract OCR -->
+            <dependency>
+                <groupId>net.sourceforge.tess4j</groupId>
+                <artifactId>tess4j</artifactId>
+                <version>${tesseract.version}</version>
+            </dependency>
+
+            <!-- ========== 云存储 ========== -->
+
+            <!-- MinIO -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+
+            <!-- AWS S3 SDK -->
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-java-sdk-s3</artifactId>
+                <version>${aws-s3.version}</version>
+            </dependency>
+
+            <!-- ========== 工具类库 ========== -->
+
+            <!-- Apache Commons IO -->
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+
+            <!-- Apache Commons Lang3 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+
+            <!-- Google Guava -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+
+            <!-- ========== 项目内部模块 ========== -->
+
+            <!-- OmniAgent Common -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- OmniAgent Core -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Document Storage API -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-document-storage-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Document Storage Starter -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-document-storage-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Document Processor API -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-document-processor-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Document Processor Starter -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-document-processor-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Chunking API -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-chunking-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Chunking Starter -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-chunking-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- RAG API -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-rag-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- RAG Starter Adapter -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-rag-starter-adapter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- AI API -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-ai-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- AI Starter -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-ai-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Knowledge Registry API -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-knowledge-registry-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Knowledge Registry Starter -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-knowledge-registry-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- P2P API -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-p2p-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- P2P Starter -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-p2p-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Workflow -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-workflow</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Marketplace -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-marketplace</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- OCR Starter Tesseract -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-ocr-starter-tesseract</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

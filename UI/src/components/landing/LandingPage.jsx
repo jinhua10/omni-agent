@@ -29,12 +29,14 @@ import {
   RightOutlined
 } from '@ant-design/icons'
 import GiteeIcon from '../icons/GiteeIcon'
+import { useLanguage } from '../../contexts/LanguageContext'
 import './LandingPage.css'
 
 const { Title, Paragraph, Text } = Typography
 
 
 const LandingPage = ({ onEnterApp }) => {
+  const { t } = useLanguage()
   const [animatedStats, setAnimatedStats] = useState({
     modules: 0,
     codeLines: 0,
@@ -48,31 +50,31 @@ const LandingPage = ({ onEnterApp }) => {
   const statsPages = [
     // 第一页：核心架构
     [
-      { title: '模块数量', value: 22, suffix: '个', icon: 'ApiOutlined', color: '#667eea' },
-      { title: 'Java代码', value: 85000, suffix: '+行', icon: 'CodeOutlined', color: '#52c41a' },
-      { title: '文档格式', value: 10, suffix: '类', icon: 'FileTextOutlined', color: '#faad14' },
-      { title: '分块方式', value: 6, suffix: '种', icon: 'ThunderboltOutlined', color: '#f5222d' },
+      { title: t('landingPage.stats.modules'), value: 22, suffix: t('landingPage.stats.modulesUnit'), icon: 'ApiOutlined', color: '#667eea' },
+      { title: t('landingPage.stats.codeLines'), value: 85000, suffix: t('landingPage.stats.codeLinesUnit'), icon: 'CodeOutlined', color: '#52c41a' },
+      { title: t('landingPage.stats.docFormats'), value: 10, suffix: t('landingPage.stats.docFormatsUnit'), icon: 'FileTextOutlined', color: '#faad14' },
+      { title: t('landingPage.stats.chunkingStrategies'), value: 6, suffix: t('landingPage.stats.chunkingStrategiesUnit'), icon: 'ThunderboltOutlined', color: '#f5222d' },
     ],
     // 第二页：RAG能力
     [
-      { title: 'RAG方案', value: 6, suffix: '种', icon: 'DatabaseOutlined', color: '#1890ff' },
-      { title: '向量模型', value: 3, suffix: '类', icon: 'ThunderboltOutlined', color: '#722ed1' },
-      { title: '存储引擎', value: 6, suffix: '种', icon: 'SafetyOutlined', color: '#eb2f96' },
-      { title: '多实例', value: 1, suffix: '支持', icon: 'CheckCircleOutlined', color: '#52c41a' },
+      { title: t('landingPage.stats.ragSolutions'), value: 6, suffix: t('landingPage.stats.ragSolutionsUnit'), icon: 'DatabaseOutlined', color: '#1890ff' },
+      { title: t('landingPage.stats.vectorModels'), value: 3, suffix: t('landingPage.stats.vectorModelsUnit'), icon: 'ThunderboltOutlined', color: '#722ed1' },
+      { title: t('landingPage.stats.storageEngines'), value: 6, suffix: t('landingPage.stats.storageEnginesUnit'), icon: 'SafetyOutlined', color: '#eb2f96' },
+      { title: t('landingPage.stats.multiInstance'), value: 1, suffix: t('landingPage.stats.multiInstanceUnit'), icon: 'CheckCircleOutlined', color: '#52c41a' },
     ],
     // 第三页：增强特性
     [
-      { title: '模型接入', value: 3, suffix: '类', icon: 'BulbOutlined', color: '#faad14' },
-      { title: '知识网络', value: 1, suffix: '启用', icon: 'ShareAltOutlined', color: '#13c2c2' },
-      { title: 'HOPE', value: 1, suffix: '启用', icon: 'RocketOutlined', color: '#f5222d' },
-      { title: 'P2P', value: 1, suffix: '启用', icon: 'CloudOutlined', color: '#1890ff' },
+      { title: t('landingPage.stats.modelIntegration'), value: 3, suffix: t('landingPage.stats.modelIntegrationUnit'), icon: 'BulbOutlined', color: '#faad14' },
+      { title: t('landingPage.stats.knowledgeNetwork'), value: 1, suffix: t('landingPage.stats.knowledgeNetworkUnit'), icon: 'ShareAltOutlined', color: '#13c2c2' },
+      { title: t('landingPage.stats.hope'), value: 1, suffix: t('landingPage.stats.hopeUnit'), icon: 'RocketOutlined', color: '#f5222d' },
+      { title: t('landingPage.stats.p2p'), value: 1, suffix: t('landingPage.stats.p2pUnit'), icon: 'CloudOutlined', color: '#1890ff' },
     ],
     // 第四页：技术栈
     [
-      { title: 'Spring Boot', value: 3.4, suffix: '', icon: 'CloudOutlined', color: '#52c41a' },
-      { title: 'Java', value: 21, suffix: '', icon: 'CodeOutlined', color: '#fa8c16' },
-      { title: '编译状态', value: 100, suffix: '%', icon: 'CheckCircleOutlined', color: '#52c41a' },
-      { title: '生产可用', value: 100, suffix: '%', icon: 'SafetyOutlined', color: '#1890ff' },
+      { title: t('landingPage.stats.springBoot'), value: 3.4, suffix: '', icon: 'CloudOutlined', color: '#52c41a' },
+      { title: t('landingPage.stats.java'), value: 21, suffix: '', icon: 'CodeOutlined', color: '#fa8c16' },
+      { title: t('landingPage.stats.compileStatus'), value: 100, suffix: t('landingPage.stats.percentUnit'), icon: 'CheckCircleOutlined', color: '#52c41a' },
+      { title: t('landingPage.stats.productionReady'), value: 100, suffix: t('landingPage.stats.percentUnit'), icon: 'SafetyOutlined', color: '#1890ff' },
     ],
   ]
 
@@ -143,17 +145,17 @@ const LandingPage = ({ onEnterApp }) => {
           </div>
 
           <Title level={2} className="hero-subtitle">
-            全场景企业级Agent框架
+            {t('landingPage.hero.subtitle')}
           </Title>
 
           <div className="hero-slogan">
             <Text className="hero-slogan-text">
-              🚀 让Agent遍地开花，Agent元年正式开启！
+              {t('landingPage.hero.slogan')}
             </Text>
           </div>
 
           <Paragraph className="hero-description">
-            基于知识域隔离的智能Agent平台 | 构建分布式企业级AI应用
+            {t('landingPage.hero.description')}
           </Paragraph>
 
           <div className="hero-features">
@@ -161,31 +163,31 @@ const LandingPage = ({ onEnterApp }) => {
               <Col xs={12} sm={8} md={4}>
                 <div className="hero-feature-item">
                   <RocketOutlined className="hero-feature-icon" />
-                  <Text className="hero-feature-text">智能Agent</Text>
+                  <Text className="hero-feature-text">{t('landingPage.hero.featureAgent')}</Text>
                 </div>
               </Col>
               <Col xs={12} sm={8} md={4}>
                 <div className="hero-feature-item">
                   <CloudOutlined className="hero-feature-icon" />
-                  <Text className="hero-feature-text">服务平台</Text>
+                  <Text className="hero-feature-text">{t('landingPage.hero.featureService')}</Text>
                 </div>
               </Col>
               <Col xs={12} sm={8} md={4}>
                 <div className="hero-feature-item">
                   <BulbOutlined className="hero-feature-icon" />
-                  <Text className="hero-feature-text">智能AI应用</Text>
+                  <Text className="hero-feature-text">{t('landingPage.hero.featureAI')}</Text>
                 </div>
               </Col>
               <Col xs={12} sm={8} md={4}>
                 <div className="hero-feature-item">
                   <CodeOutlined className="hero-feature-icon" />
-                  <Text className="hero-feature-text">代码分析</Text>
+                  <Text className="hero-feature-text">{t('landingPage.hero.featureCode')}</Text>
                 </div>
               </Col>
               <Col xs={12} sm={8} md={4}>
                 <div className="hero-feature-item">
                   <ThunderboltOutlined className="hero-feature-icon" />
-                  <Text className="hero-feature-text">自动化测试</Text>
+                  <Text className="hero-feature-text">{t('landingPage.hero.featureTest')}</Text>
                 </div>
               </Col>
             </Row>
@@ -199,7 +201,7 @@ const LandingPage = ({ onEnterApp }) => {
               onClick={onEnterApp}
               className="btn-primary"
             >
-              立即开始
+              {t('landingPage.hero.startButton')}
             </Button>
             <Button
               size="large"
@@ -227,7 +229,7 @@ const LandingPage = ({ onEnterApp }) => {
               target="_blank"
               className="btn-secondary"
             >
-              技术博客
+              {t('landingPage.hero.techBlog')}
             </Button>
           </Space>
 
@@ -290,10 +292,10 @@ const LandingPage = ({ onEnterApp }) => {
             {/* 说明文字 */}
             <div className="stats-description">
               <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 13 }}>
-                {currentStatsPage === 0 && '模块化设计 · 企业级代码质量'}
-                {currentStatsPage === 1 && '多策略RAG · 灵活存储 · 支持多实例'}
-                {currentStatsPage === 2 && '知识网络 · 自学习 · P2P分布式'}
-                {currentStatsPage === 3 && '最新技术栈 · 开箱即用'}
+                {currentStatsPage === 0 && t('landingPage.stats.desc1')}
+                {currentStatsPage === 1 && t('landingPage.stats.desc2')}
+                {currentStatsPage === 2 && t('landingPage.stats.desc3')}
+                {currentStatsPage === 3 && t('landingPage.stats.desc4')}
               </Text>
             </div>
           </div>
@@ -304,25 +306,25 @@ const LandingPage = ({ onEnterApp }) => {
       <section className="comparison-section">
         <div className="container">
           <Title level={2} className="section-title">
-            为什么选择 OmniAgent？
+            {t('landingPage.comparison.title')}
           </Title>
 
           <Row gutter={48} align="middle">
             <Col xs={24} md={11}>
               <Card className="problem-card">
                 <Title level={4} style={{ color: '#f5222d', marginBottom: 24 }}>
-                  ❌ 传统RAG的根本性缺陷
+                  {t('landingPage.comparison.traditionalDefect')}
                 </Title>
 
                 {/* 单一向量空间示意图 */}
                 <div className="problem-diagram">
                   <Title level={5} style={{ textAlign: 'center', marginBottom: 16, color: '#f5222d' }}>
-                    单一向量空间混乱
+                    {t('landingPage.comparison.singleVectorChaos')}
                   </Title>
                   <div className="mixed-index">
                     <DatabaseOutlined style={{ fontSize: 48, color: '#ff4d4f' }} />
                     <Text style={{ color: '#8c8c8c', fontSize: 13, marginTop: 8 }}>
-                      📄 技术文档 + 📊 财务报表 + 💼 合同 + 📧 邮件...
+                      {t('landingPage.comparison.mixedDocs')}
                     </Text>
                   </div>
                 </div>
@@ -336,8 +338,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <CodeOutlined />
                         </div>
                         <div className="problem-content">
-                          <Text strong>语义割裂</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>固定分块破坏语义</Text>
+                          <Text strong>{t('landingPage.comparison.semanticFragmentation')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.semanticFragmentationDesc')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -347,8 +349,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <ShareAltOutlined />
                         </div>
                         <div className="problem-content">
-                          <Text strong>上下文断裂</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>跨块信息无法关联</Text>
+                          <Text strong>{t('landingPage.comparison.contextBreak')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.contextBreakDesc')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -358,8 +360,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <DatabaseOutlined />
                         </div>
                         <div className="problem-content">
-                          <Text strong>向量空间污染</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>多领域混杂降低精度</Text>
+                          <Text strong>{t('landingPage.comparison.vectorPollution')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.vectorPollutionDesc')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -369,8 +371,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <SafetyOutlined />
                         </div>
                         <div className="problem-content">
-                          <Text strong>单一存储</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>存在单点故障</Text>
+                          <Text strong>{t('landingPage.comparison.singleStorage')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.singleStorageDesc')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -380,8 +382,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <ThunderboltOutlined />
                         </div>
                         <div className="problem-content">
-                          <Text strong>固定维度</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>无法适配不同场景</Text>
+                          <Text strong>{t('landingPage.comparison.fixedDimension')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.fixedDimensionDesc')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -391,8 +393,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <BulbOutlined />
                         </div>
                         <div className="problem-content">
-                          <Text strong>静态知识</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>缺乏持续学习</Text>
+                          <Text strong>{t('landingPage.comparison.staticKnowledge')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.staticKnowledgeDesc')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -408,31 +410,31 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} md={11}>
               <Card className="solution-card">
                 <Title level={4} style={{ color: '#52c41a', marginBottom: 24 }}>
-                  ✅ OmniAgent的架构创新
+                  {t('landingPage.comparison.innovation')}
                 </Title>
 
                 {/* 知识域隔离示意图 */}
                 <div className="solution-diagram">
                   <Title level={5} style={{ textAlign: 'center', marginBottom: 16, color: '#52c41a' }}>
-                    知识域隔离架构
+                    {t('landingPage.comparison.domainIsolation')}
                   </Title>
                   <Row gutter={12}>
                     <Col span={8}>
                       <div className="domain-box">
                         <FileTextOutlined style={{ fontSize: 24 }} />
-                        <Text style={{ fontSize: 12 }}>技术文档域</Text>
+                        <Text style={{ fontSize: 12 }}>{t('landingPage.comparison.techDocDomain')}</Text>
                       </div>
                     </Col>
                     <Col span={8}>
                       <div className="domain-box">
                         <DatabaseOutlined style={{ fontSize: 24 }} />
-                        <Text style={{ fontSize: 12 }}>财务报表域</Text>
+                        <Text style={{ fontSize: 12 }}>{t('landingPage.comparison.financeDomain')}</Text>
                       </div>
                     </Col>
                     <Col span={8}>
                       <div className="domain-box">
                         <SafetyOutlined style={{ fontSize: 24 }} />
-                        <Text style={{ fontSize: 12 }}>合同域</Text>
+                        <Text style={{ fontSize: 12 }}>{t('landingPage.comparison.contractDomain')}</Text>
                       </div>
                     </Col>
                   </Row>
@@ -447,8 +449,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <CodeOutlined />
                         </div>
                         <div className="innovation-content">
-                          <Text strong>6种分块策略</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>智能保留语义</Text>
+                          <Text strong>{t('landingPage.comparison.sixStrategies')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.semanticPreserved')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -458,8 +460,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <ShareAltOutlined />
                         </div>
                         <div className="innovation-content">
-                          <Text strong>知识域隔离</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>独立向量空间</Text>
+                          <Text strong>{t('landingPage.comparison.domainIsolationFeature')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.independentVector')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -469,8 +471,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <DatabaseOutlined />
                         </div>
                         <div className="innovation-content">
-                          <Text strong>多元存储</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>灾备冗余方案</Text>
+                          <Text strong>{t('landingPage.comparison.multiStorage')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.disasterBackup')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -480,8 +482,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <ThunderboltOutlined />
                         </div>
                         <div className="innovation-content">
-                          <Text strong>多维度向量</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>并行Embedding</Text>
+                          <Text strong>{t('landingPage.comparison.multiDimension')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.parallelEmbedding')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -491,8 +493,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <ApiOutlined />
                         </div>
                         <div className="innovation-content">
-                          <Text strong>知识网络</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>跨域关联增强</Text>
+                          <Text strong>{t('landingPage.comparison.knowledgeNetworkFeature')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.crossDomain')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -502,8 +504,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <RocketOutlined />
                         </div>
                         <div className="innovation-content">
-                          <Text strong>HOPE架构</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>自我学习进化</Text>
+                          <Text strong>{t('landingPage.comparison.hopeArch')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.selfLearning')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -513,8 +515,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <BulbOutlined />
                         </div>
                         <div className="innovation-content">
-                          <Text strong>智能角色</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>AI生成提示词</Text>
+                          <Text strong>{t('landingPage.comparison.smartRole')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.aiPrompts')}</Text>
                         </div>
                       </div>
                     </Col>
@@ -524,8 +526,8 @@ const LandingPage = ({ onEnterApp }) => {
                           <CloudOutlined />
                         </div>
                         <div className="innovation-content">
-                          <Text strong>分布式架构</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>高可用集群</Text>
+                          <Text strong>{t('landingPage.comparison.distributedArch')}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>{t('landingPage.comparison.highAvailability')}</Text>
                         </div>
                       </div>
                     </Col>
