@@ -29,7 +29,7 @@ import { ServiceMarket } from './components/service'
 import { UserProfile } from './components/profile'
 import { AdminPanel } from './components/admin'
 import { WorkflowMarket, WorkflowBuilder } from './components/workflow'
-import { LandingPage } from './components/landing'
+import LandingPage from './components/landing/LandingPage.jsx'
 import { initializeUserId } from './utils/userManager'
 import './assets/css/main.css'
 import './assets/css/error-boundary.css'
@@ -42,12 +42,7 @@ function AppContent() {
   const { t } = useLanguage()
   const { theme: currentTheme, themeName } = useTheme()
   const [activeMenu, setActiveMenu] = useState('qa')
-  const [showLanding, setShowLanding] = useState(() => {
-    // 检查是否首次访问，或者URL中没有hash
-    const hasVisited = localStorage.getItem('omni_has_visited')
-    const hasHash = window.location.hash && window.location.hash.length > 1
-    return !hasVisited && !hasHash
-  })
+  const [currentView, setCurrentView] = useState('landing') // 'landing' 或 'app'
   const [aiPanelConfig, setAIPanelConfig] = useState(() => {
     // 从localStorage读取AI面板配置
     try {
@@ -62,38 +57,40 @@ function AppContent() {
     return { dockPosition: DOCK_POSITIONS.NONE }
   })
 
-  // 处理进入应用
+  // 处理进入应用（从Landing Page跳转到Demo）
   const handleEnterApp = () => {
-    setShowLanding(false)
-    localStorage.setItem('omni_has_visited', 'true')
-    // 设置默认路由
-    window.location.hash = '#/qa'
+    // 跳转到Demo路由
+    window.location.hash = '#/demo/qa'
   }
 
-  // 如果显示Landing Page，直接返回
-  if (showLanding) {
-    return <LandingPage onEnterApp={handleEnterApp} />
-  }
-
-  // 监听URL hash变化，自动切换菜单
+  // 监听URL hash变化，判断显示Landing Page还是主应用
   React.useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash
-      // 解析 hash，例如 #/documents?view=chunking
-      const path = hash.split('?')[0].replace('#/', '')
-      setActiveMenu((prev) => {
-        if (!path || path === prev) return prev
-        console.log('Hash changed, switching menu from', prev, 'to', path)
-        return path
-      })
+
+      // 如果hash以 #/demo/ 开头，显示主应用
+      if (hash.startsWith('#/demo/')) {
+        setCurrentView('app')
+        // 解析实际的菜单路径
+        const path = hash.replace('#/demo/', '').split('?')[0]
+        setActiveMenu(path || 'qa')
+      } else {
+        // 否则显示Landing Page
+        setCurrentView('landing')
+      }
     }
 
-    // 初始化时也检查一次
+    // 初始化时检查
     handleHashChange()
 
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
+
+  // 如果显示Landing Page，直接返回
+  if (currentView === 'landing') {
+    return <LandingPage onEnterApp={handleEnterApp} />
+  }
 
   // 监听localStorage变化
   React.useEffect(() => {
@@ -132,9 +129,9 @@ function AppContent() {
   const handleMenuClick = (key) => {
     setActiveMenu(key)
     console.log('Navigate to:', key)
-    // 同步更新 URL hash，避免 hash 监听把菜单切换“拉回”到旧页面
+    // 使用/demo/路由前缀
     if (typeof key === 'string' && key.length > 0) {
-      const nextHash = `#/${key}`
+      const nextHash = `#/demo/${key}`
       if (window.location.hash !== nextHash) {
         window.location.hash = nextHash
       }

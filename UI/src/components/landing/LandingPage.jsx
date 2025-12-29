@@ -134,7 +134,7 @@ const LandingPage = ({ onEnterApp }) => {
                 title="Maven模块"
                 value={animatedStats.modules}
                 suffix="+"
-                valueStyle={{ color: '#1890ff' }}
+                styles={{ value: { color: '#1890ff' } }}
               />
             </Col>
             <Col xs={12} sm={6}>
@@ -142,7 +142,7 @@ const LandingPage = ({ onEnterApp }) => {
                 title="代码行数"
                 value={animatedStats.codeLines}
                 suffix="+"
-                valueStyle={{ color: '#52c41a' }}
+                styles={{ value: { color: '#52c41a' } }}
               />
             </Col>
             <Col xs={12} sm={6}>
@@ -150,7 +150,7 @@ const LandingPage = ({ onEnterApp }) => {
                 title="文档格式"
                 value={animatedStats.formats}
                 suffix="种"
-                valueStyle={{ color: '#faad14' }}
+                styles={{ value: { color: '#faad14' } }}
               />
             </Col>
             <Col xs={12} sm={6}>
@@ -158,7 +158,7 @@ const LandingPage = ({ onEnterApp }) => {
                 title="分块策略"
                 value={animatedStats.strategies}
                 suffix="种"
-                valueStyle={{ color: '#f5222d' }}
+                styles={{ value: { color: '#f5222d' } }}
               />
             </Col>
           </Row>
