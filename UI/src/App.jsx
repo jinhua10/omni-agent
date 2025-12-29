@@ -136,25 +136,7 @@ function AppContent() {
     }
   }, [isDocked, aiPanelConfig])
 
-  // 菜单点击处理 / Menu click handler
-  const handleMenuClick = (key) => {
-    setActiveMenu(key)
-    console.log('Navigate to:', key)
-    // 使用/demo/路由前缀
-    if (typeof key === 'string' && key.length > 0) {
-      const nextHash = `#/demo/${key}`
-      if (window.location.hash !== nextHash) {
-        window.location.hash = nextHash
-      }
-    }
-  }
-
-  // 如果显示Landing Page，直接返回（所有hooks已经在上面调用完毕）
-  if (currentView === 'landing') {
-    return <LandingPage onEnterApp={handleEnterApp} />
-  }
-
-  // 处理分隔线拖拽调整大小
+  // 处理分隔线拖拽调整大小 - 必须在条件返回之前定义
   const handleSplitterResize = React.useCallback((position) => {
     const minSize = 300 // 最小宽度/高度
     const maxSize = window.innerWidth * 0.8 // 最大80%
@@ -183,6 +165,24 @@ function AppContent() {
     setAIPanelConfig(newConfig)
     localStorage.setItem('floating_ai_panel_config', JSON.stringify(newConfig))
   }, [aiPanelConfig, dockPosition])
+
+  // 菜单点击处理 / Menu click handler
+  const handleMenuClick = (key) => {
+    setActiveMenu(key)
+    console.log('Navigate to:', key)
+    // 使用/demo/路由前缀
+    if (typeof key === 'string' && key.length > 0) {
+      const nextHash = `#/demo/${key}`
+      if (window.location.hash !== nextHash) {
+        window.location.hash = nextHash
+      }
+    }
+  }
+
+  // 如果显示Landing Page，直接返回（所有hooks已经在上面调用完毕）
+  if (currentView === 'landing') {
+    return <LandingPage onEnterApp={handleEnterApp} />
+  }
 
   /**
    * 渲染页面内容 / Render page content
