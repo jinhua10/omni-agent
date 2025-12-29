@@ -1,4 +1,4 @@
-# OmniAgent - 智能知识网络平台 🚀
+# OmniAgent - 全场景智能Agent框架 🚀
 
 <div align="center">
 
@@ -7,649 +7,607 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
-**基于知识域隔离的智能文档处理与RAG系统**
+**让AI更智能、更可控、更实用的全场景Agent开发框架**
 
-### 📖 [**5分钟快速开始 →**](QUICKSTART.md)
+### 🌐 [**官网演示 →**](https://yumbo.top/) | 📖 [**快速开始**](#-快速开始) | 🎯 [**核心特性**](#-核心特性)
 
-[核心特性](#-核心特性) • [架构设计](#-架构设计) • [使用示例](#-使用示例) • [路线图](#-开发路线图)
+**让Agent遍地开花，Agent元年正式启动！**
 
 </div>
 
 ---
 
-## 📊 项目概览
+## 🎯 为什么选择 OmniAgent？
 
-OmniAgent 是一个现代化的企业级知识管理平台，通过**知识域隔离架构**实现多领域知识的专业化组织和检索。
+OmniAgent 是一个**全场景Agent开发框架**，专为解决传统RAG系统的根本性缺陷而设计，让您能够：
 
-| 维度 | 状态 |
+- 🏗️ **构建分布式企业级Agent平台** - 支持多实例、多策略、灾备冗余
+- 🧠 **打造更智能的Agent应用** - HOPE自学习架构 + 知识网络系统  
+- 🚀 **快速开发AI应用** - 完整的上下文管理 + 开箱即用的组件
+- 📊 **构建专业知识服务** - 类似Copilot/Cursor的智能助手
+- 🔧 **构建上下文更智能的任意AI应用** - 项目分析、自动化测试、代码生成等
+
+### 📈 项目数据
+
+| 指标 | 数值 |
 |------|------|
-| **当前版本** | 1.0.0 |
-| **模块总数** | 20个Maven模块 + 1个前端项目 |
-| **代码量** | ~15,000+ 行 |
-| **架构状态** | ✅ 重构完成 |
-| **编译状态** | ✅ BUILD SUCCESS |
-| **最后更新** | 2025-12-29 |
+| **代码量** | 85,144 行 Java 代码 |
+| **后端模块** | 22 个功能模块 |
+| **存储引擎** | 6 种（File/SQLite/H2/MongoDB/Redis/Elasticsearch） |
+| **RAG策略** | 6+ 种智能分块策略 |
+| **支持模型** | Ollama/在线API/ONNX本地模型 3种类型 |
+| **文档格式** | Word/Excel/PPT/PDF + 所有文本格式 |
+| **部署方式** | 本地/Docker/K8s/云服务器 |
 
 ---
 
-## 🎯 核心理念
+## ⚠️ 传统RAG的根本性缺陷
 
-### 传统RAG的问题
+### 1. 分块导致语义割裂
+传统RAG将文档强制切分成固定大小的块，导致：
+- 📄 **上下文断裂** - 重要信息被切断，完整语义无法保留
+- 🔍 **检索不准确** - 相关内容分散在不同块中
+- 💔 **语义完整性丢失** - 无法理解完整语境和逻辑关系
 
-```
-传统架构：所有文档混在一个索引中
-┌────────────────────────────────────┐
-│         单一RAG索引池               │
-│  📄技术文档 + 📊财务报表 + 💼合同   │
-│  + 📧邮件 + 📝会议记录...          │
-└────────────────────────────────────┘
-         ↓
-    ❌ 向量空间混乱
-    ❌ 检索精度低下
-    ❌ 无法专业化处理
-```
+### 2. 单一索引混乱
+所有文档混在一个向量空间：
+- 🌀 **向量空间污染** - 不同领域文档互相干扰，降低检索精度
+- 🎯 **无法针对性优化** - 技术文档和业务文档需要不同策略
+- 📊 **扩展性差** - 数据量增长后性能急剧下降
 
-### OmniAgent的解决方案
+### 3. 缺乏上下文记忆
+传统RAG无法理解对话历史：
+- 💬 **多轮对话失败** - 无法理解"它"、"这个"等指代词
+- 🔄 **重复提问** - 每次都需要提供完整问题
+- 🧠 **无学习能力** - 无法从交互中改进和优化
 
-```
-知识域隔离架构：每个领域独立的向量空间
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│  技术文档域   │  │  财务报表域   │  │   合同域      │
-│  独立索引     │  │  独立索引     │  │  独立索引     │
-│  专业化策略   │  │  专业化策略   │  │  专业化策略   │
-└──────────────┘  └──────────────┘  └──────────────┘
-         ↓                ↓                ↓
-    ✅ 语义检索精准    ✅ 专业知识提取   ✅ 细粒度权限
-    ✅ 针对性优化      ✅ 领域增量更新   ✅ 智能路由
-```
+### 4. 无知识关联
+文档之间缺乏语义连接：
+- 🔗 **孤立的知识点** - 无法发现相关内容和引用关系
+- 🕸️ **无知识图谱** - 缺少结构化的知识组织
+- 📚 **检索单一维度** - 只能靠关键词简单匹配
 
 ---
 
-## ⚡ 核心特性
+## ✅ OmniAgent的架构创新
 
-### 🏗️ 知识域隔离架构
+### 🎯 核心优势对比
 
-- **多域管理** - 每个知识域独立的向量空间和索引
-- **智能路由** - 根据查询意图自动路由到合适的知识域
-- **增量更新** - 文件哈希追踪，只处理变更内容
-- **权限隔离** - 细粒度的域级访问控制
+| 特性 | 传统RAG | OmniAgent |
+|------|---------|-----------|
+| **分块策略** | 固定大小切分 | 6种智能策略（困惑度/语义/段落等） ⭐ |
+| **存储方式** | 单一向量库 | 6种存储引擎异构冗余 + 灾备方案 |
+| **RAG系统** | 单一实例 | 支持多套不同向量维度系统并行使用 |
+| **知识组织** | 平面检索 | 域索引 + 知识网络 + HOPE自学习 |
+| **上下文管理** | 无 | 完整的对话历史 + 意图分析 + 缺口检测 |
+| **分布式** | 不支持 | P2P知识共享 + 连接码机制 |
+| **模型支持** | 单一 | ONNX本地/Ollama/在线API 三种类型 |
 
-### 📄 全格式文档支持
+### 🚀 创新架构详解
 
-#### Office文档（5种核心格式）
+#### 1. 多策略智能分块
 
-| 格式 | 特性 | 处理器 |
-|------|------|--------|
-| **PDF** | 逐页提取、页码标记、元数据 | PDFProcessor |
-| **Word** (.doc/.docx) | 表格转Markdown、标题识别 | WordProcessor |
-| **Excel** (.xls/.xlsx) | 智能表格、公式计算、数据分段 | ExcelProcessor |
-| **PowerPoint** (.ppt/.pptx) | 幻灯片提取、结构化输出 | PPTProcessor |
-| **文本** (.txt/.md/.log) | 纯文本提取 | TextProcessor |
+```
+传统方式:
+[固定500字] [固定500字] [固定500字]... ❌ 语义割裂
+         
+OmniAgent智能分块:
+├─ 困惑度分块 (基于AI的语义边界识别) ⭐ 推荐
+│  └─ 自动识别自然语义边界，保留完整上下文
+├─ 语义分块 (基于向量相似度)
+│  └─ 语义相近的内容聚合在一起
+├─ 段落分块 (基于自然段落)
+│  └─ 保持文档原始结构
+├─ 滑动窗口 (重叠窗口)
+│  └─ 保留上下文连续性
+├─ 递归分块 (层次化)
+│  └─ 大文档层次化处理
+└─ 固定大小 (兼容模式)
+   └─ 兼容传统RAG需求
+```
 
-#### 全文本格式支持 ⭐
+#### 2. 异构冗余存储架构
 
-- ✅ **所有文本格式** - .txt, .md, .json, .xml, .csv, .log, .yaml, .ini, .conf...
-- ✅ **所有编程语言** - .java, .py, .js, .cpp, .go, .rs, .kt, .swift, .ts...
-- ✅ **配置文件** - .properties, .yml, .env, .config...
-- ✅ **代码项目** - 支持构建完整代码库的独立知识库
+```
+同一份数据，6种存储方式，灾备保障:
+┌─────────────────────────────────────────┐
+│  File存储 ←→ SQLite ←→ MongoDB          │
+│     ↕️          ↕️         ↕️               │
+│  Redis缓存 ←→ H2内存 ←→ Elasticsearch   │
+└─────────────────────────────────────────┘
+✅ 灾备保障  ✅ 性能优化  ✅ 按需选择  ✅ 读写分离
+```
 
-#### 增强功能
+**优势**：
+- 📦 **File** - 简单快速，无需额外服务
+- 💾 **SQLite/H2** - 嵌入式数据库，单文件部署
+- 📊 **MongoDB** - 文档数据库，复杂查询
+- ⚡ **Redis** - 高速缓存，毫秒级响应
+- 🔍 **Elasticsearch** - 企业级搜索，海量数据
 
-- ✅ **Markdown 标准化** - 所有表格统一转换为Markdown格式
-- ✅ **结构保留** - 标题层级、页码信息完整保留
-- ✅ **LLM友好** - 输出格式适合大语言模型处理
-- ✅ **逐页处理** - 避免大文件内存溢出
-- ✅ **代码智能分析** - 支持源码级别的知识提取
+#### 3. 多维度RAG并行
 
-### 🧩 智能分块策略（6种）
+```
+同时运行多套不同维度的RAG系统:
+┌──────────────────────────────────────────┐
+│ RAG-768维  → 通用语义理解（快速检索）     │
+│ RAG-1024维 → 专业领域精准匹配（高精度）   │  
+│ RAG-512维  → 轻量级检索（低资源消耗）     │
+└──────────────────────────────────────────┘
+智能路由：根据问题类型自动选择最优RAG系统
+```
 
-| 策略 | 适用场景 | 特点 |
-|------|----------|------|
-| **固定长度** | 通用文档 | 固定大小+重叠窗口 |
-| **段落分块** | 结构化文档 | 按段落边界+最大段落数 |
-| **句子分块** | 短文本 | 按句子边界分块 |
-| **句子边界** | 平衡场景 | 目标大小+句子完整性 |
-| **PPL智能** | 技术文档 | 困惑度峰值检测+ONNX可选 |
-| **语义分块** | 高质量需求 | TF-IDF+向量化+AI可选 |
+#### 4. 知识网络系统
 
-#### 自动化特性
+```
+传统RAG：
+文档1  文档2  文档3  文档4  文档5 (完全孤立) ❌
+            
+OmniAgent知识网络架构：
+          [核心架构文档]
+         /      |      \
+    [API文档] [设计图] [代码库]
+      /  \      |      /  \
+[接口说明][测试用例][单元测试][集成测试]
+      \    |    |    |    /
+       [知识图谱自动关联]
+```
 
-- ✅ **文档类型推断** - 自动识别7种文档类型
-- ✅ **策略自动选择** - 根据文档类型选择最佳分块策略
-- ✅ **策略自动注册** - Spring Boot自动发现和注册分块策略
-- ✅ **参数优化** - 内置参数工具类自动调优
+**域索引组织**：
+```
+项目知识库
+├─ 技术域
+│  ├─ 架构文档
+│  ├─ API文档
+│  └─ 代码注释
+├─ 业务域
+│  ├─ 需求文档
+│  ├─ 流程图
+│  └─ 用户手册
+└─ 测试域
+   ├─ 测试用例
+   ├─ 测试报告
+   └─ BUG跟踪
+```
 
-### 🔍 多域RAG检索
+#### 5. HOPE自学习架构
 
-- **统一接口** - 简洁优雅的RagService接口（15个核心方法）
-- **向量检索** - 集成ONNX Embedding，支持真正的语义搜索
-- **优雅降级** - 无Embedding时自动降级到文本检索
-- **多后端支持** - Lucene全文索引（其他后端待扩展）
+```
+传统RAG：提问 → 检索 → 返回结果 (固定流程) ❌
 
-### 🌐 知识网络（增强层）
+OmniAgent HOPE架构：
+用户提问 → 意图分析 → 问题分类 → 知识检索
+    ↓                                      ↓
+反馈学习 ← 效果评估 ← 答案生成 ← 知识缺口检测
+    ↓                                      ↓
+策略优化 ← 模式识别 ← 补充知识 ← 自动改进
+```
 
-- **知识图谱** - 基于提取文本构建知识关联网络
-- **跨域关联** - 建立不同知识域之间的关联
-- **AI提取** - 调用大语言模型自动提取知识点
-- **后台异步** - 独立后台服务，不影响原有流程
+**自学习能力**：
+- 🎓 **问题分类学习** - 自动识别问题类型模式
+- 🔍 **知识缺口检测** - 发现知识库盲点
+- 📈 **策略自动优化** - 根据效果调整检索策略
+- 🔄 **持续改进** - 从每次交互中学习
 
 ---
 
-## 💡 使用示例
+## 🎯 核心特性
 
-### 示例1：处理文档
+### 1. 🤖 智能Agent构建
+- ✅ 完整的对话历史管理
+- ✅ 意图分析与理解
+- ✅ 多轮对话支持
+- ✅ 上下文自动保持
+- ✅ 角色系统（支持多角色协作）
 
-```java
-// 完整流程：文档 → 分块 → 索引
-@Service
-public class DocumentService {
-    @Autowired private DocumentProcessor processor;
-    @Autowired private ChunkingService chunking;
-    @Autowired private RagService rag;
-    
-    public void process(File file) {
-        // 1. 提取文本（自动识别格式）
-        String text = processor.extractText(file).getText();
-        
-        // 2. 智能分块（自动选择策略）
-        List<Chunk> chunks = chunking.chunk(text);
-        
-        // 3. 索引到知识库
-        List<Document> docs = chunks.stream()
-            .map(chunk -> Document.builder()
-                .content(chunk.getText())
-                .build())
-            .collect(Collectors.toList());
-        rag.batchIndex(docs);
-    }
-}
-```
+### 2. 📚 全面文档处理
 
-### 示例2：搜索与问答
+**Office系列**：
+- ✅ **Word** (.doc/.docx) - 表格转Markdown、样式保留
+- ✅ **Excel** (.xls/.xlsx) - 公式计算、数据智能分段
+- ✅ **PowerPoint** (.ppt/.pptx) - 幻灯片内容提取
+- ✅ **PDF** - 逐页提取、页码标记、元数据
 
-```java
-// 简单搜索
-@GetMapping("/search")
-public List<String> search(@RequestParam String query) {
-    return ragService.search(query, 5)
-        .stream()
-        .map(Document::getContent)
-        .collect(Collectors.toList());
-}
+**所有文本格式**：
+- ✅ 基础文本：.txt, .md, .log, .csv
+- ✅ 配置文件：.yml, .json, .xml, .ini, .properties
+- ✅ 编程语言：.java, .py, .js, .cpp, .go, .ts, .kt, .swift等
+- ✅ **支持构建完整代码项目的独立知识库**
 
-// AI问答（可选）
-@GetMapping("/qa")
-public String qa(@RequestParam String question) {
-    // 检索相关文档
-    List<Document> docs = ragService.search(question, 3);
-    String context = docs.stream()
-        .map(Document::getContent)
-        .collect(Collectors.joining("\n"));
-    
-    // AI生成答案（需要配置AI服务）
-    return aiService.generate("根据以下内容回答：" + context + "\n问题：" + question);
-}
-```
+**高级功能**：
+- ✅ **Vision LLM图片提取** - 使用AI理解图片内容（千问3-VL等）
+- ✅ **OCR文字识别** - Tesseract光学识别
+- ✅ **本地模型/Ollama/在线API** - 灵活选择提取方式
 
-### 示例3：知识域管理
+### 3. 🧠 先进RAG技术
 
-```java
-// 创建专门的知识域
-@Service
-public class DomainService {
-    @Autowired private KnowledgeDomainService domainService;
-    
-    public void createTechDomain() {
-        KnowledgeDomain domain = KnowledgeDomain.builder()
-            .domainId("tech-docs")
-            .name("技术文档域")
-            .domainType(DomainType.DOCUMENT)
-            .build();
-        domainService.createDomain(domain);
-    }
-    
-    // 智能路由
-    @Autowired private DomainRouter router;
-    
-    public void smartRoute(String query) {
-        QueryRouteResult result = router.route(query);
-        System.out.println("推荐域: " + result.getDomainIds());
-    }
-}
-```
+**6种智能分块策略**：
+- ✅ **困惑度智能分块** ⭐ 推荐 - AI驱动的语义边界识别
+- ✅ **语义分块** - 基于向量相似度聚合
+- ✅ **段落分块** - 保持自然段落结构
+- ✅ **滑动窗口** - 重叠保留上下文
+- ✅ **递归分块** - 层次化处理大文档
+- ✅ **固定大小** - 兼容模式
 
-> 💡 **更多示例**: 查看 [QUICKSTART.md](QUICKSTART.md) 获取完整教程
+**多维度向量化**：
+- ✅ **ONNX本地模型** - bge-base-zh、bge-m3等
+- ✅ **Ollama服务** - 本地部署，数据安全
+- ✅ **在线向量API** - 千问、DeepSeek等
+- ✅ **多套RAG并行** - 不同维度同时工作
+
+### 4. 💾 异构冗余存储
+
+**6种存储引擎**：
+- ✅ **File** - 文件系统，零依赖
+- ✅ **SQLite** - 嵌入式数据库，单文件
+- ✅ **H2** - 内存数据库，高性能
+- ✅ **MongoDB** - 文档数据库，灵活schema
+- ✅ **Redis** - 缓存加速，毫秒响应
+- ✅ **Elasticsearch** - 企业级搜索，亿级数据
+
+**灾备保障**：
+- ✅ 同一数据多存储备份
+- ✅ 自动故障切换
+- ✅ 数据一致性保证
+
+### 5. 🕸️ 知识网络系统
+
+**域索引**：
+- ✅ 按领域分类组织知识
+- ✅ 独立的向量空间
+- ✅ 专业化检索策略
+- ✅ 智能路由分发
+
+**知识图谱**：
+- ✅ 自动发现文档关联
+- ✅ 引用关系追踪
+- ✅ 语义相似度计算
+- ✅ 智能推荐相关内容
+
+**P2P知识共享**：
+- ✅ 连接码机制
+- ✅ 跨节点知识传递
+- ✅ 分布式单体可用
+- ✅ 企业内部知识网络
+
+### 6. 🎓 HOPE自学习
+
+- ✅ **问题分类** - 自动识别问题类型
+- ✅ **知识缺口检测** - 发现知识盲点
+- ✅ **策略自动优化** - 根据反馈改进
+- ✅ **持续学习** - 从交互中进化
+- ✅ **模式识别** - 发现常见问题模式
+
+### 7. 🔄 工作流引擎
+
+- ✅ 可视化流程设计
+- ✅ 节点拖拽编排
+- ✅ 条件分支控制
+- ✅ 循环迭代支持
+- ✅ 工作流市场（分享/导入）
+
+### 8. 🌐 分布式架构
+
+- ✅ P2P节点连接
+- ✅ 去中心化设计
+- ✅ 知识跨节点共享
+- ✅ 单体可用保障
+- ✅ 企业级部署支持
 
 ---
 
-## 🏗️ 架构设计
+## 🏗️ 智能化全流程
 
-### 模块结构（20个Maven模块 + 1个前端项目）
-
-```
-omni-agent/
-│
-├── ========== API层（接口定义）7个模块 ==========
-│
-├── omni-agent-document-storage-api       # 文档存储接口
-├── omni-agent-rag-api                    # RAG检索接口
-├── omni-agent-ai-api                     # AI服务接口
-├── omni-agent-p2p-api                    # P2P协作接口
-├── omni-agent-knowledge-registry-api     # 知识域注册接口
-├── omni-agent-chunking-api               # 文档分块接口
-├── omni-agent-document-processor-api     # 文档处理接口
-│
-├── ========== 通用工具层 1个模块 ==========
-│
-├── omni-agent-common                     # 通用工具类
-│
-├── ========== 核心业务层 1个模块 ==========
-│
-├── omni-agent-core                       # 核心业务逻辑
-│   ├── 知识域管理
-│   ├── 工作流编排
-│   └── 业务路由
-│
-├── ========== Starter实现层 7个模块 ==========
-│
-├── omni-agent-chunking-starter           # 分块策略实现（6种）
-├── omni-agent-document-processor-starter # 文档处理器实现（5种）
-├── omni-agent-document-storage-starter   # 文档存储实现
-├── omni-agent-ocr-starter-tesseract      # OCR识别实现
-├── omni-agent-rag-starter-adapter        # RAG适配器实现
-├── omni-agent-ai-starter                 # AI服务实现
-├── omni-agent-knowledge-registry-starter # 知识域实现
-├── omni-agent-p2p-starter                # P2P实现
-│
-├── ========== Web层 1个模块 ==========
-│
-├── omni-agent-web                        # REST API接口
-│
-├── ========== 工作流引擎 1个模块 ==========
-│
-├── omni-agent-workflow                   # 工作流定义与执行
-│
-├── ========== 算法市场 1个模块 ==========
-│
-├── omni-agent-marketplace                # 算法插件市场
-│
-├── ========== 应用示例 2个模块 ==========
-│
-├── omni-agent-example-basic              # 基础示例
-├── omni-agent-example-production         # 生产示例
-│
-└── ========== 前端项目（独立） ==========
-    │
-    └── UI/                                # React + Vite 前端应用
-        ├── 问答模块
-        ├── 文档管理
-        ├── 统计分析
-        ├── 反馈系统
-        ├── 角色管理
-        └── 协作网络
-```
-
-### 架构层次图
+### 完整的文档处理Pipeline
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    应用层（你的代码）                      │
-│              REST API / Web UI / 工作流                  │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│                  核心业务层（Core）                       │
-│         知识域管理 | 路由编排 | 业务逻辑                  │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│                 API接口层（抽象定义）                     │
-│   文档处理 | 分块 | RAG | AI | 知识域 | 存储             │
-└─────────────────────────────────────────────────────────┘
-                          ↑
-┌─────────────────────────────────────────────────────────┐
-│              Starter实现层（具体实现）                    │
-│   各种技术栈的实现，通过Spring Boot自动配置               │
-└─────────────────────────────────────────────────────────┘
+📄 文档上传
+    ↓
+📑 智能文本提取
+    ├─ 本地模型提取
+    ├─ Ollama服务提取  
+    └─ 在线API提取（千问3-VL等）
+    ↓
+    支持格式：
+    • Office: Word/Excel/PPT (.doc/.docx/.xls/.xlsx/.ppt/.pptx)
+    • 文档: PDF
+    • 文本: 所有文本格式（.txt/.md/.json/.xml/.log/.csv等）
+    • 代码: 所有编程语言文件
+    ↓
+✂️ 智能分块
+    ├─ 困惑度分块 (AI驱动) ⭐ 推荐
+    ├─ 语义分块 (向量相似度)
+    ├─ 段落分块 (自然段落)
+    ├─ 滑动窗口 (重叠保留)
+    ├─ 递归分块 (层次化)
+    └─ 固定大小 (兼容模式)
+    ↓
+🔢 向量化
+    ├─ ONNX本地模型 (bge-base-zh/bge-m3等)
+    ├─ Ollama本地服务
+    ├─ 在线向量API
+    └─ 多套RAG系统并行支持
+    ↓
+💾 多元异构存储
+    ├─ File (简单快速)
+    ├─ SQLite (嵌入式)
+    ├─ H2 (内存数据库)
+    ├─ MongoDB (文档数据库)
+    ├─ Redis (高速缓存)
+    └─ Elasticsearch (企业搜索)
+    ↓
+🕸️ 知识网络构建
+    ├─ 域索引组织
+    ├─ 知识图谱自动构建
+    ├─ 语义关联分析
+    └─ P2P知识共享
+    ↓
+🤖 HOPE自学习
+    ├─ 问题分类学习
+    ├─ 知识缺口检测
+    ├─ 策略自动优化
+    └─ 持续改进机制
 ```
-
-### 设计原则
-
-- ✅ **依赖倒置**（DIP） - 高层依赖抽象，低层实现抽象
-- ✅ **接口隔离**（ISP） - 接口职责单一，精准定义
-- ✅ **开闭原则**（OCP） - 对扩展开放，对修改关闭
-- ✅ **单一职责**（SRP） - 每个模块职责明确
 
 ---
 
 ## 🚀 快速开始
 
-> **💡 完整教程请查看**: **[QUICKSTART.md](QUICKSTART.md)** - 5分钟快速上手指南
-
 ### 三步启动
 
+#### 1️⃣ 克隆项目
+
 ```bash
-# 1. 克隆项目
+# GitHub
 git clone https://github.com/jinhua10/omni-agent.git
+
+# 或 Gitee（国内推荐，速度更快）
+git clone https://gitee.com/gnnu/omni-agent.git
+
 cd omni-agent
-
-# 2. 编译项目
-mvn clean install -DskipTests
-
-# 3. 运行示例
-cd omni-agent-example-basic
-mvn spring-boot:run
 ```
 
-### 核心使用
-
-```java
-@Service
-public class MyService {
-    @Autowired private DocumentProcessor documentProcessor;
-    @Autowired private ChunkingService chunkingService;
-    @Autowired private RagService ragService;
-    
-    public void process(File file) {
-        // 1. 提取文本
-        String text = documentProcessor.extractText(file).getText();
-        
-        // 2. 智能分块
-        List<Chunk> chunks = chunkingService.chunk(text);
-        
-        // 3. 索引到RAG
-        ragService.batchIndex(toDocuments(chunks));
-    }
-    
-    public List<String> search(String query) {
-        return ragService.search(query, 5)
-            .stream()
-            .map(Document::getContent)
-            .collect(Collectors.toList());
-    }
-}
-```
-
-### REST API快速测试
+#### 2️⃣ 编译并启动后端
 
 ```bash
-# 搜索文档
-curl -X POST http://localhost:8080/api/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "关键词", "topK": 5}'
+# 清理并编译项目
+mvn clean package \
+    -pl omni-agent-example-basic \
+    -am \
+    -DskipTests
+
+# 启动后端服务（使用omni-agent-example-basic模块）
+java -Dfile.encoding=UTF-8 \
+     -Dsun.jnu.encoding=UTF-8 \
+     -jar omni-agent-example-basic/target/omni-agent-example-basic-1.0.0.jar
 ```
 
-> 📖 **更多示例和详细说明**: [QUICKSTART.md](QUICKSTART.md)
+**或使用启动脚本**：
+```bash
+# Windows
+.\scripts\start.ps1
+
+# Linux/Mac
+chmod +x scripts/start.sh
+./scripts/start.sh
+```
+
+#### 3️⃣ 启动前端
+
+```bash
+cd UI
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+访问 **http://localhost:3000** 开始使用！
+
+### 🌐 在线演示
+
+**官网地址**：[https://yumbo.top](https://yumbo.top)
+
+立即访问在线演示，体验完整功能！
 
 ---
 
-## 📚 文档与资源
+## 📦 系统架构
 
-### 快速开始
-
-- **[📖 5分钟快速开始](QUICKSTART.md)** ⭐ **推荐首选** - 从零开始的完整教程
-
-### 架构文档
-
-- **[知识网络架构设计](docs/refactor_01/core/KNOWLEDGE_NETWORK_ARCHITECTURE.md)** - 知识域隔离架构详解
-- **[RAG重构总结](docs/refactor_01/PROJECT_FINAL_SUMMARY.md)** - RAG架构重构完整记录
-
-### API参考
-
-各模块的详细API文档请查看对应模块目录下的README.md文件：
+### 后端模块（22个）
 
 ```
-omni-agent-chunking-api/README.md           # 分块API
-omni-agent-document-processor-api/README.md # 文档处理API
-omni-agent-rag-api/README.md                # RAG检索API
-omni-agent-knowledge-registry-api/README.md # 知识域API
+omni-agent/
+├─ omni-agent-core               # 核心模块（HOPE/查询/分类）
+├─ omni-agent-common             # 公共工具
+├─ omni-agent-ai-api             # AI服务抽象接口
+├─ omni-agent-ai-starter         # AI服务实现（Ollama/在线API/Vision LLM）
+├─ omni-agent-rag-api            # RAG抽象接口
+├─ omni-agent-rag-starter-adapter # RAG适配器（File/H2/SQLite/Redis/MongoDB/ES）
+├─ omni-agent-chunking-api       # 分块策略接口
+├─ omni-agent-chunking-starter   # 分块策略实现（6种）
+├─ omni-agent-document-processor-api    # 文档处理接口
+├─ omni-agent-document-processor-starter # 文档处理器实现
+├─ omni-agent-document-storage-api      # 文档存储接口
+├─ omni-agent-document-storage-starter  # 文档存储实现
+├─ omni-agent-knowledge-registry-api    # 知识注册表接口
+├─ omni-agent-knowledge-registry-starter # 知识网络实现
+├─ omni-agent-ocr-starter-tesseract    # OCR识别
+├─ omni-agent-p2p-api            # P2P接口
+├─ omni-agent-p2p-starter        # P2P实现
+├─ omni-agent-workflow           # 工作流引擎
+├─ omni-agent-marketplace        # 工作流市场
+├─ omni-agent-web                # Web接口层
+├─ omni-agent-example-basic      # 基础示例（启动入口）
+└─ omni-agent-example-production # 生产环境示例
 ```
 
-### 示例代码
+### 前端技术栈
 
-完整的示例代码位于：
-- `omni-agent-example-basic/` - 基础功能示例
-- `omni-agent-example-production/` - 生产环境配置示例
+- ⚛️ **React 18** - 现代UI框架
+- 🎨 **Ant Design 5** - 企业级组件库
+- 🎭 **Framer Motion** - 流畅动画
+- 📊 **ECharts** - 数据可视化
+- 🔄 **React Router** - 路由管理
+- 🎨 **自定义主题引擎** - 多主题切换
 
 ---
 
-## 🛣️ 开发路线图
+## 💡 应用场景
 
-### ✅ Phase 1: 基础架构（已完成）
+### 1. 🏢 企业知识管理
+- 内部文档智能检索
+- 技术文档自动问答
+- 项目知识沉淀
+- 新人培训助手
 
-- ✅ 知识域注册API
-- ✅ 文档处理模块（5种格式）
-- ✅ 智能分块模块（6种策略）
-- ✅ RAG统一接口
-- ✅ 向量化集成（ONNX）
+### 2. 💻 开发辅助工具
+- 代码库智能分析
+- API文档自动生成
+- 代码审查助手
+- 项目架构分析
 
-### ✅ Phase 2: 知识网络（已完成）
+### 3. 🎓 教育培训
+- 课程资料问答
+- 学习进度跟踪
+- 知识图谱构建
+- 个性化学习路径
 
-- ✅ 知识域管理服务
-- ✅ 知识网络API定义
-- ✅ 知识网络构建器（KnowledgeNetworkBuilder）
-- ✅ 知识网络管理器（KnowledgeNetworkManager）
-- ✅ AI知识提取服务
-- ✅ 异步构建与后台扫描
-- ✅ 知识存储服务
+### 4. 🔬 研究助手
+- 论文智能检索
+- 文献关联分析
+- 研究成果管理
+- 知识发现
 
-### ✅ Phase 3: 智能路由（已完成）
+### 5. 🤖 智能客服
+- 产品文档问答
+- 常见问题解答
+- 多轮对话支持
+- 知识库管理
 
-- ✅ 意图识别引擎（基于关键词匹配）
-- ✅ 领域路由器（DomainRouter）
-- ✅ 多域查询支持
-- ✅ 角色匹配机制
-- ✅ 跨域查询优化
-- ✅ REST API接口（/api/router/route）
-
-### 🔄 Phase 4: Web界面（部分完成）
-
-- ✅ React + Vite 前端框架
-- ✅ 问答模块（QA）
-- ✅ 文档管理模块
-- ✅ 统计模块
-- ✅ 反馈系统
-- ✅ 角色管理
-- ✅ 协作网络
-- ⏳ AI服务市场（进行中）
-- ⏳ 个人中心（进行中）
-- ⏳ 系统管理（进行中）
-
-### 📋 Phase 5: 高级功能（规划中）
-
-#### 5.1 应用场景扩展
-
-- ⬜ **源码分析域** - 基于现有框架的应用场景
-  - 源码域定义与配置
-  - 多角度分析（安全、架构、质量）
-  - Git深度集成
-  - 代码知识自动提取
-  
-- ⬜ **更多领域场景**
-  - 财务分析域
-  - 法律合同域
-  - 医疗知识域
-  - 电商产品域
-
-#### 5.2 功能增强
-
-- ⬜ 知识图谱可视化
-- ⬜ 更智能的意图识别（LLM驱动）
-- ⬜ 实时监控仪表板
-- ⬜ 多模态支持（图片、音频、视频）
-- ⬜ 知识推理引擎
-
-#### 5.3 性能优化
-
-- ⬜ 分布式RAG检索
-- ⬜ 向量索引优化
-- ⬜ 缓存策略增强
-- ⬜ 并发处理优化
+### 6. 📊 数据分析
+- 报表自动生成
+- 数据洞察发现
+- 趋势分析预测
+- 异常检测
 
 ---
 
-## 🎨 技术栈
+## 🗺️ 开发路线图
 
-### 核心框架
+### ✅ 已完成（v1.0.0）
 
-- **Spring Boot** 3.4.1 - 应用框架
-- **Spring Data** - 数据访问
-- **Spring WebFlux** - 响应式Web
+- ✅ 核心架构设计
+- ✅ 6种智能分块策略
+- ✅ 6种存储引擎支持
+- ✅ 多维度RAG系统
+- ✅ 知识网络基础
+- ✅ HOPE自学习框架
+- ✅ 工作流引擎
+- ✅ P2P知识共享
+- ✅ Web管理界面
+- ✅ Office文档全支持
+- ✅ Vision LLM集成
 
-### 文档处理
+### 🚧 进行中（v1.1.0）
 
-- **Apache POI** 5.5.0 - Office文档处理
-- **PDFBox** 2.0.30 - PDF处理
-- **Apache Tika** 3.2.3 - 文档格式检测
+- 🔄 知识图谱可视化
+- 🔄 高级分析仪表盘
+- 🔄 更多RAG策略
+- 🔄 性能优化
+- 🔄 Docker部署方案
 
-### RAG与向量化
+### 📅 计划中（v2.0.0）
 
-- **Apache Lucene** 9.10.0 - 全文检索
-- **ONNX Runtime** - 模型推理
-- **BGE-base-zh-v1.5** - 中文Embedding模型
-
-### 工具库
-
-- **Lombok** 1.18.34 - 减少样板代码
-- **Jackson** 2.15.3 - JSON处理
-- **SLF4J + Logback** 1.5.19 - 日志框架
-
----
-
-## 📊 项目统计
-
-### 代码规模
-
-```
-总模块数:    20个Maven模块 + 1个前端项目
-API模块:     7个
-Starter模块: 7个
-核心模块:    1个
-工具模块:    1个
-Web模块:     1个
-工作流模块:  1个
-示例模块:    2个
-前端项目:    1个（React + Vite）
-
-总代码量:    ~15,000+行（后端Java）
-前端代码:    ~5,000+行（React/JavaScript）
-文档数量:    30+份
-```
-
-### 功能覆盖
-
-```
-文档格式:    5种（PDF/Word/Excel/PPT/Text）
-分块策略:    6种（固定/段落/句子/边界/PPL/语义）
-RAG后端:     1种（Lucene，其他待扩展）
-AI集成:      支持（Ollama/ONNX/在线API）
-知识域:      无限扩展
-```
-
-### 架构质量
-
-- **编译状态**: ✅ BUILD SUCCESS
-- **代码质量**: ⭐⭐⭐⭐⭐
-- **架构设计**: ⭐⭐⭐⭐⭐
-- **可维护性**: ⭐⭐⭐⭐⭐
-- **文档完整性**: ⭐⭐⭐⭐⭐
+- 📋 多语言支持（Python SDK、Node.js SDK）
+- 📋 云原生部署（K8s Operator）
+- 📋 向量数据库优化
+- 📋 更多AI模型集成
+- 📋 企业级权限系统
+- 📋 审计日志系统
+- 📋 SaaS云服务版本
 
 ---
 
-## 🔥 核心亮点
+## 👥 贡献指南
 
-### 1. 知识域隔离架构
-
-业界首创的多域隔离RAG架构，每个知识域独立向量空间：
-
-- 📊 **财务域** - 财务报表、预算分析
-- 💼 **合同域** - 合同文本、法律条款
-- 🔧 **技术域** - 技术文档、API手册
-- 👥 **HR域** - 员工手册、政策制度
-- 🎯 **自定义域** - 无限扩展可能
-
-### 2. 智能化全流程
-
-```
-文档上传 → 格式识别 → 智能分块 → 向量化 → 域索引 → 语义检索
-   ↓          ↓          ↓          ↓         ↓         ↓
-  自动      Markdown   策略选择    ONNX     域隔离    AI增强
-```
-
-### 3. 企业级特性
-
-- ✅ **可插拔架构** - 每个组件都可替换
-- ✅ **优雅降级** - 核心功能不依赖外部服务
-- ✅ **增量更新** - 文件哈希追踪，避免重复处理
-- ✅ **资源优化** - 逐页处理，避免内存溢出
-- ✅ **生产就绪** - 完整的异常处理和日志
-
----
-
-## 🤝 贡献指南
-
-我们欢迎各种形式的贡献！
+我们欢迎所有形式的贡献！
 
 ### 贡献方式
 
-1. **报告Bug** - 在Issues中报告问题
-2. **提交功能建议** - 在Discussions中讨论新功能
-3. **提交代码** - Fork项目，提交Pull Request
-4. **完善文档** - 帮助改进文档
+1. 🐛 **提交Bug** - [Issue Tracker](https://github.com/jinhua10/omni-agent/issues)
+2. 💡 **功能建议** - 提交Feature Request
+3. 📝 **改进文档** - 文档永远不够完善
+4. 🔧 **提交代码** - Pull Request欢迎
 
 ### 开发流程
 
 ```bash
 # 1. Fork项目
 # 2. 创建特性分支
-git checkout -b feature/your-feature
+git checkout -b feature/AmazingFeature
 
 # 3. 提交更改
-git commit -m "Add: 新功能描述"
+git commit -m 'Add some AmazingFeature'
 
 # 4. 推送到分支
-git push origin feature/your-feature
+git push origin feature/AmazingFeature
 
-# 5. 创建Pull Request
+# 5. 提交Pull Request
 ```
 
 ---
 
 ## 📄 许可证
 
-本项目采用 [Apache License 2.0](LICENSE.txt) 开源许可证。
+本项目采用 **Apache License 2.0** 开源协议。
+
+详见 [LICENSE.txt](LICENSE.txt) 文件。
 
 ---
 
-## 👥 团队
+## 🙏 致谢
 
-**开发者**: Jinhua Yu  
-**邮箱**: 1015770492@qq.com  
-**GitHub**: https://github.com/jinhua10/omni-agent
+感谢以下开源项目：
+
+- [Spring Boot](https://spring.io/projects/spring-boot) - 应用框架
+- [Apache Lucene](https://lucene.apache.org/) - 全文检索
+- [ONNX Runtime](https://onnxruntime.ai/) - 模型推理
+- [React](https://react.dev/) - 前端框架
+- [Ant Design](https://ant.design/) - UI组件库
+- [Ollama](https://ollama.ai/) - 本地LLM服务
 
 ---
 
-## 🌟 Star History
+## 📞 联系方式
 
-如果这个项目对你有帮助，请给我们一个 ⭐️！
+- 📧 **邮箱**: 1015770492@qq.com
+- 💬 **CSDN博客**: [https://yumbo.blog.csdn.net/](https://yumbo.blog.csdn.net/)
+- 🐙 **GitHub**: [https://github.com/jinhua10](https://github.com/jinhua10)
+- 🦊 **Gitee**: [https://gitee.com/gnnu](https://gitee.com/gnnu)
+- 🌐 **官网**: [https://yumbo.top](https://yumbo.top)
+
+---
+
+## ⭐ Star History
+
+如果这个项目对您有帮助，请给我们一个Star！⭐
 
 [![Star History Chart](https://api.star-history.com/svg?repos=jinhua10/omni-agent&type=Date)](https://star-history.com/#jinhua10/omni-agent&Date)
 
 ---
 
-## 📞 联系我们
-
-- **GitHub Issues**: [提交问题](https://github.com/jinhua10/omni-agent/issues)
-- **GitHub Discussions**: [参与讨论](https://github.com/jinhua10/omni-agent/discussions)
-- **Email**: 1015770492@qq.com
-
----
-
 <div align="center">
 
-**🎉 感谢使用 OmniAgent！**
+**让Agent遍地开花，Agent元年正式启动！**
 
-Made with ❤️ by Jinhua Yu
+**OmniAgent - 构建下一代智能Agent应用**
+
+[🌐 官网](https://yumbo.top) • [📖 文档](docs/) • [🐛 反馈](https://github.com/jinhua10/omni-agent/issues) • [💬 讨论](https://github.com/jinhua10/omni-agent/discussions)
+
+Made with ❤️ by OmniAgent Team
 
 </div>
 

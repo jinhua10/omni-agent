@@ -6,7 +6,7 @@
  * @since 2025-12-29
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Button, Row, Col, Card, Typography, Space, Statistic } from 'antd'
 import {
   RocketOutlined,
@@ -63,8 +63,8 @@ const LandingPage = ({ onEnterApp }) => {
 
   const [currentStatsPage, setCurrentStatsPage] = useState(0)
 
-  // 扩展的统计数据 - 根据系统架构
-  const statsPages = [
+  // 使用 useMemo 优化 statsPages，避免每次渲染都重新创建
+  const statsPages = useMemo(() => [
     // 第一页：核心架构
     [
       { title: t('landingPage.stats.modules'), value: 22, suffix: t('landingPage.stats.modulesUnit'), icon: 'ApiOutlined', color: '#667eea' },
@@ -93,7 +93,7 @@ const LandingPage = ({ onEnterApp }) => {
       { title: t('landingPage.stats.compileStatus'), value: 100, suffix: t('landingPage.stats.percentUnit'), icon: 'CheckCircleOutlined', color: '#52c41a' },
       { title: t('landingPage.stats.productionReady'), value: 100, suffix: t('landingPage.stats.percentUnit'), icon: 'SafetyOutlined', color: '#1890ff' },
     ],
-  ]
+  ], [t, language])
 
   // 数字动画效果
   useEffect(() => {
