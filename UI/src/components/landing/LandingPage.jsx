@@ -298,25 +298,93 @@ const LandingPage = ({ onEnterApp }) => {
           <Row gutter={48} align="middle">
             <Col xs={24} md={11}>
               <Card className="problem-card">
-                <Title level={4} style={{ color: '#f5222d' }}>
+                <Title level={4} style={{ color: '#f5222d', marginBottom: 24 }}>
                   ❌ 传统RAG的根本性缺陷
                 </Title>
+
+                {/* 单一向量空间示意图 */}
                 <div className="problem-diagram">
+                  <Title level={5} style={{ textAlign: 'center', marginBottom: 16, color: '#f5222d' }}>
+                    单一向量空间混乱
+                  </Title>
                   <div className="mixed-index">
-                    <DatabaseOutlined style={{ fontSize: 48 }} />
-                    <Text>单一向量空间 + 固定分块</Text>
+                    <DatabaseOutlined style={{ fontSize: 48, color: '#ff4d4f' }} />
+                    <Text style={{ color: '#8c8c8c', fontSize: 13, marginTop: 8 }}>
+                      📄 技术文档 + 📊 财务报表 + 💼 合同 + 📧 邮件...
+                    </Text>
                   </div>
-                  <Paragraph className="problem-list">
-                    📄 技术文档 + 📊 财务报表 + 💼 合同 + 📧 邮件...
-                  </Paragraph>
-                  <div className="problem-results">
-                    <Text type="danger">• <strong>语义割裂</strong>：固定分块破坏语义完整性</Text>
-                    <Text type="danger">• <strong>上下文断裂</strong>：跨块信息无法关联</Text>
-                    <Text type="danger">• <strong>向量空间污染</strong>：多领域混杂降低检索精度</Text>
-                    <Text type="danger">• <strong>单一存储</strong>：无灾备方案，存在单点故障</Text>
-                    <Text type="danger">• <strong>固定维度</strong>：无法适配不同场景需求</Text>
-                    <Text type="danger">• <strong>静态知识</strong>：缺乏持续学习和优化能力</Text>
-                  </div>
+                </div>
+
+                {/* 根本性缺陷 */}
+                <div className="problem-points">
+                  <Row gutter={[12, 12]}>
+                    <Col span={12}>
+                      <div className="problem-item">
+                        <div className="problem-icon" style={{ background: '#ff4d4f' }}>
+                          <CodeOutlined />
+                        </div>
+                        <div className="problem-content">
+                          <Text strong>语义割裂</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>固定分块破坏语义</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="problem-item">
+                        <div className="problem-icon" style={{ background: '#ff7875' }}>
+                          <ShareAltOutlined />
+                        </div>
+                        <div className="problem-content">
+                          <Text strong>上下文断裂</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>跨块信息无法关联</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="problem-item">
+                        <div className="problem-icon" style={{ background: '#fa541c' }}>
+                          <DatabaseOutlined />
+                        </div>
+                        <div className="problem-content">
+                          <Text strong>向量空间污染</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>多领域混杂降低精度</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="problem-item">
+                        <div className="problem-icon" style={{ background: '#cf1322' }}>
+                          <SafetyOutlined />
+                        </div>
+                        <div className="problem-content">
+                          <Text strong>单一存储</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>存在单点故障</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="problem-item">
+                        <div className="problem-icon" style={{ background: '#ff9c6e' }}>
+                          <ThunderboltOutlined />
+                        </div>
+                        <div className="problem-content">
+                          <Text strong>固定维度</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>无法适配不同场景</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="problem-item">
+                        <div className="problem-icon" style={{ background: '#d4380d' }}>
+                          <BulbOutlined />
+                        </div>
+                        <div className="problem-content">
+                          <Text strong>静态知识</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>缺乏持续学习</Text>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
                 </div>
               </Card>
             </Col>
