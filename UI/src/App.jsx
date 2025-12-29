@@ -87,11 +87,6 @@ function AppContent() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  // 如果显示Landing Page，直接返回
-  if (currentView === 'landing') {
-    return <LandingPage onEnterApp={handleEnterApp} />
-  }
-
   // 监听localStorage变化
   React.useEffect(() => {
     const handleStorageChange = () => {
@@ -125,6 +120,22 @@ function AppContent() {
     })
   }, [])
 
+  // 判断AI面板是否停靠（最大化时不算停靠）
+  const isDocked = aiPanelConfig.dockPosition !== DOCK_POSITIONS.NONE && !aiPanelConfig.isMaximized
+  const dockPosition = aiPanelConfig.dockPosition
+
+  // 如果localStorage中有停靠状态但当前是浮动模式，重置配置
+  React.useEffect(() => {
+    if (!isDocked && aiPanelConfig.dockPosition && aiPanelConfig.dockPosition !== DOCK_POSITIONS.NONE) {
+      const resetConfig = {
+        ...aiPanelConfig,
+        dockPosition: DOCK_POSITIONS.NONE,
+      }
+      setAIPanelConfig(resetConfig)
+      localStorage.setItem('floating_ai_panel_config', JSON.stringify(resetConfig))
+    }
+  }, [isDocked, aiPanelConfig])
+
   // 菜单点击处理 / Menu click handler
   const handleMenuClick = (key) => {
     setActiveMenu(key)
@@ -138,23 +149,10 @@ function AppContent() {
     }
   }
 
-  // 判断AI面板是否停靠（最大化时不算停靠）
-  const isDocked = aiPanelConfig.dockPosition !== DOCK_POSITIONS.NONE && !aiPanelConfig.isMaximized
-  const dockPosition = aiPanelConfig.dockPosition
-  
-  //console.log('🏠 App.jsx render - isDocked:', isDocked, 'dockPosition:', dockPosition, 'isMaximized:', aiPanelConfig.isMaximized, 'config:', aiPanelConfig)
-
-  // 如果localStorage中有停靠状态但当前是浮动模式，重置配置
-  React.useEffect(() => {
-    if (!isDocked && aiPanelConfig.dockPosition && aiPanelConfig.dockPosition !== DOCK_POSITIONS.NONE) {
-      const resetConfig = {
-        ...aiPanelConfig,
-        dockPosition: DOCK_POSITIONS.NONE,
-      }
-      setAIPanelConfig(resetConfig)
-      localStorage.setItem('floating_ai_panel_config', JSON.stringify(resetConfig))
-    }
-  }, [])
+  // 如果显示Landing Page，直接返回（所有hooks已经在上面调用完毕）
+  if (currentView === 'landing') {
+    return <LandingPage onEnterApp={handleEnterApp} />
+  }
 
   // 处理分隔线拖拽调整大小
   const handleSplitterResize = React.useCallback((position) => {
