@@ -1,7 +1,10 @@
 # OmniAgent 站点配置
 # 此文件专门用于站点配置，Certbot会自动修改此文件添加SSL
-# 位置: /etc/nginx/sites-available/omni-agent
-# 链接: ln -s /etc/nginx/sites-available/omni-agent /etc/nginx/sites-enabled/
+# 部署位置: /etc/nginx/sites-available/omni-agent
+# 创建软链接: ln -s /etc/nginx/sites-available/omni-agent /etc/nginx/sites-enabled/omni-agent
+#
+# 注意：软链接目标路径不要加斜杠，应该是完整的文件路径
+
 
 server {
     listen 80;
