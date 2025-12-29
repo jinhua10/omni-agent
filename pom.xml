@@ -172,7 +172,7 @@
         <elasticsearch.version>8.17.0</elasticsearch.version>
 
         <!-- AI模型相关 -->
-        <onnxruntime.version>1.20.1</onnxruntime.version>
+        <onnxruntime.version>1.16.0</onnxruntime.version>
 
         <!-- OCR相关 -->
         <tesseract.version>5.15.0</tesseract.version>

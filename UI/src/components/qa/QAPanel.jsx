@@ -8,7 +8,7 @@
  * @since 2025-12-12
  */
 
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { Layout } from 'antd'
 import ChatBox from './ChatBox'
 import QuestionInput from './QuestionInput'
@@ -131,7 +131,12 @@ function QAPanel() {
   const scheduleUpdate = useCallback(() => {
     if (!updateBatchRef.current.pending) {
       updateBatchRef.current.pending = true
-      requestAnimationFrame(flushUpdate)
+      // 使用setTimeout代替requestAnimationFrame，避免渲染期间setState警告
+      setTimeout(() => {
+        if (updateBatchRef.current.pending) {
+          flushUpdate()
+        }
+      }, 16) // 约60fps
     }
   }, [flushUpdate])
 
