@@ -27,8 +27,8 @@ export default defineConfig({
 
   // 构建配置
   build: {
-    // 输出到 Spring Boot 的 static 目录
-    outDir: '../src/main/resources/static',
+    // 输出到标准的 dist 目录（用于独立部署）
+    outDir: 'dist',
     emptyOutDir: true, // 清空输出目录
     sourcemap: true,
     rollupOptions: {
