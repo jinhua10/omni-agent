@@ -526,6 +526,17 @@ public class OnlineAPIAIService implements AIService, EmbeddingService {
 
             Map<String, Object> firstChoice = choices.get(0);
             Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+
+            // ⭐ 修复：添加 null 检查，避免 NPE
+            if (message == null) {
+                log.error("❌ [API Response] message 字段为 null");
+                return AIResponse.builder()
+                        .text("")
+                        .success(false)
+                        .error("Invalid response: message is null")
+                        .build();
+            }
+
             String content = (String) message.get("content");
             String finishReason = (String) firstChoice.get("finish_reason");
 
@@ -600,8 +611,7 @@ public class OnlineAPIAIService implements AIService, EmbeddingService {
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", currentModel);
             requestBody.put("max_tokens", 2000);
-            Double temp = properties.getTemperature();
-            requestBody.put("temperature", temp != null ? temp : 0.7);
+            requestBody.put("temperature", properties.getTemperature());
 
             // 转换消息格式（支持多模态）
             List<Map<String, Object>> formattedMessages = new ArrayList<>();
@@ -667,7 +677,7 @@ public class OnlineAPIAIService implements AIService, EmbeddingService {
     }
 
     @Override
-    public reactor.core.publisher.Flux<String> chatWithVisionFlux(List<ChatMessage> messages) {
+    public Flux<String> chatWithVisionFlux(List<ChatMessage> messages) {
         return Flux.create(sink -> {
             try {
                 String endpoint = getEndpoint();
@@ -675,8 +685,7 @@ public class OnlineAPIAIService implements AIService, EmbeddingService {
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("model", currentModel);
                 requestBody.put("max_tokens", 2000);
-                Double temp = properties.getTemperature();
-                requestBody.put("temperature", temp != null ? temp : 0.7);
+                requestBody.put("temperature", properties.getTemperature());
                 requestBody.put("stream", true);
 
                 // 转换消息格式（支持多模态）
