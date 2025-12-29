@@ -221,6 +221,28 @@
   background-clip: text;
 }
 
+.section-subtitle {
+  text-align: center;
+  font-size: 28px !important;
+  font-weight: 600 !important;
+  color: #595959 !important;
+  margin-bottom: 32px !important;
+  position: relative;
+  padding-bottom: 16px;
+}
+
+.section-subtitle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
 .problem-card,
 .solution-card {
   height: 100%;

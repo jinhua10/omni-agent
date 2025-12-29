@@ -208,20 +208,23 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} md={11}>
               <Card className="problem-card">
                 <Title level={4} style={{ color: '#f5222d' }}>
-                  ❌ 传统RAG的问题
+                  ❌ 传统RAG的根本性缺陷
                 </Title>
                 <div className="problem-diagram">
                   <div className="mixed-index">
                     <DatabaseOutlined style={{ fontSize: 48 }} />
-                    <Text>单一RAG索引池</Text>
+                    <Text>单一向量空间 + 固定分块</Text>
                   </div>
                   <Paragraph className="problem-list">
                     📄 技术文档 + 📊 财务报表 + 💼 合同 + 📧 邮件...
                   </Paragraph>
                   <div className="problem-results">
-                    <Text type="danger">• 向量空间混乱</Text>
-                    <Text type="danger">• 检索精度低下</Text>
-                    <Text type="danger">• 无法专业化处理</Text>
+                    <Text type="danger">• <strong>语义割裂</strong>：固定分块破坏语义完整性</Text>
+                    <Text type="danger">• <strong>上下文断裂</strong>：跨块信息无法关联</Text>
+                    <Text type="danger">• <strong>向量空间污染</strong>：多领域混杂降低检索精度</Text>
+                    <Text type="danger">• <strong>单一存储</strong>：无灾备方案，存在单点故障</Text>
+                    <Text type="danger">• <strong>固定维度</strong>：无法适配不同场景需求</Text>
+                    <Text type="danger">• <strong>静态知识</strong>：缺乏持续学习和优化能力</Text>
                   </div>
                 </div>
               </Card>
@@ -234,7 +237,7 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} md={11}>
               <Card className="solution-card">
                 <Title level={4} style={{ color: '#52c41a' }}>
-                  ✅ OmniAgent的解决方案
+                  ✅ OmniAgent的架构创新
                 </Title>
                 <div className="solution-diagram">
                   <Row gutter={16}>
@@ -258,9 +261,12 @@ const LandingPage = ({ onEnterApp }) => {
                     </Col>
                   </Row>
                   <div className="solution-results">
-                    <Text type="success">• 语义检索精准</Text>
-                    <Text type="success">• 专业知识提取</Text>
-                    <Text type="success">• 智能路由优化</Text>
+                    <Text type="success">• <strong>6种分块策略</strong>：智能保留语义完整性</Text>
+                    <Text type="success">• <strong>知识域隔离</strong>：独立向量空间，精准检索</Text>
+                    <Text type="success">• <strong>多元存储</strong>：文件+数据库+向量库，灾备冗余</Text>
+                    <Text type="success">• <strong>多维度向量</strong>：支持不同Embedding模型并行</Text>
+                    <Text type="success">• <strong>知识网络</strong>：跨域关联，语义补全上下文</Text>
+                    <Text type="success">• <strong>HOPE架构</strong>：自我学习与持续优化</Text>
                   </div>
                 </div>
               </Card>
@@ -342,8 +348,61 @@ const LandingPage = ({ onEnterApp }) => {
                 <BulbOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>语义检索</Title>
-                <Text>AI增强搜索</Text>
+                <Title level={4}>多次RAG</Title>
+                <Text>多策略并行检索</Text>
+              </div>
+            </div>
+          </div>
+
+          {/* 知识网络流程 */}
+          <Title level={3} className="section-subtitle" style={{ marginTop: 64, marginBottom: 32, textAlign: 'center' }}>
+            知识网络增强层
+          </Title>
+
+          <div className="workflow-diagram">
+            <div className="workflow-step">
+              <div className="step-icon">
+                <ApiOutlined />
+              </div>
+              <div className="step-content">
+                <Title level={4}>知识提取</Title>
+                <Text>AI智能分析</Text>
+              </div>
+            </div>
+
+            <ArrowRightOutlined className="workflow-arrow" />
+
+            <div className="workflow-step">
+              <div className="step-icon">
+                <ShareAltOutlined />
+              </div>
+              <div className="step-content">
+                <Title level={4}>跨域关联</Title>
+                <Text>语义图谱构建</Text>
+              </div>
+            </div>
+
+            <ArrowRightOutlined className="workflow-arrow" />
+
+            <div className="workflow-step">
+              <div className="step-icon">
+                <ThunderboltOutlined />
+              </div>
+              <div className="step-content">
+                <Title level={4}>HOPE学习</Title>
+                <Text>自我优化进化</Text>
+              </div>
+            </div>
+
+            <ArrowRightOutlined className="workflow-arrow" />
+
+            <div className="workflow-step">
+              <div className="step-icon">
+                <BulbOutlined />
+              </div>
+              <div className="step-content">
+                <Title level={4}>上下文补全</Title>
+                <Text>智能问答增强</Text>
               </div>
             </div>
           </div>
