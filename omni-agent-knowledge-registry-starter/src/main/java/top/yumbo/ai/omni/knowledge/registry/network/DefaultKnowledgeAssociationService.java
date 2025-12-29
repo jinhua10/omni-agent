@@ -1,8 +1,10 @@
 package top.yumbo.ai.omni.knowledge.registry.network;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -19,9 +21,12 @@ import java.util.stream.Collectors;
 public class DefaultKnowledgeAssociationService implements KnowledgeAssociationService {
 
     private final KnowledgeStorageService storageService;
+    private final ObjectMapper objectMapper;
+    private static final String ASSOCIATION_PREFIX = "knowledge-association";
 
     public DefaultKnowledgeAssociationService(KnowledgeStorageService storageService) {
         this.storageService = storageService;
+        this.objectMapper = new ObjectMapper();
         log.info("✅ DefaultKnowledgeAssociationService 已初始化（基于 KnowledgeStorageService）");
     }
 
@@ -154,15 +159,67 @@ public class DefaultKnowledgeAssociationService implements KnowledgeAssociationS
             double strength) {
         log.debug("创建知识关联: source={}, target={}, type={}, strength={}",
                 sourceKnowledgeId, targetKnowledgeId, relationType, strength);
-        // TODO: 实现知识关联创建逻辑
-        return true;
+
+        try {
+            // 1. 创建关联对象
+            KnowledgeAssociation association = KnowledgeAssociation.builder()
+                    .associationId(UUID.randomUUID().toString())
+                    .sourceKnowledgeId(sourceKnowledgeId)
+                    .targetKnowledgeId(targetKnowledgeId)
+                    .relationType(relationType)
+                    .strength(strength)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            // 2. 序列化为 JSON
+            byte[] jsonData = objectMapper.writeValueAsBytes(association);
+
+            // 3. 构建存储路径：knowledge-association/{sourceId}/{targetId}.json
+            String documentId = buildAssociationDocumentId(sourceKnowledgeId, targetKnowledgeId);
+            String filename = targetKnowledgeId + ".json";
+
+            // 4. 存储到 DocumentStorage
+            // 注意：由于 DocumentStorage 是按域组织的，我们使用特殊的 "association" 域
+            // 实际实现中可能需要调整存储策略
+            storageService.storeKnowledge(
+                    createAssociationAsKnowledge(association),
+                    "association" // 特殊域用于存储关联
+            );
+
+            log.debug("✅ 创建知识关联成功: {} → {}", sourceKnowledgeId, targetKnowledgeId);
+            return true;
+
+        } catch (Exception e) {
+            log.error("❌ 创建知识关联失败: source={}, target={}",
+                    sourceKnowledgeId, targetKnowledgeId, e);
+            return false;
+        }
     }
 
     @Override
     public boolean removeAssociation(String sourceKnowledgeId, String targetKnowledgeId) {
         log.debug("删除知识关联: source={}, target={}", sourceKnowledgeId, targetKnowledgeId);
-        // TODO: 实现知识关联删除逻辑
-        return true;
+
+        try {
+            // 构建关联的知识ID
+            String associationKnowledgeId = buildAssociationKnowledgeId(sourceKnowledgeId, targetKnowledgeId);
+
+            // 从 "association" 域中删除
+            boolean deleted = storageService.deleteKnowledge(associationKnowledgeId, "association");
+
+            if (deleted) {
+                log.debug("✅ 删除知识关联成功: {} → {}", sourceKnowledgeId, targetKnowledgeId);
+            } else {
+                log.warn("⚠️ 知识关联不存在或删除失败: {} → {}", sourceKnowledgeId, targetKnowledgeId);
+            }
+
+            return deleted;
+
+        } catch (Exception e) {
+            log.error("❌ 删除知识关联失败: source={}, target={}",
+                    sourceKnowledgeId, targetKnowledgeId, e);
+            return false;
+        }
     }
 
     @Override
@@ -417,6 +474,44 @@ public class DefaultKnowledgeAssociationService implements KnowledgeAssociationS
     }
 
     /**
+     * 构建关联的文档ID
+     */
+    private String buildAssociationDocumentId(String sourceId, String targetId) {
+        return String.format("%s/%s/%s", ASSOCIATION_PREFIX, sourceId, targetId);
+    }
+
+    /**
+     * 构建关联的知识ID
+     */
+    private String buildAssociationKnowledgeId(String sourceId, String targetId) {
+        return String.format("assoc-%s-%s", sourceId, targetId);
+    }
+
+    /**
+     * 将关联对象转换为 RefinedKnowledge（用于存储）
+     */
+    private RefinedKnowledge createAssociationAsKnowledge(KnowledgeAssociation association) {
+        try {
+            String jsonContent = objectMapper.writeValueAsString(association);
+
+            return RefinedKnowledge.builder()
+                    .knowledgeId(buildAssociationKnowledgeId(
+                            association.getSourceKnowledgeId(),
+                            association.getTargetKnowledgeId()))
+                    .title(String.format("关联: %s → %s",
+                            association.getSourceKnowledgeId(),
+                            association.getTargetKnowledgeId()))
+                    .refinedContent(jsonContent)
+                    .knowledgeType("ASSOCIATION")
+                    .importance(3.0)
+                    .build();
+        } catch (Exception e) {
+            log.error("转换关联为知识对象失败", e);
+            return null;
+        }
+    }
+
+    /**
      * 域引用信息（内部类）
      */
     private static class DomainReferenceInfo {
@@ -562,6 +657,101 @@ public class DefaultKnowledgeAssociationService implements KnowledgeAssociationS
             return "";
         }
         return text.length() > length ? text.substring(0, length) : text;
+    }
+
+    /**
+     * 知识关联（内部类）
+     *
+     * <p>表示两个知识之间的关联关系</p>
+     */
+    private static class KnowledgeAssociation {
+        private String associationId;
+        private String sourceKnowledgeId;
+        private String targetKnowledgeId;
+        private String relationType;
+        private double strength;
+        private LocalDateTime createdAt;
+
+        public static KnowledgeAssociationBuilder builder() {
+            return new KnowledgeAssociationBuilder();
+        }
+
+        public String getAssociationId() {
+            return associationId;
+        }
+
+        public String getSourceKnowledgeId() {
+            return sourceKnowledgeId;
+        }
+
+        public String getTargetKnowledgeId() {
+            return targetKnowledgeId;
+        }
+
+        public String getRelationType() {
+            return relationType;
+        }
+
+        public double getStrength() {
+            return strength;
+        }
+
+        public LocalDateTime getCreatedAt() {
+            return createdAt;
+        }
+
+        /**
+         * Builder for KnowledgeAssociation
+         */
+        private static class KnowledgeAssociationBuilder {
+            private String associationId;
+            private String sourceKnowledgeId;
+            private String targetKnowledgeId;
+            private String relationType;
+            private double strength;
+            private LocalDateTime createdAt;
+
+            public KnowledgeAssociationBuilder associationId(String associationId) {
+                this.associationId = associationId;
+                return this;
+            }
+
+            public KnowledgeAssociationBuilder sourceKnowledgeId(String sourceKnowledgeId) {
+                this.sourceKnowledgeId = sourceKnowledgeId;
+                return this;
+            }
+
+            public KnowledgeAssociationBuilder targetKnowledgeId(String targetKnowledgeId) {
+                this.targetKnowledgeId = targetKnowledgeId;
+                return this;
+            }
+
+            public KnowledgeAssociationBuilder relationType(String relationType) {
+                this.relationType = relationType;
+                return this;
+            }
+
+            public KnowledgeAssociationBuilder strength(double strength) {
+                this.strength = strength;
+                return this;
+            }
+
+            public KnowledgeAssociationBuilder createdAt(LocalDateTime createdAt) {
+                this.createdAt = createdAt;
+                return this;
+            }
+
+            public KnowledgeAssociation build() {
+                KnowledgeAssociation association = new KnowledgeAssociation();
+                association.associationId = this.associationId;
+                association.sourceKnowledgeId = this.sourceKnowledgeId;
+                association.targetKnowledgeId = this.targetKnowledgeId;
+                association.relationType = this.relationType;
+                association.strength = this.strength;
+                association.createdAt = this.createdAt;
+                return association;
+            }
+        }
     }
 }
 
