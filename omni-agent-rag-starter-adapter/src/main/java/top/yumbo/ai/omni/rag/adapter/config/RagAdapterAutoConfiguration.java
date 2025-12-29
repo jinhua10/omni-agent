@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.rag.RagService;
@@ -28,6 +29,9 @@ import java.util.Map;
 @Slf4j
 @AutoConfiguration
 @EnableConfigurationProperties(RagAdapterProperties.class)
+@ComponentScan(basePackages = {
+    "top.yumbo.ai.omni.rag.adapter.optimization"
+})
 public class RagAdapterAutoConfiguration {
 
     private final ApplicationContext applicationContext;
