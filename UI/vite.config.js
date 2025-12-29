@@ -30,7 +30,15 @@ export default defineConfig({
     // 输出到标准的 dist 目录（用于独立部署）
     outDir: 'dist',
     emptyOutDir: true, // 清空输出目录
-    sourcemap: true,
+    sourcemap: false, // 生产环境禁用sourcemap，提高性能
+    minify: 'terser', // 使用terser压缩
+    terserOptions: {
+      compress: {
+        drop_console: false, // 保留console用于调试
+        drop_debugger: true,
+        pure_funcs: ['console.debug'] // 移除console.debug
+      }
+    },
     rollupOptions: {
       output: {
         // 静态资源分类打包
@@ -45,6 +53,12 @@ export default defineConfig({
             return `assets/css/[name]-[hash][extname]`
           }
           return `assets/[ext]/[name]-[hash][extname]`
+        },
+        // 手动分包
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'antd-vendor': ['antd', '@ant-design/icons'],
+          'utils': ['axios', 'dayjs']
         }
       }
     }

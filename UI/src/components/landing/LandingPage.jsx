@@ -37,6 +37,23 @@ const { Title, Paragraph, Text } = Typography
 
 const LandingPage = ({ onEnterApp }) => {
   const { t, language, toggleLanguage } = useLanguage()
+
+  // 图标映射对象 - 避免使用eval导致生产环境问题
+  const iconMap = {
+    ApiOutlined,
+    CodeOutlined,
+    FileTextOutlined,
+    ThunderboltOutlined,
+    DatabaseOutlined,
+    SafetyOutlined,
+    CheckCircleOutlined,
+    BulbOutlined,
+    ShareAltOutlined,
+    RocketOutlined,
+    CloudOutlined,
+    UserOutlined
+  }
+
   const [animatedStats, setAnimatedStats] = useState({
     modules: 0,
     codeLines: 0,
@@ -273,12 +290,12 @@ const LandingPage = ({ onEnterApp }) => {
               <div className="stats-row-wrapper">
                 <Row gutter={[24, 24]} className="stats-row">
                   {statsPages[currentStatsPage].map((stat, index) => {
-                    const IconComponent = eval(stat.icon)
+                    const IconComponent = iconMap[stat.icon]
                     return (
                       <Col xs={12} sm={6} key={index}>
                         <div className="stat-item">
                           <div className="stat-icon" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
-                            <IconComponent style={{ fontSize: 24, color: '#fff' }} />
+                            {IconComponent && <IconComponent style={{ fontSize: 24, color: '#fff' }} />}
                           </div>
                           <Statistic
                             title={stat.title}
