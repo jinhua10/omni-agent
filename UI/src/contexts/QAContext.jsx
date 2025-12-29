@@ -50,11 +50,20 @@ export function QAProvider({ children }) {
    */
   const updateLastMessage = useCallback((updater) => {
     setMessages(prev => {
+      if (prev.length === 0) return prev
+
       const newMessages = [...prev]
-      const lastMessage = newMessages[newMessages.length - 1]
+      const lastIndex = newMessages.length - 1
+      const lastMessage = newMessages[lastIndex]
+
       if (lastMessage) {
-        Object.assign(lastMessage, typeof updater === 'function' ? updater(lastMessage) : updater)
+        // 创建新对象而不是直接修改，确保React能检测到变化
+        newMessages[lastIndex] = {
+          ...lastMessage,
+          ...(typeof updater === 'function' ? updater(lastMessage) : updater)
+        }
       }
+
       return newMessages
     })
   }, [])

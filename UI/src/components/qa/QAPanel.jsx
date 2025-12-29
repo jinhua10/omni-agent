@@ -30,6 +30,7 @@ function QAPanel() {
   const {
     messages,
     setMessages,
+    updateLastMessage,
     similarQuestions,
     setSimilarQuestions,
     currentQuestion,
@@ -150,43 +151,43 @@ function QAPanel() {
           // 累加到ref
           if (data.type === 'left') {
             streamingContentRef.current.leftPanel += data.content
+            // 立即更新UI
+            updateLastMessage({
+              dualTrack: true,
+              leftPanel: streamingContentRef.current.leftPanel,
+              rightPanel: streamingContentRef.current.rightPanel
+            })
           } else if (data.type === 'right') {
             streamingContentRef.current.rightPanel += data.content
+            // 立即更新UI
+            updateLastMessage({
+              dualTrack: true,
+              leftPanel: streamingContentRef.current.leftPanel,
+              rightPanel: streamingContentRef.current.rightPanel
+            })
           } else if (data.type === 'llm') {
             streamingLLMAnswerRef.current += data.content
+            // 立即更新UI
+            updateLastMessage({
+              dualTrack: false,
+              content: streamingLLMAnswerRef.current
+            })
+          } else if (data.type === 'complete') {
+            updateLastMessage({
+              streaming: false,
+              sessionId: data.sessionId
+            })
+            setCurrentEventSource(null)
+            setLoading(false)
+          } else if (data.type === 'error') {
+            updateLastMessage({
+              type: 'error',
+              content: data.error || t('qa.error.failed'),
+              streaming: false
+            })
+            setCurrentEventSource(null)
+            setLoading(false)
           }
-
-          // 🔥 立即更新 UI - 确保流式输出能看到
-          setMessages(prev => {
-            const newMessages = [...prev]
-            const lastMessage = newMessages[newMessages.length - 1]
-
-            if (lastMessage && lastMessage.streaming) {
-              if (data.type === 'left' || data.type === 'right') {
-                // 双轨模式
-                lastMessage.dualTrack = true
-                lastMessage.leftPanel = streamingContentRef.current.leftPanel || ''
-                lastMessage.rightPanel = streamingContentRef.current.rightPanel || ''
-              } else if (data.type === 'llm') {
-                // 单轨LLM模式
-                lastMessage.dualTrack = false
-                lastMessage.content = streamingLLMAnswerRef.current
-              } else if (data.type === 'complete') {
-                lastMessage.streaming = false
-                lastMessage.sessionId = data.sessionId
-                setCurrentEventSource(null)
-                setLoading(false)
-              } else if (data.type === 'error') {
-                lastMessage.type = 'error'
-                lastMessage.content = data.error || t('qa.error.failed')
-                lastMessage.streaming = false
-                setCurrentEventSource(null)
-                setLoading(false)
-              }
-            }
-
-            return newMessages
-          })
         }
       )
 
