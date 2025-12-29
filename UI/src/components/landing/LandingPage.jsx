@@ -532,76 +532,167 @@ const LandingPage = ({ onEnterApp }) => {
             智能化全流程
           </Title>
 
+          {/* 主流程 */}
           <div className="workflow-diagram">
-            <div className="workflow-step">
+            <div className="workflow-step enhanced">
               <div className="step-icon">
                 <CloudOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>文档上传</Title>
-                <Text>Office+文本+代码</Text>
+                <Title level={4}>1. 文档上传</Title>
+                <Text className="step-highlight">全格式支持</Text>
+                <div className="step-details">
+                  <Text>• Office: Word, Excel, PPT, PDF</Text>
+                  <Text>• 文本: TXT, MD, JSON, XML, CSV...</Text>
+                  <Text>• 代码: 所有编程语言</Text>
+                </div>
               </div>
             </div>
 
             <ArrowRightOutlined className="workflow-arrow" />
 
-            <div className="workflow-step">
+            <div className="workflow-step enhanced">
               <div className="step-icon">
                 <FileTextOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>智能提取</Title>
-                <Text>全格式支持</Text>
+                <Title level={4}>2. 智能提取</Title>
+                <Text className="step-highlight">多引擎可选</Text>
+                <div className="step-details">
+                  <Text>• 本地模型: 离线处理</Text>
+                  <Text>• Ollama: 本地部署</Text>
+                  <Text>• 在线API: 千问3-VL等</Text>
+                </div>
               </div>
             </div>
 
             <ArrowRightOutlined className="workflow-arrow" />
 
-            <div className="workflow-step">
+            <div className="workflow-step enhanced">
               <div className="step-icon">
                 <CodeOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>智能分块</Title>
-                <Text>策略自动选择</Text>
+                <Title level={4}>3. 智能分块</Title>
+                <Text className="step-highlight">6种策略可选</Text>
+                <div className="step-details">
+                  <Text>• 固定长度/段落/句子</Text>
+                  <Text>• 困惑度智能分块（推荐）</Text>
+                  <Text>• 语义分块（TF-IDF）</Text>
+                </div>
               </div>
             </div>
 
             <ArrowRightOutlined className="workflow-arrow" />
 
-            <div className="workflow-step">
+            <div className="workflow-step enhanced">
               <div className="step-icon">
                 <ThunderboltOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>向量化</Title>
-                <Text>ONNX Embedding</Text>
+                <Title level={4}>4. 向量化</Title>
+                <Text className="step-highlight">多种方式并存</Text>
+                <div className="step-details">
+                  <Text>• ONNX本地模型: BGE系列</Text>
+                  <Text>• Ollama: 本地向量化</Text>
+                  <Text>• 在线API: OpenAI, 千帆...</Text>
+                  <Text style={{ color: '#52c41a', fontWeight: 600 }}>✓ 支持多套RAG系统同时运行</Text>
+                </div>
               </div>
             </div>
 
             <ArrowRightOutlined className="workflow-arrow" />
 
-            <div className="workflow-step">
+            <div className="workflow-step enhanced">
               <div className="step-icon">
                 <DatabaseOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>域索引</Title>
-                <Text>知识域隔离</Text>
+                <Title level={4}>5. 域索引构建</Title>
+                <Text className="step-highlight">知识域隔离架构</Text>
+                <div className="step-details">
+                  <Text>• 按领域独立向量空间</Text>
+                  <Text>• 避免跨域干扰</Text>
+                  <Text>• 精准检索定位</Text>
+                </div>
               </div>
             </div>
 
             <ArrowRightOutlined className="workflow-arrow" />
 
-            <div className="workflow-step">
+            <div className="workflow-step enhanced">
               <div className="step-icon">
                 <BulbOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>多次RAG</Title>
-                <Text>多策略并行检索</Text>
+                <Title level={4}>6. 多次RAG检索</Title>
+                <Text className="step-highlight">多策略并行</Text>
+                <div className="step-details">
+                  <Text>• 向量检索 + 关键词检索</Text>
+                  <Text>• 结果融合与重排序</Text>
+                  <Text>• 提高召回率和准确率</Text>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* 域索引架构详解 */}
+          <div className="domain-architecture-section" style={{ marginTop: 80 }}>
+            <Title level={3} className="section-subtitle" style={{ marginBottom: 32, textAlign: 'center' }}>
+              知识域隔离架构详解
+            </Title>
+            <Row gutter={48} align="middle">
+              <Col xs={24} md={12}>
+                <Card style={{ background: '#f9f9f9', border: '2px solid #e8e8e8' }}>
+                  <Title level={4} style={{ color: '#8c8c8c', marginBottom: 16 }}>
+                    ❌ 传统方式：单一索引池
+                  </Title>
+                  <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                    <DatabaseOutlined style={{ fontSize: 64, color: '#ff4d4f' }} />
+                    <Paragraph style={{ marginTop: 16, color: '#8c8c8c' }}>
+                      所有文档混在一个向量空间<br/>
+                      技术、财务、法律文档相互干扰<br/>
+                      检索精度低，噪音多
+                    </Paragraph>
+                  </div>
+                </Card>
+              </Col>
+              <Col xs={24} md={12}>
+                <Card style={{ background: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)', border: '2px solid #52c41a' }}>
+                  <Title level={4} style={{ color: '#52c41a', marginBottom: 16 }}>
+                    ✅ OmniAgent：知识域隔离
+                  </Title>
+                  <Row gutter={[8, 8]} style={{ marginTop: 20 }}>
+                    <Col span={8}>
+                      <div style={{ textAlign: 'center', padding: '16px 8px', background: '#fff', borderRadius: 8, border: '1px solid #b7eb8f' }}>
+                        <FileTextOutlined style={{ fontSize: 32, color: '#52c41a' }} />
+                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>技术文档域</div>
+                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>独立索引</div>
+                      </div>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ textAlign: 'center', padding: '16px 8px', background: '#fff', borderRadius: 8, border: '1px solid #b7eb8f' }}>
+                        <DatabaseOutlined style={{ fontSize: 32, color: '#52c41a' }} />
+                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>财务数据域</div>
+                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>独立索引</div>
+                      </div>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ textAlign: 'center', padding: '16px 8px', background: '#fff', borderRadius: 8, border: '1px solid #b7eb8f' }}>
+                        <SafetyOutlined style={{ fontSize: 32, color: '#52c41a' }} />
+                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>法律合同域</div>
+                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>独立索引</div>
+                      </div>
+                    </Col>
+                  </Row>
+                  <Paragraph style={{ marginTop: 20, color: '#389e0d', textAlign: 'center', fontWeight: 500 }}>
+                    每个领域独立向量空间<br/>
+                    互不干扰，精准检索<br/>
+                    检索精度提升50%+
+                  </Paragraph>
+                </Card>
+              </Col>
+            </Row>
           </div>
 
           {/* 知识网络流程 */}

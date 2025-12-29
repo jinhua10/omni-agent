@@ -679,25 +679,84 @@
   align-items: center;
   gap: 16px;
   flex: 0 0 auto;
+  padding: 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.workflow-step:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* 增强版流程步骤 */
+.workflow-step.enhanced {
+  min-width: 220px;
+  max-width: 240px;
+  padding: 24px 20px;
+  align-items: flex-start;
+}
+
+.workflow-step.enhanced .step-content {
+  text-align: left;
+  max-width: 100%;
+}
+
+.workflow-step.enhanced h4 {
+  font-size: 16px !important;
+  margin-bottom: 8px !important;
+  color: #262626;
+}
+
+.step-highlight {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff !important;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.step-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.step-details .ant-typography {
+  font-size: 12px;
+  color: #595959;
+  line-height: 1.6;
+  margin: 0;
 }
 
 .step-icon {
-  width: 80px;
-  height: 80px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  color: #1890ff;
-  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.2);
+  font-size: 28px;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
   transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.workflow-step.enhanced .step-icon {
+  margin-bottom: 8px;
 }
 
 .workflow-step:hover .step-icon {
   transform: scale(1.1) rotate(5deg);
-  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
 }
 
 .step-content {
@@ -717,7 +776,13 @@
 
 .workflow-arrow {
   font-size: 24px;
-  color: #1890ff;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+/* 域架构详解区域 */
+.domain-architecture-section {
+  padding: 48px 0;
 }
 
 /* ========== Features Section ========== */
