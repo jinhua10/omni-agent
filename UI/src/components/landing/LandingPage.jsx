@@ -36,7 +36,7 @@ const { Title, Paragraph, Text } = Typography
 
 
 const LandingPage = ({ onEnterApp }) => {
-  const { t } = useLanguage()
+  const { t, language, toggleLanguage } = useLanguage()
   const [animatedStats, setAnimatedStats] = useState({
     modules: 0,
     codeLines: 0,
@@ -142,6 +142,33 @@ const LandingPage = ({ onEnterApp }) => {
             <Title level={1} className="hero-title">
               OmniAgent
             </Title>
+          </div>
+
+          {/* 语言切换按钮 */}
+          <div className="language-switch">
+            <Button
+              className="lang-btn"
+              onClick={toggleLanguage}
+              size="small"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#fff',
+                backdropFilter: 'blur(10px)',
+                borderRadius: 20,
+                padding: '4px 16px',
+                fontWeight: 500,
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+              }}
+            >
+              {language === 'zh' ? 'EN' : '中文'}
+            </Button>
           </div>
 
           <Title level={2} className="hero-subtitle">
@@ -913,9 +940,9 @@ const LandingPage = ({ onEnterApp }) => {
                   {t('landingPage.features.fullFormatSupportDesc')}
                 </Paragraph>
                 <ul className="feature-list">
-                  <li><CheckCircleOutlined /> <strong>Office</strong>: PDF, Word, Excel, PowerPoint</li>
-                  <li><CheckCircleOutlined /> <strong>文本</strong>: TXT, MD, JSON, XML, CSV, LOG...</li>
-                  <li><CheckCircleOutlined /> <strong>代码</strong>: Java, Python, JS, C++... 所有编程语言</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.officeDocs')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.textDocs')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.codeDocs')}</li>
                   <li><CheckCircleOutlined /> {t('landingPage.features.codeProjectKB')}</li>
                 </ul>
               </Card>

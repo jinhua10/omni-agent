@@ -59,6 +59,22 @@
   margin-bottom: 48px;
 }
 
+.language-switch {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  z-index: 10;
+}
+
+.lang-btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: scale(1.05);
+}
+
+.lang-btn:active {
+  transform: scale(0.95);
+}
+
 .logo-icon {
   display: inline-block;
   background: rgba(255, 255, 255, 0.15);
