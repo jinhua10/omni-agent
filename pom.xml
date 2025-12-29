@@ -58,9 +58,6 @@
 
         <module>omni-agent-core</module>
 
-        <!-- PPL ONNX Service -->
-        <module>omni-agent-ppl-onnx</module>
-
         <!-- ========== Starter 实现层 ========== -->
 
         <!-- Chunking Starter (分块实现) ⭐ 新增 -->
@@ -96,9 +93,8 @@
         <module>omni-agent-rag-starter-adapter</module>
 
         <!-- AI Starters (AI Service Starters) -->
-        <module>omni-agent-ai-starter-ollama</module>
-        <module>omni-agent-ai-starter-online-api</module>
-        <module>omni-agent-ai-starter-onnx</module>
+        <module>omni-agent-ai-starter</module>
+
 
         <!-- Knowledge Registry Starters ⭐ (知识库网络) -->
         <module>omni-agent-knowledge-registry-starter</module>

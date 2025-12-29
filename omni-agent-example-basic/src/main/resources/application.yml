@@ -316,7 +316,20 @@ omni-agent:
 
   # ========== 步骤6️⃣ AI服务配置 (AI Service) ==========
   # 作用：智能对话和生成
+  # ========== 📚 AI调用归档配置 ⭐ NEW ==========
+  # 作用：记录每次AI调用的完整信息，用于知识网络学习
+  # 位置：自动拦截所有AI调用，异步归档
   ai:
+    archive:
+      enabled: true                      # 启用AI调用归档
+      storage-path: data/ai-archives     # 归档存储路径
+      enable-memory-index: true          # 启用内存索引（快速查询）
+      max-memory-index: 1000             # 内存索引最大数量
+      auto-clean-days: 30                # 自动清理30天前的归档（0=不清理）
+      thread-pool:
+        core-size: 2                     # 归档线程池核心线程数
+        max-size: 5                      # 归档线程池最大线程数
+        queue-capacity: 1000             # 归档队列容量
     # type: ollama  # 本地Ollama（开发/测试）
     type: online-api    # 在线API（生产环境推荐）
 

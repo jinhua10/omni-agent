@@ -44,7 +44,7 @@
         <!-- 使用 Online API -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-ai-starter-online-api</artifactId>
+            <artifactId>omni-agent-ai-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
 

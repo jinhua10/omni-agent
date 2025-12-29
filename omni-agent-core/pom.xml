@@ -47,13 +47,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- PPL ONNX Service (Optional) -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-ppl-onnx</artifactId>
-            <version>${project.version}</version>
-            <optional>true</optional>
-        </dependency>
         <!-- Knowledge Registry API      -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>

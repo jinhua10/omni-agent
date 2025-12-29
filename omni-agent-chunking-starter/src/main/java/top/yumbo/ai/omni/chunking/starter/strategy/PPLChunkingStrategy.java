@@ -6,7 +6,6 @@ import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.chunking.ChunkingConfig;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
 import top.yumbo.ai.omni.chunking.starter.config.ChunkingProperties;
-import top.yumbo.ai.omni.chunking.starter.util.ChunkingParamUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;

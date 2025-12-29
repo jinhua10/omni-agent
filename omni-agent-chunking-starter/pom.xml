@@ -44,16 +44,9 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- PPL ONNX (Optional) -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-ppl-onnx</artifactId>
-            <version>${project.version}</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-ai-starter-onnx</artifactId>
+            <artifactId>omni-agent-ai-starter</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>

@@ -851,7 +851,7 @@ public class DocumentProcessingService {
         // ⭐ 检查必要的服务是否可用
         if (embeddingService == null || ragService == null) {
             log.warn("⚠️ EmbeddingService 或 RAGService 未配置，跳过向量化");
-            log.info("💡 提示: 请添加相应的 starter 依赖（如 omni-agent-ai-starter-ollama）");
+            log.info("💡 提示: 请添加相应的 starter 依赖（如 omni-agent-ai-starter）");
             // 降级：返回模拟数据
             return chunkCount * 768;
         }
