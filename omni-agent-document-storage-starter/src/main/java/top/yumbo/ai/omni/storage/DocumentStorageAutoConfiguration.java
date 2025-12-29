@@ -34,15 +34,17 @@ public class DocumentStorageAutoConfiguration {
 
     /**
      * 创建所有文档存储服务实例
+     *
+     * <p>注意：使用 Object 类型避免可选依赖的 ClassNotFoundException</p>
      */
     @Bean
     public Map<String, DocumentStorageService> documentStorageServices(
             DocumentStorageProperties properties,
-            ObjectProvider<MongoTemplate> mongoTemplate,
-            ObjectProvider<RedisTemplate<String, Object>> redisTemplate,
-            ObjectProvider<S3Client> s3Client,
-            ObjectProvider<MinioClient> minioClient,
-            ObjectProvider<ElasticsearchClient> elasticsearchClient) {
+            ObjectProvider<Object> mongoTemplate,
+            ObjectProvider<Object> redisTemplate,
+            ObjectProvider<Object> s3Client,
+            ObjectProvider<Object> minioClient,
+            ObjectProvider<Object> elasticsearchClient) {
 
         Map<String, DocumentStorageService> services = new HashMap<>();
         List<DocumentStorageProperties.StorageInstanceConfig> instances = properties.getInstances();
