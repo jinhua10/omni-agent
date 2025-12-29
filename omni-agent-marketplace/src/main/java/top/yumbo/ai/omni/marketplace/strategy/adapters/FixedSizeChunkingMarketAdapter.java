@@ -1,5 +1,7 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
 import top.yumbo.ai.omni.chunking.starter.strategy.FixedLengthStrategy;
@@ -16,8 +18,10 @@ import java.util.Map;
  * @since 3.0.0
  */
 @Component
+@ConditionalOnBean(FixedLengthStrategy.class)
 public class FixedSizeChunkingMarketAdapter extends ChunkingStrategyAdapter {
 
+    @Autowired
     public FixedSizeChunkingMarketAdapter(FixedLengthStrategy executor) {
         super(executor, ChunkingStrategy.FIXED_LENGTH);
     }

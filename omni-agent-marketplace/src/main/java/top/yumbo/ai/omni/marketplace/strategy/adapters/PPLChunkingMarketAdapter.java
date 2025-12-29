@@ -1,5 +1,7 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
@@ -18,8 +20,10 @@ import java.util.Map;
  */
 @Component
 @ConditionalOnClass(name = "top.yumbo.ai.omni.ppl.onnx.PPLService")
+@ConditionalOnBean(PPLChunkingStrategy.class)
 public class PPLChunkingMarketAdapter extends ChunkingStrategyAdapter {
 
+    @Autowired
     public PPLChunkingMarketAdapter(PPLChunkingStrategy executor) {
         super(executor, ChunkingStrategy.PPL);
     }

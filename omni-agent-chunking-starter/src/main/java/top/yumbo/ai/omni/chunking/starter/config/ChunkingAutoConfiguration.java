@@ -67,6 +67,54 @@ public class ChunkingAutoConfiguration {
         log.info("✅ 初始化分块服务，默认策略: {}", properties.getStrategy());
         return new DefaultChunkingService(properties);
     }
+
+    // ========== 策略执行器 Bean（用于 Marketplace Adapter） ==========
+
+    @Bean
+    @ConditionalOnMissingBean(FixedLengthStrategy.class)
+    public FixedLengthStrategy fixedLengthStrategy(ChunkingProperties properties) {
+        return new FixedLengthStrategy(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ParagraphStrategy.class)
+    public ParagraphStrategy paragraphStrategy(ChunkingProperties properties) {
+        return new ParagraphStrategy(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(SentenceStrategy.class)
+    public SentenceStrategy sentenceStrategy(ChunkingProperties properties) {
+        return new SentenceStrategy(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(MarkdownStrategy.class)
+    public MarkdownStrategy markdownStrategy(ChunkingProperties properties) {
+        return new MarkdownStrategy(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PPLChunkingStrategy.class)
+    public PPLChunkingStrategy pplChunkingStrategy(ChunkingProperties properties) {
+        try {
+            return new PPLChunkingStrategy(properties);
+        } catch (NoClassDefFoundError e) {
+            log.warn("⚠️ PPL 分块策略不可用（需要 omni-agent-ppl-onnx 依赖）");
+            return null;
+        }
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(SemanticStrategy.class)
+    public SemanticStrategy semanticStrategy(ChunkingProperties properties) {
+        try {
+            return new SemanticStrategy(properties);
+        } catch (Exception e) {
+            log.warn("⚠️ 语义分块策略不可用: {}", e.getMessage());
+            return null;
+        }
+    }
 }
 
 

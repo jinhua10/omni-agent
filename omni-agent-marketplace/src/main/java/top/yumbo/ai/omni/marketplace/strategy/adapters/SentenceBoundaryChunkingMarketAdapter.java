@@ -1,8 +1,10 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.chunking.ChunkingStrategy;
-import top.yumbo.ai.omni.chunking.starter.strategy.SentenceBoundaryStrategy;
+import top.yumbo.ai.omni.chunking.starter.strategy.SentenceStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.UsageExample;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 
@@ -16,9 +18,11 @@ import java.util.Map;
  * @since 3.0.0
  */
 @Component
+@ConditionalOnBean(SentenceStrategy.class)
 public class SentenceBoundaryChunkingMarketAdapter extends ChunkingStrategyAdapter {
 
-    public SentenceBoundaryChunkingMarketAdapter(SentenceBoundaryStrategy executor) {
+    @Autowired
+    public SentenceBoundaryChunkingMarketAdapter(SentenceStrategy executor) {
         super(executor, ChunkingStrategy.SENTENCE);
     }
 
