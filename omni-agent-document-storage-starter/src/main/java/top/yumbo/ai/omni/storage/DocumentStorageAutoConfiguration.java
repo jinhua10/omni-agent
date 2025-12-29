@@ -1,11 +1,12 @@
 package top.yumbo.ai.omni.storage;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
@@ -32,19 +33,17 @@ import java.util.Map;
 @EnableConfigurationProperties(DocumentStorageProperties.class)
 public class DocumentStorageAutoConfiguration {
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     /**
      * 创建所有文档存储服务实例
      *
-     * <p>注意：使用 Object 类型避免可选依赖的 ClassNotFoundException</p>
+     * <p>通过 ApplicationContext 获取可选依赖，避免 ObjectProvider 类型冲突</p>
      */
     @Bean
     public Map<String, DocumentStorageService> documentStorageServices(
-            DocumentStorageProperties properties,
-            ObjectProvider<Object> mongoTemplate,
-            ObjectProvider<Object> redisTemplate,
-            ObjectProvider<Object> s3Client,
-            ObjectProvider<Object> minioClient,
-            ObjectProvider<Object> elasticsearchClient) {
+            DocumentStorageProperties properties) {
 
         Map<String, DocumentStorageService> services = new HashMap<>();
         List<DocumentStorageProperties.StorageInstanceConfig> instances = properties.getInstances();
@@ -61,12 +60,19 @@ public class DocumentStorageAutoConfiguration {
             String instanceId = config.getOrGenerateId();
 
             try {
+                // 从 ApplicationContext 获取可选的 Bean
+                Object mongoTemplate = getBeanSafely("mongoTemplate");
+                Object redisTemplate = getBeanSafely("redisTemplate");
+                Object s3Client = getBeanSafely("s3Client");
+                Object minioClient = getBeanSafely("minioClient");
+                Object elasticsearchClient = getBeanSafely("elasticsearchClient");
+
                 DocumentStorageService service = new DocumentStorageInstanceBuilder(config)
-                        .withMongoTemplate(mongoTemplate.getIfAvailable())
-                        .withRedisTemplate(redisTemplate.getIfAvailable())
-                        .withS3Client(s3Client.getIfAvailable())
-                        .withMinioClient(minioClient.getIfAvailable())
-                        .withElasticsearchClient(elasticsearchClient.getIfAvailable())
+                        .withMongoTemplate(mongoTemplate)
+                        .withRedisTemplate(redisTemplate)
+                        .withS3Client(s3Client)
+                        .withMinioClient(minioClient)
+                        .withElasticsearchClient(elasticsearchClient)
                         .build();
 
                 services.put(instanceId, service);
@@ -85,6 +91,17 @@ public class DocumentStorageAutoConfiguration {
 
         log.info("✅ 文档存储实例创建完成，共 {} 个", services.size());
         return services;
+    }
+
+    /**
+     * 安全地获取 Bean（通过名称，如果不存在返回 null）
+     */
+    private Object getBeanSafely(String beanName) {
+        try {
+            return applicationContext.getBean(beanName);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**

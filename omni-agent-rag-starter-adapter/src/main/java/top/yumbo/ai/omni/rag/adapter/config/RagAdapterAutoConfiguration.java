@@ -1,10 +1,11 @@
 package top.yumbo.ai.omni.rag.adapter.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,18 +31,16 @@ import java.util.Map;
 @EnableConfigurationProperties(RagAdapterProperties.class)
 public class RagAdapterAutoConfiguration {
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     /**
      * 创建所有 RAG 服务实例
      *
-     * <p>注意：使用 Object 类型避免可选依赖的 ClassNotFoundException</p>
+     * <p>通过 ApplicationContext 获取可选依赖，避免 ObjectProvider 类型冲突</p>
      */
     @Bean
-    public Map<String, RagService> ragServices(
-            RagAdapterProperties properties,
-            ObjectProvider<JdbcTemplate> jdbcTemplate,
-            ObjectProvider<Object> mongoTemplate,
-            ObjectProvider<Object> redisTemplate,
-            ObjectProvider<Object> elasticsearchClient) {
+    public Map<String, RagService> ragServices(RagAdapterProperties properties) {
 
         Map<String, RagService> services = new HashMap<>();
         List<RagAdapterProperties.RagInstanceConfig> instances = properties.getInstances();
@@ -58,11 +57,17 @@ public class RagAdapterAutoConfiguration {
             String instanceId = config.getOrGenerateId();
 
             try {
+                // 从 ApplicationContext 获取可选的 Bean
+                JdbcTemplate jdbcTemplate = getBeanSafely(JdbcTemplate.class);
+                Object mongoTemplate = getBeanSafely("mongoTemplate");
+                Object redisTemplate = getBeanSafely("redisTemplate");
+                Object elasticsearchClient = getBeanSafely("elasticsearchClient");
+
                 RagService service = new RagInstanceBuilder(config, properties.getVectorDimension())
-                        .withJdbcTemplate(jdbcTemplate.getIfAvailable())
-                        .withMongoTemplate(mongoTemplate.getIfAvailable())
-                        .withRedisTemplate(redisTemplate.getIfAvailable())
-                        .withElasticsearchClient(elasticsearchClient.getIfAvailable())
+                        .withJdbcTemplate(jdbcTemplate)
+                        .withMongoTemplate(mongoTemplate)
+                        .withRedisTemplate(redisTemplate)
+                        .withElasticsearchClient(elasticsearchClient)
                         .build();
 
                 services.put(instanceId, service);
@@ -76,6 +81,28 @@ public class RagAdapterAutoConfiguration {
 
         log.info("✅ RAG 实例创建完成，共 {} 个", services.size());
         return services;
+    }
+
+    /**
+     * 安全地获取 Bean（如果不存在返回 null）
+     */
+    private <T> T getBeanSafely(Class<T> beanClass) {
+        try {
+            return applicationContext.getBean(beanClass);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 安全地获取 Bean（通过名称，如果不存在返回 null）
+     */
+    private Object getBeanSafely(String beanName) {
+        try {
+            return applicationContext.getBean(beanName);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
