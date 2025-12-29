@@ -6,7 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.common.http.HttpClientAdapter;
 
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -101,21 +104,27 @@ public class SecureRemoteExecutor {
         }
 
         try {
-            URL url = new URL(endpoint);
+            // 使用 URI 替代已过时的 URL(String) 构造函数
+            URI uri = new URI(endpoint);
 
             // 检查协议（生产环境强制HTTPS）
-            if (REQUIRE_HTTPS && !"https".equalsIgnoreCase(url.getProtocol())) {
+            String scheme = uri.getScheme();
+            if (REQUIRE_HTTPS && !"https".equalsIgnoreCase(scheme)) {
                 throw new RemoteExecutionException("HTTPS is required for remote algorithms");
             }
 
             // 检查主机（防止内网扫描 - SSRF攻击防护）
-            String host = url.getHost();
+            String host = uri.getHost();
+            if (host == null || host.isEmpty()) {
+                throw new RemoteExecutionException("Invalid endpoint URL: missing host");
+            }
+
             if (isInternalHost(host)) {
                 log.warn("Attempting to access internal host: {}", host);
                 throw new RemoteExecutionException("Access to internal hosts is forbidden");
             }
 
-        } catch (java.net.MalformedURLException e) {
+        } catch (URISyntaxException e) {
             throw new RemoteExecutionException("Invalid endpoint URL: " + endpoint);
         }
     }

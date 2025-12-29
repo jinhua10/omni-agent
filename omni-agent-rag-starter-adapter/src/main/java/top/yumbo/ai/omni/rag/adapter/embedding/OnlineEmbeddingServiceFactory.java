@@ -2,8 +2,8 @@ package top.yumbo.ai.omni.rag.adapter.embedding;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.RestTemplate;
-import top.yumbo.ai.omni.ai.online.OnlineAPIAIService;
-import top.yumbo.ai.omni.ai.online.OnlineAPIProperties;
+import top.yumbo.ai.omni.ai.starter.impl.OnlineAPIAIService;
+import top.yumbo.ai.omni.ai.starter.properties.OnlineAPIProperties;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.adapter.config.RagAdapterProperties;
 

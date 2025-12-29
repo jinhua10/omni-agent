@@ -1,8 +1,8 @@
 package top.yumbo.ai.omni.rag.adapter.embedding;
 
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.omni.ai.ollama.OllamaAIService;
-import top.yumbo.ai.omni.ai.ollama.OllamaProperties;
+import top.yumbo.ai.omni.ai.starter.impl.OllamaAIService;
+import top.yumbo.ai.omni.ai.starter.properties.OllamaProperties;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.adapter.config.RagAdapterProperties;
 

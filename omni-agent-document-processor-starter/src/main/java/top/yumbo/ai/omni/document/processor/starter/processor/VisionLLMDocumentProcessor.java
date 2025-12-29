@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.ai.api.AIService;
-import top.yumbo.ai.omni.ai.api.config.VisionLLMBatchProcessingProperties;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.ai.starter.config.VisionLLMBatchProcessingProperties;
 import top.yumbo.ai.omni.document.processor.DocumentProcessor;
 
 import java.util.*;
