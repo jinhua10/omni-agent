@@ -32,14 +32,20 @@ public class ThemeController {
      */
     @GetMapping("/list")
     public ResponseEntity<List<Map<String, Object>>> getThemeList() {
-        log.info("获取主题列表");
+        try {
+            log.info("📋 获取主题列表请求");
 
-        // 返回空列表，UI将使用内置主题
-        // Return empty list, UI will use built-in themes
-        List<Map<String, Object>> themes = new ArrayList<>();
+            // 返回空列表，UI将使用内置主题
+            // Return empty list, UI will use built-in themes
+            List<Map<String, Object>> themes = new ArrayList<>();
 
-        log.info("返回 {} 个服务器主题", themes.size());
-        return ResponseEntity.ok(themes);
+            log.info("✅ 返回 {} 个服务器主题", themes.size());
+            return ResponseEntity.ok(themes);
+        } catch (Exception e) {
+            log.error("❌ 获取主题列表失败", e);
+            // 即使出错也返回空列表而不是500错误
+            return ResponseEntity.ok(new ArrayList<>());
+        }
     }
 
     /**

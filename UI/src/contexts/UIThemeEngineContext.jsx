@@ -565,15 +565,31 @@ export const UIThemeEngineProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
+        // 如果后端返回错误，静默处理，使用本地主题
+        // If backend returns error, handle silently and use local themes
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`ℹ️ Theme server unavailable (${response.status}), using local themes`);
+        }
+        return false;
       }
 
       const serverThemes = await response.json();
 
       // 验证返回的数据 / Validate returned data
       if (!Array.isArray(serverThemes)) {
-        console.warn('⚠️ Server returned invalid theme list, using local themes');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('ℹ️ Server returned invalid theme list, using local themes');
+        }
         return false;
+      }
+
+      // 如果服务器返回空列表，也是正常的
+      // Empty list from server is also normal
+      if (serverThemes.length === 0) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('ℹ️ No server themes available, using local themes only');
+        }
+        return true; // 返回成功，因为空列表也是有效响应
       }
 
       // 合并服务器主题和本地主题 / Merge server themes with local themes
@@ -595,7 +611,11 @@ export const UIThemeEngineProvider = ({ children }) => {
       console.log('✅ Themes synced from server:', mergedThemes.length);
       return true;
     } catch (error) {
-      console.warn('⚠️ Failed to sync themes from server, using local themes:', error.message);
+      // 网络错误或超时 - 静默处理
+      // Network error or timeout - handle silently
+      if (process.env.NODE_ENV === 'development') {
+        console.log('ℹ️ Theme sync skipped (backend not available), using local themes');
+      }
       // 即使同步失败，也保持本地主题可用 / Keep local themes available even if sync fails
       return false;
     }
