@@ -63,7 +63,7 @@ const LandingPage = ({ onEnterApp }) => {
       { title: 'AI模型', value: 10, suffix: '+ 种', icon: 'BulbOutlined', color: '#faad14' },
       { title: '知识网络', value: 1, suffix: '套', icon: 'ShareAltOutlined', color: '#13c2c2' },
       { title: 'HOPE架构', value: 1, suffix: '套', icon: 'RocketOutlined', color: '#f5222d' },
-      { title: '角色系统', value: 1, suffix: '套', icon: 'UserOutlined', color: '#722ed1' },
+      { title: 'P2P网络', value: 1, suffix: '套', icon: 'CloudOutlined', color: '#1890ff' },
     ],
     // 第四页：企业级特性
     [
@@ -280,7 +280,7 @@ const LandingPage = ({ onEnterApp }) => {
               <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 13 }}>
                 {currentStatsPage === 0 && '核心架构 - 模块化设计，企业级代码质量'}
                 {currentStatsPage === 1 && 'RAG能力 - 多策略并行，多维度向量，灾备冗余'}
-                {currentStatsPage === 2 && 'AI增强 - 知识网络，HOPE自学习，智能角色系统'}
+                {currentStatsPage === 2 && 'AI增强 - 知识网络，HOPE自学习，P2P分布式架构'}
                 {currentStatsPage === 3 && '企业级特性 - 最新技术栈，生产就绪，高可用'}
               </Text>
             </div>
@@ -695,7 +695,7 @@ const LandingPage = ({ onEnterApp }) => {
             </Row>
           </div>
 
-          {/* 知识网络流程 */}
+          {/* 知识网络增强层 */}
           <Title level={3} className="section-subtitle" style={{ marginTop: 64, marginBottom: 32, textAlign: 'center' }}>
             知识网络增强层
           </Title>
@@ -746,6 +746,124 @@ const LandingPage = ({ onEnterApp }) => {
                 <Text>智能问答增强</Text>
               </div>
             </div>
+          </div>
+
+          {/* P2P分布式架构 */}
+          <div className="p2p-architecture-section" style={{ marginTop: 80 }}>
+            <Title level={3} className="section-subtitle" style={{ marginBottom: 32, textAlign: 'center' }}>
+              P2P分布式架构 - 让知识在网络中传递
+            </Title>
+
+            <Row gutter={[48, 32]}>
+              <Col xs={24}>
+                <Card className="p2p-card">
+                  <Row gutter={48} align="middle">
+                    <Col xs={24} md={12}>
+                      <Title level={4} style={{ color: '#1890ff', marginBottom: 24 }}>
+                        🌐 分布式知识网络
+                      </Title>
+                      <div className="p2p-features">
+                        <div className="p2p-feature-item">
+                          <div className="p2p-feature-icon" style={{ background: '#1890ff' }}>
+                            <ShareAltOutlined />
+                          </div>
+                          <div>
+                            <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
+                              连接码快速配对
+                            </Text>
+                            <Text type="secondary" style={{ fontSize: 13 }}>
+                              输入连接码即可建立P2P连接，无需复杂配置
+                            </Text>
+                          </div>
+                        </div>
+
+                        <div className="p2p-feature-item">
+                          <div className="p2p-feature-icon" style={{ background: '#52c41a' }}>
+                            <CloudOutlined />
+                          </div>
+                          <div>
+                            <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
+                              企业级知识共享
+                            </Text>
+                            <Text type="secondary" style={{ fontSize: 13 }}>
+                              团队、部门、跨组织知识实时同步与共享
+                            </Text>
+                          </div>
+                        </div>
+
+                        <div className="p2p-feature-item">
+                          <div className="p2p-feature-icon" style={{ background: '#722ed1' }}>
+                            <SafetyOutlined />
+                          </div>
+                          <div>
+                            <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
+                              分布式单体架构
+                            </Text>
+                            <Text type="secondary" style={{ fontSize: 13 }}>
+                              每个节点独立可用，集群协同工作，高可用保障
+                            </Text>
+                          </div>
+                        </div>
+
+                        <div className="p2p-feature-item">
+                          <div className="p2p-feature-icon" style={{ background: '#fa8c16' }}>
+                            <ThunderboltOutlined />
+                          </div>
+                          <div>
+                            <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
+                              知识自动传播
+                            </Text>
+                            <Text type="secondary" style={{ fontSize: 13 }}>
+                              新知识自动推送到连接的节点，持续学习和进化
+                            </Text>
+                          </div>
+                        </div>
+                      </div>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <div className="p2p-diagram">
+                        <div className="p2p-network">
+                          <div className="p2p-node central">
+                            <DatabaseOutlined style={{ fontSize: 32, color: '#fff' }} />
+                            <Text style={{ color: '#fff', fontSize: 12, marginTop: 8 }}>企业节点</Text>
+                          </div>
+
+                          <div className="p2p-connections">
+                            <div className="p2p-node satellite" style={{ top: '0%', left: '50%' }}>
+                              <CloudOutlined style={{ fontSize: 20, color: '#fff' }} />
+                              <Text style={{ color: '#fff', fontSize: 10 }}>部门A</Text>
+                            </div>
+                            <div className="p2p-node satellite" style={{ top: '50%', left: '90%' }}>
+                              <CloudOutlined style={{ fontSize: 20, color: '#fff' }} />
+                              <Text style={{ color: '#fff', fontSize: 10 }}>部门B</Text>
+                            </div>
+                            <div className="p2p-node satellite" style={{ top: '100%', left: '50%' }}>
+                              <CloudOutlined style={{ fontSize: 20, color: '#fff' }} />
+                              <Text style={{ color: '#fff', fontSize: 10 }}>部门C</Text>
+                            </div>
+                            <div className="p2p-node satellite" style={{ top: '50%', left: '10%' }}>
+                              <CloudOutlined style={{ fontSize: 20, color: '#fff' }} />
+                              <Text style={{ color: '#fff', fontSize: 10 }}>远程团队</Text>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'center', marginTop: 24 }}>
+                          <Text strong style={{ color: '#1890ff', fontSize: 14 }}>
+                            🔗 通过连接码建立分布式知识网络
+                          </Text>
+                          <br />
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            单体可用 + 分布式协同 = 全能Agent架构
+                          </Text>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                </Card>
+              </Col>
+            </Row>
           </div>
         </div>
       </section>
