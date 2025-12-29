@@ -74,17 +74,24 @@ OmniAgent 是一个现代化的企业级知识管理平台，通过**知识域�
 - **增量更新** - 文件哈希追踪，只处理变更内容
 - **权限隔离** - 细粒度的域级访问控制
 
-### 📄 智能文档处理
+### 📄 全格式文档支持
 
-#### 支持的文档格式（5种）
+#### Office文档（5种核心格式）
 
 | 格式 | 特性 | 处理器 |
 |------|------|--------|
 | **PDF** | 逐页提取、页码标记、元数据 | PDFProcessor |
-| **Word** | 表格转Markdown、标题识别 | WordProcessor |
-| **Excel** | 智能表格、公式计算、数据分段 | ExcelProcessor |
-| **PowerPoint** | 幻灯片提取、结构化输出 | PPTProcessor |
-| **文本** | .txt/.md/.log | TextProcessor |
+| **Word** (.doc/.docx) | 表格转Markdown、标题识别 | WordProcessor |
+| **Excel** (.xls/.xlsx) | 智能表格、公式计算、数据分段 | ExcelProcessor |
+| **PowerPoint** (.ppt/.pptx) | 幻灯片提取、结构化输出 | PPTProcessor |
+| **文本** (.txt/.md/.log) | 纯文本提取 | TextProcessor |
+
+#### 全文本格式支持 ⭐
+
+- ✅ **所有文本格式** - .txt, .md, .json, .xml, .csv, .log, .yaml, .ini, .conf...
+- ✅ **所有编程语言** - .java, .py, .js, .cpp, .go, .rs, .kt, .swift, .ts...
+- ✅ **配置文件** - .properties, .yml, .env, .config...
+- ✅ **代码项目** - 支持构建完整代码库的独立知识库
 
 #### 增强功能
 
@@ -92,6 +99,7 @@ OmniAgent 是一个现代化的企业级知识管理平台，通过**知识域�
 - ✅ **结构保留** - 标题层级、页码信息完整保留
 - ✅ **LLM友好** - 输出格式适合大语言模型处理
 - ✅ **逐页处理** - 避免大文件内存溢出
+- ✅ **代码智能分析** - 支持源码级别的知识提取
 
 ### 🧩 智能分块策略（6种）
 

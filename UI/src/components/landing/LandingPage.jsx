@@ -46,7 +46,7 @@ const LandingPage = ({ onEnterApp }) => {
     const targets = {
       modules: 20,
       codeLines: 15000,
-      formats: 5,
+      formats: 10,  // Office文档(5种) + 所有文本格式
       strategies: 6
     }
 
@@ -147,9 +147,9 @@ const LandingPage = ({ onEnterApp }) => {
             </Col>
             <Col xs={12} sm={6}>
               <Statistic
-                title="文档格式"
+                title="支持格式"
                 value={animatedStats.formats}
-                suffix="种"
+                suffix="+ 类型"
                 styles={{ value: { color: '#faad14' } }}
               />
             </Col>
@@ -251,7 +251,7 @@ const LandingPage = ({ onEnterApp }) => {
               </div>
               <div className="step-content">
                 <Title level={4}>文档上传</Title>
-                <Text>自动识别格式</Text>
+                <Text>Office+文本+代码</Text>
               </div>
             </div>
 
@@ -263,7 +263,7 @@ const LandingPage = ({ onEnterApp }) => {
               </div>
               <div className="step-content">
                 <Title level={4}>智能提取</Title>
-                <Text>Markdown标准化</Text>
+                <Text>全格式支持</Text>
               </div>
             </div>
 
@@ -344,14 +344,15 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} sm={12} md={8}>
               <Card className="feature-card" hoverable>
                 <FileTextOutlined className="feature-icon" />
-                <Title level={4}>智能文档处理</Title>
+                <Title level={4}>全格式文档支持</Title>
                 <Paragraph>
-                  支持5种文档格式，自动Markdown转换，完美适配LLM
+                  Office全家桶 + 所有文本格式，自动Markdown转换，完美适配LLM
                 </Paragraph>
                 <ul className="feature-list">
-                  <li><CheckCircleOutlined /> PDF/Word/Excel/PPT</li>
-                  <li><CheckCircleOutlined /> 表格结构保留</li>
-                  <li><CheckCircleOutlined /> 逐页处理优化</li>
+                  <li><CheckCircleOutlined /> <strong>Office</strong>: PDF, Word, Excel, PowerPoint</li>
+                  <li><CheckCircleOutlined /> <strong>文本</strong>: TXT, MD, JSON, XML, CSV, LOG...</li>
+                  <li><CheckCircleOutlined /> <strong>代码</strong>: Java, Python, JS, C++... 所有编程语言</li>
+                  <li><CheckCircleOutlined /> 支持构建代码项目独立知识库</li>
                 </ul>
               </Card>
             </Col>
@@ -389,14 +390,15 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} sm={12} md={8}>
               <Card className="feature-card" hoverable>
                 <ApiOutlined className="feature-icon" />
-                <Title level={4}>知识网络</Title>
+                <Title level={4}>智能角色与知识网络</Title>
                 <Paragraph>
-                  AI自动提取知识点，构建知识图谱，实现跨域关联
+                  创建角色，通过角色描述智能构建提示词，自动生成专用知识库
                 </Paragraph>
                 <ul className="feature-list">
-                  <li><CheckCircleOutlined /> 知识提取</li>
-                  <li><CheckCircleOutlined /> 跨域关联</li>
-                  <li><CheckCircleOutlined /> 后台异步</li>
+                  <li><CheckCircleOutlined /> AI智能提示词生成</li>
+                  <li><CheckCircleOutlined /> 角色专用知识库</li>
+                  <li><CheckCircleOutlined /> 知识图谱与跨域关联</li>
+                  <li><CheckCircleOutlined /> 代码项目智能分析</li>
                 </ul>
               </Card>
             </Col>
