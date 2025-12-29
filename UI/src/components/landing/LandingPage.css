@@ -96,6 +96,45 @@
   margin: 0 auto 48px !important;
 }
 
+.hero-features {
+  margin-bottom: 64px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-feature-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.hero-feature-item:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.hero-feature-icon {
+  font-size: 24px;
+  color: #fff;
+}
+
+.hero-feature-text {
+  color: #fff !important;
+  font-size: 15px;
+  font-weight: 500;
+}
+
 .hero-actions {
   margin-bottom: 80px;
 }
@@ -458,6 +497,80 @@
 .feature-list .anticon {
   color: #52c41a;
   font-size: 16px;
+}
+
+/* ========== Use Cases Section ========== */
+.use-cases-section {
+  padding: 100px 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.use-case-card {
+  height: 100%;
+  border-radius: 16px;
+  border: 2px solid #e8e8e8;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.use-case-card:hover {
+  border-color: #1890ff;
+  box-shadow: 0 12px 40px rgba(24, 144, 255, 0.2);
+  transform: translateY(-8px);
+}
+
+.use-case-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.use-case-icon {
+  font-size: 36px;
+}
+
+.use-case-header h3 {
+  margin: 0 !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+}
+
+.use-case-desc {
+  color: #8c8c8c;
+  font-size: 15px;
+  margin-bottom: 20px !important;
+}
+
+.use-case-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.use-case-list li {
+  padding: 12px 0;
+  color: #595959;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.6;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.use-case-list li:last-child {
+  border-bottom: none;
+}
+
+.use-case-list .anticon {
+  color: #52c41a;
+  font-size: 16px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.use-case-list strong {
+  color: #262626;
 }
 
 /* ========== Tech Stack Section ========== */

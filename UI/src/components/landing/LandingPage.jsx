@@ -90,12 +90,41 @@ const LandingPage = ({ onEnterApp }) => {
           </div>
 
           <Title level={2} className="hero-subtitle">
-            智能知识网络平台
+            全场景企业级Agent框架
           </Title>
 
           <Paragraph className="hero-description">
-            基于知识域隔离的企业级RAG系统 | 让每个领域的知识独立闪耀
+            基于知识域隔离的智能Agent平台 | 构建分布式企业级AI应用
           </Paragraph>
+
+          <div className="hero-features">
+            <Row gutter={[24, 16]} justify="center">
+              <Col xs={24} sm={12} md={6}>
+                <div className="hero-feature-item">
+                  <RocketOutlined className="hero-feature-icon" />
+                  <Text className="hero-feature-text">智能Agent构建</Text>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="hero-feature-item">
+                  <CloudOutlined className="hero-feature-icon" />
+                  <Text className="hero-feature-text">Agent服务平台</Text>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="hero-feature-item">
+                  <CodeOutlined className="hero-feature-icon" />
+                  <Text className="hero-feature-text">代码智能分析</Text>
+                </div>
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <div className="hero-feature-item">
+                  <ThunderboltOutlined className="hero-feature-icon" />
+                  <Text className="hero-feature-text">自动化测试</Text>
+                </div>
+              </Col>
+            </Row>
+          </div>
 
           <Space size="large" className="hero-actions">
             <Button
@@ -505,6 +534,89 @@ const LandingPage = ({ onEnterApp }) => {
                   <li><CheckCircleOutlined /> 20+模块化设计</li>
                   <li><CheckCircleOutlined /> 完整异常处理</li>
                   <li><CheckCircleOutlined /> 编译100%通过</li>
+                </ul>
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      </section>
+
+      {/* 应用场景 */}
+      <section className="use-cases-section">
+        <div className="container">
+          <Title level={2} className="section-title">
+            全场景Agent应用
+          </Title>
+
+          <Row gutter={[32, 32]}>
+            <Col xs={24} md={12}>
+              <Card className="use-case-card" hoverable>
+                <div className="use-case-header">
+                  <RocketOutlined className="use-case-icon" style={{ color: '#1890ff' }} />
+                  <Title level={3}>智能代码助手</Title>
+                </div>
+                <Paragraph className="use-case-desc">
+                  类似 GitHub Copilot / Cursor 的智能编程助手
+                </Paragraph>
+                <ul className="use-case-list">
+                  <li><CheckCircleOutlined /> <strong>完整项目上下文</strong>：分析整个代码仓库，提供精准建议</li>
+                  <li><CheckCircleOutlined /> <strong>代码智能补全</strong>：基于项目风格和历史代码</li>
+                  <li><CheckCircleOutlined /> <strong>Bug检测</strong>：自动发现潜在问题并给出修复方案</li>
+                  <li><CheckCircleOutlined /> <strong>文档生成</strong>：自动生成API文档和注释</li>
+                </ul>
+              </Card>
+            </Col>
+
+            <Col xs={24} md={12}>
+              <Card className="use-case-card" hoverable>
+                <div className="use-case-header">
+                  <ThunderboltOutlined className="use-case-icon" style={{ color: '#52c41a' }} />
+                  <Title level={3}>自动化测试平台</Title>
+                </div>
+                <Paragraph className="use-case-desc">
+                  智能测试用例生成与执行
+                </Paragraph>
+                <ul className="use-case-list">
+                  <li><CheckCircleOutlined /> <strong>测试用例自动生成</strong>：基于代码逻辑生成测试</li>
+                  <li><CheckCircleOutlined /> <strong>边界条件识别</strong>：AI发现边界和异常场景</li>
+                  <li><CheckCircleOutlined /> <strong>回归测试</strong>：智能选择需要执行的测试</li>
+                  <li><CheckCircleOutlined /> <strong>测试报告分析</strong>：自动生成详细测试报告</li>
+                </ul>
+              </Card>
+            </Col>
+
+            <Col xs={24} md={12}>
+              <Card className="use-case-card" hoverable>
+                <div className="use-case-header">
+                  <FileTextOutlined className="use-case-icon" style={{ color: '#faad14' }} />
+                  <Title level={3}>项目分析报告</Title>
+                </div>
+                <Paragraph className="use-case-desc">
+                  深度项目洞察与优化建议
+                </Paragraph>
+                <ul className="use-case-list">
+                  <li><CheckCircleOutlined /> <strong>架构分析</strong>：评估系统架构合理性</li>
+                  <li><CheckCircleOutlined /> <strong>代码质量</strong>：检测代码smell和反模式</li>
+                  <li><CheckCircleOutlined /> <strong>安全审计</strong>：发现安全漏洞和风险点</li>
+                  <li><CheckCircleOutlined /> <strong>性能优化</strong>：识别性能瓶颈并给出建议</li>
+                </ul>
+              </Card>
+            </Col>
+
+            <Col xs={24} md={12}>
+              <Card className="use-case-card" hoverable>
+                <div className="use-case-header">
+                  <CloudOutlined className="use-case-icon" style={{ color: '#722ed1' }} />
+                  <Title level={3}>企业Agent服务平台</Title>
+                </div>
+                <Paragraph className="use-case-desc">
+                  构建分布式Agent服务生态
+                </Paragraph>
+                <ul className="use-case-list">
+                  <li><CheckCircleOutlined /> <strong>多租户隔离</strong>：企业级安全和权限管理</li>
+                  <li><CheckCircleOutlined /> <strong>Agent市场</strong>：发布和订阅各类专业Agent</li>
+                  <li><CheckCircleOutlined /> <strong>工作流编排</strong>：组合多个Agent完成复杂任务</li>
+                  <li><CheckCircleOutlined /> <strong>API网关</strong>：统一接口，灵活集成</li>
                 </ul>
               </Card>
             </Col>
