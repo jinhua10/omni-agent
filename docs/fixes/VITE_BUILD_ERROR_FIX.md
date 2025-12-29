@@ -104,6 +104,13 @@ dist/
 
 ## 🚀 验证步骤
 
+### 0. 安装terser (必需)
+
+```bash
+cd UI
+npm install -D terser
+```
+
 ### 1. 重新构建
 
 ```bash
