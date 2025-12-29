@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.ai.ollama.OllamaAIService;
 import top.yumbo.ai.omni.ai.ollama.OllamaProperties;
 import top.yumbo.ai.omni.rag.RagService;
-import top.yumbo.ai.omni.rag.adapter.RagAdapterProperties;
+import top.yumbo.ai.omni.rag.adapter.config.RagAdapterProperties;
 
 /**
  * Ollama 嵌入服务工厂

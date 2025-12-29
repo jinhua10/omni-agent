@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.rag.adapter;
+package top.yumbo.ai.omni.rag.adapter.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -9,6 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.adapter.impl.mock.MockRagService;
+import top.yumbo.ai.omni.rag.adapter.impl.RagInstanceBuilder;
+import top.yumbo.ai.omni.rag.adapter.impl.RagServiceRegistry;
 
 import java.util.HashMap;
 import java.util.List;

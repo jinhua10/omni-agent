@@ -3,9 +3,8 @@ package top.yumbo.ai.omni.rag.adapter.embedding;
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.ai.api.EmbeddingService;
 import top.yumbo.ai.omni.ai.onnx.OnnxEmbeddingService;
-import top.yumbo.ai.omni.ai.onnx.OnnxEmbeddingProperties;
 import top.yumbo.ai.omni.rag.RagService;
-import top.yumbo.ai.omni.rag.adapter.RagAdapterProperties;
+import top.yumbo.ai.omni.rag.adapter.config.RagAdapterProperties;
 
 /**
  * ONNX 嵌入服务工厂

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.rag.adapter;
+package top.yumbo.ai.omni.rag.adapter.embedding;
 
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.rag.RagService;

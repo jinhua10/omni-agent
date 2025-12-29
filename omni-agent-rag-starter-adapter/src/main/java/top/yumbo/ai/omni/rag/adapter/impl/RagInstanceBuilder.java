@@ -1,14 +1,17 @@
-package top.yumbo.ai.omni.rag.adapter;
+package top.yumbo.ai.omni.rag.adapter.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.adapter.config.RagAdapterProperties;
+import top.yumbo.ai.omni.rag.adapter.embedding.EmbeddingRagServiceDecorator;
 import top.yumbo.ai.omni.rag.adapter.impl.elasticsearch.ElasticsearchRAGProperties;
 import top.yumbo.ai.omni.rag.adapter.impl.elasticsearch.ElasticsearchRAGService;
 import top.yumbo.ai.omni.rag.adapter.impl.file.FileRAGProperties;
 import top.yumbo.ai.omni.rag.adapter.impl.file.LuceneRAGService;
 import top.yumbo.ai.omni.rag.adapter.impl.h2.H2RAGProperties;
 import top.yumbo.ai.omni.rag.adapter.impl.h2.H2RAGService;
+import top.yumbo.ai.omni.rag.adapter.impl.mock.MockRagService;
 import top.yumbo.ai.omni.rag.adapter.impl.mongodb.MongoDBRAGProperties;
 import top.yumbo.ai.omni.rag.adapter.impl.mongodb.MongoDBRAGService;
 import top.yumbo.ai.omni.rag.adapter.impl.redis.RedisRAGProperties;

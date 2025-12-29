@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.rag.RagService;
-import top.yumbo.ai.omni.rag.adapter.RagServiceRegistry;
+import top.yumbo.ai.omni.rag.adapter.impl.RagServiceRegistry;
 import top.yumbo.ai.omni.rag.model.Document;
 import top.yumbo.ai.omni.rag.model.Vector;
 

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.rag.adapter;
+package top.yumbo.ai.omni.rag.adapter.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
