@@ -1,13 +1,16 @@
 package top.yumbo.ai.omni.knowledge.registry;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
+import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeAssociationService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeExtractionService;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRefinementService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
@@ -57,6 +60,20 @@ public class KnowledgeRegistryAutoConfiguration {
     public KnowledgeExtractionService knowledgeExtractionService(KnowledgeStorageService storageService) {
         log.info("🔍 创建默认知识提取服务（基于 KnowledgeStorageService）");
         return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeExtractionService(storageService);
+    }
+
+    /**
+     * 创建默认的知识提炼服务
+     */
+    @Bean
+    @ConditionalOnMissingBean(KnowledgeRefinementService.class)
+    public KnowledgeRefinementService knowledgeRefinementService(
+            @Autowired(required = false) AIService aiService) {
+        log.info("🎨 创建默认知识提炼服务（基于 AIService）");
+        if (aiService == null) {
+            log.warn("⚠️ AIService 不可用，知识提炼将仅使用规则方式");
+        }
+        return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeRefinementService(aiService);
     }
 }
 
