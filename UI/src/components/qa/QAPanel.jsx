@@ -8,7 +8,7 @@
  * @since 2025-12-12
  */
 
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import { Layout } from 'antd'
 import ChatBox from './ChatBox'
 import QuestionInput from './QuestionInput'
@@ -45,14 +45,6 @@ function QAPanel() {
   const streamingContentRef = useRef({ leftPanel: '', rightPanel: '' })
   const streamingLLMAnswerRef = useRef('')
 
-  // ⚡ 性能优化：批量更新缓冲
-  const updateBatchRef = useRef({
-    pending: false,
-    leftPanel: '',
-    rightPanel: '',
-    llmAnswer: '',
-    type: null
-  })
 
   // 从 localStorage 读取流式模式偏好（默认为 true）
   const [isStreamingMode, setIsStreamingMode] = useState(() => {
@@ -100,45 +92,6 @@ function QAPanel() {
     console.log(`🔄 Switched role to: ${role}`)
   }
 
-  /**
-   * ⚡ 性能优化：批量更新UI（使用requestAnimationFrame）
-   * 将多次小更新合并成一次大更新，降低渲染频率
-   */
-  const flushUpdate = useCallback(() => {
-    setMessages(prev => {
-      const newMessages = [...prev]
-      const lastMessage = newMessages[newMessages.length - 1]
-
-      if (lastMessage && lastMessage.streaming) {
-        if (updateBatchRef.current.type === 'dual') {
-          // 双轨模式
-          lastMessage.dualTrack = true
-          lastMessage.leftPanel = updateBatchRef.current.leftPanel
-          lastMessage.rightPanel = updateBatchRef.current.rightPanel
-        } else if (updateBatchRef.current.type === 'llm') {
-          // 单轨LLM模式
-          lastMessage.dualTrack = false
-          lastMessage.content = updateBatchRef.current.llmAnswer
-        }
-      }
-
-      return newMessages
-    })
-
-    updateBatchRef.current.pending = false
-  }, [setMessages])
-
-  const scheduleUpdate = useCallback(() => {
-    if (!updateBatchRef.current.pending) {
-      updateBatchRef.current.pending = true
-      // 使用setTimeout代替requestAnimationFrame，避免渲染期间setState警告
-      setTimeout(() => {
-        if (updateBatchRef.current.pending) {
-          flushUpdate()
-        }
-      }, 16) // 约60fps
-    }
-  }, [flushUpdate])
 
   /**
    * 处理问题提交
@@ -194,59 +147,46 @@ function QAPanel() {
           // 调试日志
           console.log('📨 Received data:', data.type, data)
 
-          // ⚡ 性能优化：累加到ref并使用批量更新
+          // 累加到ref
           if (data.type === 'left') {
-            // 左面板：纯 LLM
-            console.log('⬅️ Left panel:', data.content)
             streamingContentRef.current.leftPanel += data.content
-            updateBatchRef.current.leftPanel = streamingContentRef.current.leftPanel
-            updateBatchRef.current.type = 'dual'
-            scheduleUpdate() // 批量更新，约60fps
           } else if (data.type === 'right') {
-            // 右面板：RAG 增强 / 角色知识库
-            console.log('➡️ Right panel:', data.content)
             streamingContentRef.current.rightPanel += data.content
-            updateBatchRef.current.rightPanel = streamingContentRef.current.rightPanel
-            updateBatchRef.current.type = 'dual'
-            scheduleUpdate() // 批量更新，约60fps
           } else if (data.type === 'llm') {
-            // 单轨 LLM（不使用 RAG）
-            console.log('📦 LLM chunk:', data.content)
             streamingLLMAnswerRef.current += data.content
-            updateBatchRef.current.llmAnswer = streamingLLMAnswerRef.current
-            updateBatchRef.current.type = 'llm'
-            scheduleUpdate() // 批量更新，约60fps
           }
 
-          // 🔥 处理流式控制事件（complete/error）- 立即更新
-          if (data.type === 'complete' || data.type === 'error') {
-            // 先刷新pending的批量更新
-            if (updateBatchRef.current.pending) {
-              flushUpdate()
+          // 🔥 立即更新 UI - 确保流式输出能看到
+          setMessages(prev => {
+            const newMessages = [...prev]
+            const lastMessage = newMessages[newMessages.length - 1]
+
+            if (lastMessage && lastMessage.streaming) {
+              if (data.type === 'left' || data.type === 'right') {
+                // 双轨模式
+                lastMessage.dualTrack = true
+                lastMessage.leftPanel = streamingContentRef.current.leftPanel || ''
+                lastMessage.rightPanel = streamingContentRef.current.rightPanel || ''
+              } else if (data.type === 'llm') {
+                // 单轨LLM模式
+                lastMessage.dualTrack = false
+                lastMessage.content = streamingLLMAnswerRef.current
+              } else if (data.type === 'complete') {
+                lastMessage.streaming = false
+                lastMessage.sessionId = data.sessionId
+                setCurrentEventSource(null)
+                setLoading(false)
+              } else if (data.type === 'error') {
+                lastMessage.type = 'error'
+                lastMessage.content = data.error || t('qa.error.failed')
+                lastMessage.streaming = false
+                setCurrentEventSource(null)
+                setLoading(false)
+              }
             }
 
-            // 然后处理完成/错误事件
-            setMessages(prev => {
-              const newMessages = [...prev]
-              const lastMessage = newMessages[newMessages.length - 1]
-
-              if (lastMessage && lastMessage.streaming) {
-                if (data.type === 'complete') {
-                  lastMessage.streaming = false
-                  lastMessage.sessionId = data.sessionId
-                  setCurrentEventSource(null)
-                  setLoading(false)
-                } else if (data.type === 'error') {
-                  lastMessage.type = 'error'
-                  lastMessage.content = data.error || t('qa.error.failed')
-                  lastMessage.streaming = false
-                  setCurrentEventSource(null)
-                  setLoading(false)
-                }
-              }
-              return newMessages
-            })
-          }
+            return newMessages
+          })
         }
       )
 

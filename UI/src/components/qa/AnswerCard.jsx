@@ -8,7 +8,7 @@
  * @since 2025-12-12
  */
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Button, Space, Tooltip, Collapse } from 'antd'
 import { LikeOutlined, DislikeOutlined, CopyOutlined, LikeFilled, DislikeFilled } from '@ant-design/icons'
 import StreamingAnswer from './StreamingAnswer'
@@ -17,8 +17,6 @@ import DocumentReferences from './DocumentReferences'
 import SessionInfoDisplay from './SessionInfoDisplay'
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/qa/answer-card.css'
-
-const { Panel } = Collapse
 
 /**
  * 答案卡片组件
@@ -29,7 +27,7 @@ const AnswerCard = React.memo(function AnswerCard(props) {
   const { t } = useLanguage()
   const [feedback, setFeedback] = useState(null)
   const [copied, setCopied] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
+  const [activeKey, setActiveKey] = useState(['1']) // 使用activeKey代替collapsed
 
   const handleLike = () => {
     const newFeedback = feedback === 'like' ? null : 'like'
@@ -57,6 +55,129 @@ const AnswerCard = React.memo(function AnswerCard(props) {
     }
   }
 
+  // ⚡ 性能优化：使用useMemo缓存items配置
+  const collapseItems = useMemo(() => [
+    {
+      key: '1',
+      label: (
+        <div className="answer-card__header">
+          <span className="answer-card__header-title">
+            {answer.streaming ? t('qa.generating') : t('qa.answer')}
+          </span>
+          <span className="answer-card__header-time">
+            {new Date(answer.timestamp).toLocaleTimeString()}
+          </span>
+        </div>
+      ),
+      children: (
+        <>
+          <div className="answer-card__text">
+            {answer.thinking ? (
+              <div className="answer-card__thinking">
+                <div className="answer-card__thinking-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span className="answer-card__thinking-text">Thinking...</span>
+              </div>
+            ) : answer.dualTrack ? (
+              // 双轨模式：左右双面板显示
+              <div className="answer-card__dual-track">
+                <div className="answer-card__panel answer-card__panel--left">
+                  <div className="answer-card__panel-header">
+                    <span className="answer-card__panel-icon">🤖</span>
+                    <span className="answer-card__panel-title">{t('qa.dualTrack.leftPanelTitle')}</span>
+                  </div>
+                  <div className="answer-card__panel-content">
+                    {answer.streaming ? (
+                      <StreamingAnswer content={answer.leftPanel || ''} streaming={answer.streaming} />
+                    ) : (
+                      <MarkdownRenderer content={answer.leftPanel || ''} isStreaming={false} />
+                    )}
+                  </div>
+                </div>
+
+                <div className="answer-card__panel answer-card__panel--right">
+                  <div className="answer-card__panel-header">
+                    <span className="answer-card__panel-icon">📚</span>
+                    <span className="answer-card__panel-title">{t('qa.dualTrack.rightPanelTitle')}</span>
+                  </div>
+                  <div className="answer-card__panel-content">
+                    {answer.streaming ? (
+                      <StreamingAnswer content={answer.rightPanel || ''} streaming={answer.streaming} />
+                    ) : (
+                      <MarkdownRenderer content={answer.rightPanel || ''} isStreaming={false} />
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : answer.streaming ? (
+              // 单轨模式：单面板流式显示
+              <StreamingAnswer content={answer.content} streaming={answer.streaming} />
+            ) : (
+              // 单轨模式：单面板静态显示
+              <MarkdownRenderer content={answer.content} isStreaming={false} />
+            )}
+
+            {answer.stopped && !answer.streaming && (
+              <div className="answer-card__stopped-badge">
+                ⚠️ {t('qa.generationStopped')}
+              </div>
+            )}
+          </div>
+
+          {/* 会话信息（分页文档） */}
+          {!answer.streaming && answer.sessionId && (
+            <SessionInfoDisplay sessionId={answer.sessionId} />
+          )}
+
+          {/* 引用文档列表 */}
+          {!answer.streaming && answer.sources && answer.sources.length > 0 && (
+            <DocumentReferences
+              sources={answer.sources}
+              chunks={answer.chunks}
+            />
+          )}
+
+          {!answer.streaming && (
+            <div className="answer-card__footer">
+              <Space className="answer-card__actions">
+                <Tooltip title={t('qa.feedback.like')}>
+                  <Button
+                    type="text"
+                    icon={feedback === 'like' ? <LikeFilled /> : <LikeOutlined />}
+                    onClick={handleLike}
+                    className={`answer-card__action-btn ${feedback === 'like' ? 'answer-card__action-btn--active' : ''}`}
+                  />
+                </Tooltip>
+
+                <Tooltip title={t('qa.feedback.dislike')}>
+                  <Button
+                    type="text"
+                    icon={feedback === 'dislike' ? <DislikeFilled /> : <DislikeOutlined />}
+                    onClick={handleDislike}
+                    className={`answer-card__action-btn ${feedback === 'dislike' ? 'answer-card__action-btn--active' : ''}`}
+                  />
+                </Tooltip>
+
+                <Tooltip title={copied ? t('qa.feedback.copied') : t('qa.feedback.copy')}>
+                  <Button
+                    type="text"
+                    icon={<CopyOutlined />}
+                    onClick={handleCopy}
+                    className="answer-card__action-btn"
+                  />
+                </Tooltip>
+              </Space>
+            </div>
+          )}
+        </>
+      ),
+      className: 'answer-card__panel'
+    }
+  ], [answer, feedback, copied, t])
+
   return (
     <div className="answer-card">
       <div className="answer-card__avatar">
@@ -64,129 +185,13 @@ const AnswerCard = React.memo(function AnswerCard(props) {
       </div>
 
       <div className="answer-card__content">
-        <Collapse 
-          activeKey={collapsed ? [] : ['1']} 
-          onChange={() => setCollapsed(!collapsed)}
+        <Collapse
+          activeKey={activeKey}
+          onChange={setActiveKey}
           bordered={false}
           className="answer-card__collapse"
-        >
-          <Panel 
-            header={
-              <div className="answer-card__header">
-                <span className="answer-card__header-title">
-                  {answer.streaming ? t('qa.generating') : t('qa.answer')}
-                </span>
-                <span className="answer-card__header-time">
-                  {new Date(answer.timestamp).toLocaleTimeString()}
-                </span>
-              </div>
-            } 
-            key="1"
-            className="answer-card__panel"
-          >
-            <div className="answer-card__text">
-          {answer.thinking ? (
-            <div className="answer-card__thinking">
-              <div className="answer-card__thinking-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-              <span className="answer-card__thinking-text">Thinking...</span>
-            </div>
-          ) : answer.dualTrack ? (
-            // 双轨模式：左右双面板显示
-            <div className="answer-card__dual-track">
-              <div className="answer-card__panel answer-card__panel--left">
-                <div className="answer-card__panel-header">
-                  <span className="answer-card__panel-icon">🤖</span>
-                  <span className="answer-card__panel-title">{t('qa.dualTrack.leftPanelTitle')}</span>
-                </div>
-                <div className="answer-card__panel-content">
-                  {answer.streaming ? (
-                    <StreamingAnswer content={answer.leftPanel || ''} streaming={answer.streaming} />
-                  ) : (
-                    <MarkdownRenderer content={answer.leftPanel || ''} isStreaming={false} />
-                  )}
-                </div>
-              </div>
-
-              <div className="answer-card__panel answer-card__panel--right">
-                <div className="answer-card__panel-header">
-                  <span className="answer-card__panel-icon">📚</span>
-                  <span className="answer-card__panel-title">{t('qa.dualTrack.rightPanelTitle')}</span>
-                </div>
-                <div className="answer-card__panel-content">
-                  {answer.streaming ? (
-                    <StreamingAnswer content={answer.rightPanel || ''} streaming={answer.streaming} />
-                  ) : (
-                    <MarkdownRenderer content={answer.rightPanel || ''} isStreaming={false} />
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : answer.streaming ? (
-            // 单轨模式：单面板流式显示
-            <StreamingAnswer content={answer.content} streaming={answer.streaming} />
-          ) : (
-            // 单轨模式：单面板静态显示
-            <MarkdownRenderer content={answer.content} isStreaming={false} />
-          )}
-          
-          {answer.stopped && !answer.streaming && (
-            <div className="answer-card__stopped-badge">
-              ⚠️ {t('qa.generationStopped')}
-            </div>
-          )}
-        </div>
-
-        {/* 会话信息（分页文档） */}
-        {!answer.streaming && answer.sessionId && (
-          <SessionInfoDisplay sessionId={answer.sessionId} />
-        )}
-
-        {/* 引用文档列表 */}
-        {!answer.streaming && answer.sources && answer.sources.length > 0 && (
-          <DocumentReferences
-            sources={answer.sources}
-            chunks={answer.chunks}
-          />
-        )}
-
-        {!answer.streaming && (
-          <div className="answer-card__footer">
-            <Space className="answer-card__actions">
-              <Tooltip title={t('qa.feedback.like')}>
-                <Button
-                  type="text"
-                  icon={feedback === 'like' ? <LikeFilled /> : <LikeOutlined />}
-                  onClick={handleLike}
-                  className={`answer-card__action-btn ${feedback === 'like' ? 'answer-card__action-btn--active' : ''}`}
-                />
-              </Tooltip>
-
-              <Tooltip title={t('qa.feedback.dislike')}>
-                <Button
-                  type="text"
-                  icon={feedback === 'dislike' ? <DislikeFilled /> : <DislikeOutlined />}
-                  onClick={handleDislike}
-                  className={`answer-card__action-btn ${feedback === 'dislike' ? 'answer-card__action-btn--active' : ''}`}
-                />
-              </Tooltip>
-
-              <Tooltip title={copied ? t('qa.feedback.copied') : t('qa.feedback.copy')}>
-                <Button
-                  type="text"
-                  icon={<CopyOutlined />}
-                  onClick={handleCopy}
-                  className="answer-card__action-btn"
-                />
-              </Tooltip>
-            </Space>
-          </div>
-        )}
-          </Panel>
-        </Collapse>
+          items={collapseItems}
+        />
       </div>
     </div>
   )
