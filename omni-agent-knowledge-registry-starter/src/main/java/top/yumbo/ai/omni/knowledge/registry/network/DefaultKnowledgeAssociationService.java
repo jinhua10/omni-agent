@@ -168,20 +168,301 @@ public class DefaultKnowledgeAssociationService implements KnowledgeAssociationS
     @Override
     public List<DomainAssociation> findRelatedDomains(String domainId, int topK) {
         log.debug("查找相关域: domainId={}, topK={}", domainId, topK);
-        // TODO: 实现相关域查找逻辑
-        return new ArrayList<>();
+
+        try {
+            // 1. 获取该域的所有知识（通过搜索空字符串获取所有）
+            // 注意：这是一个简化实现，生产环境应该有专门的 listAllKnowledge 方法
+            List<RefinedKnowledge> domainKnowledge = getAllKnowledgeInDomain(domainId);
+
+            if (domainKnowledge.isEmpty()) {
+                log.debug("域 {} 中没有知识", domainId);
+                return new ArrayList<>();
+            }
+
+            // 2. 统计其他域的引用次数（基于知识内容中的域名称或关键词）
+            Map<String, DomainReferenceInfo> domainReferences = new HashMap<>();
+
+            for (RefinedKnowledge knowledge : domainKnowledge) {
+                // 从知识内容中提取可能的域引用
+                List<String> referencedDomains = extractDomainReferences(knowledge);
+
+                for (String refDomainId : referencedDomains) {
+                    if (!refDomainId.equals(domainId)) { // 排除自己
+                        domainReferences.computeIfAbsent(refDomainId, k -> new DomainReferenceInfo())
+                                .incrementCount();
+                    }
+                }
+            }
+
+            // 3. 转换为 DomainAssociation 并计算关联强度
+            List<DomainAssociation> associations = new ArrayList<>();
+            int totalKnowledge = domainKnowledge.size();
+
+            for (Map.Entry<String, DomainReferenceInfo> entry : domainReferences.entrySet()) {
+                String refDomainId = entry.getKey();
+                int refCount = entry.getValue().getCount();
+
+                // 计算关联强度：引用次数 / 总知识数
+                double strength = (double) refCount / totalKnowledge;
+
+                DomainAssociation association = DomainAssociation.builder()
+                        .domainId(refDomainId)
+                        .domainName(getDomainName(refDomainId))
+                        .strength(Math.min(1.0, strength)) // 限制在 0-1 之间
+                        .relationType("REFERENCE")
+                        .sharedKnowledgeCount(refCount)
+                        .build();
+
+                associations.add(association);
+            }
+
+            // 4. 按关联强度排序并返回 Top K
+            List<DomainAssociation> result = associations.stream()
+                    .sorted((a, b) -> Double.compare(b.getStrength(), a.getStrength()))
+                    .limit(topK)
+                    .collect(Collectors.toList());
+
+            log.debug("✅ 找到 {} 个相关域", result.size());
+            return result;
+
+        } catch (Exception e) {
+            log.error("❌ 查找相关域失败: domainId={}", domainId, e);
+            return new ArrayList<>();
+        }
     }
 
     @Override
     public List<DomainRecommendation> recommendDomains(String query, int topK) {
         log.debug("推荐知识域: query={}, topK={}", query, topK);
-        // TODO: 实现域推荐逻辑
-        return new ArrayList<>();
+
+        try {
+            // 1. 从查询中提取关键词
+            List<String> queryKeywords = extractQueryKeywords(query);
+
+            if (queryKeywords.isEmpty()) {
+                log.debug("未能从查询中提取关键词");
+                return new ArrayList<>();
+            }
+
+            log.debug("提取到查询关键词: {}", queryKeywords);
+
+            // 2. 使用关键词在所有域中搜索，统计每个域的匹配度
+            // 注意：这需要能够获取所有域的列表，这里简化实现
+            Map<String, DomainMatchInfo> domainMatches = new HashMap<>();
+
+            // 尝试搜索知识，根据搜索结果统计域分布
+            for (String keyword : queryKeywords) {
+                // 这里简化：假设我们通过某种方式能获取到跨域搜索结果
+                // 实际实现需要配合 KnowledgeRegistry 获取所有域列表
+                // 然后在每个域中搜索
+
+                // 为了演示，我们使用一个固定的域列表进行搜索
+                List<String> commonDomains = Arrays.asList(
+                    "security", "authentication", "authorization",
+                    "java", "spring", "database", "api", "frontend"
+                );
+
+                for (String domainId : commonDomains) {
+                    try {
+                        List<RefinedKnowledge> results = storageService.searchKnowledge(
+                                keyword, domainId, 5);
+
+                        if (!results.isEmpty()) {
+                            DomainMatchInfo info = domainMatches.computeIfAbsent(
+                                    domainId, k -> new DomainMatchInfo(domainId));
+                            info.addMatches(results.size());
+                            info.incrementKeywordMatches();
+                        }
+                    } catch (Exception e) {
+                        // 域可能不存在，继续下一个
+                        log.trace("域 {} 搜索失败或不存在", domainId);
+                    }
+                }
+            }
+
+            // 3. 计算推荐分数并构建推荐列表
+            List<DomainRecommendation> recommendations = new ArrayList<>();
+
+            for (DomainMatchInfo info : domainMatches.values()) {
+                // 推荐分数 = (关键词匹配数 / 总关键词数) * 0.6 + (匹配知识数 / 10) * 0.4
+                double keywordScore = (double) info.getKeywordMatches() / queryKeywords.size();
+                double knowledgeScore = Math.min(1.0, info.getTotalMatches() / 10.0);
+                double score = keywordScore * 0.6 + knowledgeScore * 0.4;
+
+                DomainRecommendation recommendation = DomainRecommendation.builder()
+                        .domainId(info.getDomainId())
+                        .domainName(getDomainName(info.getDomainId()))
+                        .score(score)
+                        .reason(generateRecommendationReason(info, queryKeywords))
+                        .matchedKeywords(queryKeywords)
+                        .build();
+
+                recommendations.add(recommendation);
+            }
+
+            // 4. 按推荐分数排序并返回 Top K
+            List<DomainRecommendation> result = recommendations.stream()
+                    .sorted((r1, r2) -> Double.compare(r2.getScore(), r1.getScore()))
+                    .limit(topK)
+                    .collect(Collectors.toList());
+
+            log.debug("✅ 推荐 {} 个知识域", result.size());
+            return result;
+
+        } catch (Exception e) {
+            log.error("❌ 推荐知识域失败: query={}", query, e);
+            return new ArrayList<>();
+        }
+    }
+
+
+    /**
+     * 获取域中的所有知识（简化实现）
+     */
+    private List<RefinedKnowledge> getAllKnowledgeInDomain(String domainId) {
+        // 简化实现：使用空字符串搜索尝试获取所有知识
+        // 生产环境应该有专门的 API
+        try {
+            return storageService.searchKnowledge("", domainId, 1000);
+        } catch (Exception e) {
+            log.debug("无法获取域 {} 的所有知识", domainId);
+            return new ArrayList<>();
+        }
     }
 
     /**
-     * 从知识中提取关键词
+     * 从知识内容中提取域引用
      */
+    private List<String> extractDomainReferences(RefinedKnowledge knowledge) {
+        List<String> references = new ArrayList<>();
+
+        if (knowledge.getRefinedContent() == null) {
+            return references;
+        }
+
+        String content = knowledge.getRefinedContent().toLowerCase();
+
+        // 常见域名称模式（可以扩展）
+        Map<String, List<String>> domainKeywords = Map.of(
+            "security", Arrays.asList("security", "安全", "认证", "授权"),
+            "authentication", Arrays.asList("authentication", "auth", "登录", "jwt"),
+            "java", Arrays.asList("java", "spring", "springboot"),
+            "database", Arrays.asList("database", "mysql", "redis", "数据库"),
+            "api", Arrays.asList("api", "rest", "接口"),
+            "frontend", Arrays.asList("frontend", "react", "vue", "前端")
+        );
+
+        for (Map.Entry<String, List<String>> entry : domainKeywords.entrySet()) {
+            String domainId = entry.getKey();
+            List<String> keywords = entry.getValue();
+
+            for (String keyword : keywords) {
+                if (content.contains(keyword)) {
+                    if (!references.contains(domainId)) {
+                        references.add(domainId);
+                    }
+                    break; // 找到一个关键词就够了
+                }
+            }
+        }
+
+        return references;
+    }
+
+    /**
+     * 获取域名称（简化实现）
+     */
+    private String getDomainName(String domainId) {
+        // 简化实现：直接返回 ID 的格式化版本
+        // 生产环境应该从 KnowledgeRegistry 查询
+        return domainId.substring(0, 1).toUpperCase() + domainId.substring(1);
+    }
+
+    /**
+     * 从查询中提取关键词
+     */
+    private List<String> extractQueryKeywords(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 分词并过滤
+        return Arrays.stream(query.split("[\\s,，、。.!！?？]+"))
+                .map(String::trim)
+                .filter(word -> word.length() >= 2) // 过滤单字符
+                .filter(word -> !isStopWord(word))  // 过滤停用词
+                .limit(10) // 限制关键词数量
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 判断是否为停用词
+     */
+    private boolean isStopWord(String word) {
+        Set<String> stopWords = Set.of(
+            "的", "了", "和", "是", "在", "有", "我", "个", "们", "这",
+            "那", "与", "及", "等", "中", "可以", "什么", "如何", "为什么",
+            "the", "a", "an", "and", "or", "but", "is", "are", "was", "were",
+            "in", "on", "at", "to", "for", "of", "with", "by", "from"
+        );
+        return stopWords.contains(word.toLowerCase());
+    }
+
+    /**
+     * 生成推荐原因
+     */
+    private String generateRecommendationReason(DomainMatchInfo info, List<String> queryKeywords) {
+        return String.format("匹配 %d 个关键词，找到 %d 条相关知识",
+                info.getKeywordMatches(), info.getTotalMatches());
+    }
+
+    /**
+     * 域引用信息（内部类）
+     */
+    private static class DomainReferenceInfo {
+        private int count = 0;
+
+        public void incrementCount() {
+            count++;
+        }
+
+        public int getCount() {
+            return count;
+        }
+    }
+
+    /**
+     * 域匹配信息（内部类）
+     */
+    private static class DomainMatchInfo {
+        private final String domainId;
+        private int totalMatches = 0;
+        private int keywordMatches = 0;
+
+        public DomainMatchInfo(String domainId) {
+            this.domainId = domainId;
+        }
+
+        public void addMatches(int count) {
+            totalMatches += count;
+        }
+
+        public void incrementKeywordMatches() {
+            keywordMatches++;
+        }
+
+        public String getDomainId() {
+            return domainId;
+        }
+
+        public int getTotalMatches() {
+            return totalMatches;
+        }
+
+        public int getKeywordMatches() {
+            return keywordMatches;
+        }
+    }
     private List<String> extractKeywords(RefinedKnowledge knowledge) {
         List<String> keywords = new ArrayList<>();
 
