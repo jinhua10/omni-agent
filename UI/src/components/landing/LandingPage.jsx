@@ -543,7 +543,7 @@ const LandingPage = ({ onEnterApp }) => {
       <section className="workflow-section">
         <div className="container">
           <Title level={2} className="section-title">
-            智能化全流程
+            {t('landingPage.workflow.title')}
           </Title>
 
           {/* 主流程 */}
@@ -553,12 +553,12 @@ const LandingPage = ({ onEnterApp }) => {
                 <CloudOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>1. 文档上传</Title>
-                <Text className="step-highlight">全格式支持</Text>
+                <Title level={4}>{t('landingPage.workflow.step1Title')}</Title>
+                <Text className="step-highlight">{t('landingPage.workflow.step1Highlight')}</Text>
                 <div className="step-details">
-                  <Text>• Office: Word, Excel, PPT, PDF</Text>
-                  <Text>• 文本: TXT, MD, JSON, XML, CSV...</Text>
-                  <Text>• 代码: 所有编程语言</Text>
+                  <Text>{t('landingPage.workflow.step1Detail1')}</Text>
+                  <Text>{t('landingPage.workflow.step1Detail2')}</Text>
+                  <Text>{t('landingPage.workflow.step1Detail3')}</Text>
                 </div>
               </div>
             </div>
@@ -570,12 +570,12 @@ const LandingPage = ({ onEnterApp }) => {
                 <FileTextOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>2. 智能提取</Title>
-                <Text className="step-highlight">多引擎可选</Text>
+                <Title level={4}>{t('landingPage.workflow.step2Title')}</Title>
+                <Text className="step-highlight">{t('landingPage.workflow.step2Highlight')}</Text>
                 <div className="step-details">
-                  <Text>• 本地模型: 离线处理</Text>
-                  <Text>• Ollama: 本地部署</Text>
-                  <Text>• 在线API: 千问3-VL等</Text>
+                  <Text>{t('landingPage.workflow.step2Detail1')}</Text>
+                  <Text>{t('landingPage.workflow.step2Detail2')}</Text>
+                  <Text>{t('landingPage.workflow.step2Detail3')}</Text>
                 </div>
               </div>
             </div>
@@ -587,12 +587,12 @@ const LandingPage = ({ onEnterApp }) => {
                 <CodeOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>3. 智能分块</Title>
-                <Text className="step-highlight">6种策略可选</Text>
+                <Title level={4}>{t('landingPage.workflow.step3Title')}</Title>
+                <Text className="step-highlight">{t('landingPage.workflow.step3Highlight')}</Text>
                 <div className="step-details">
-                  <Text>• 固定长度/段落/句子</Text>
-                  <Text>• 困惑度智能分块（推荐）</Text>
-                  <Text>• 语义分块（TF-IDF）</Text>
+                  <Text>{t('landingPage.workflow.step3Detail1')}</Text>
+                  <Text>{t('landingPage.workflow.step3Detail2')}</Text>
+                  <Text>{t('landingPage.workflow.step3Detail3')}</Text>
                 </div>
               </div>
             </div>
@@ -604,13 +604,13 @@ const LandingPage = ({ onEnterApp }) => {
                 <ThunderboltOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>4. 向量化</Title>
-                <Text className="step-highlight">多种方式并存</Text>
+                <Title level={4}>{t('landingPage.workflow.step4Title')}</Title>
+                <Text className="step-highlight">{t('landingPage.workflow.step4Highlight')}</Text>
                 <div className="step-details">
-                  <Text>• ONNX本地模型: BGE系列</Text>
-                  <Text>• Ollama: 本地向量化</Text>
-                  <Text>• 在线API: OpenAI, 千帆...</Text>
-                  <Text style={{ color: '#52c41a', fontWeight: 600 }}>✓ 支持多套RAG系统同时运行</Text>
+                  <Text>{t('landingPage.workflow.step4Detail1')}</Text>
+                  <Text>{t('landingPage.workflow.step4Detail2')}</Text>
+                  <Text>{t('landingPage.workflow.step4Detail3')}</Text>
+                  <Text style={{ color: '#52c41a', fontWeight: 600 }}>{t('landingPage.workflow.step4Detail4')}</Text>
                 </div>
               </div>
             </div>
@@ -622,12 +622,12 @@ const LandingPage = ({ onEnterApp }) => {
                 <DatabaseOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>5. 域索引构建</Title>
-                <Text className="step-highlight">知识域隔离架构</Text>
+                <Title level={4}>{t('landingPage.workflow.step5Title')}</Title>
+                <Text className="step-highlight">{t('landingPage.workflow.step5Highlight')}</Text>
                 <div className="step-details">
-                  <Text>• 按领域独立向量空间</Text>
-                  <Text>• 避免跨域干扰</Text>
-                  <Text>• 精准检索定位</Text>
+                  <Text>{t('landingPage.workflow.step5Detail1')}</Text>
+                  <Text>{t('landingPage.workflow.step5Detail2')}</Text>
+                  <Text>{t('landingPage.workflow.step5Detail3')}</Text>
                 </div>
               </div>
             </div>
@@ -639,12 +639,12 @@ const LandingPage = ({ onEnterApp }) => {
                 <BulbOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>6. 多次RAG检索</Title>
-                <Text className="step-highlight">多策略并行</Text>
+                <Title level={4}>{t('landingPage.workflow.step6Title')}</Title>
+                <Text className="step-highlight">{t('landingPage.workflow.step6Highlight')}</Text>
                 <div className="step-details">
-                  <Text>• 向量检索 + 关键词检索</Text>
-                  <Text>• 结果融合与重排序</Text>
-                  <Text>• 提高召回率和准确率</Text>
+                  <Text>{t('landingPage.workflow.step6Detail1')}</Text>
+                  <Text>{t('landingPage.workflow.step6Detail2')}</Text>
+                  <Text>{t('landingPage.workflow.step6Detail3')}</Text>
                 </div>
               </div>
             </div>
@@ -653,20 +653,20 @@ const LandingPage = ({ onEnterApp }) => {
           {/* 域索引架构详解 */}
           <div className="domain-architecture-section" style={{ marginTop: 80 }}>
             <Title level={3} className="section-subtitle" style={{ marginBottom: 32, textAlign: 'center' }}>
-              知识域隔离架构详解
+              {t('landingPage.workflow.domainArchDetail')}
             </Title>
             <Row gutter={48} align="middle">
               <Col xs={24} md={12}>
                 <Card style={{ background: '#f9f9f9', border: '2px solid #e8e8e8' }}>
                   <Title level={4} style={{ color: '#8c8c8c', marginBottom: 16 }}>
-                    ❌ 传统方式：单一索引池
+                    {t('landingPage.workflow.traditionalWay')}
                   </Title>
                   <div style={{ textAlign: 'center', padding: '20px 0' }}>
                     <DatabaseOutlined style={{ fontSize: 64, color: '#ff4d4f' }} />
                     <Paragraph style={{ marginTop: 16, color: '#8c8c8c' }}>
-                      所有文档混在一个向量空间<br/>
-                      技术、财务、法律文档相互干扰<br/>
-                      检索精度低，噪音多
+                      {t('landingPage.workflow.traditionalDesc1')}<br/>
+                      {t('landingPage.workflow.traditionalDesc2')}<br/>
+                      {t('landingPage.workflow.traditionalDesc3')}
                     </Paragraph>
                   </div>
                 </Card>
@@ -674,35 +674,35 @@ const LandingPage = ({ onEnterApp }) => {
               <Col xs={24} md={12}>
                 <Card style={{ background: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)', border: '2px solid #52c41a' }}>
                   <Title level={4} style={{ color: '#52c41a', marginBottom: 16 }}>
-                    ✅ OmniAgent：知识域隔离
+                    {t('landingPage.workflow.omniAgentWay')}
                   </Title>
                   <Row gutter={[8, 8]} style={{ marginTop: 20 }}>
                     <Col span={8}>
                       <div style={{ textAlign: 'center', padding: '16px 8px', background: '#fff', borderRadius: 8, border: '1px solid #b7eb8f' }}>
                         <FileTextOutlined style={{ fontSize: 32, color: '#52c41a' }} />
-                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>技术文档域</div>
-                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>独立索引</div>
+                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>{t('landingPage.workflow.techDataDomain')}</div>
+                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>{t('landingPage.workflow.independentIndex')}</div>
                       </div>
                     </Col>
                     <Col span={8}>
                       <div style={{ textAlign: 'center', padding: '16px 8px', background: '#fff', borderRadius: 8, border: '1px solid #b7eb8f' }}>
                         <DatabaseOutlined style={{ fontSize: 32, color: '#52c41a' }} />
-                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>财务数据域</div>
-                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>独立索引</div>
+                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>{t('landingPage.workflow.financeDataDomain')}</div>
+                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>{t('landingPage.workflow.independentIndex')}</div>
                       </div>
                     </Col>
                     <Col span={8}>
                       <div style={{ textAlign: 'center', padding: '16px 8px', background: '#fff', borderRadius: 8, border: '1px solid #b7eb8f' }}>
                         <SafetyOutlined style={{ fontSize: 32, color: '#52c41a' }} />
-                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>法律合同域</div>
-                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>独立索引</div>
+                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>{t('landingPage.workflow.legalContractDomain')}</div>
+                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>{t('landingPage.workflow.independentIndex')}</div>
                       </div>
                     </Col>
                   </Row>
                   <Paragraph style={{ marginTop: 20, color: '#389e0d', textAlign: 'center', fontWeight: 500 }}>
-                    每个领域独立向量空间<br/>
-                    互不干扰，精准检索<br/>
-                    检索精度提升50%+
+                    {t('landingPage.workflow.omniAgentDesc1')}<br/>
+                    {t('landingPage.workflow.omniAgentDesc2')}<br/>
+                    {t('landingPage.workflow.omniAgentDesc3')}
                   </Paragraph>
                 </Card>
               </Col>
@@ -711,7 +711,7 @@ const LandingPage = ({ onEnterApp }) => {
 
           {/* 知识网络增强层 */}
           <Title level={3} className="section-subtitle" style={{ marginTop: 64, marginBottom: 32, textAlign: 'center' }}>
-            知识网络增强层
+            {t('landingPage.workflow.knowledgeNetworkLayer')}
           </Title>
 
           <div className="workflow-diagram">
@@ -720,8 +720,8 @@ const LandingPage = ({ onEnterApp }) => {
                 <ApiOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>知识提取</Title>
-                <Text>AI智能分析</Text>
+                <Title level={4}>{t('landingPage.workflow.knowledgeExtraction')}</Title>
+                <Text>{t('landingPage.workflow.aiAnalysis')}</Text>
               </div>
             </div>
 
@@ -732,8 +732,8 @@ const LandingPage = ({ onEnterApp }) => {
                 <ShareAltOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>跨域关联</Title>
-                <Text>语义图谱构建</Text>
+                <Title level={4}>{t('landingPage.workflow.crossDomainAssociation')}</Title>
+                <Text>{t('landingPage.workflow.semanticGraph')}</Text>
               </div>
             </div>
 
@@ -744,8 +744,8 @@ const LandingPage = ({ onEnterApp }) => {
                 <ThunderboltOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>HOPE学习</Title>
-                <Text>自我优化进化</Text>
+                <Title level={4}>{t('landingPage.workflow.hopeLearning')}</Title>
+                <Text>{t('landingPage.workflow.selfOptimization')}</Text>
               </div>
             </div>
 
@@ -756,8 +756,8 @@ const LandingPage = ({ onEnterApp }) => {
                 <BulbOutlined />
               </div>
               <div className="step-content">
-                <Title level={4}>上下文补全</Title>
-                <Text>智能问答增强</Text>
+                <Title level={4}>{t('landingPage.workflow.contextCompletion')}</Title>
+                <Text>{t('landingPage.workflow.qaEnhancement')}</Text>
               </div>
             </div>
           </div>
@@ -765,7 +765,7 @@ const LandingPage = ({ onEnterApp }) => {
           {/* P2P分布式架构 */}
           <div className="p2p-architecture-section" style={{ marginTop: 80 }}>
             <Title level={3} className="section-subtitle" style={{ marginBottom: 32, textAlign: 'center' }}>
-              P2P分布式架构 - 让知识在网络中传递
+              {t('landingPage.workflow.p2pArchTitle')}
             </Title>
 
             <Row gutter={[48, 32]}>
@@ -774,7 +774,7 @@ const LandingPage = ({ onEnterApp }) => {
                   <Row gutter={48} align="middle">
                     <Col xs={24} md={12}>
                       <Title level={4} style={{ color: '#1890ff', marginBottom: 24 }}>
-                        🌐 分布式知识网络
+                        {t('landingPage.workflow.distributedNetwork')}
                       </Title>
                       <div className="p2p-features">
                         <div className="p2p-feature-item">
@@ -783,10 +783,10 @@ const LandingPage = ({ onEnterApp }) => {
                           </div>
                           <div>
                             <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
-                              连接码快速配对
+                              {t('landingPage.workflow.connectCodePairing')}
                             </Text>
                             <Text type="secondary" style={{ fontSize: 13 }}>
-                              输入连接码即可建立P2P连接，无需复杂配置
+                              {t('landingPage.workflow.connectCodeDesc')}
                             </Text>
                           </div>
                         </div>
@@ -797,10 +797,10 @@ const LandingPage = ({ onEnterApp }) => {
                           </div>
                           <div>
                             <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
-                              企业级知识共享
+                              {t('landingPage.workflow.enterpriseSharing')}
                             </Text>
                             <Text type="secondary" style={{ fontSize: 13 }}>
-                              团队、部门、跨组织知识实时同步与共享
+                              {t('landingPage.workflow.enterpriseSharingDesc')}
                             </Text>
                           </div>
                         </div>
@@ -811,10 +811,10 @@ const LandingPage = ({ onEnterApp }) => {
                           </div>
                           <div>
                             <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
-                              分布式单体架构
+                              {t('landingPage.workflow.distributedMonolithic')}
                             </Text>
                             <Text type="secondary" style={{ fontSize: 13 }}>
-                              每个节点独立可用，集群协同工作，高可用保障
+                              {t('landingPage.workflow.distributedMonolithicDesc')}
                             </Text>
                           </div>
                         </div>
@@ -825,10 +825,10 @@ const LandingPage = ({ onEnterApp }) => {
                           </div>
                           <div>
                             <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
-                              知识自动传播
+                              {t('landingPage.workflow.knowledgePropagation')}
                             </Text>
                             <Text type="secondary" style={{ fontSize: 13 }}>
-                              新知识自动推送到连接的节点，持续学习和进化
+                              {t('landingPage.workflow.knowledgePropagationDesc')}
                             </Text>
                           </div>
                         </div>
@@ -840,36 +840,36 @@ const LandingPage = ({ onEnterApp }) => {
                         <div className="p2p-network">
                           <div className="p2p-node central">
                             <DatabaseOutlined style={{ fontSize: 32, color: '#fff' }} />
-                            <Text style={{ color: '#fff', fontSize: 12, marginTop: 8 }}>企业节点</Text>
+                            <Text style={{ color: '#fff', fontSize: 12, marginTop: 8 }}>{t('landingPage.workflow.enterpriseNode')}</Text>
                           </div>
 
                           <div className="p2p-connections">
                             <div className="p2p-node satellite" style={{ top: '0%', left: '50%' }}>
                               <CloudOutlined style={{ fontSize: 20, color: '#fff' }} />
-                              <Text style={{ color: '#fff', fontSize: 10 }}>部门A</Text>
+                              <Text style={{ color: '#fff', fontSize: 10 }}>{t('landingPage.workflow.departmentA')}</Text>
                             </div>
                             <div className="p2p-node satellite" style={{ top: '50%', left: '90%' }}>
                               <CloudOutlined style={{ fontSize: 20, color: '#fff' }} />
-                              <Text style={{ color: '#fff', fontSize: 10 }}>部门B</Text>
+                              <Text style={{ color: '#fff', fontSize: 10 }}>{t('landingPage.workflow.departmentB')}</Text>
                             </div>
                             <div className="p2p-node satellite" style={{ top: '100%', left: '50%' }}>
                               <CloudOutlined style={{ fontSize: 20, color: '#fff' }} />
-                              <Text style={{ color: '#fff', fontSize: 10 }}>部门C</Text>
+                              <Text style={{ color: '#fff', fontSize: 10 }}>{t('landingPage.workflow.departmentC')}</Text>
                             </div>
                             <div className="p2p-node satellite" style={{ top: '50%', left: '10%' }}>
                               <CloudOutlined style={{ fontSize: 20, color: '#fff' }} />
-                              <Text style={{ color: '#fff', fontSize: 10 }}>远程团队</Text>
+                              <Text style={{ color: '#fff', fontSize: 10 }}>{t('landingPage.workflow.remoteTeam')}</Text>
                             </div>
                           </div>
                         </div>
 
                         <div style={{ textAlign: 'center', marginTop: 24 }}>
                           <Text strong style={{ color: '#1890ff', fontSize: 14 }}>
-                            🔗 通过连接码建立分布式知识网络
+                            {t('landingPage.workflow.connectCodeTip')}
                           </Text>
                           <br />
                           <Text type="secondary" style={{ fontSize: 12 }}>
-                            单体可用 + 分布式协同 = 全能Agent架构
+                            {t('landingPage.workflow.monolithicDistributed')}
                           </Text>
                         </div>
                       </div>
@@ -886,21 +886,21 @@ const LandingPage = ({ onEnterApp }) => {
       <section className="features-section">
         <div className="container">
           <Title level={2} className="section-title">
-            核心特性
+            {t('landingPage.features.title')}
           </Title>
 
           <Row gutter={[32, 32]}>
             <Col xs={24} sm={12} md={8}>
               <Card className="feature-card" hoverable>
                 <ShareAltOutlined className="feature-icon" />
-                <Title level={4}>知识域隔离</Title>
+                <Title level={4}>{t('landingPage.features.domainIsolation')}</Title>
                 <Paragraph>
-                  每个知识域独立向量空间，避免知识混淆，提升检索精度50%+
+                  {t('landingPage.features.domainIsolationDesc')}
                 </Paragraph>
                 <ul className="feature-list">
-                  <li><CheckCircleOutlined /> 多域管理</li>
-                  <li><CheckCircleOutlined /> 智能路由</li>
-                  <li><CheckCircleOutlined /> 权限隔离</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.multiDomain')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.smartRouting')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.permissionIsolation')}</li>
                 </ul>
               </Card>
             </Col>
@@ -908,15 +908,15 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} sm={12} md={8}>
               <Card className="feature-card" hoverable>
                 <FileTextOutlined className="feature-icon" />
-                <Title level={4}>全格式文档支持</Title>
+                <Title level={4}>{t('landingPage.features.fullFormatSupport')}</Title>
                 <Paragraph>
-                  Office全家桶 + 所有文本格式，自动Markdown转换，完美适配LLM
+                  {t('landingPage.features.fullFormatSupportDesc')}
                 </Paragraph>
                 <ul className="feature-list">
                   <li><CheckCircleOutlined /> <strong>Office</strong>: PDF, Word, Excel, PowerPoint</li>
                   <li><CheckCircleOutlined /> <strong>文本</strong>: TXT, MD, JSON, XML, CSV, LOG...</li>
                   <li><CheckCircleOutlined /> <strong>代码</strong>: Java, Python, JS, C++... 所有编程语言</li>
-                  <li><CheckCircleOutlined /> 支持构建代码项目独立知识库</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.codeProjectKB')}</li>
                 </ul>
               </Card>
             </Col>
@@ -924,14 +924,14 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} sm={12} md={8}>
               <Card className="feature-card" hoverable>
                 <CodeOutlined className="feature-icon" />
-                <Title level={4}>6种分块策略</Title>
+                <Title level={4}>{t('landingPage.features.sixChunkingStrategies')}</Title>
                 <Paragraph>
-                  从简单到智能，根据文档类型自动选择最佳分块策略
+                  {t('landingPage.features.sixChunkingStrategiesDesc')}
                 </Paragraph>
                 <ul className="feature-list">
-                  <li><CheckCircleOutlined /> 固定长度/段落/句子</li>
-                  <li><CheckCircleOutlined /> PPL智能分块</li>
-                  <li><CheckCircleOutlined /> 语义分块（TF-IDF）</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.fixedParaSentence')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.pplSmart')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.semanticTFIDF')}</li>
                 </ul>
               </Card>
             </Col>
@@ -939,14 +939,14 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} sm={12} md={8}>
               <Card className="feature-card" hoverable>
                 <ThunderboltOutlined className="feature-icon" />
-                <Title level={4}>向量化检索</Title>
+                <Title level={4}>{t('landingPage.features.vectorSearch')}</Title>
                 <Paragraph>
-                  集成ONNX Runtime，支持本地Embedding，无需调用在线API
+                  {t('landingPage.features.vectorSearchDesc')}
                 </Paragraph>
                 <ul className="feature-list">
-                  <li><CheckCircleOutlined /> BGE-base-zh-v1.5</li>
-                  <li><CheckCircleOutlined /> 语义搜索</li>
-                  <li><CheckCircleOutlined /> 优雅降级</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.bgeBase')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.semanticSearch')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.gracefulDegradation')}</li>
                 </ul>
               </Card>
             </Col>
@@ -954,15 +954,15 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} sm={12} md={8}>
               <Card className="feature-card" hoverable>
                 <ApiOutlined className="feature-icon" />
-                <Title level={4}>智能角色与知识网络</Title>
+                <Title level={4}>{t('landingPage.features.smartRoleKnowledge')}</Title>
                 <Paragraph>
-                  创建角色，通过角色描述智能构建提示词，自动生成专用知识库
+                  {t('landingPage.features.smartRoleKnowledgeDesc')}
                 </Paragraph>
                 <ul className="feature-list">
-                  <li><CheckCircleOutlined /> AI智能提示词生成</li>
-                  <li><CheckCircleOutlined /> 角色专用知识库</li>
-                  <li><CheckCircleOutlined /> 知识图谱与跨域关联</li>
-                  <li><CheckCircleOutlined /> 代码项目智能分析</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.aiPromptGen')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.roleKB')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.knowledgeGraph')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.codeProjectAnalysis')}</li>
                 </ul>
               </Card>
             </Col>
@@ -970,14 +970,14 @@ const LandingPage = ({ onEnterApp }) => {
             <Col xs={24} sm={12} md={8}>
               <Card className="feature-card" hoverable>
                 <SafetyOutlined className="feature-icon" />
-                <Title level={4}>企业级架构</Title>
+                <Title level={4}>{t('landingPage.features.enterpriseArch')}</Title>
                 <Paragraph>
-                  Spring Boot标准，可插拔设计，生产就绪
+                  {t('landingPage.features.enterpriseArchDesc')}
                 </Paragraph>
                 <ul className="feature-list">
-                  <li><CheckCircleOutlined /> 20+模块化设计</li>
-                  <li><CheckCircleOutlined /> 完整异常处理</li>
-                  <li><CheckCircleOutlined /> 编译100%通过</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.modularDesign')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.exceptionHandling')}</li>
+                  <li><CheckCircleOutlined /> {t('landingPage.features.compileSuccess')}</li>
                 </ul>
               </Card>
             </Col>
@@ -989,7 +989,7 @@ const LandingPage = ({ onEnterApp }) => {
       <section className="use-cases-section">
         <div className="container">
           <Title level={2} className="section-title">
-            全场景Agent应用
+            {t('landingPage.useCases.title')}
           </Title>
 
           <Row gutter={[32, 32]}>
@@ -997,16 +997,16 @@ const LandingPage = ({ onEnterApp }) => {
               <Card className="use-case-card" hoverable>
                 <div className="use-case-header">
                   <RocketOutlined className="use-case-icon" style={{ color: '#1890ff' }} />
-                  <Title level={3}>智能代码助手</Title>
+                  <Title level={3}>{t('landingPage.useCases.smartCodeAssistant')}</Title>
                 </div>
                 <Paragraph className="use-case-desc">
-                  类似 GitHub Copilot / Cursor 的智能编程助手
+                  {t('landingPage.useCases.smartCodeAssistantDesc')}
                 </Paragraph>
                 <ul className="use-case-list">
-                  <li><CheckCircleOutlined /> <strong>完整项目上下文</strong>：分析整个代码仓库，提供精准建议</li>
-                  <li><CheckCircleOutlined /> <strong>代码智能补全</strong>：基于项目风格和历史代码</li>
-                  <li><CheckCircleOutlined /> <strong>Bug检测</strong>：自动发现潜在问题并给出修复方案</li>
-                  <li><CheckCircleOutlined /> <strong>文档生成</strong>：自动生成API文档和注释</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.fullProjectContext')}</strong>{t('landingPage.useCases.fullProjectContextDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.smartCompletion')}</strong>{t('landingPage.useCases.smartCompletionDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.bugDetection')}</strong>{t('landingPage.useCases.bugDetectionDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.docGeneration')}</strong>{t('landingPage.useCases.docGenerationDesc')}</li>
                 </ul>
               </Card>
             </Col>
@@ -1015,16 +1015,16 @@ const LandingPage = ({ onEnterApp }) => {
               <Card className="use-case-card" hoverable>
                 <div className="use-case-header">
                   <ThunderboltOutlined className="use-case-icon" style={{ color: '#52c41a' }} />
-                  <Title level={3}>自动化测试平台</Title>
+                  <Title level={3}>{t('landingPage.useCases.autoTestPlatform')}</Title>
                 </div>
                 <Paragraph className="use-case-desc">
-                  智能测试用例生成与执行
+                  {t('landingPage.useCases.autoTestPlatformDesc')}
                 </Paragraph>
                 <ul className="use-case-list">
-                  <li><CheckCircleOutlined /> <strong>测试用例自动生成</strong>：基于代码逻辑生成测试</li>
-                  <li><CheckCircleOutlined /> <strong>边界条件识别</strong>：AI发现边界和异常场景</li>
-                  <li><CheckCircleOutlined /> <strong>回归测试</strong>：智能选择需要执行的测试</li>
-                  <li><CheckCircleOutlined /> <strong>测试报告分析</strong>：自动生成详细测试报告</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.testCaseGen')}</strong>{t('landingPage.useCases.testCaseGenDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.boundaryDetection')}</strong>{t('landingPage.useCases.boundaryDetectionDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.regressionTest')}</strong>{t('landingPage.useCases.regressionTestDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.testReportAnalysis')}</strong>{t('landingPage.useCases.testReportAnalysisDesc')}</li>
                 </ul>
               </Card>
             </Col>
@@ -1033,16 +1033,16 @@ const LandingPage = ({ onEnterApp }) => {
               <Card className="use-case-card" hoverable>
                 <div className="use-case-header">
                   <FileTextOutlined className="use-case-icon" style={{ color: '#faad14' }} />
-                  <Title level={3}>项目分析报告</Title>
+                  <Title level={3}>{t('landingPage.useCases.projectAnalysisReport')}</Title>
                 </div>
                 <Paragraph className="use-case-desc">
-                  深度项目洞察与优化建议
+                  {t('landingPage.useCases.projectAnalysisReportDesc')}
                 </Paragraph>
                 <ul className="use-case-list">
-                  <li><CheckCircleOutlined /> <strong>架构分析</strong>：评估系统架构合理性</li>
-                  <li><CheckCircleOutlined /> <strong>代码质量</strong>：检测代码smell和反模式</li>
-                  <li><CheckCircleOutlined /> <strong>安全审计</strong>：发现安全漏洞和风险点</li>
-                  <li><CheckCircleOutlined /> <strong>性能优化</strong>：识别性能瓶颈并给出建议</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.architectureAnalysis')}</strong>{t('landingPage.useCases.architectureAnalysisDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.codeQuality')}</strong>{t('landingPage.useCases.codeQualityDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.securityAudit')}</strong>{t('landingPage.useCases.securityAuditDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.performanceOptimization')}</strong>{t('landingPage.useCases.performanceOptimizationDesc')}</li>
                 </ul>
               </Card>
             </Col>
@@ -1051,16 +1051,16 @@ const LandingPage = ({ onEnterApp }) => {
               <Card className="use-case-card" hoverable>
                 <div className="use-case-header">
                   <CloudOutlined className="use-case-icon" style={{ color: '#722ed1' }} />
-                  <Title level={3}>企业Agent服务平台</Title>
+                  <Title level={3}>{t('landingPage.useCases.enterpriseAgentService')}</Title>
                 </div>
                 <Paragraph className="use-case-desc">
-                  构建分布式Agent服务生态
+                  {t('landingPage.useCases.enterpriseAgentServiceDesc')}
                 </Paragraph>
                 <ul className="use-case-list">
-                  <li><CheckCircleOutlined /> <strong>多租户隔离</strong>：企业级安全和权限管理</li>
-                  <li><CheckCircleOutlined /> <strong>Agent市场</strong>：发布和订阅各类专业Agent</li>
-                  <li><CheckCircleOutlined /> <strong>工作流编排</strong>：组合多个Agent完成复杂任务</li>
-                  <li><CheckCircleOutlined /> <strong>API网关</strong>：统一接口，灵活集成</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.multiTenantIsolation')}</strong>{t('landingPage.useCases.multiTenantIsolationDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.agentMarketplace')}</strong>{t('landingPage.useCases.agentMarketplaceDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.workflowOrchestration')}</strong>{t('landingPage.useCases.workflowOrchestrationDesc')}</li>
+                  <li><CheckCircleOutlined /> <strong>{t('landingPage.useCases.apiGateway')}</strong>{t('landingPage.useCases.apiGatewayDesc')}</li>
                 </ul>
               </Card>
             </Col>
@@ -1072,7 +1072,7 @@ const LandingPage = ({ onEnterApp }) => {
       <section className="tech-stack-section">
         <div className="container">
           <Title level={2} className="section-title">
-            技术栈
+            {t('landingPage.techStack.title')}
           </Title>
 
           <Row gutter={[24, 24]} justify="center">
@@ -1114,14 +1114,14 @@ const LandingPage = ({ onEnterApp }) => {
       <section className="quickstart-section">
         <div className="container">
           <Title level={2} className="section-title">
-            三步启动
+            {t('landingPage.quickStart.title')}
           </Title>
 
           <Row gutter={[32, 32]} justify="center">
             <Col xs={24} md={8}>
               <Card className="quickstart-card">
                 <div className="step-number">1</div>
-                <Title level={4}>克隆项目（二选一）</Title>
+                <Title level={4}>{t('landingPage.quickStart.step1Title')}</Title>
                 <div className="code-block">
                   <pre>{`# GitHub
 git clone https://github.com/jinhua10/omni-agent.git
@@ -1135,7 +1135,7 @@ git clone https://gitee.com/gnnu/omni-agent.git`}</pre>
             <Col xs={24} md={8}>
               <Card className="quickstart-card">
                 <div className="step-number">2</div>
-                <Title level={4}>启动后端</Title>
+                <Title level={4}>{t('landingPage.quickStart.step2Title')}</Title>
                 <div className="code-block">
                   <pre>{`mvn clean install -DskipTests
 
@@ -1149,7 +1149,7 @@ mvn spring-boot:run`}</pre>
             <Col xs={24} md={8}>
               <Card className="quickstart-card">
                 <div className="step-number">3</div>
-                <Title level={4}>启动前端</Title>
+                <Title level={4}>{t('landingPage.quickStart.step3Title')}</Title>
                 <div className="code-block">
                   <pre>{`cd UI
 
@@ -1168,7 +1168,7 @@ npm run dev`}</pre>
               icon={<RocketOutlined />}
               onClick={onEnterApp}
             >
-              体验在线Demo
+              {t('landingPage.quickStart.demoButton')}
             </Button>
           </div>
         </div>
@@ -1179,40 +1179,39 @@ npm run dev`}</pre>
         <div className="container">
           <Row gutter={48}>
             <Col xs={24} md={8}>
-              <Title level={4}>关于 OmniAgent</Title>
+              <Title level={4}>{t('landingPage.footer.aboutTitle')}</Title>
               <Paragraph>
-                基于知识域隔离的企业级智能知识管理平台，
-                让每个领域的知识独立闪耀。
+                {t('landingPage.footer.aboutDesc')}
               </Paragraph>
             </Col>
 
             <Col xs={24} md={8}>
-              <Title level={4}>快速链接</Title>
+              <Title level={4}>{t('landingPage.footer.quickLinks')}</Title>
               <ul className="footer-links">
                 <li><a href="https://github.com/jinhua10/omni-agent" target="_blank" rel="noopener noreferrer">
-                  <GithubOutlined /> GitHub
+                  <GithubOutlined /> {t('landingPage.footer.githubLink')}
                 </a></li>
                 <li><a href="https://gitee.com/gnnu" target="_blank" rel="noopener noreferrer">
-                  <GithubOutlined /> Gitee
+                  <GithubOutlined /> {t('landingPage.footer.giteeLink')}
                 </a></li>
                 <li><a href="https://yumbo.blog.csdn.net/" target="_blank" rel="noopener noreferrer">
-                  <BookOutlined /> 技术博客
+                  <BookOutlined /> {t('landingPage.footer.techBlogLink')}
                 </a></li>
               </ul>
             </Col>
 
             <Col xs={24} md={8}>
-              <Title level={4}>联系我们</Title>
+              <Title level={4}>{t('landingPage.footer.contactUs')}</Title>
               <ul className="footer-links">
-                <li><MailOutlined /> 1015770492@qq.com</li>
-                <li><GithubOutlined /> github.com/jinhua10</li>
+                <li><MailOutlined /> {t('landingPage.footer.email')}</li>
+                <li><GithubOutlined /> {t('landingPage.footer.github')}</li>
               </ul>
             </Col>
           </Row>
 
           <div className="footer-bottom">
             <Text type="secondary">
-              © 2025 OmniAgent. Apache License 2.0. Made with ❤️ by Jinhua Yu
+              {t('landingPage.footer.copyright')}
             </Text>
           </div>
         </div>
