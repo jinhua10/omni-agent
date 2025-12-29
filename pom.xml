@@ -23,9 +23,6 @@
     <modules>
         <!-- ========== API 层 (Interface Layer) - 已完成 ========== -->
 
-        <!-- 持久化 API (Persistence API) -->
-        <module>omni-agent-persistence-api</module>
-
         <!-- 文档存储 API (Document Storage API) -->
         <module>omni-agent-document-storage-api</module>
 
@@ -39,10 +36,19 @@
         <module>omni-agent-p2p-api</module>
 
         <!-- Voting API (Voting System API) -->
-        <module>omni-agent-voting-api</module>
+<!--        <module>omni-agent-voting-api</module>-->
 
         <!-- Behavior API (Behavior Analysis API) -->
-        <module>omni-agent-behavior-api</module>
+<!--        <module>omni-agent-behavior-api</module>-->
+
+        <!-- Knowledge Registry API (Knowledge Registry API) ⭐ Phase 1 -->
+        <module>omni-agent-knowledge-registry-api</module>
+
+        <!-- Chunking API (文档分块 API) ⭐ 新增 -->
+        <module>omni-agent-chunking-api</module>
+
+        <!-- Document Processor API (文档处理 API) ⭐ 新增 -->
+        <module>omni-agent-document-processor-api</module>
 
         <!-- ========== 通用工具模块 (Common Module) ========== -->
 
@@ -52,12 +58,18 @@
 
         <module>omni-agent-core</module>
 
+        <!-- ========== Starter 实现层 ========== -->
+
+        <!-- Chunking Starter (分块实现) ⭐ 新增 -->
+        <module>omni-agent-chunking-starter</module>
+
+        <!-- Document Processor Starter (文档处理实现) ⭐ 新增 -->
+        <module>omni-agent-document-processor-starter</module>
+
         <!-- ========== Web 层 (Web Layer) ========== -->
 
         <module>omni-agent-web</module>
 
-        <!-- PPL ONNX Service -->
-        <module>omni-agent-ppl-onnx</module>
 
         <!-- ========== 算法市场 (Algorithm Marketplace) ========== -->
 
@@ -67,64 +79,37 @@
 
         <module>omni-agent-workflow</module>
 
+
         <!-- ========== 以下模块待创建 ========== -->
 
 
-        <!-- 持久化 Starters (Persistence Starters) -->
-        <module>omni-agent-persistence-starter-memory</module>
-        <module>omni-agent-persistence-starter-file</module>
-        <module>omni-agent-persistence-starter-h2</module>
-        <module>omni-agent-persistence-starter-sqlite</module>
-        <module>omni-agent-persistence-starter-redis</module>
-        <module>omni-agent-persistence-starter-mongodb</module>
-        <module>omni-agent-persistence-starter-elasticsearch</module>
-
         <!-- 文档存储 Starters (Document Storage Starters) -->
-        <module>omni-agent-document-storage-starter-file</module>
-        <module>omni-agent-document-storage-starter-mongodb</module>
-        <module>omni-agent-document-storage-starter-redis</module>
-        <module>omni-agent-document-storage-starter-elasticsearch</module>
-        <module>omni-agent-document-storage-starter-s3</module>
-        <module>omni-agent-document-storage-starter-minio</module>
+        <module>omni-agent-document-storage-starter</module>
 
         <!-- OCR Starters (OCR 识别) -->
         <module>omni-agent-ocr-starter-tesseract</module>
 
         <!-- RAG Starters (RAG Starters) -->
-        <module>omni-agent-rag-starter-file</module>
-        <module>omni-agent-rag-starter-h2</module>
-        <module>omni-agent-rag-starter-sqlite</module>
-        <module>omni-agent-rag-starter-redis</module>
-        <module>omni-agent-rag-starter-mongodb</module>
-        <module>omni-agent-rag-starter-elasticsearch</module>
+        <module>omni-agent-rag-starter-adapter</module>
 
         <!-- AI Starters (AI Service Starters) -->
-        <module>omni-agent-ai-starter-ollama</module>
-        <module>omni-agent-ai-starter-online-api</module>
-        <module>omni-agent-ai-starter-onnx</module>
+        <module>omni-agent-ai-starter</module>
+
+
+        <!-- Knowledge Registry Starters ⭐ (知识库网络) -->
+        <module>omni-agent-knowledge-registry-starter</module>
+
 
         <!-- 应用示例 (Application Examples) -->
         <module>omni-agent-example-basic</module>
         <module>omni-agent-example-production</module>
 
         <!-- P2P Starters -->
-        <module>omni-agent-p2p-starter-memory</module>
-        <module>omni-agent-p2p-starter-h2</module>
-        <module>omni-agent-p2p-starter-sqlite</module>
-        <module>omni-agent-p2p-starter-redis</module>
-        <module>omni-agent-p2p-starter-mongodb</module>
-        <module>omni-agent-p2p-starter-elasticsearch</module>
+        <module>omni-agent-p2p-starter</module>
 
-        <!-- Voting Starters -->
-        <module>omni-agent-voting-starter-memory</module>
-        <module>omni-agent-voting-starter-redis</module>
-        <module>omni-agent-voting-starter-mongodb</module>
-        <module>omni-agent-voting-starter-elasticsearch</module>
 
-        <!-- Behavior Starters -->
-        <module>omni-agent-behavior-starter-memory</module>
-        <module>omni-agent-behavior-starter-redis</module>
-        <module>omni-agent-behavior-starter-mongodb</module>
+
+
     </modules>
 
     <!-- 开发者信息 -->
@@ -164,12 +149,16 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
 
+        <!-- Maven 编译器配置 -->
+        <maven.compiler.showWarnings>false</maven.compiler.showWarnings>
+
         <!-- 依赖版本 -->
         <spring-boot.version>3.4.1</spring-boot.version>
         <lombok.version>1.18.34</lombok.version>
         <lucene.version>9.10.0</lucene.version>
         <poi.version>5.5.0</poi.version>
         <tika.version>3.2.3</tika.version>
+        <pdfbox.version>2.0.30</pdfbox.version>
         <jackson.version>2.15.3</jackson.version>
 
         <!-- 安全版本覆盖 -->
@@ -259,6 +248,13 @@
                 <version>${tika.version}</version>
             </dependency>
 
+            <!-- Apache PDFBox (for PDF processing) ⭐ -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+
             <!-- 修复安全漏洞 -->
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -325,6 +321,9 @@
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <charset>${project.build.sourceEncoding}</charset>
                     <docencoding>${project.build.sourceEncoding}</docencoding>
+                    <failOnError>false</failOnError>
+                    <failOnWarnings>false</failOnWarnings>
+                    <quiet>true</quiet>
                 </configuration>
                 <executions>
                     <execution>

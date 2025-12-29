@@ -1,13 +1,15 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.omni.core.chunking.strategy.ChunkingStrategy;
+import top.yumbo.ai.omni.chunking.Chunk;
+import top.yumbo.ai.omni.chunking.ChunkingConfig;
+import top.yumbo.ai.omni.chunking.ChunkingStrategy;
+import top.yumbo.ai.omni.chunking.starter.strategy.ChunkingStrategyExecutor;
 import top.yumbo.ai.omni.marketplace.strategy.AbstractMarketplaceStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyExecutionException;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.*;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingOutput;
-import top.yumbo.ai.storage.api.model.Chunk;
 
 import java.util.List;
 import java.util.Map;
@@ -15,7 +17,7 @@ import java.util.Map;
 /**
  * 分块策略适配器基类
  *
- * 将现有的 ChunkingStrategy 适配到 MarketplaceStrategy 接口
+ * 将新的 ChunkingStrategyExecutor 适配到 MarketplaceStrategy 接口
  *
  * 使用适配器模式，保持现有分块策略不变，同时支持市场接口
  *
@@ -25,12 +27,16 @@ import java.util.Map;
 @Slf4j
 public abstract class ChunkingStrategyAdapter extends AbstractMarketplaceStrategy {
 
-    /** 被适配的分块策略 */
-    protected final ChunkingStrategy delegate;
+    /** 被适配的分块策略执行器 */
+    protected final ChunkingStrategyExecutor executor;
 
-    protected ChunkingStrategyAdapter(ChunkingStrategy delegate) {
-        this.delegate = delegate;
-        log.debug("创建分块策略适配器: {}", delegate.getStrategyName());
+    /** 策略类型 */
+    protected final ChunkingStrategy strategyType;
+
+    protected ChunkingStrategyAdapter(ChunkingStrategyExecutor executor, ChunkingStrategy strategyType) {
+        this.executor = executor;
+        this.strategyType = strategyType;
+        log.debug("创建分块策略适配器: {}", strategyType);
     }
 
     @Override
@@ -40,18 +46,18 @@ public abstract class ChunkingStrategyAdapter extends AbstractMarketplaceStrateg
 
     @Override
     public String getStrategyId() {
-        // 使用原策略名称生成ID
-        return "top.yumbo.ai.omni.chunking." + delegate.getStrategyName() + ".v1";
+        // 使用策略类型生成ID
+        return "top.yumbo.ai.omni.chunking." + strategyType.name().toLowerCase() + ".v1";
     }
 
     @Override
     public String getStrategyName() {
-        return delegate.getStrategyName();
+        return strategyType.name().toLowerCase();
     }
 
     @Override
     public String getDescription() {
-        return delegate.getDescription();
+        return strategyType.getDescription();
     }
 
     @Override
@@ -65,13 +71,8 @@ public abstract class ChunkingStrategyAdapter extends AbstractMarketplaceStrateg
     }
 
     @Override
-    public Map<String, Object> getDefaultParameters() {
-        return delegate.getDefaultParams();
-    }
-
-    @Override
     public List<String> getTags() {
-        return List.of("chunking", delegate.getStrategyName(), "built-in", "text-processing");
+        return List.of("chunking", strategyType.name().toLowerCase(), "built-in", "text-processing");
     }
 
     @Override
@@ -90,11 +91,14 @@ public abstract class ChunkingStrategyAdapter extends AbstractMarketplaceStrateg
 
             ChunkingInput chunkingInput = (ChunkingInput) input;
 
-            // 调用原分块策略
-            List<Chunk> chunks = delegate.chunk(
+            // 构建分块配置
+            ChunkingConfig config = buildConfig(params);
+
+            // 调用策略执行器
+            List<Chunk> chunks = executor.execute(
                     chunkingInput.getDocumentId(),
                     chunkingInput.getContent(),
-                    params
+                    config
             );
 
             log.debug("分块完成: documentId={}, chunks={}", chunkingInput.getDocumentId(), chunks.size());
@@ -112,11 +116,47 @@ public abstract class ChunkingStrategyAdapter extends AbstractMarketplaceStrateg
         }
     }
 
+    /**
+     * 从参数构建分块配置
+     */
+    protected ChunkingConfig buildConfig(Map<String, Object> params) {
+        if (params == null || params.isEmpty()) {
+            return ChunkingConfig.builder()
+                    .strategy(strategyType)
+                    .build();
+        }
+
+        ChunkingConfig.ChunkingConfigBuilder builder = ChunkingConfig.builder()
+                .strategy(strategyType);
+
+        // 通用参数
+        if (params.containsKey("maxChunkSize")) {
+            builder.maxChunkSize((Integer) params.get("maxChunkSize"));
+        }
+        if (params.containsKey("minChunkSize")) {
+            builder.minChunkSize((Integer) params.get("minChunkSize"));
+        }
+
+        // 固定长度策略参数
+        if (params.containsKey("chunkSize")) {
+            builder.fixedLengthSize((Integer) params.get("chunkSize"));
+        }
+        if (params.containsKey("overlapSize") || params.containsKey("overlap")) {
+            Object overlap = params.getOrDefault("overlapSize", params.get("overlap"));
+            builder.overlap((Integer) overlap);
+        }
+
+        // 语义分块参数
+        if (params.containsKey("similarityThreshold")) {
+            builder.semanticThreshold(((Number) params.get("similarityThreshold")).doubleValue());
+        }
+
+        return builder.build();
+    }
+
     @Override
     public SecurityLevel getSecurityLevel() {
         return SecurityLevel.SAFE;  // 内置策略，完全安全
     }
-
-
 }
 

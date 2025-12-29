@@ -4,6 +4,7 @@ description: "测试工作流"
 steps:
 - id: "step1"
   name: "第一步"
+  description: null
   agent: "EchoAgent"
   input: "${workflow.input}"
   config: null
@@ -14,6 +15,7 @@ steps:
   condition: null
 - id: "step2"
   name: "第二步"
+  description: null
   agent: "EchoAgent"
   input: "${step1.output}"
   config: null
@@ -26,9 +28,10 @@ steps:
 config: null
 version: "1.0.0"
 tags: null
+category: null
 metadata: null
-createdAt: 1766236868093
-updatedAt: 1766236868092
+createdAt: 1766857169493
+updatedAt: 1766857169493
 author: null
 status: "active"
 inputSchema: null

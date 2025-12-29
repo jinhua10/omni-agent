@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.web.model.RAGStrategyTemplate;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.io.File;
 import java.io.IOException;
@@ -423,3 +423,8 @@ public class SystemRAGConfigService {
         private long updatedAt = System.currentTimeMillis();
     }
 }
+
+
+
+
+

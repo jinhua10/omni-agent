@@ -248,7 +248,7 @@ themeApi.syncTheme(data)    // → PUT /api/themes/sync
 
 ### 2. Role 导入缺失
 - ❌ 之前：`Cannot resolve symbol 'Role'`
-- ✅ 现在：已添加 `import top.yumbo.ai.omni.core.role.Role;`
+- ✅ 现在：已添加 `import top.yumbo.ai.omni.knowledge.registry.role.Role;`
 
 ### 3. 主题API不存在
 - ❌ 之前：`GET /api/themes/list` 返回 404
@@ -306,7 +306,7 @@ omni-agent-example-basic/
 
 ```bash
 # 启动应用
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 
 # 测试主题API

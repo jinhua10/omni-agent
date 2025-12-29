@@ -1,7 +1,7 @@
 package top.yumbo.ai.omni.marketplace;
 
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.storage.api.model.OptimizationData;
+import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 
 import java.util.List;
 import java.util.Map;

@@ -51,11 +51,11 @@ class AlgorithmMarketServiceTest {
         String algorithmId = marketService.publishAlgorithm(algorithm);
         marketService.approveAlgorithm(algorithmId);
 
-        // 执行算法
+        // 执行算法 - 将查询作为 input 传递
         var result = marketService.executeMarketAlgorithm(
                 algorithmId,
-                "doc-123",
-                Map.of("query", query)
+                query,  // 使用查询作为输入，而不是 "doc-123"
+                Map.of()
         );
 
         // 验证结果
@@ -183,11 +183,11 @@ class AlgorithmMarketServiceTest {
         String algorithmId = marketService.publishAlgorithm(algorithm);
         marketService.approveAlgorithm(algorithmId);
 
-        // 执行算法
+        // 执行算法 - 传递搜索结果列表作为 input
         var result = marketService.executeMarketAlgorithm(
                 algorithmId,
-                "doc-123",
-                Map.of()
+                searchResults,  // 使用搜索结果作为输入
+                params  // 将参数传递到 context
         );
 
         // 验证结果

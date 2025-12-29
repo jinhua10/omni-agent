@@ -1,0 +1,21 @@
+# ========================================
+# 跨域查询配置
+# ========================================
+omni-agent:
+  cross-domain-query:
+    # 线程池配置
+    core-pool-size: 5           # 核心线程数
+    max-pool-size: 10           # 最大线程数
+    queue-capacity: 100         # 队列容量
+    thread-name-prefix: "CrossDomain-"  # 线程名称前缀
+    query-timeout: 30           # 查询超时时间（秒）
+
+  # 查询结果缓存配置
+  query-cache:
+    enabled: true               # 是否启用缓存
+    max-size: 1000              # 最大缓存条目数
+    ttl-minutes: 30             # 缓存过期时间（分钟）
+    persistence-enabled: true   # 是否启用持久化（重启后保留缓存）
+    persistence-prefix: "query-cache"  # 持久化存储前缀
+    warmup-enabled: true        # 是否启用预热（启动时加载热门查询）
+    warmup-size: 50             # 预热查询数量

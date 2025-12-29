@@ -4,12 +4,13 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.storage.api.DocumentStorageService;
-import top.yumbo.ai.storage.api.model.Chunk;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.Document;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.chunking.Chunk;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.Document;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ import java.util.List;
 public class DocumentQAService {
 
     private final DocumentStorageService storageService;
-    private final RAGService ragService;
+    private final RagService ragService;
     private final AIService aiService;
 
     /**
@@ -56,7 +57,10 @@ public class DocumentQAService {
             log.debug("获取文档分块: chunks={}", chunks.size());
 
             // 2. 使用RAG检索（假设文档已被索引）
-            List<SearchResult> results = ragService.searchByText(question, 5);
+            List<Document> documents = ragService.semanticSearch(question, 5);
+            List<SearchResult> results = documents.stream()
+                    .map(SearchResult::fromDocument)
+                    .toList();
 
             // 过滤出属于指定文档的结果
             List<SearchResult> docResults = results.stream()
@@ -78,7 +82,7 @@ public class DocumentQAService {
                             .build();
                         return SearchResult.builder()
                             .document(doc)
-                            .score(1.0f)
+                            .score(1.0)
                             .build();
                     })
                     .toList();
@@ -139,7 +143,10 @@ public class DocumentQAService {
             }
 
             // 2. 检索相关分块
-            List<SearchResult> results = ragService.searchByText(question, 5);
+            List<Document> documents = ragService.semanticSearch(question, 5);
+            List<SearchResult> results = documents.stream()
+                    .map(SearchResult::fromDocument)
+                    .toList();
 
             // 过滤出属于指定文档的结果
             List<SearchResult> docResults = results.stream()
@@ -158,7 +165,7 @@ public class DocumentQAService {
                             .build();
                         return SearchResult.builder()
                             .document(doc)
-                            .score(1.0f)
+                            .score(1.0)
                             .build();
                     })
                     .toList();
@@ -178,8 +185,8 @@ public class DocumentQAService {
             context.append("问题：").append(question);
 
             // 4. 流式生成答案
-            List<top.yumbo.ai.ai.api.model.ChatMessage> messages = List.of(
-                top.yumbo.ai.ai.api.model.ChatMessage.builder()
+            List<ChatMessage> messages = List.of(
+                ChatMessage.builder()
                     .role("user")
                     .content(context.toString())
                     .build()
@@ -217,4 +224,8 @@ public class DocumentQAService {
         private String errorMessage;
     }
 }
+
+
+
+
 

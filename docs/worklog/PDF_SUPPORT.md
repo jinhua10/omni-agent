@@ -216,7 +216,7 @@ omni-agent:
 
 ```bash
 # 启动应用
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 
 # 访问 http://localhost:8080
@@ -230,7 +230,7 @@ mvn spring-boot:run
 ```yaml
 logging:
   level:
-    top.yumbo.ai.omni.core.document.processor.VisionLLMDocumentProcessor: DEBUG
+    top.yumbo.ai.omni.document.processor.starter.processor.VisionLLMDocumentProcessor: DEBUG
 ```
 
 预期输出：

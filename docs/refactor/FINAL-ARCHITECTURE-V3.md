@@ -245,7 +245,7 @@ omni-agent:
   persistence:
     type: elasticsearch
     elasticsearch:
-      host: es-cluster.example.com:9200
+      host: es-cluster.p2p.com:9200
       
   document-storage:
     type: s3
@@ -256,7 +256,7 @@ omni-agent:
   rag:
     type: elasticsearch
     elasticsearch:
-      host: es-cluster.example.com:9200
+      host: es-cluster.p2p.com:9200
       
   ai:
     type: online-api

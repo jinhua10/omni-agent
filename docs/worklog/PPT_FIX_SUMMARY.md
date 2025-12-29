@@ -98,13 +98,13 @@ for (XSLFSlide slide : slides) {
 
 ```bash
 cd D:\Jetbrains\omni-agent
-mvn install -pl omni-agent-core,omni-agent-web,omni-agent-example-basic -am -DskipTests
+mvn install -pl omni-agent-core,omni-agent-web,omni-agent-p2p-basic -am -DskipTests
 ```
 
 ### 启动
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

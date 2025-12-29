@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import top.yumbo.ai.ai.api.config.VisionLLMProperties;
+import top.yumbo.ai.omni.ai.starter.config.VisionLLMProperties;
 import top.yumbo.ai.omni.web.util.DocumentParser;
 import top.yumbo.ai.omni.web.util.parser.SimpleDocumentParser;
 import top.yumbo.ai.omni.web.util.parser.image.SmartImageExtractor;
@@ -73,4 +73,9 @@ public class DocumentParserConfig {
         return parser;
     }
 }
+
+
+
+
+
 

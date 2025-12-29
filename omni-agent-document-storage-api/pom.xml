@@ -46,6 +46,12 @@
             <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-chunking-api</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 </project>

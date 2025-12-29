@@ -39,3 +39,8 @@ public class PlaceholderImageStrategy implements ImageContentExtractorStrategy {
     }
 }
 
+
+
+
+
+

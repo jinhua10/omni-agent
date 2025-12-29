@@ -46,3 +46,8 @@ public interface ImageContentExtractorStrategy {
     boolean isAvailable();
 }
 
+
+
+
+
+

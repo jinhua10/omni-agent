@@ -306,7 +306,7 @@ public class SystemRAGConfigController {
     private String getExtractedText(String documentId) {
         try {
             // 从存储中获取提取的文本
-            java.nio.file.Path textPath = java.nio.file.Paths.get("data/extracted", documentId + ".txt");
+            java.nio.file.Path textPath = java.nio.file.Paths.get("data/extracted", documentId + ".md");
             if (java.nio.file.Files.exists(textPath)) {
                 return new String(java.nio.file.Files.readAllBytes(textPath), java.nio.charset.StandardCharsets.UTF_8);
             }
@@ -756,4 +756,9 @@ public class SystemRAGConfigController {
         private String description;
     }
 }
+
+
+
+
+
 

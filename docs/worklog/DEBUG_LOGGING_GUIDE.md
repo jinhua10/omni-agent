@@ -28,7 +28,7 @@ logging:
     # 核心功能日志
     top.yumbo.ai.omni.core: DEBUG
     # 特定组件日志（更细粒度控制）
-    top.yumbo.ai.omni.core.document.processor.VisionLLMDocumentProcessor: DEBUG
+    top.yumbo.ai.omni.document.processor.starter.processor.VisionLLMDocumentProcessor: DEBUG
     top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager: DEBUG
     top.yumbo.ai.omni.core.query.QueryService: DEBUG
 ```
@@ -42,14 +42,14 @@ $env:LOGGING_LEVEL_TOP_YUMBO_AI_RAG="DEBUG"
 $env:LOGGING_LEVEL_TOP_YUMBO_AI_OMNI_CORE="DEBUG"
 
 # 启动应用
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 
 ### 方法 3: 命令行参数
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run -Dspring-boot.run.arguments="--logging.level.top.yumbo.ai.ai.ollama=DEBUG --logging.level.top.yumbo.ai.rag=DEBUG --logging.level.top.yumbo.ai.omni.core=DEBUG"
 ```
 
@@ -158,7 +158,7 @@ DEBUG [QueryService] 🔎 [Query] Result #2: score=0.8876, docId=chunk_034, cont
 ```yaml
 logging:
   level:
-    top.yumbo.ai.ai.ollama.OllamaAIService: DEBUG
+    top.yumbo.ai.omni.ai.ollama.OllamaAIService: DEBUG
 ```
 
 ### 只看 RAG 检索过程
@@ -166,7 +166,7 @@ logging:
 ```yaml
 logging:
   level:
-    top.yumbo.ai.rag.sqlite.SQLiteRAGService: DEBUG
+    top.yumbo.ai.omni.rag.sqlite.SQLiteRAGService: DEBUG
     top.yumbo.ai.omni.core.query.QueryService: DEBUG
 ```
 
@@ -175,7 +175,7 @@ logging:
 ```yaml
 logging:
   level:
-    top.yumbo.ai.omni.core.document.processor.VisionLLMDocumentProcessor: DEBUG
+    top.yumbo.ai.omni.document.processor.starter.processor.VisionLLMDocumentProcessor: DEBUG
     top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager: DEBUG
 ```
 
@@ -232,8 +232,8 @@ Get-Content logs.txt -Wait -Tail 50
 ```yaml
 logging:
   level:
-    top.yumbo.ai.omni.core.document.processor.VisionLLMDocumentProcessor: DEBUG
-    top.yumbo.ai.ai.ollama.OllamaAIService: DEBUG
+    top.yumbo.ai.omni.document.processor.starter.processor.VisionLLMDocumentProcessor: DEBUG
+    top.yumbo.ai.omni.ai.ollama.OllamaAIService: DEBUG
 ```
 
 查看：
@@ -248,7 +248,7 @@ logging:
 ```yaml
 logging:
   level:
-    top.yumbo.ai.rag.sqlite.SQLiteRAGService: DEBUG
+    top.yumbo.ai.omni.rag.sqlite.SQLiteRAGService: DEBUG
     top.yumbo.ai.omni.core.query.QueryService: DEBUG
 ```
 
@@ -304,7 +304,7 @@ logging:
 使用：
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run -Dspring-boot.run.profiles=debug
 ```
 

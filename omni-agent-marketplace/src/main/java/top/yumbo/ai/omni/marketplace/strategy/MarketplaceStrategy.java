@@ -31,7 +31,7 @@ public interface MarketplaceStrategy {
     /**
      * 获取策略ID（全局唯一）
      * 格式：{namespace}.{category}.{name}.{version}
-     * 示例：com.example.chunking.semantic.v1
+     * 示例：com.p2p.chunking.semantic.v1
      */
     String getStrategyId();
 

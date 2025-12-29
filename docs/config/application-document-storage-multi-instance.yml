@@ -1,0 +1,151 @@
+# 文档存储多实例配置示例
+
+## 单实例配置（最简单）
+```yaml
+omni-agent:
+  document-storage:
+    instances:
+      - id: default
+        type: file
+        primary: true
+```
+
+
+
+## 零配置（自动使用 File 存储）
+```yaml
+# 不配置任何内容，系统会自动创建默认的 File 实例
+omni-agent:
+  document-storage:
+    # 留空即可
+```
+
+## 多实例配置（完整示例）
+```yaml
+omni-agent:
+  document-storage:
+    instances:
+      # 实例 1: File 存储（开发环境）
+      - id: dev-storage
+        name: "开发环境存储"
+        type: file
+        primary: true
+        file:
+          base-directory: data/documents/dev
+
+      # 实例 2: MongoDB 存储（生产环境）
+      - id: prod-storage
+        name: "生产环境存储"
+        type: mongodb
+        mongodb:
+          database: omni-agent-prod
+          chunk-collection: document_chunks
+          image-collection: document_images
+
+      # 实例 3: Redis 存储（缓存）
+      - id: cache-storage
+        name: "缓存存储"
+        type: redis
+        redis:
+          key-prefix: "omni:cache:"
+          ttl: 3600  # 1小时过期
+
+      # 实例 4: S3 存储（云端）
+      - id: cloud-storage
+        name: "云端存储"
+        type: s3
+        s3:
+          bucket-name: omni-agent-docs
+          endpoint: https://s3.amazonaws.com
+          access-key: ${AWS_ACCESS_KEY}
+          secret-key: ${AWS_SECRET_KEY}
+          region: us-east-1
+
+      # 实例 5: MinIO 存储（私有云）
+      - id: minio-storage
+        name: "MinIO存储"
+        type: minio
+        minio:
+          endpoint: http://localhost:9000
+          access-key: minioadmin
+          secret-key: minioadmin
+          bucket-name: omni-agent
+
+      # 实例 6: Elasticsearch 存储（搜索）
+      - id: search-storage
+        name: "搜索存储"
+        type: elasticsearch
+        elasticsearch:
+          chunk-index: document-chunks
+          image-index: document-images
+          document-index: documents
+```
+
+## 使用方式
+
+### 方式1: 注入主实例
+```java
+@Service
+public class MyService {
+    @Autowired
+    private DocumentStorageService storageService;  // 自动注入 primary 实例
+    
+    public void saveDoc(String docId, byte[] data) {
+        storageService.saveDocument(docId, "file.pdf", data);
+    }
+}
+```
+
+### 方式2: 使用注册表
+```java
+@Service
+@RequiredArgsConstructor
+public class MyService {
+    private final DocumentStorageRegistry registry;
+    
+    public void saveToMultiple(String docId, byte[] data) {
+        // 保存到开发环境
+        DocumentStorageService devStorage = registry.getServiceOrThrow("dev-storage");
+        devStorage.saveDocument(docId, "file.pdf", data);
+        
+        // 同时保存到生产环境
+        DocumentStorageService prodStorage = registry.getServiceOrThrow("prod-storage");
+        prodStorage.saveDocument(docId, "file.pdf", data);
+    }
+}
+```
+
+### 方式3: 注入所有实例
+```java
+@Service
+public class MyService {
+    @Autowired
+    private Map<String, DocumentStorageService> storageServices;
+    
+    public void saveToAll(String docId, byte[] data) {
+        for (Map.Entry<String, DocumentStorageService> entry : storageServices.entrySet()) {
+            String id = entry.getKey();
+            DocumentStorageService service = entry.getValue();
+            service.saveDocument(docId, "file.pdf", data);
+        }
+    }
+}
+```
+
+## 兜底机制
+
+1. **零配置** - 自动创建 File 存储
+2. **实例创建失败** - 自动降级为 File 存储
+3. **依赖未注入** - 自动降级为 File 存储
+
+## 支持的存储类型
+
+| 类型 | 说明 | 依赖要求 |
+|------|------|---------|
+| file | 文件系统存储 | 无（默认） |
+| mongodb | MongoDB GridFS | MongoTemplate |
+| redis | Redis Hash | RedisTemplate |
+| s3 | AWS S3 | S3Client |
+| minio | MinIO 对象存储 | MinioClient |
+| elasticsearch | Elasticsearch | ElasticsearchClient |
+

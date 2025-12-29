@@ -17,20 +17,7 @@
     <description>核心业务逻辑层 - 只依赖API接口，不依赖具体实现</description>
 
     <dependencies>
-        <!-- Spring Boot Starter -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-
         <!-- ========== API 依赖（只依赖接口） ========== -->
-
-        <!-- Persistence API -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- Document Storage API -->
         <dependency>
@@ -60,20 +47,15 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- PPL ONNX Service (Optional) -->
+        <!-- Knowledge Registry API      -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-ppl-onnx</artifactId>
+            <artifactId>omni-agent-knowledge-registry-api</artifactId>
             <version>${project.version}</version>
-            <optional>true</optional>
+            <scope>compile</scope>
         </dependency>
 
-        <!-- Voting API -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-voting-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
 
         <!-- ========== 工具库 ========== -->
 
@@ -118,7 +100,6 @@
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>2.0.30</version>
         </dependency>
 
         <!-- Apache Tika (for document parsing) -->
@@ -132,7 +113,10 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
 
         <!-- ========== 测试依赖 ========== -->
 
@@ -155,6 +139,8 @@
             <version>1.37</version>
             <scope>test</scope>
         </dependency>
+
+
     </dependencies>
 
 </project>

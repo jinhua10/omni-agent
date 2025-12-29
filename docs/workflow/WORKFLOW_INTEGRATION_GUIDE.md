@@ -90,7 +90,7 @@ description: "数据处理示例工作流"
 author: "Your Name"
 tags:
   - "data"
-  - "example"
+  - "p2p"
 
 steps:
   # 步骤1：转换数据
@@ -118,7 +118,7 @@ import top.yumbo.ai.omni.workflow.WorkflowEngine;
 import top.yumbo.ai.omni.workflow.WorkflowResult;
 
 @RestController
-@RequestMapping("/api/example")
+@RequestMapping("/api/p2p")
 public class ExampleController {
 
     @Autowired

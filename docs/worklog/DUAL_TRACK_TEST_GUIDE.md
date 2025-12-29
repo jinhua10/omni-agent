@@ -12,7 +12,7 @@ cd D:\Jetbrains\omni-agent
 或者手动启动：
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

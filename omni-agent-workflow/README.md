@@ -112,7 +112,7 @@ description: "我的工作流"
 author: "Your Name"
 status: "active"
 tags:
-  - "example"
+  - "p2p"
 
 steps:
   - id: "step1"

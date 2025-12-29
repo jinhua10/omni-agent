@@ -3,11 +3,11 @@ package top.yumbo.ai.example.production.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.ai.api.model.AIResponse;
-import top.yumbo.ai.ai.api.model.ChatMessage;
-import top.yumbo.ai.storage.api.DocumentStorageService;
-import top.yumbo.ai.storage.api.model.StorageStatistics;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.model.AIResponse;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.model.StorageStatistics;
 
 import java.util.ArrayList;
 import java.util.HashMap;

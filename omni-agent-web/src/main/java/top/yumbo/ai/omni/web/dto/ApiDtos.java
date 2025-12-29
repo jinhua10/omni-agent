@@ -1,8 +1,8 @@
 package top.yumbo.ai.omni.web.dto;
 
 import lombok.Data;
-import top.yumbo.ai.ai.api.model.ChatMessage;
-import top.yumbo.ai.rag.api.model.Document;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.rag.model.Document;
 
 import java.util.List;
 
@@ -66,9 +66,10 @@ public class ApiDtos {
     @Data
     public static class QuestionRequest {
         private String question;
-        private String knowledgeMode; // none, rag, role
+        private String knowledgeMode; // none, rag, role, intelligent
         private String roleName;
-        private String hopeSessionId;
+        private String hopeSessionId;  // 用于多轮对话
+        private String userId;  // 用于智能问答模式
     }
 
     /**
@@ -99,4 +100,9 @@ public class ApiDtos {
         private long timestamp;
     }
 }
+
+
+
+
+
 

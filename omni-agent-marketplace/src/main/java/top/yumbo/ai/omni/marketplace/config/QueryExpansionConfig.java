@@ -63,7 +63,7 @@ public class QueryExpansionConfig {
      * (Domain word mapping)
      */
     private Map<String, String[]> domainWords = new HashMap<>() {{
-        put("spring", new String[]{"boot", "framework", "cloud"});
+        put("META-INF/spring/spring", new String[]{"boot", "framework", "cloud"});
         put("java", new String[]{"jdk", "jvm", "maven"});
         put("数据库", new String[]{"mysql", "postgresql", "mongodb"});
         put("缓存", new String[]{"redis", "memcached", "caffeine"});

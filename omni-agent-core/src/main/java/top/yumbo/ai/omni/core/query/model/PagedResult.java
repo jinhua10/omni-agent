@@ -1,7 +1,7 @@
 package top.yumbo.ai.omni.core.query.model;
 
 import lombok.Getter;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
 
@@ -92,4 +92,5 @@ public class PagedResult {
         return searchResults.subList(fromIndex, toIndex);
     }
 }
+
 

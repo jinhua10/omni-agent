@@ -79,7 +79,7 @@ public class WorkflowConfiguration {
 @SpringBootApplication
 @EnableScheduling
 @ComponentScan(basePackages = {
-    "top.yumbo.ai.omni.example.basic",
+    "top.yumbo.ai.omni.p2p.basic",
     "top.yumbo.ai.omni.core",
     "top.yumbo.ai.omni.marketplace",
     "top.yumbo.ai.omni.web",
@@ -100,7 +100,7 @@ cd D:\Jetbrains\omni-agent
 mvn clean install -DskipTests -pl omni-agent-workflow -am
 
 # 2. 启动示例应用
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

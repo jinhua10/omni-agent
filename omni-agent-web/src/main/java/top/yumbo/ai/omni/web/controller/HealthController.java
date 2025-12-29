@@ -1,14 +1,14 @@
 package top.yumbo.ai.omni.web.controller;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.persistence.api.QuestionClassifierPersistence;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,13 +24,19 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api")
-@RequiredArgsConstructor
 public class HealthController {
 
-    private final QuestionClassifierPersistence persistence;
-    private final DocumentStorageService storageService;
-    private final RAGService ragService;
-    private final AIService aiService;
+    @Autowired(required = false)
+    private KnowledgeRegistry knowledgeRegistry;
+
+    @Autowired
+    private DocumentStorageService storageService;
+
+    @Autowired
+    private RagService ragService;
+
+    @Autowired
+    private AIService aiService;
 
     /**
      * 健康检查
@@ -41,13 +47,20 @@ public class HealthController {
     public Map<String, Object> health() {
         Map<String, Object> result = new HashMap<>();
         result.put("status", "UP");
-        result.put("persistence", persistence.getClass().getSimpleName());
+        result.put("knowledgeRegistry", knowledgeRegistry != null ?
+                knowledgeRegistry.getClass().getSimpleName() : "Not Available");
         result.put("documentStorage", storageService.getClass().getSimpleName());
         result.put("rag", ragService.getClass().getSimpleName());
         result.put("ai", aiService.getClass().getSimpleName());
         result.put("aiModel", aiService.getCurrentModel());
-        result.put("message", "OmniAgent is running with pluggable architecture!");
+        result.put("message", "OmniAgent is running" +
+                (knowledgeRegistry != null ? " with Knowledge Network Architecture!" : "!"));
         return result;
     }
 }
+
+
+
+
+
 

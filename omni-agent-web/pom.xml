@@ -38,6 +38,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Knowledge Registry File Starter ⭐ Phase 1 -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-knowledge-registry-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Boot Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -77,6 +84,24 @@
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-document-processor-starter</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-chunking-starter</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-rag-starter-adapter</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

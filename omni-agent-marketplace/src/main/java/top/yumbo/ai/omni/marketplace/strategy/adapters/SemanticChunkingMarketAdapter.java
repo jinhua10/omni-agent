@@ -1,7 +1,10 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.core.chunking.strategy.SemanticChunkingStrategy;
+import top.yumbo.ai.omni.chunking.ChunkingStrategy;
+import top.yumbo.ai.omni.chunking.starter.strategy.SemanticStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.UsageExample;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 
@@ -15,10 +18,12 @@ import java.util.Map;
  * @since 3.0.0
  */
 @Component
+@ConditionalOnBean(SemanticStrategy.class)
 public class SemanticChunkingMarketAdapter extends ChunkingStrategyAdapter {
 
-    public SemanticChunkingMarketAdapter(SemanticChunkingStrategy delegate) {
-        super(delegate);
+    @Autowired
+    public SemanticChunkingMarketAdapter(SemanticStrategy executor) {
+        super(executor, ChunkingStrategy.SEMANTIC);
     }
 
     @Override

@@ -1,7 +1,11 @@
 package top.yumbo.ai.omni.marketplace.strategy.adapters;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.core.chunking.strategy.PPLChunkingStrategy;
+import top.yumbo.ai.omni.chunking.ChunkingStrategy;
+import top.yumbo.ai.omni.chunking.starter.strategy.PPLChunkingStrategy;
 import top.yumbo.ai.omni.marketplace.strategy.StrategyTypes.UsageExample;
 import top.yumbo.ai.omni.marketplace.strategy.adapters.model.ChunkingInput;
 
@@ -9,16 +13,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * PPL 困惑度分块策略 - 市场适配器
+ * PPL 智能分块策略 - 市场适配器
  *
  * @author OmniAgent Team
  * @since 3.0.0
  */
 @Component
+@ConditionalOnClass(name = "top.yumbo.ai.omni.ppl.onnx.PPLService")
+@ConditionalOnBean(PPLChunkingStrategy.class)
 public class PPLChunkingMarketAdapter extends ChunkingStrategyAdapter {
 
-    public PPLChunkingMarketAdapter(PPLChunkingStrategy delegate) {
-        super(delegate);
+    @Autowired
+    public PPLChunkingMarketAdapter(PPLChunkingStrategy executor) {
+        super(executor, ChunkingStrategy.PPL);
     }
 
     @Override
@@ -27,26 +34,26 @@ public class PPLChunkingMarketAdapter extends ChunkingStrategyAdapter {
             {
               "type": "object",
               "properties": {
+                "pplThreshold": {
+                  "type": "number",
+                  "description": "困惑度阈值",
+                  "default": 2.0,
+                  "minimum": 0.5,
+                  "maximum": 10.0
+                },
                 "minChunkSize": {
                   "type": "integer",
                   "description": "最小分块大小（字符数）",
                   "default": 200,
-                  "minimum": 100,
-                  "maximum": 2000
+                  "minimum": 50,
+                  "maximum": 1000
                 },
                 "maxChunkSize": {
                   "type": "integer",
                   "description": "最大分块大小（字符数）",
-                  "default": 800,
+                  "default": 1500,
                   "minimum": 500,
                   "maximum": 5000
-                },
-                "threshold": {
-                  "type": "number",
-                  "description": "困惑度阈值（0-1）",
-                  "default": 0.3,
-                  "minimum": 0,
-                  "maximum": 1
                 }
               }
             }
@@ -54,35 +61,21 @@ public class PPLChunkingMarketAdapter extends ChunkingStrategyAdapter {
     }
 
     @Override
-    public String getDescription() {
-        return "基于困惑度的智能分块策略，在主题转换点切分。" +
-               "支持简化版（词汇重叠度）和ONNX版（真实语言模型）两种模式。";
-    }
-
-    @Override
     public List<UsageExample> getExamples() {
         return List.of(
             UsageExample.builder()
-                .title("API文档分块")
-                .description("检测接口边界，在主题转换处切分")
-                .input(new ChunkingInput("api_doc", "POST /api/users\n\n创建用户...\n\nGET /api/users\n\n获取用户..."))
-                .parameters(Map.of("threshold", 0.3))
-                .expectedOutput("在接口边界处切分的分块列表")
-                .build(),
-
-            UsageExample.builder()
-                .title("长篇文章分块")
-                .description("检测主题转换，保持主题完整性")
-                .input(new ChunkingInput("article", "第一章...\n\n第二章..."))
-                .parameters(Map.of("minChunkSize", 200, "maxChunkSize", 800))
-                .expectedOutput("主题完整的分块列表")
+                .title("高精度代码分块")
+                .description("使用 PPL 模型智能识别代码边界")
+                .input(new ChunkingInput("code_java", "public class Main { ... }"))
+                .parameters(Map.of("pplThreshold", 2.0))
+                .expectedOutput("高精度分块列表")
                 .build()
         );
     }
 
     @Override
     public List<String> getTags() {
-        return List.of("chunking", "ppl", "perplexity", "ai-powered", "smart", "onnx-optional", "built-in");
+        return List.of("chunking", "ppl", "ai-powered", "high-precision", "built-in");
     }
 }
 

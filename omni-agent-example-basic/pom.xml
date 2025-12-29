@@ -36,27 +36,12 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- ========== 七维可插拔 Starters - 冗余备份方案 ========== -->
+        <!-- ========== 可插拔 Starters ========== -->
 
-        <!-- 1. Persistence Starters - 异构冗余 -->
-        <!-- 主存储：SQLite（本地轻量级数据库） -->
+        <!-- 1. Knowledge Registry Starter（知识注册表） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-starter-sqlite</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- 备份1：File（文件系统备份） -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-starter-file</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- 备份2：H2（嵌入式数据库备份） -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-persistence-starter-h2</artifactId>
+            <artifactId>omni-agent-knowledge-registry-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -64,7 +49,7 @@
         <!-- 主存储：File（本地文件系统） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-document-storage-starter-file</artifactId>
+            <artifactId>omni-agent-document-storage-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -72,37 +57,17 @@
         <!-- 主检索：Lucene（高性能全文检索） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-rag-starter-file</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- 备份检索：SQLite FTS5（备用全文检索） -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-rag-starter-sqlite</artifactId>
+            <artifactId>omni-agent-rag-starter-adapter</artifactId>
             <version>${project.version}</version>
         </dependency>
 
         <!-- 4. AI Starter - 使用本地 Ollama -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-ai-starter-ollama</artifactId>
+            <artifactId>omni-agent-ai-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
 
-        <!-- AI Starter - 使用在线 API -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-ai-starter-online-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- Embedding Starter - ONNX 本地向量化（可选，默认禁用） -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-ai-starter-onnx</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- ========== 工作流引擎 ⭐ NEW ========== -->
         <dependency>
@@ -111,12 +76,7 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- PPL ONNX - 用于高精度困惑度分块（可选） -->
-        <dependency>
-            <groupId>top.yumbo.ai.omni</groupId>
-            <artifactId>omni-agent-ppl-onnx</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
 
         <!-- OkHttp - 用于 Vision LLM HTTP 请求 -->
         <dependency>

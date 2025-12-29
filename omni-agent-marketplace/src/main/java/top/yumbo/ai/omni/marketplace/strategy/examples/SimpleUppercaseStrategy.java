@@ -74,7 +74,7 @@ public class SimpleUppercaseStrategy extends AbstractMarketplaceStrategy {
 
     @Override
     public List<String> getTags() {
-        return List.of("text", "transform", "example", "simple");
+        return List.of("text", "transform", "p2p", "simple");
     }
 
     @Override

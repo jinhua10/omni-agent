@@ -806,7 +806,7 @@ mvn clean install -DskipTests
 
 ### 3. 运行基础示例
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

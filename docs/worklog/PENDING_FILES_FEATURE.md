@@ -607,7 +607,7 @@ public Map<String, Object> cancelPendingFile(@PathVariable String fileName) {
 
 1. **启动应用**
    ```bash
-   cd omni-agent-example-basic
+   cd omni-agent-p2p-basic
    mvn spring-boot:run
    ```
 

@@ -176,7 +176,7 @@ graphics.dispose();
 
 ```bash
 cd D:\Jetbrains\omni-agent
-mvn clean install -pl omni-agent-core,omni-agent-web,omni-agent-example-basic -am -DskipTests
+mvn clean install -pl omni-agent-core,omni-agent-web,omni-agent-p2p-basic -am -DskipTests
 ```
 
 ### 重新上传
@@ -189,7 +189,7 @@ rm -rf data/storage/images/绿色环保能源灯泡——.ppt
 
 2. 启动应用：
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

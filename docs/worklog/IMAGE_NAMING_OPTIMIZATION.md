@@ -200,7 +200,7 @@ ls data/storage/images/*/page_001_* | wc -l
 ### 上传 PPT 文档
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

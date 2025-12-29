@@ -241,7 +241,7 @@ public class DocumentStorage { }       // 缺少后端信息
  *
  * @author OmniAgent Team
  * @since 1.0.0
- * @see top.yumbo.ai.storage.api.DocumentStorageService 文档和内容存储服务
+ * @see top.yumbo.ai.omni.storage.api.DocumentStorageService 文档和内容存储服务
  */
 public interface {Domain}Persistence {
     // ...
@@ -273,7 +273,7 @@ public interface {Domain}Persistence {
  *
  * @author OmniAgent Team
  * @since 1.0.0
- * @see top.yumbo.ai.persistence.api.QuestionClassifierPersistence 配置和元数据持久化服务
+ * @see top.yumbo.ai.omni.persistence.api.QuestionClassifierPersistence 配置和元数据持久化服务
  */
 public interface {Domain}StorageService {
     // ...

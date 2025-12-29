@@ -94,7 +94,7 @@ Phase 4为OmniAgent RAG系统添加了**完整的可视化和配置管理**功�
 ### 1. 启动后端
 
 ```bash
-cd omni-agent-example-basic
+cd omni-agent-p2p-basic
 mvn spring-boot:run
 ```
 

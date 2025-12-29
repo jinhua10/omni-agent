@@ -2,7 +2,7 @@ package top.yumbo.ai.p2p.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import top.yumbo.ai.p2p.api.*;
+import top.yumbo.ai.omni.p2p.api.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -417,3 +417,4 @@ public class DefaultP2PConnectionManager implements P2PConnectionManager {
         }
     }
 }
+

@@ -4,15 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import top.yumbo.ai.ai.api.AIService;
-import top.yumbo.ai.ai.api.model.AIRequest;
-import top.yumbo.ai.ai.api.model.AIResponse;
-import top.yumbo.ai.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.ai.api.model.AIRequest;
+import top.yumbo.ai.omni.ai.api.model.AIResponse;
+import top.yumbo.ai.omni.ai.api.model.ChatMessage;
+import top.yumbo.ai.omni.knowledge.registry.qa.util.ContextBuilder;
 import top.yumbo.ai.omni.web.dto.ApiDtos.*;
-import top.yumbo.ai.omni.web.util.ContextBuilder;
 import top.yumbo.ai.omni.web.util.JsonUtil;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.rag.api.model.SearchResult;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +42,7 @@ import java.util.Map;
 public class AIServiceController {
 
     private final AIService aiService;
-    private final RAGService ragService;
+    private final RagService ragService;
 
     /**
      * AI 简单对话
@@ -319,10 +319,15 @@ public class AIServiceController {
 
         try {
             // 1. 使用 RAG 检索相关文档
-            List<SearchResult> searchResults = ragService.searchByText(
+            var documents = ragService.semanticSearch(
                     request.getQuestion(),
                     request.getTopK() != null ? request.getTopK() : 5
             );
+
+            // 转换为 SearchResult
+            List<SearchResult> searchResults = documents.stream()
+                    .map(SearchResult::fromDocument)
+                    .toList();
 
             // 2. 构建上下文
             String context = ContextBuilder.buildContext(searchResults);
@@ -404,4 +409,9 @@ public class AIServiceController {
         }
     }
 }
+
+
+
+
+
 

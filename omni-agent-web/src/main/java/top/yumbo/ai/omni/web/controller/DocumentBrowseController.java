@@ -8,7 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -294,4 +294,9 @@ public class DocumentBrowseController {
         return String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024));
     }
 }
+
+
+
+
+
 

@@ -191,7 +191,7 @@ spec:
 java -Xms2g -Xmx4g \
      -XX:+UseG1GC \
      -XX:MaxGCPauseMillis=200 \
-     -jar omni-agent-example-production-1.0.0.jar
+     -jar omni-agent-p2p-production-1.0.0.jar
 ```
 
 ### 并发配置

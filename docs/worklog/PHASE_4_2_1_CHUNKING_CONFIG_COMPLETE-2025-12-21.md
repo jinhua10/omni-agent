@@ -452,7 +452,7 @@ POST /api/chunking/compare
 
 1. 启动后端服务
    ```bash
-   cd omni-agent-example-basic
+   cd omni-agent-p2p-basic
    mvn spring-boot:run
    ```
 

@@ -13,7 +13,7 @@
 
     <artifactId>omni-agent-p2p-api</artifactId>
     <name>OmniAgent P2P API</name>
-    <description>P2P Collaboration API Interface</description>
+    <description>P2P Collaboration API - Interface definitions for peer-to-peer knowledge sharing and collaboration</description>
 
     <dependencies>
         <!-- Lombok -->

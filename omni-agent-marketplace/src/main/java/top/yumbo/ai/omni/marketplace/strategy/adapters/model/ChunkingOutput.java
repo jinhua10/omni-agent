@@ -2,8 +2,7 @@ package top.yumbo.ai.omni.marketplace.strategy.adapters.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import top.yumbo.ai.storage.api.model.Chunk;
-
+import top.yumbo.ai.omni.chunking.Chunk;
 import java.util.List;
 
 /**

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>top.yumbo.ai.omni</groupId>
+        <artifactId>omni-agent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>omni-agent-voting-starter</artifactId>
+    <name>OmniAgent Voting Starter</name>
+    <description>统一的投票服务 Starter，集成所有数据源实现</description>
+
+    <dependencies>
+        <!-- Voting API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-voting-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Configuration Processor -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- ========== MongoDB Dependencies ========== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ========== Redis Dependencies ========== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ========== Elasticsearch Dependencies ========== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ========== Jackson for JSON Serialization ========== -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
+

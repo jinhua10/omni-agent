@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: omni-agent-example-basic
+    name: omni-agent-p2p-basic
 
   # 文件上传配置 (File Upload Configuration)
   servlet:
@@ -36,144 +36,102 @@ spring:
 # 步骤6️⃣ AI对话 (AI Service)
 #   ↓ 使用检索结果进行智能对话
 # ========================================
+#
+# 📁 存储目录结构说明：
+# ========================================
+# ./data/
+# ├── documents/              ← 📥 原始文件中转站（仅存储上传的原始文件）
+# │   └── example.pptx
+# │
+# ├── storage/                ← 💾 处理结果存储（所有处理生成的数据）
+# │   ├── documents/          ← 文档元数据
+# │   ├── extracted/          ← 提取的文本
+# │   ├── chunks/             ← 分块结果
+# │   ├── images/             ← 提取的图片
+# │   ├── ppl/                ← PPL分析数据
+# │   └── optimization/       ← 优化数据
+# │
+# ├── knowledge-network/      ← 🔍 知识库网络
+# │
+# ├── rag-index/              ← 🔍 RAG检索索引（Lucene/其他）
+# │
+# └── workflows/              ← 🔄 工作流数据
+# ========================================
 # ========== OmniAgent 核心配置（按处理流程顺序）==========
 omni-agent:
+
+  # ========== 🎯 统一 ONNX 模型配置 ⭐ NEW ==========
+  # 作用：避免PPL分块和文本向量化重复加载同一个模型
+  # 注意：如果PPL和Embedding使用相同的模型，系统会自动共享模型实例
+  onnx:
+    # 共享模型配置
+    shared-model:
+      enabled: true                                 # 启用模型共享
+      model-path: ./models/bge-base-zh/model.onnx  # 统一模型路径
+      max-sequence-length: 512                      # 最大序列长度
+
+  # ========== 知识注册表配置 (Knowledge Registry) ==========
+  # 作用：管理知识域、角色、关联关系等元数据
+  # 支持多种后端：file, sqlite, h2, memory, redis, mongodb, elasticsearch
+  knowledge-registry:
+    # ========== 当前使用的后端类型 ==========
+    type: file
+
+    # ========== File 配置（推荐：简单、直接）==========
+    file:
+      base-path: ./data/knowledge-network/registry  # 存储路径
+      auto-create-directories: true                 # 自动创建目录
+      pretty-print: true                            # JSON 格式化输出
 
   # ========== 步骤1️⃣ 文档存储配置 (Document Storage) ==========
   # 作用：存储上传的原始文件和提取的文本
   # 位置：文档处理流程的第1步 - 文档上传和归档
   # 支持多种后端：file, minio, s3, redis, mongodb, elasticsearch
   document-storage:
-    # ========== 当前使用的后端类型 ==========
-    type: file
-
-    # ========== File 配置（推荐：简单、直接）==========
-    file:
-      base-path: ./data/documents       # 文档存储根目录
-      chunk-path: ./data/chunks         # 分块存储目录
-      image-path: ./data/images         # 图片存储目录
-      ppl-path: ./data/ppl              # PPL数据存储目录
-      max-file-size: 104857600          # 最大文件大小（100MB）
-
-    # ========== MinIO 配置（对象存储、推荐生产环境）==========
-    # type: minio
-    minio:
-      endpoint: http://localhost:9000   # MinIO服务地址
-      access-key: minioadmin            # 访问密钥
-      secret-key: minioadmin            # 密钥
-      bucket: omni-agent                # 存储桶名称
-      auto-create-bucket: true          # 自动创建存储桶
-
-    # ========== AWS S3 配置（云存储）==========
-    # type: s3
-    s3:
-      region: us-east-1                 # AWS区域
-      access-key: your-access-key       # AWS访问密钥
-      secret-key: your-secret-key       # AWS密钥
-      bucket: omni-agent                # S3存储桶名称
-      endpoint:                         # 自定义端点（可选，用于兼容S3的服务）
-
-    # ========== Redis 配置（缓存式存储）==========
-    # type: redis
-    redis:
-      host: localhost
-      port: 6379
-      database: 1                       # 使用不同的数据库
-      key-prefix: "docs:"                 # 键前缀
-
-    # ========== MongoDB 配置（文档数据库）==========
-    # type: mongodb
-    mongodb:
-      uri: mongodb://localhost:27017
-      database: omni-agent-docs
-      collection: documents             # 集合名称
-
-    # ========== Elasticsearch 配置（全文索引）==========
-    # type: elasticsearch
-    elasticsearch:
-      hosts:
-        - localhost:9200
-      index-name: omni-agent-docs       # 索引名称
-  # ========== 持久化配置 (Persistence) - 系统内部使用 ==========
-  # 作用：存储系统配置、会话历史等元数据
-  # 支持多种后端：file, sqlite, h2, memory, redis, mongodb, elasticsearch
-  persistence:
-    # ========== 当前使用的后端类型 ==========
-    type: sqlite
-
-    # ========== File 配置（最简单、零依赖）==========
-    # type: file
-    file:
-      base-path: ./data/persistence     # 持久化数据根目录
-      # File持久化将数据以JSON格式存储在文件系统中
-      # 优点：零依赖、最简单、适合小规模数据
-      # 缺点：性能较低、不支持复杂查询
-
-    # ========== SQLite 配置（推荐：轻量级、无需额外服务）==========
-    sqlite:
-      db-path: ./data/omni-agent.db     # 数据库文件路径
-      auto-create-tables: true          # 自动创建表
-      show-sql: false                   # 是否显示SQL语句
-      connection-timeout: 30000         # 连接超时（毫秒）
-
-    # ========== H2 配置（开发/测试环境）==========
-    # type: h2
-    h2:
-      db-path: ./data/omni-agent-h2     # H2数据库文件路径（无需.mv.db后缀）
-      mode: file                        # file: 文件模式, memory: 内存模式
-      auto-create-tables: true
-      show-sql: false
-      # 内存模式示例：
-      # mode: memory
-      # db-name: testdb
-
-    # ========== Memory 配置（快速测试）==========
-    # type: memory
-    memory:
-      # 内存持久化无需额外配置，数据仅存在于内存中
-      # 优点：速度最快
-      # 缺点：重启后数据丢失
-      initial-capacity: 1000            # 初始容量
-
-    # ========== Redis 配置（高性能、分布式）==========
-    # type: redis
-    redis:
-      host: localhost                   # Redis服务器地址
-      port: 6379                        # Redis端口
-      password:                         # Redis密码（如果有）
-      database: 0                       # 使用的数据库编号
-      timeout: 3000                     # 超时时间（毫秒）
-      # 连接池配置
-      pool:
-        max-active: 8                   # 最大连接数
-        max-idle: 8                     # 最大空闲连接
-        min-idle: 0                     # 最小空闲连接
-        max-wait: -1                    # 最大等待时间（-1表示无限）
-
-    # ========== MongoDB 配置（文档数据库）==========
-    # type: mongodb
-    mongodb:
-      uri: mongodb://localhost:27017    # MongoDB连接URI
-      database: omni-agent              # 数据库名称
-      # 或使用详细配置：
-      # host: localhost
-      # port: 27017
-      # username: admin
-      # password: password
-      # database: omni-agent
-      # auth-database: admin
-
-    # ========== Elasticsearch 配置（全文搜索、大规模）==========
-    # type: elasticsearch
-    elasticsearch:
-      hosts:
-        - localhost:9200                # ES节点地址（支持多个）
-      username:                         # 用户名（如果启用安全）
-      password:                         # 密码
-      connection-timeout: 5000          # 连接超时
-      socket-timeout: 60000             # Socket超时
-      index-prefix: omni-agent          # 索引前缀
-
+    instances:
+#      # File 存储（开发环境）
+      - id: dev-storage
+        type: file
+        primary: true
+        file:
+          base-directory: data/storage/
+#
+#      # MongoDB 存储（生产环境）
+#      - id: prod-mongo
+#        type: mongodb
+#        mongodb:
+#          database: prod-documents
+#
+#      # Redis 存储（缓存）
+#      - id: cache
+#        type: redis
+#        redis:
+#          key-prefix: "doc:cache:"
+#          ttl: 3600
+#
+#      # S3 存储（云端备份）
+#      - id: s3-backup
+#        type: s3
+#        s3:
+#          bucket-name: prod-backup
+#          region: us-east-1
+#          access-key: ${AWS_ACCESS_KEY}
+#          secret-key: ${AWS_SECRET_KEY}
+#
+#      # MinIO 存储（私有云）
+#      - id: minio-storage
+#        type: minio
+#        minio:
+#          endpoint: http://minio.local:9000
+#          bucket-name: documents
+#          access-key: minioadmin
+#          secret-key: minioadmin
+#
+#      # Elasticsearch 存储（搜索）
+#      - id: search-storage
+#        type: elasticsearch
+#        elasticsearch:
+#          chunk-index: searchable-chunks
   # ========== 步骤2️⃣ Vision LLM配置 (文本提取) ==========
   # 作用：从图片/PDF/office文档中提取文本
   vision-llm:
@@ -257,8 +215,9 @@ omni-agent:
         # 启用 ONNX PPL 服务
         enabled: true
 
-        # ONNX 模型路径（BGE-base-zh）
-        model-path: ./models/bge-base-zh/model.onnx
+        # ⭐ 使用共享模型路径（与embedding.onnx.model-path保持一致）
+        # 系统会自动复用已加载的模型，避免重复加载
+        model-path: ${omni-agent.onnx.shared-model.model-path}
 
         # Tokenizer 路径
         tokenizer-path: ./models/bge-base-zh
@@ -285,24 +244,16 @@ omni-agent:
     # ONNX 本地向量化服务（默认禁用）
     onnx:
       # 是否启用 ONNX Embedding 服务
-      enabled: true
+      enabled: false  # 禁用，因为模型文件不存在
 
-      # ONNX 模型文件路径
-      # 推荐模型：
-      # - bge-base-zh-v1.5 (中文，768维，~400MB) - 推荐
-      # - bge-m3 (多语言，1024维，~2GB)
-      # - bge-large-zh (中文，1024维，~1.3GB)
-      # - text2vec-base-chinese (中文，768维，~400MB)
-      #
-      # 模型下载：
-      # 方式1: huggingface-cli download BAAI/bge-base-zh-v1.5 --local-dir ./models/bge-base-zh
-      # 方式2: git clone https://www.modelscope.cn/BAAI/bge-base-zh-v1.5.git ./models/bge-base-zh
-      model-path: ./models/bge-base-zh/model.onnx
+      # ⭐ 使用共享模型路径（与ppl.onnx.model-path保持一致）
+      # 系统会自动复用已加载的模型，避免重复加载
+      model-path: ${omni-agent.onnx.shared-model.model-path}
 
       # 最大序列长度
       # bge-base-zh-v1.5: 512
       # bge-m3: 8192
-      max-sequence-length: 512
+      max-sequence-length: ${omni-agent.onnx.shared-model.max-sequence-length}
 
       # 批处理大小（批量向量化时使用）
       batch-size: 32
@@ -365,7 +316,20 @@ omni-agent:
 
   # ========== 步骤6️⃣ AI服务配置 (AI Service) ==========
   # 作用：智能对话和生成
+  # ========== 📚 AI调用归档配置 ⭐ NEW ==========
+  # 作用：记录每次AI调用的完整信息，用于知识网络学习
+  # 位置：自动拦截所有AI调用，异步归档
   ai:
+    archive:
+      enabled: true                      # 启用AI调用归档
+      storage-path: data/ai-archives     # 归档存储路径
+      enable-memory-index: true          # 启用内存索引（快速查询）
+      max-memory-index: 1000             # 内存索引最大数量
+      auto-clean-days: 30                # 自动清理30天前的归档（0=不清理）
+      thread-pool:
+        core-size: 2                     # 归档线程池核心线程数
+        max-size: 5                      # 归档线程池最大线程数
+        queue-capacity: 1000             # 归档队列容量
     # type: ollama  # 本地Ollama（开发/测试）
     type: online-api    # 在线API（生产环境推荐）
 
@@ -430,9 +394,11 @@ omni-agent:
       await-termination-seconds: 30
 
   # ========== 文件监听器配置 ⭐ ==========
+  # 📁 监听 data/documents 目录（原始文件中转站）
+  # 当新文件上传到此目录时，自动触发处理流程，处理结果存储到 data/storage
   file-watcher:
     enabled: true                       # 启用文件监听
-    watch-directory: ./data/documents   # 监听目录（上传文件会保存到这里）
+    watch-directory: ./data/documents   # 监听目录（原始文件中转站，仅存储上传的原始文件）
     auto-index: true                    # 自动索引
     scan-interval: 30000                # 扫描间隔（毫秒）
 

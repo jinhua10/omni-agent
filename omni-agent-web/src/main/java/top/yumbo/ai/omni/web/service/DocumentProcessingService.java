@@ -5,13 +5,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.ai.api.EmbeddingService;
-import top.yumbo.ai.omni.core.chunking.ChunkingStrategyManager;
-import top.yumbo.ai.omni.core.document.DocumentProcessorManager;
+import top.yumbo.ai.omni.ai.api.EmbeddingService;
+import top.yumbo.ai.omni.chunking.Chunk;
+import top.yumbo.ai.omni.chunking.ChunkingConfig;
+import top.yumbo.ai.omni.chunking.ChunkingStrategy;
+import top.yumbo.ai.omni.chunking.starter.ChunkingStrategyManager;
+import top.yumbo.ai.omni.document.processor.DocumentProcessor;
+import top.yumbo.ai.omni.document.processor.starter.DocumentProcessorManager;
+import top.yumbo.ai.omni.document.processor.starter.image.ImageCompressor;
+import top.yumbo.ai.omni.document.processor.starter.image.ImageHashCalculator;
+import top.yumbo.ai.omni.storage.api.model.Image;
 import top.yumbo.ai.omni.web.websocket.DocumentProcessingWebSocketHandler;
-import top.yumbo.ai.rag.api.RAGService;
-import top.yumbo.ai.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
+import jakarta.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,11 +52,14 @@ public class DocumentProcessingService {
     private final ChunkingStrategyManager chunkingStrategyManager;  // ⭐ 分块策略管理器
 
     // ⭐ 可选服务（如果没有配置相应的 starter，这些服务可能不存在）
+    // 注入所有可用的 EmbeddingService，然后智能选择最合适的
     @Autowired(required = false)
-    private EmbeddingService embeddingService;  // ⭐ 向量化服务（可选）
+    private List<EmbeddingService> embeddingServices;  // ⭐ 所有可用的向量化服务
+
+    private EmbeddingService embeddingService;  // ⭐ 实际使用的向量化服务（智能选择）
 
     @Autowired(required = false)
-    private RAGService ragService;  // ⭐ RAG索引服务（可选）
+    private RagService ragService;  // ⭐ RAG索引服务（可选）
 
     // ⭐ 图片处理线程池（用于异步保存图片）
     @Autowired(required = false)
@@ -72,6 +83,47 @@ public class DocumentProcessingService {
         this.storageService = storageService;
         this.documentProcessorManager = documentProcessorManager;
         this.chunkingStrategyManager = chunkingStrategyManager;
+    }
+
+    /**
+     * 初始化：智能选择最合适的 EmbeddingService
+     * <p>
+     * 优先级：
+     * 1. onnxEmbeddingService（专用的 Embedding 服务，性能最好）
+     * 2. aiService（通用 AI 服务，支持 Ollama/Online API）
+     * 3. 其他实现了 EmbeddingService 的服务
+     */
+    @PostConstruct
+    public void init() {
+        if (embeddingServices == null || embeddingServices.isEmpty()) {
+            log.warn("⚠️ 未找到任何 EmbeddingService，向量化功能将不可用");
+            this.embeddingService = null;
+            return;
+        }
+
+        // 优先级 1：查找名为 onnxEmbeddingService 的 bean（ONNX 专用服务）
+        for (EmbeddingService service : embeddingServices) {
+            String beanName = service.getClass().getSimpleName();
+            if (beanName.contains("OnnxEmbedding") || beanName.contains("ONNX")) {
+                this.embeddingService = service;
+                log.info("✅ 选择 ONNX Embedding 服务: {}", service.getClass().getSimpleName());
+                return;
+            }
+        }
+
+        // 优先级 2：查找名为 aiService 的 bean（非 Vision 的通用 AI 服务）
+        for (EmbeddingService service : embeddingServices) {
+            String beanName = service.getClass().getSimpleName();
+            if (!beanName.toLowerCase().contains("vision")) {
+                this.embeddingService = service;
+                log.info("✅ 选择 AI Embedding 服务: {}", service.getClass().getSimpleName());
+                return;
+            }
+        }
+
+        // 优先级 3：使用第一个可用的服务
+        this.embeddingService = embeddingServices.get(0);
+        log.info("✅ 选择默认 Embedding 服务: {}", embeddingService.getClass().getSimpleName());
     }
 
     /**
@@ -225,7 +277,7 @@ public class DocumentProcessingService {
         if (extractionResult.getImages() != null && !extractionResult.getImages().isEmpty()) {
             final String finalDocumentId = documentId;
             final String finalDocumentName = documentName;
-            final List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> finalImages =
+            final List<DocumentProcessor.ExtractedImage> finalImages =
                     extractionResult.getImages();
 
             if (imageProcessingExecutor != null) {
@@ -410,8 +462,8 @@ public class DocumentProcessingService {
             options.put("batchSize", 5);      // ⭐ 每批处理5个页面（启用分批并行）
             // 注意：不设置 streaming=true 和 streamCallback，因为流程视图不需要实时输出
 
-            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
-                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+            DocumentProcessor.ProcessingContext context =
+                    DocumentProcessor.ProcessingContext.builder()
                             .fileBytes(content)              // ⭐ 使用 fileBytes
                             .originalFileName(documentName)  // ⭐ 使用真实文件名
                             .fileExtension(fileExtension)    // ⭐ 使用提取的扩展名
@@ -423,7 +475,7 @@ public class DocumentProcessingService {
             log.info("🚀 [流程视图] 开始分批并行处理: model={}, file={}, batchSize={}",
                     model, documentName, options.get("batchSize"));
 
-            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
+            DocumentProcessor.ProcessingResult result =
                     documentProcessorManager.processDocument(context);
 
             String extractedText = result.getContent();
@@ -476,8 +528,8 @@ public class DocumentProcessingService {
             options.put("documentId", documentId);  // ⭐ 传递文档ID，用于生成图片路径
             // 注意：不设置 streaming=true 和 streamCallback，因为流程视图不需要实时输出
 
-            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext context =
-                    top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingContext.builder()
+            DocumentProcessor.ProcessingContext context =
+                    DocumentProcessor.ProcessingContext.builder()
                             .fileBytes(content)              // ⭐ 使用 fileBytes
                             .originalFileName(documentName)  // ⭐ 使用真实文件名
                             .fileExtension(fileExtension)    // ⭐ 使用提取的扩展名
@@ -489,11 +541,11 @@ public class DocumentProcessingService {
             log.info("🚀 [流程视图] 开始分批并行处理: model={}, file={}, batchSize={}",
                     model, documentName, options.get("batchSize"));
 
-            top.yumbo.ai.omni.core.document.DocumentProcessor.ProcessingResult result =
+            DocumentProcessor.ProcessingResult result =
                     documentProcessorManager.processDocument(context);
 
             String extractedText = result.getContent();
-            List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> images =
+            List<DocumentProcessor.ExtractedImage> images =
                     result.getImages() != null ? result.getImages() : new ArrayList<>();
 
             if (extractedText == null || extractedText.isEmpty()) {
@@ -521,7 +573,7 @@ public class DocumentProcessingService {
      * @return 成功保存的图片数量
      */
     private int saveExtractedImages(String documentId, String documentName,
-                                    List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> extractedImages) {
+                                    List<DocumentProcessor.ExtractedImage> extractedImages) {
         if (extractedImages == null || extractedImages.isEmpty()) {
             return 0;
         }
@@ -539,15 +591,14 @@ public class DocumentProcessingService {
         long totalCompressedSize = 0;
 
         // ⭐ 配置压缩参数
-        top.yumbo.ai.omni.core.image.ImageCompressor.CompressionConfig compressionConfig =
-                new top.yumbo.ai.omni.core.image.ImageCompressor.CompressionConfig();
+        ImageCompressor.CompressionConfig compressionConfig = new ImageCompressor.CompressionConfig();
         compressionConfig.setEnabled(true);
         compressionConfig.setQuality(0.85f);
         compressionConfig.setMaxWidth(2048);
         compressionConfig.setMaxHeight(2048);
         compressionConfig.setMinSizeToCompress(100 * 1024); // 100KB
 
-        for (top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage extractedImage : extractedImages) {
+        for (DocumentProcessor.ExtractedImage extractedImage : extractedImages) {
             try {
                 byte[] imageData = extractedImage.getData();
                 String format = extractedImage.getFormat();
@@ -555,7 +606,7 @@ public class DocumentProcessingService {
                 totalOriginalSize += originalSize;
 
                 // ⭐ 1. 计算图片哈希值（用于去重）
-                String imageHash = top.yumbo.ai.omni.core.image.ImageHashCalculator.calculateHash(imageData);
+                String imageHash = ImageHashCalculator.calculateHash(imageData);
 
                 // ⭐ 2. 检查是否已存在相同图片
                 Optional<String> existingImageId = storageService.findImageByHash(imageHash);
@@ -571,8 +622,8 @@ public class DocumentProcessingService {
                 }
 
                 // ⭐ 3. 压缩图片
-                top.yumbo.ai.omni.core.image.ImageCompressor.CompressionResult compressionResult =
-                        top.yumbo.ai.omni.core.image.ImageCompressor.compress(imageData, format, compressionConfig);
+                ImageCompressor.CompressionResult compressionResult =
+                        ImageCompressor.compress(imageData, format, compressionConfig);
 
                 if (compressionResult.isCompressed()) {
                     compressedCount++;
@@ -593,7 +644,7 @@ public class DocumentProcessingService {
                 }
 
                 // ⭐ 5. 构建 Image 对象
-                top.yumbo.ai.storage.api.model.Image image = top.yumbo.ai.storage.api.model.Image.builder()
+                Image image = Image.builder()
                         .documentId(documentId)
                         .data(imageData)
                         .format(format)
@@ -644,9 +695,9 @@ public class DocumentProcessingService {
      */
     private static class TextExtractionResult {
         private final String text;
-        private final List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> images;
+        private final List<DocumentProcessor.ExtractedImage> images;
 
-        public TextExtractionResult(String text, List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> images) {
+        public TextExtractionResult(String text, List<DocumentProcessor.ExtractedImage> images) {
             this.text = text;
             this.images = images;
         }
@@ -655,7 +706,7 @@ public class DocumentProcessingService {
             return text;
         }
 
-        public List<top.yumbo.ai.omni.core.document.DocumentProcessor.ExtractedImage> getImages() {
+        public List<DocumentProcessor.ExtractedImage> getImages() {
             return images;
         }
     }
@@ -673,13 +724,55 @@ public class DocumentProcessingService {
                 text.length(), strategy, params);
 
         try {
+            // ⭐ 将字符串策略名转换为ChunkingStrategy枚举
+            ChunkingStrategy chunkingStrategy;
+            try {
+                // 尝试将策略名转换为枚举（将 kebab-case 转换为 UPPER_SNAKE_CASE）
+                String enumName = strategy.toUpperCase().replace("-", "_");
+                chunkingStrategy = ChunkingStrategy.valueOf(enumName);
+            } catch (IllegalArgumentException e) {
+                log.warn("⚠️ 未知策略: {}, 使用默认策略 FIXED_LENGTH", strategy);
+                chunkingStrategy = ChunkingStrategy.FIXED_LENGTH;
+            }
+
+            // ⭐ 构建ChunkingConfig对象
+            ChunkingConfig config =
+                    ChunkingConfig.builder()
+                            .fixedLengthSize(getIntParam(params, "chunkSize", 500))
+                            .overlap(getIntParam(params, "overlapSize", 50))
+                            .minChunkSize(getIntParam(params, "minChunkSize", 100))
+                            .maxChunkSize(getIntParam(params, "maxChunkSize", 2000))
+                            .build();
+
             // ⭐ 调用真正的分块策略管理器
-            var chunks = chunkingStrategyManager.chunkWithStrategy(
+            List<top.yumbo.ai.omni.chunking.Chunk> chunkingChunks = chunkingStrategyManager.chunkWithStrategy(
                     documentId,
                     text,
-                    strategy,
-                    params
+                    chunkingStrategy,
+                    config
             );
+
+            // ⭐ 转换为存储服务的Chunk类型
+            List<Chunk> chunks = new ArrayList<>();
+            for (top.yumbo.ai.omni.chunking.Chunk chunkingChunk : chunkingChunks) {
+                Map<String, Object> metadata = new HashMap<>();
+                metadata.put("strategy", chunkingChunk.getStrategy() != null ? chunkingChunk.getStrategy().name() : "UNKNOWN");
+                metadata.put("startPosition", chunkingChunk.getStartPosition());
+                metadata.put("endPosition", chunkingChunk.getEndPosition());
+                metadata.put("length", chunkingChunk.getSize());
+
+                Chunk chunk = Chunk.builder()
+                        .id(chunkingChunk.getId())
+                        .documentId(chunkingChunk.getDocumentId())
+                        .content(chunkingChunk.getContent())
+                        .sequence(chunkingChunk.getSequence())
+                        .startPosition(chunkingChunk.getStartPosition())
+                        .endPosition(chunkingChunk.getEndPosition())
+                        .metadata(metadata)
+                        .createdAt(System.currentTimeMillis())
+                        .build();
+                chunks.add(chunk);
+            }
 
             log.info("✅ 智能分块完成: 生成 {} 个分块, strategy={}", chunks.size(), strategy);
 
@@ -696,9 +789,28 @@ public class DocumentProcessingService {
     }
 
     /**
+     * 从参数Map中获取整数值，带默认值
+     */
+    private int getIntParam(Map<String, Object> params, String key, int defaultValue) {
+        if (params == null || !params.containsKey(key)) {
+            return defaultValue;
+        }
+        Object value = params.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException e) {
+            log.warn("⚠️ 无法解析参数 {}: {}, 使用默认值 {}", key, value, defaultValue);
+            return defaultValue;
+        }
+    }
+
+    /**
      * 保存分块到存储服务 ⭐
      */
-    private void saveChunksToStorage(String documentId, List<top.yumbo.ai.storage.api.model.Chunk> chunks) {
+    private void saveChunksToStorage(String documentId, List<Chunk> chunks) {
         if (chunks == null || chunks.isEmpty()) {
             log.warn("⚠️ 分块列表为空，跳过保存");
             return;
@@ -739,7 +851,7 @@ public class DocumentProcessingService {
         // ⭐ 检查必要的服务是否可用
         if (embeddingService == null || ragService == null) {
             log.warn("⚠️ EmbeddingService 或 RAGService 未配置，跳过向量化");
-            log.info("💡 提示: 请添加相应的 starter 依赖（如 omni-agent-ai-starter-ollama）");
+            log.info("💡 提示: 请添加相应的 starter 依赖（如 omni-agent-ai-starter）");
             // 降级：返回模拟数据
             return chunkCount * 768;
         }
@@ -757,7 +869,7 @@ public class DocumentProcessingService {
 
             // ⭐ 2. 批量生成向量
             List<String> texts = chunks.stream()
-                    .map(top.yumbo.ai.storage.api.model.Chunk::getContent)
+                    .map(Chunk::getContent)
                     .collect(java.util.stream.Collectors.toList());
 
             List<float[]> embeddings = embeddingService.embedBatch(texts);
@@ -766,13 +878,13 @@ public class DocumentProcessingService {
                     embeddings.size(), embeddingService.getDimension());
 
             // ⭐ 3. 构建 RAG 文档并索引
-            List<top.yumbo.ai.rag.api.model.Document> ragDocuments = new java.util.ArrayList<>();
+            List<top.yumbo.ai.omni.rag.model.Document> ragDocuments = new java.util.ArrayList<>();
 
             for (int i = 0; i < chunks.size(); i++) {
                 var chunk = chunks.get(i);
                 float[] embedding = embeddings.get(i);
 
-                var ragDoc = top.yumbo.ai.rag.api.model.Document.builder()
+                var ragDoc = top.yumbo.ai.omni.rag.model.Document.builder()
                         .id(chunk.getId())
                         .content(chunk.getContent())
                         .embedding(embedding)
@@ -788,10 +900,10 @@ public class DocumentProcessingService {
             }
 
             // ⭐ 4. 批量索引到 RAG 服务
-            List<String> indexedIds = ragService.indexDocuments(ragDocuments);
+            ragService.batchIndex(ragDocuments);
 
             log.info("✅ 向量化完成: documentId={}, 生成 {} 个向量, 索引 {} 个文档",
-                    documentId, embeddings.size(), indexedIds.size());
+                    documentId, embeddings.size(), ragDocuments.size());
 
             return embeddings.size() * embeddingService.getDimension();
 
@@ -889,4 +1001,3 @@ public class DocumentProcessingService {
         private int vectorCount;
     }
 }
-

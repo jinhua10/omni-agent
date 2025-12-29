@@ -7,10 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.core.optimization.AutoOptimizationSelector;
-import top.yumbo.ai.omni.core.optimization.AutoOptimizationSelector.*;
-import top.yumbo.ai.omni.core.optimization.RAGOptimizationService;
-import top.yumbo.ai.storage.api.model.OptimizationData;
+import top.yumbo.ai.omni.rag.adapter.optimization.AutoOptimizationSelector;
+import top.yumbo.ai.omni.rag.adapter.optimization.RAGOptimizationService;
+import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 
 import java.util.List;
 import java.util.Map;
@@ -42,10 +41,10 @@ public class RAGOptimizationController {
      */
     @PostMapping("/auto-select")
     @Operation(summary = "自动选择算法", description = "根据查询上下文自动推荐最佳算法组合")
-    public ResponseEntity<OptimizationRecommendation> autoSelectAlgorithms(
-            @RequestBody QueryContext context) {
+    public ResponseEntity<AutoOptimizationSelector.OptimizationRecommendation> autoSelectAlgorithms(
+            @RequestBody AutoOptimizationSelector.QueryContext context) {
         log.info("Auto-selecting algorithms for query: {}", context.getQuery());
-        OptimizationRecommendation recommendation = autoSelector.selectOptimalAlgorithms(context);
+        AutoOptimizationSelector.OptimizationRecommendation recommendation = autoSelector.selectOptimalAlgorithms(context);
         return ResponseEntity.ok(recommendation);
     }
 
@@ -54,10 +53,10 @@ public class RAGOptimizationController {
      */
     @PostMapping("/evaluate-scenarios")
     @Operation(summary = "批量评估场景", description = "批量评估多个查询场景的最佳算法")
-    public ResponseEntity<Map<String, OptimizationRecommendation>> evaluateScenarios(
-            @RequestBody List<QueryContext> contexts) {
+    public ResponseEntity<Map<String, AutoOptimizationSelector.OptimizationRecommendation>> evaluateScenarios(
+            @RequestBody List<AutoOptimizationSelector.QueryContext> contexts) {
         log.info("Evaluating {} scenarios", contexts.size());
-        Map<String, OptimizationRecommendation> results = autoSelector.evaluateScenarios(contexts);
+        Map<String, AutoOptimizationSelector.OptimizationRecommendation> results = autoSelector.evaluateScenarios(contexts);
         return ResponseEntity.ok(results);
     }
 
@@ -171,4 +170,9 @@ public class RAGOptimizationController {
         private Map<String, Double> metrics;
     }
 }
+
+
+
+
+
 

@@ -9,8 +9,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.core.image.ImageStorageService;
-import top.yumbo.ai.storage.api.model.Image;
+import top.yumbo.ai.omni.document.processor.starter.image.ImageStorageService;
+import top.yumbo.ai.omni.storage.api.model.Image;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -129,4 +129,9 @@ public class ImageController {
         private String url;
     }
 }
+
+
+
+
+
 
