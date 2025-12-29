@@ -48,31 +48,31 @@ const LandingPage = ({ onEnterApp }) => {
   const statsPages = [
     // 第一页：核心架构
     [
-      { title: 'Maven模块', value: 20, suffix: '+', icon: 'ApiOutlined', color: '#667eea' },
-      { title: '代码行数', value: 15000, suffix: '+', icon: 'CodeOutlined', color: '#52c41a' },
-      { title: '支持格式', value: 10, suffix: '+ 类型', icon: 'FileTextOutlined', color: '#faad14' },
-      { title: '分块策略', value: 6, suffix: '种', icon: 'ThunderboltOutlined', color: '#f5222d' },
+      { title: '模块数量', value: 22, suffix: '个', icon: 'ApiOutlined', color: '#667eea' },
+      { title: '代码量', value: 15000, suffix: '行', icon: 'CodeOutlined', color: '#52c41a' },
+      { title: '文档格式', value: 10, suffix: '类', icon: 'FileTextOutlined', color: '#faad14' },
+      { title: '分块方式', value: 6, suffix: '种', icon: 'ThunderboltOutlined', color: '#f5222d' },
     ],
     // 第二页：RAG能力
     [
-      { title: 'RAG策略', value: 5, suffix: '+ 种', icon: 'DatabaseOutlined', color: '#1890ff' },
-      { title: '向量维度', value: 4, suffix: '种支持', icon: 'ThunderboltOutlined', color: '#722ed1' },
-      { title: '存储方案', value: 3, suffix: '种', icon: 'SafetyOutlined', color: '#eb2f96' },
-      { title: '灾备冗余', value: 100, suffix: '%', icon: 'CheckCircleOutlined', color: '#52c41a' },
+      { title: 'RAG方案', value: 6, suffix: '种', icon: 'DatabaseOutlined', color: '#1890ff' },
+      { title: '向量模型', value: 3, suffix: '类', icon: 'ThunderboltOutlined', color: '#722ed1' },
+      { title: '存储引擎', value: 6, suffix: '种', icon: 'SafetyOutlined', color: '#eb2f96' },
+      { title: '多实例', value: 1, suffix: '支持', icon: 'CheckCircleOutlined', color: '#52c41a' },
     ],
-    // 第三页：AI增强
+    // 第三页：增强特性
     [
-      { title: 'AI模型', value: 10, suffix: '+ 种', icon: 'BulbOutlined', color: '#faad14' },
-      { title: '知识网络', value: 1, suffix: '套', icon: 'ShareAltOutlined', color: '#13c2c2' },
-      { title: 'HOPE架构', value: 1, suffix: '套', icon: 'RocketOutlined', color: '#f5222d' },
-      { title: 'P2P网络', value: 1, suffix: '套', icon: 'CloudOutlined', color: '#1890ff' },
+      { title: '模型接入', value: 3, suffix: '类', icon: 'BulbOutlined', color: '#faad14' },
+      { title: '知识网络', value: 1, suffix: '启用', icon: 'ShareAltOutlined', color: '#13c2c2' },
+      { title: 'HOPE', value: 1, suffix: '启用', icon: 'RocketOutlined', color: '#f5222d' },
+      { title: 'P2P', value: 1, suffix: '启用', icon: 'CloudOutlined', color: '#1890ff' },
     ],
-    // 第四页：企业级特性
+    // 第四页：技术栈
     [
       { title: 'Spring Boot', value: 3.4, suffix: '', icon: 'CloudOutlined', color: '#52c41a' },
-      { title: 'Java版本', value: 21, suffix: '', icon: 'CodeOutlined', color: '#fa8c16' },
-      { title: '编译通过', value: 100, suffix: '%', icon: 'CheckCircleOutlined', color: '#52c41a' },
-      { title: '生产就绪', value: 100, suffix: '%', icon: 'SafetyOutlined', color: '#1890ff' },
+      { title: 'Java', value: 21, suffix: '', icon: 'CodeOutlined', color: '#fa8c16' },
+      { title: '编译状态', value: 100, suffix: '%', icon: 'CheckCircleOutlined', color: '#52c41a' },
+      { title: '生产可用', value: 100, suffix: '%', icon: 'SafetyOutlined', color: '#1890ff' },
     ],
   ]
 
@@ -290,10 +290,10 @@ const LandingPage = ({ onEnterApp }) => {
             {/* 说明文字 */}
             <div className="stats-description">
               <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 13 }}>
-                {currentStatsPage === 0 && '核心架构 - 模块化设计，企业级代码质量'}
-                {currentStatsPage === 1 && 'RAG能力 - 多策略并行，多维度向量，灾备冗余'}
-                {currentStatsPage === 2 && 'AI增强 - 知识网络，HOPE自学习，P2P分布式架构'}
-                {currentStatsPage === 3 && '企业级特性 - 最新技术栈，生产就绪，高可用'}
+                {currentStatsPage === 0 && '模块化设计 · 企业级代码质量'}
+                {currentStatsPage === 1 && '多策略RAG · 灵活存储 · 支持多实例'}
+                {currentStatsPage === 2 && '知识网络 · 自学习 · P2P分布式'}
+                {currentStatsPage === 3 && '最新技术栈 · 开箱即用'}
               </Text>
             </div>
           </div>
