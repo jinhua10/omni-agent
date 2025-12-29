@@ -327,38 +327,129 @@ const LandingPage = ({ onEnterApp }) => {
 
             <Col xs={24} md={11}>
               <Card className="solution-card">
-                <Title level={4} style={{ color: '#52c41a' }}>
+                <Title level={4} style={{ color: '#52c41a', marginBottom: 24 }}>
                   ✅ OmniAgent的架构创新
                 </Title>
+
+                {/* 知识域隔离示意图 */}
                 <div className="solution-diagram">
-                  <Row gutter={16}>
+                  <Title level={5} style={{ textAlign: 'center', marginBottom: 16, color: '#52c41a' }}>
+                    知识域隔离架构
+                  </Title>
+                  <Row gutter={12}>
                     <Col span={8}>
                       <div className="domain-box">
-                        <FileTextOutlined />
-                        <Text>技术文档域</Text>
+                        <FileTextOutlined style={{ fontSize: 24 }} />
+                        <Text style={{ fontSize: 12 }}>技术文档域</Text>
                       </div>
                     </Col>
                     <Col span={8}>
                       <div className="domain-box">
-                        <DatabaseOutlined />
-                        <Text>财务报表域</Text>
+                        <DatabaseOutlined style={{ fontSize: 24 }} />
+                        <Text style={{ fontSize: 12 }}>财务报表域</Text>
                       </div>
                     </Col>
                     <Col span={8}>
                       <div className="domain-box">
-                        <SafetyOutlined />
-                        <Text>合同域</Text>
+                        <SafetyOutlined style={{ fontSize: 24 }} />
+                        <Text style={{ fontSize: 12 }}>合同域</Text>
                       </div>
                     </Col>
                   </Row>
-                  <div className="solution-results">
-                    <Text type="success">• <strong>6种分块策略</strong>：智能保留语义完整性</Text>
-                    <Text type="success">• <strong>知识域隔离</strong>：独立向量空间，精准检索</Text>
-                    <Text type="success">• <strong>多元存储</strong>：文件+数据库+向量库，灾备冗余</Text>
-                    <Text type="success">• <strong>多维度向量</strong>：支持不同Embedding模型并行</Text>
-                    <Text type="success">• <strong>知识网络</strong>：跨域关联，语义补全上下文</Text>
-                    <Text type="success">• <strong>HOPE架构</strong>：自我学习与持续优化</Text>
-                  </div>
+                </div>
+
+                {/* 核心创新点 */}
+                <div className="innovation-points">
+                  <Row gutter={[12, 12]}>
+                    <Col span={12}>
+                      <div className="innovation-item">
+                        <div className="innovation-icon" style={{ background: '#52c41a' }}>
+                          <CodeOutlined />
+                        </div>
+                        <div className="innovation-content">
+                          <Text strong>6种分块策略</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>智能保留语义</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="innovation-item">
+                        <div className="innovation-icon" style={{ background: '#1890ff' }}>
+                          <ShareAltOutlined />
+                        </div>
+                        <div className="innovation-content">
+                          <Text strong>知识域隔离</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>独立向量空间</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="innovation-item">
+                        <div className="innovation-icon" style={{ background: '#722ed1' }}>
+                          <DatabaseOutlined />
+                        </div>
+                        <div className="innovation-content">
+                          <Text strong>多元存储</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>灾备冗余方案</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="innovation-item">
+                        <div className="innovation-icon" style={{ background: '#faad14' }}>
+                          <ThunderboltOutlined />
+                        </div>
+                        <div className="innovation-content">
+                          <Text strong>多维度向量</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>并行Embedding</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="innovation-item">
+                        <div className="innovation-icon" style={{ background: '#13c2c2' }}>
+                          <ApiOutlined />
+                        </div>
+                        <div className="innovation-content">
+                          <Text strong>知识网络</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>跨域关联增强</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="innovation-item">
+                        <div className="innovation-icon" style={{ background: '#f5222d' }}>
+                          <RocketOutlined />
+                        </div>
+                        <div className="innovation-content">
+                          <Text strong>HOPE架构</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>自我学习进化</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="innovation-item">
+                        <div className="innovation-icon" style={{ background: '#eb2f96' }}>
+                          <BulbOutlined />
+                        </div>
+                        <div className="innovation-content">
+                          <Text strong>智能角色</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>AI生成提示词</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="innovation-item">
+                        <div className="innovation-icon" style={{ background: '#fa8c16' }}>
+                          <CloudOutlined />
+                        </div>
+                        <div className="innovation-content">
+                          <Text strong>分布式架构</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>高可用集群</Text>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
                 </div>
               </Card>
             </Col>

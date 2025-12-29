@@ -476,11 +476,17 @@
 
 .domain-box {
   text-align: center;
-  padding: 24px 16px;
-  background: #f6ffed;
+  padding: 16px 8px;
+  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
   border: 2px solid #b7eb8f;
   border-radius: 12px;
   transition: all 0.3s ease;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .domain-box:hover {
@@ -489,10 +495,76 @@
 }
 
 .domain-box .anticon {
-  font-size: 32px;
   color: #52c41a;
-  margin-bottom: 8px;
-  display: block;
+}
+
+.domain-box .ant-typography {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #389e0d;
+}
+
+/* 创新点区域 */
+.innovation-points {
+  margin-top: 24px;
+}
+
+.innovation-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  height: 100%;
+}
+
+.innovation-item:hover {
+  border-color: #52c41a;
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.15);
+  transform: translateY(-2px);
+}
+
+.innovation-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.innovation-icon .anticon {
+  font-size: 20px;
+  color: #fff;
+}
+
+.innovation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.innovation-content .ant-typography {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.innovation-content strong {
+  font-size: 14px;
+  color: #262626;
+}
+
+.innovation-content .ant-typography-secondary {
+  font-size: 12px;
+  color: #8c8c8c;
 }
 
 .vs-divider {
