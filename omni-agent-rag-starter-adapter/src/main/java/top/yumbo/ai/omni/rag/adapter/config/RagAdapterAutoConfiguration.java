@@ -1,5 +1,6 @@
 package top.yumbo.ai.omni.rag.adapter.config;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -7,6 +8,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.adapter.impl.mock.MockRagService;
@@ -37,9 +40,9 @@ public class RagAdapterAutoConfiguration {
     public Map<String, RagService> ragServices(
             RagAdapterProperties properties,
             ObjectProvider<JdbcTemplate> jdbcTemplate,
-            ObjectProvider<Object> mongoTemplate,
-            ObjectProvider<Object> redisTemplate,
-            ObjectProvider<Object> elasticsearchClient) {
+            ObjectProvider<MongoTemplate> mongoTemplate,
+            ObjectProvider<RedisTemplate<String, Object>> redisTemplate,
+            ObjectProvider<ElasticsearchClient> elasticsearchClient) {
 
         Map<String, RagService> services = new HashMap<>();
         List<RagAdapterProperties.RagInstanceConfig> instances = properties.getInstances();

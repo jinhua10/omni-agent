@@ -75,42 +75,42 @@ omni-agent:
         file:
           base-directory: data/documents/dev
 
-      # MongoDB 存储（生产环境）
-      - id: prod-mongo
-        type: mongodb
-        mongodb:
-          database: prod-documents
-
-      # Redis 存储（缓存）
-      - id: cache
-        type: redis
-        redis:
-          key-prefix: "doc:cache:"
-          ttl: 3600
-
-      # S3 存储（云端备份）
-      - id: s3-backup
-        type: s3
-        s3:
-          bucket-name: prod-backup
-          region: us-east-1
-          access-key: ${AWS_ACCESS_KEY}
-          secret-key: ${AWS_SECRET_KEY}
-
-      # MinIO 存储（私有云）
-      - id: minio-storage
-        type: minio
-        minio:
-          endpoint: http://minio.local:9000
-          bucket-name: documents
-          access-key: minioadmin
-          secret-key: minioadmin
-
-      # Elasticsearch 存储（搜索）
-      - id: search-storage
-        type: elasticsearch
-        elasticsearch:
-          chunk-index: searchable-chunks
+#      # MongoDB 存储（生产环境）
+#      - id: prod-mongo
+#        type: mongodb
+#        mongodb:
+#          database: prod-documents
+#
+#      # Redis 存储（缓存）
+#      - id: cache
+#        type: redis
+#        redis:
+#          key-prefix: "doc:cache:"
+#          ttl: 3600
+#
+#      # S3 存储（云端备份）
+#      - id: s3-backup
+#        type: s3
+#        s3:
+#          bucket-name: prod-backup
+#          region: us-east-1
+#          access-key: ${AWS_ACCESS_KEY}
+#          secret-key: ${AWS_SECRET_KEY}
+#
+#      # MinIO 存储（私有云）
+#      - id: minio-storage
+#        type: minio
+#        minio:
+#          endpoint: http://minio.local:9000
+#          bucket-name: documents
+#          access-key: minioadmin
+#          secret-key: minioadmin
+#
+#      # Elasticsearch 存储（搜索）
+#      - id: search-storage
+#        type: elasticsearch
+#        elasticsearch:
+#          chunk-index: searchable-chunks
   # ========== 步骤2️⃣ Vision LLM配置 (文本提取) ==========
   # 作用：从图片/PDF/office文档中提取文本
   vision-llm:

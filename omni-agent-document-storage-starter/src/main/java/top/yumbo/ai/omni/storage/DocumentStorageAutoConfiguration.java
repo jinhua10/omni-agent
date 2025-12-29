@@ -1,5 +1,7 @@
 package top.yumbo.ai.omni.storage;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import io.minio.MinioClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -9,6 +11,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
+import software.amazon.awssdk.services.s3.S3Client;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.HashMap;
@@ -38,11 +43,11 @@ public class DocumentStorageAutoConfiguration {
     @Bean
     public Map<String, DocumentStorageService> documentStorageServices(
             DocumentStorageProperties properties,
-            ObjectProvider<Object> mongoTemplate,
-            ObjectProvider<Object> redisTemplate,
-            ObjectProvider<Object> s3Client,
-            ObjectProvider<Object> minioClient,
-            ObjectProvider<Object> elasticsearchClient) {
+            ObjectProvider<MongoTemplate> mongoTemplate,
+            ObjectProvider<RedisTemplate<String, Object>> redisTemplate,
+            ObjectProvider<S3Client> s3Client,
+            ObjectProvider<MinioClient> minioClient,
+            ObjectProvider<ElasticsearchClient> elasticsearchClient) {
 
         Map<String, DocumentStorageService> services = new HashMap<>();
         List<DocumentStorageProperties.StorageInstanceConfig> instances = properties.getInstances();
