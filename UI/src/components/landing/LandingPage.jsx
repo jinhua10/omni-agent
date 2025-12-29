@@ -49,7 +49,7 @@ const LandingPage = ({ onEnterApp }) => {
     // 第一页：核心架构
     [
       { title: '模块数量', value: 22, suffix: '个', icon: 'ApiOutlined', color: '#667eea' },
-      { title: '代码量', value: 15000, suffix: '行', icon: 'CodeOutlined', color: '#52c41a' },
+      { title: 'Java代码', value: 85000, suffix: '+行', icon: 'CodeOutlined', color: '#52c41a' },
       { title: '文档格式', value: 10, suffix: '类', icon: 'FileTextOutlined', color: '#faad14' },
       { title: '分块方式', value: 6, suffix: '种', icon: 'ThunderboltOutlined', color: '#f5222d' },
     ],
