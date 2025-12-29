@@ -1,7 +1,6 @@
 package top.yumbo.ai.omni.storage;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -33,8 +32,12 @@ import java.util.Map;
 @EnableConfigurationProperties(DocumentStorageProperties.class)
 public class DocumentStorageAutoConfiguration {
 
-    @Autowired
-    private ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
+
+    public DocumentStorageAutoConfiguration(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        log.info("🚀 文档存储自动配置已加载");
+    }
 
     /**
      * 创建所有文档存储服务实例

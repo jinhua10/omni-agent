@@ -1,7 +1,6 @@
 package top.yumbo.ai.omni.rag.adapter.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -31,8 +30,12 @@ import java.util.Map;
 @EnableConfigurationProperties(RagAdapterProperties.class)
 public class RagAdapterAutoConfiguration {
 
-    @Autowired
-    private ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
+
+    public RagAdapterAutoConfiguration(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        log.info("🚀 RAG 适配器自动配置已加载");
+    }
 
     /**
      * 创建所有 RAG 服务实例
