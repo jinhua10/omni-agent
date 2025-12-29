@@ -28,9 +28,11 @@ import {
   LeftOutlined,
   RightOutlined
 } from '@ant-design/icons'
+import GiteeIcon from '../icons/GiteeIcon'
 import './LandingPage.css'
 
 const { Title, Paragraph, Text } = Typography
+
 
 const LandingPage = ({ onEnterApp }) => {
   const [animatedStats, setAnimatedStats] = useState({
@@ -207,6 +209,16 @@ const LandingPage = ({ onEnterApp }) => {
               className="btn-secondary"
             >
               GitHub
+            </Button>
+            <Button
+              size="large"
+              icon={<GiteeIcon />}
+              href="https://gitee.com/gnnu/omni-agent"
+              target="_blank"
+              className="btn-secondary"
+              style={{ background: 'rgba(196, 26, 22, 0.15)' }}
+            >
+              Gitee
             </Button>
             <Button
               size="large"
