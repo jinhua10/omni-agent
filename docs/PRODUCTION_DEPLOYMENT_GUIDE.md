@@ -243,7 +243,25 @@ tail -f /root/omni-agent/app.log
 
 ## 🐛 常见问题
 
-### 1. 403 Forbidden
+### 1. 构建错误：Could not resolve entry module
+
+**问题**:
+```
+error during build:
+Could not resolve entry module "react-router-dom".
+```
+
+**原因**: vite.config.js中配置了未安装的依赖
+
+**解决**: 
+```bash
+# 检查vite.config.js的manualChunks配置
+# 确保只包含package.json中已安装的依赖
+```
+
+已修复，详见 `docs/fixes/VITE_BUILD_ERROR_FIX.md`
+
+### 2. 403 Forbidden
 
 **原因**: Nginx没有读取权限
 

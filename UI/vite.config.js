@@ -56,9 +56,10 @@ export default defineConfig({
         },
         // 手动分包
         manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'react-vendor': ['react', 'react-dom'],
           'antd-vendor': ['antd', '@ant-design/icons'],
-          'utils': ['axios', 'dayjs']
+          'markdown-vendor': ['react-markdown', 'remark-gfm', 'rehype-raw'],
+          'syntax-vendor': ['react-syntax-highlighter', 'highlight.js']
         }
       }
     }
