@@ -22,7 +22,7 @@ OmniAgent 是一个现代化的企业级知识管理平台，通过**知识域�
 | 维度 | 状态 |
 |------|------|
 | **当前版本** | 1.0.0 |
-| **模块总数** | 21个模块 |
+| **模块总数** | 20个Maven模块 + 1个前端项目 |
 | **代码量** | ~15,000+ 行 |
 | **架构状态** | ✅ 重构完成 |
 | **编译状态** | ✅ BUILD SUCCESS |
@@ -127,17 +127,17 @@ OmniAgent 是一个现代化的企业级知识管理平台，通过**知识域�
 
 ## 🏗️ 架构设计
 
-### 模块结构（21个模块）
+### 模块结构（20个Maven模块 + 1个前端项目）
 
 ```
 omni-agent/
 │
-├── ========== API层（接口定义）6个模块 ==========
+├── ========== API层（接口定义）7个模块 ==========
 │
 ├── omni-agent-document-storage-api       # 文档存储接口
 ├── omni-agent-rag-api                    # RAG检索接口
 ├── omni-agent-ai-api                     # AI服务接口
-├── omni-agent-p2p-api                    # P2P协作接口（待激活）
+├── omni-agent-p2p-api                    # P2P协作接口
 ├── omni-agent-knowledge-registry-api     # 知识域注册接口
 ├── omni-agent-chunking-api               # 文档分块接口
 ├── omni-agent-document-processor-api     # 文档处理接口
@@ -162,7 +162,7 @@ omni-agent/
 ├── omni-agent-rag-starter-adapter        # RAG适配器实现
 ├── omni-agent-ai-starter                 # AI服务实现
 ├── omni-agent-knowledge-registry-starter # 知识域实现
-├── omni-agent-p2p-starter                # P2P实现（待激活）
+├── omni-agent-p2p-starter                # P2P实现
 │
 ├── ========== Web层 1个模块 ==========
 │
@@ -176,10 +176,20 @@ omni-agent/
 │
 ├── omni-agent-marketplace                # 算法插件市场
 │
-└── ========== 应用示例 2个模块 ==========
+├── ========== 应用示例 2个模块 ==========
+│
+├── omni-agent-example-basic              # 基础示例
+├── omni-agent-example-production         # 生产示例
+│
+└── ========== 前端项目（独立） ==========
     │
-    ├── omni-agent-example-basic          # 基础示例
-    └── omni-agent-example-production     # 生产示例
+    └── UI/                                # React + Vite 前端应用
+        ├── 问答模块
+        ├── 文档管理
+        ├── 统计分析
+        ├── 反馈系统
+        ├── 角色管理
+        └── 协作网络
 ```
 
 ### 架构层次图
@@ -427,34 +437,68 @@ public class QAService {
 - ✅ RAG统一接口
 - ✅ 向量化集成（ONNX）
 
-### 🔄 Phase 2: 知识网络（进行中）
+### ✅ Phase 2: 知识网络（已完成）
 
 - ✅ 知识域管理服务
 - ✅ 知识网络API定义
-- ⏳ AI知识提取服务
-- ⏳ 跨域关联分析
-- ⏳ 知识图谱构建
+- ✅ 知识网络构建器（KnowledgeNetworkBuilder）
+- ✅ 知识网络管理器（KnowledgeNetworkManager）
+- ✅ AI知识提取服务
+- ✅ 异步构建与后台扫描
+- ✅ 知识存储服务
 
-### 📋 Phase 3: 源码分析（计划中）
+### ✅ Phase 3: 智能路由（已完成）
 
-- ⬜ 源码域定义
-- ⬜ 多角度分析（安全、架构、质量）
-- ⬜ Git深度集成
-- ⬜ 代码知识提取
+- ✅ 意图识别引擎（基于关键词匹配）
+- ✅ 领域路由器（DomainRouter）
+- ✅ 多域查询支持
+- ✅ 角色匹配机制
+- ✅ 跨域查询优化
+- ✅ REST API接口（/api/router/route）
 
-### 📋 Phase 4: 智能路由（计划中）
+### 🔄 Phase 4: Web界面（部分完成）
 
-- ⬜ 意图识别引擎
-- ⬜ 领域路由器
-- ⬜ 多域查询优化
-- ⬜ 结果聚合与排序
+- ✅ React + Vite 前端框架
+- ✅ 问答模块（QA）
+- ✅ 文档管理模块
+- ✅ 统计模块
+- ✅ 反馈系统
+- ✅ 角色管理
+- ✅ 协作网络
+- ⏳ AI服务市场（进行中）
+- ⏳ 个人中心（进行中）
+- ⏳ 系统管理（进行中）
 
-### 📋 Phase 5: 可视化与UI（计划中）
+### 📋 Phase 5: 高级功能（规划中）
+
+#### 5.1 应用场景扩展
+
+- ⬜ **源码分析域** - 基于现有框架的应用场景
+  - 源码域定义与配置
+  - 多角度分析（安全、架构、质量）
+  - Git深度集成
+  - 代码知识自动提取
+  
+- ⬜ **更多领域场景**
+  - 财务分析域
+  - 法律合同域
+  - 医疗知识域
+  - 电商产品域
+
+#### 5.2 功能增强
 
 - ⬜ 知识图谱可视化
-- ⬜ 知识域管理界面
+- ⬜ 更智能的意图识别（LLM驱动）
 - ⬜ 实时监控仪表板
-- ⬜ 配置管理界面
+- ⬜ 多模态支持（图片、音频、视频）
+- ⬜ 知识推理引擎
+
+#### 5.3 性能优化
+
+- ⬜ 分布式RAG检索
+- ⬜ 向量索引优化
+- ⬜ 缓存策略增强
+- ⬜ 并发处理优化
 
 ---
 
@@ -491,16 +535,18 @@ public class QAService {
 ### 代码规模
 
 ```
-总模块数:    21个
+总模块数:    20个Maven模块 + 1个前端项目
 API模块:     7个
-Starter模块: 8个
+Starter模块: 7个
 核心模块:    1个
 工具模块:    1个
 Web模块:     1个
 工作流模块:  1个
 示例模块:    2个
+前端项目:    1个（React + Vite）
 
-总代码量:    ~15,000+行
+总代码量:    ~15,000+行（后端Java）
+前端代码:    ~5,000+行（React/JavaScript）
 文档数量:    30+份
 ```
 
