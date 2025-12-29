@@ -98,23 +98,25 @@
 
 .hero-features {
   margin-bottom: 64px;
-  max-width: 900px;
+  max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .hero-feature-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 16px 24px;
+  gap: 8px;
+  padding: 20px 12px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
   cursor: pointer;
+  height: 100%;
 }
 
 .hero-feature-item:hover {
@@ -125,14 +127,16 @@
 }
 
 .hero-feature-icon {
-  font-size: 24px;
+  font-size: 28px;
   color: #fff;
 }
 
 .hero-feature-text {
   color: #fff !important;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .hero-actions {

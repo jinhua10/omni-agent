@@ -98,26 +98,32 @@ const LandingPage = ({ onEnterApp }) => {
           </Paragraph>
 
           <div className="hero-features">
-            <Row gutter={[24, 16]} justify="center">
-              <Col xs={24} sm={12} md={6}>
+            <Row gutter={[16, 16]} justify="center">
+              <Col xs={12} sm={8} md={4}>
                 <div className="hero-feature-item">
                   <RocketOutlined className="hero-feature-icon" />
-                  <Text className="hero-feature-text">智能Agent构建</Text>
+                  <Text className="hero-feature-text">智能Agent</Text>
                 </div>
               </Col>
-              <Col xs={24} sm={12} md={6}>
+              <Col xs={12} sm={8} md={4}>
                 <div className="hero-feature-item">
                   <CloudOutlined className="hero-feature-icon" />
-                  <Text className="hero-feature-text">Agent服务平台</Text>
+                  <Text className="hero-feature-text">服务平台</Text>
                 </div>
               </Col>
-              <Col xs={24} sm={12} md={6}>
+              <Col xs={12} sm={8} md={4}>
+                <div className="hero-feature-item">
+                  <BulbOutlined className="hero-feature-icon" />
+                  <Text className="hero-feature-text">智能AI应用</Text>
+                </div>
+              </Col>
+              <Col xs={12} sm={8} md={4}>
                 <div className="hero-feature-item">
                   <CodeOutlined className="hero-feature-icon" />
-                  <Text className="hero-feature-text">代码智能分析</Text>
+                  <Text className="hero-feature-text">代码分析</Text>
                 </div>
               </Col>
-              <Col xs={24} sm={12} md={6}>
+              <Col xs={12} sm={8} md={4}>
                 <div className="hero-feature-item">
                   <ThunderboltOutlined className="hero-feature-icon" />
                   <Text className="hero-feature-text">自动化测试</Text>
