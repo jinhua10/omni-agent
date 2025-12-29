@@ -65,3 +65,4 @@ src.backup
 /old/**
 /omni-agent-example-basic/data/**
 /omni-agent-core/data/
+/omni-agent-example-production/logs/

@@ -8,8 +8,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import top.yumbo.ai.omni.document.processor.DocumentProcessor;
+import top.yumbo.ai.omni.document.processor.service.DocumentExtractionResultService;
+import top.yumbo.ai.omni.document.processor.service.impl.DocumentExtractionResultServiceImpl;
 import top.yumbo.ai.omni.document.processor.starter.CompositeDocumentProcessor;
 import top.yumbo.ai.omni.document.processor.starter.DocumentProcessorManager;
+import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.List;
 
@@ -50,6 +53,19 @@ import java.util.List;
     matchIfMissing = true
 )
 public class DocumentProcessorAutoConfiguration {
+
+    /**
+     * 文档提取结果服务
+     *
+     * @param storageService 文档存储服务
+     * @return 文档提取结果服务
+     */
+    @Bean
+    @ConditionalOnMissingBean(DocumentExtractionResultService.class)
+    public DocumentExtractionResultService documentExtractionResultService(DocumentStorageService storageService) {
+        log.info("🔧 初始化文档提取结果服务");
+        return new DocumentExtractionResultServiceImpl(storageService);
+    }
 
     /**
      * 文档处理器管理器
