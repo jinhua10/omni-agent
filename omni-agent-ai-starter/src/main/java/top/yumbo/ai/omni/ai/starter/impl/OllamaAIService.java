@@ -54,7 +54,7 @@ public class OllamaAIService implements AIService, EmbeddingService {
      * 构造函数（支持自定义 HttpClientAdapter）
      */
     public OllamaAIService(RestTemplate restTemplate, OllamaProperties properties,
-                          HttpClientAdapter httpClientAdapter) {
+                           HttpClientAdapter httpClientAdapter) {
         this.restTemplate = restTemplate;
         this.properties = properties;
         this.currentModel = properties.getDefaultModel();
@@ -182,8 +182,8 @@ public class OllamaAIService implements AIService, EmbeddingService {
 
                 // ⭐ Debug 日志：消息完整内容（不截断）
                 log.debug("📤 [LLM Request] Message [{}]:\n{}",
-                    message.getRole(),
-                    message.getContent()
+                        message.getRole(),
+                        message.getContent()
                 );
             }
 
@@ -191,7 +191,7 @@ public class OllamaAIService implements AIService, EmbeddingService {
 
             // ⭐ Debug 日志：完整请求元信息
             log.debug("📤 [LLM Request] URL: {}, Model: {}, Messages Count: {}",
-                url, currentModel, ollamaMessages.size());
+                    url, currentModel, ollamaMessages.size());
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -204,11 +204,22 @@ public class OllamaAIService implements AIService, EmbeddingService {
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, Object> body = response.getBody();
                 Map<String, Object> message = (Map<String, Object>) body.get("message");
+
+                // ⭐ 修复：添加 null 检查，避免 NPE
+                if (message == null) {
+                    log.error("❌ [LLM Response] message 字段为 null");
+                    return AIResponse.builder()
+                            .text("")
+                            .success(false)
+                            .error("Invalid response: message is null")
+                            .build();
+                }
+
                 String content = (String) message.get("content");
 
                 // ⭐ Debug 日志：LLM 响应
                 log.debug("📥 [LLM Response] Duration: {}ms, Content Length: {} chars",
-                    duration, content != null ? content.length() : 0);
+                        duration, content != null ? content.length() : 0);
                 log.debug("📥 [LLM Response] Content:\n{}", content);
 
                 return AIResponse.builder()
@@ -390,17 +401,17 @@ public class OllamaAIService implements AIService, EmbeddingService {
 
     /**
      * 多模态对话（Ollama Vision 支持）
-     *
+     * <p>
      * Ollama API 格式：
      * {
-     *   "model": "llava",
-     *   "messages": [
-     *     {
-     *       "role": "user",
-     *       "content": "What's in this image?",
-     *       "images": ["base64_encoded_image"]
-     *     }
-     *   ]
+     * "model": "llava",
+     * "messages": [
+     * {
+     * "role": "user",
+     * "content": "What's in this image?",
+     * "images": ["base64_encoded_image"]
+     * }
+     * ]
      * }
      */
     @Override
@@ -480,18 +491,23 @@ public class OllamaAIService implements AIService, EmbeddingService {
 
             // 解析 Ollama 响应格式
             Map<String, Object> messageObj = (Map<String, Object>) body.get("message");
-            if (messageObj != null) {
-                String content = (String) messageObj.get("content");
-
-                return AIResponse.builder()
-                        .text(content)
-                        .model(currentModel)
-                        .finishReason("stop")
-                        .success(true)
-                        .build();
+            if (messageObj == null) {
+                log.error("❌ [Ollama Vision] message 字段为 null");
+                throw new RuntimeException("Invalid response format: message is null");
             }
 
-            throw new RuntimeException("Invalid response format");
+            String content = (String) messageObj.get("content");
+            if (content == null) {
+                log.warn("⚠️ [Ollama Vision] content 字段为 null，使用空字符串");
+                content = "";
+            }
+
+            return AIResponse.builder()
+                    .text(content)
+                    .model(currentModel)
+                    .finishReason("stop")
+                    .success(true)
+                    .build();
 
         } catch (Exception e) {
             log.error("❌ [Ollama Vision] 失败", e);

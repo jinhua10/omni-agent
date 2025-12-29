@@ -12,6 +12,7 @@ import top.yumbo.ai.omni.ai.api.model.AIResponse;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.ai.api.model.ModelInfo;
 import top.yumbo.ai.omni.ai.starter.properties.OnlineAPIProperties;
+import top.yumbo.ai.omni.common.http.HttpClientAdapter;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,14 +31,14 @@ import java.util.stream.Collectors;
  * </p>
  *
  * @author OmniAgent Team
- * @since 1.0.0
  * @version 1.0.0 - Online API Starter 实现
+ * @since 1.0.0
  */
 @Slf4j
 public class OnlineAPIAIService implements AIService, EmbeddingService {
 
     private final RestTemplate restTemplate;
-    private final top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter;
+    private final HttpClientAdapter httpClientAdapter;
     private final OnlineAPIProperties properties;
     private String currentModel;
 
@@ -52,7 +53,7 @@ public class OnlineAPIAIService implements AIService, EmbeddingService {
      * 构造函数（支持自定义 HttpClientAdapter）
      */
     public OnlineAPIAIService(RestTemplate restTemplate, OnlineAPIProperties properties,
-                              top.yumbo.ai.omni.common.http.HttpClientAdapter httpClientAdapter) {
+                              HttpClientAdapter httpClientAdapter) {
         this.restTemplate = restTemplate;
         this.properties = properties;
         this.currentModel = properties.getDefaultModel();
@@ -256,73 +257,73 @@ public class OnlineAPIAIService implements AIService, EmbeddingService {
 
                 // 使用 RestTemplate 的 execute 方法处理流式响应
                 restTemplate.execute(
-                    endpoint,
-                    HttpMethod.POST,
-                    request -> {
-                        headers.forEach((key, values) -> values.forEach(value -> request.getHeaders().add(key, value)));
-                        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                        request.getBody().write(
-                            new com.fasterxml.jackson.databind.ObjectMapper()
-                                .writeValueAsBytes(requestBody)
-                        );
-                    },
-                    response -> {
-                        try (java.io.BufferedReader reader = new java.io.BufferedReader(
-                            new java.io.InputStreamReader(response.getBody(), java.nio.charset.StandardCharsets.UTF_8))) {
+                        endpoint,
+                        HttpMethod.POST,
+                        request -> {
+                            headers.forEach((key, values) -> values.forEach(value -> request.getHeaders().add(key, value)));
+                            request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                            request.getBody().write(
+                                    new com.fasterxml.jackson.databind.ObjectMapper()
+                                            .writeValueAsBytes(requestBody)
+                            );
+                        },
+                        response -> {
+                            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                                    new java.io.InputStreamReader(response.getBody(), java.nio.charset.StandardCharsets.UTF_8))) {
 
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                if (line.isEmpty() || line.startsWith(":")) {
-                                    continue;  // 跳过空行和注释
-                                }
-
-                                if (line.startsWith("data: ")) {
-                                    String data = line.substring(6).trim();
-
-                                    // 检查是否是结束标记
-                                    if ("[DONE]".equals(data)) {
-                                        sink.complete();
-                                        break;
+                                String line;
+                                while ((line = reader.readLine()) != null) {
+                                    if (line.isEmpty() || line.startsWith(":")) {
+                                        continue;  // 跳过空行和注释
                                     }
 
-                                    try {
-                                        // 解析 JSON
-                                        com.fasterxml.jackson.databind.ObjectMapper mapper =
-                                            new com.fasterxml.jackson.databind.ObjectMapper();
-                                        Map<String, Object> jsonData = mapper.readValue(data, Map.class);
+                                    if (line.startsWith("data: ")) {
+                                        String data = line.substring(6).trim();
 
-                                        // 提取 token
-                                        List<Map<String, Object>> choices =
-                                            (List<Map<String, Object>>) jsonData.get("choices");
-                                        if (choices != null && !choices.isEmpty()) {
-                                            Map<String, Object> firstChoice = choices.get(0);
-                                            Map<String, Object> delta =
-                                                (Map<String, Object>) firstChoice.get("delta");
-                                            if (delta != null) {
-                                                String content = (String) delta.get("content");
-                                                if (content != null && !content.isEmpty()) {
-                                                    sink.next(content);
+                                        // 检查是否是结束标记
+                                        if ("[DONE]".equals(data)) {
+                                            sink.complete();
+                                            break;
+                                        }
+
+                                        try {
+                                            // 解析 JSON
+                                            com.fasterxml.jackson.databind.ObjectMapper mapper =
+                                                    new com.fasterxml.jackson.databind.ObjectMapper();
+                                            Map<String, Object> jsonData = mapper.readValue(data, Map.class);
+
+                                            // 提取 token
+                                            List<Map<String, Object>> choices =
+                                                    (List<Map<String, Object>>) jsonData.get("choices");
+                                            if (choices != null && !choices.isEmpty()) {
+                                                Map<String, Object> firstChoice = choices.get(0);
+                                                Map<String, Object> delta =
+                                                        (Map<String, Object>) firstChoice.get("delta");
+                                                if (delta != null) {
+                                                    String content = (String) delta.get("content");
+                                                    if (content != null && !content.isEmpty()) {
+                                                        sink.next(content);
+                                                    }
+                                                }
+
+                                                // 检查是否完成
+                                                String finishReason = (String) firstChoice.get("finish_reason");
+                                                if (finishReason != null && !finishReason.isEmpty()) {
+                                                    sink.complete();
+                                                    break;
                                                 }
                                             }
-
-                                            // 检查是否完成
-                                            String finishReason = (String) firstChoice.get("finish_reason");
-                                            if (finishReason != null && !finishReason.isEmpty()) {
-                                                sink.complete();
-                                                break;
-                                            }
+                                        } catch (Exception e) {
+                                            log.warn("Failed to parse SSE data: {}", data, e);
                                         }
-                                    } catch (Exception e) {
-                                        log.warn("Failed to parse SSE data: {}", data, e);
                                     }
                                 }
+                            } catch (Exception e) {
+                                log.error("Error reading stream", e);
+                                sink.error(e);
                             }
-                        } catch (Exception e) {
-                            log.error("Error reading stream", e);
-                            sink.error(e);
+                            return null;
                         }
-                        return null;
-                    }
                 );
             } catch (Exception e) {
                 log.error("Failed to start streaming", e);
@@ -423,7 +424,7 @@ public class OnlineAPIAIService implements AIService, EmbeddingService {
 
     /**
      * 获取 chat/completions API 端点 URL
-     *
+     * <p>
      * endpoint 就是完整的 API URL，直接使用
      */
     private String getEndpoint() {
