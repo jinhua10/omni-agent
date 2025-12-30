@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.knowledge.registry.role.service.RoleService;
 import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.role.RoleStatus;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -51,7 +52,8 @@ public class RoleController {
                 .filter(role -> keyword == null || keyword.isEmpty() ||
                     role.getRoleName().contains(keyword) ||
                     role.getDescription().contains(keyword))
-                .filter(role -> enabled == null || role.isEnabled() == enabled)
+                .filter(role -> enabled == null ||
+                    enabled == (role.getStatus() == RoleStatus.ACTIVE))
                 .sorted((r1, r2) -> Integer.compare(r2.getPriority(), r1.getPriority()))
                 .collect(Collectors.toList());
 
@@ -199,14 +201,20 @@ public class RoleController {
             log.info("切换角色状态: {}", roleName);
 
             KnowledgeRole role = roleService.getRole(roleName);
-            role.setEnabled(!role.isEnabled());
+
+            // 切换状态：ACTIVE <-> DISABLED
+            if (role.getStatus() == RoleStatus.ACTIVE) {
+                role.setStatus(RoleStatus.DISABLED);
+            } else {
+                role.setStatus(RoleStatus.ACTIVE);
+            }
 
             roleService.updateRole(role);
 
             result.put("status", "success");
             result.put("message", "角色状态已更新");
             result.put("roleName", roleName);
-            result.put("enabled", role.isEnabled());
+            result.put("enabled", role.getStatus() == RoleStatus.ACTIVE);
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
