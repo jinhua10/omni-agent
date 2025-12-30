@@ -8,8 +8,8 @@ import top.yumbo.ai.omni.knowledge.registry.qa.model.IntelligentQARequest;
 import top.yumbo.ai.omni.knowledge.registry.qa.model.IntelligentQAResponse;
 import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
 import top.yumbo.ai.omni.knowledge.registry.role.service.RoleService;
-import top.yumbo.ai.omni.knowledge.registry.qa.util.ContextBuilder;
 import top.yumbo.ai.omni.rag.RagService;
+import top.yumbo.ai.omni.rag.model.ContextBuilder;
 import top.yumbo.ai.omni.rag.model.Document;
 
 import java.util.List;
