@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.role.RoleStatus;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,10 +13,10 @@ import java.util.stream.Collectors;
 
 /**
  * 角色服务 (Role Service)
- *
+ * <p>
  * 提供角色管理和查询功能
  * (Provides role management and query functions)
- *
+ * <p>
  * 核心功能 (Core Features):
  * - 角色注册和管理 (Role registration and management)
  * - 角色查询 (Role query)
@@ -54,7 +55,7 @@ public class RoleService {
                 .roleName("Default Role")
                 .description("Default role for general questions")
                 .keywords(Arrays.asList("general", "common", "default"))
-                .enabled(true)
+                .status(RoleStatus.ACTIVE)
                 .priority(0)
                 .config(new HashMap<>())
                 .build();
@@ -99,7 +100,7 @@ public class RoleService {
      */
     public List<KnowledgeRole> getEnabledRoles() {
         return roles.values().stream()
-                .filter(KnowledgeRole::isEnabled)
+                .filter(r -> r.getStatus() == RoleStatus.ACTIVE)
                 .sorted(Comparator.comparingInt(KnowledgeRole::getPriority).reversed())
                 .collect(Collectors.toList());
     }
@@ -130,8 +131,8 @@ public class RoleService {
                     // 检查角色关键词是否包含任何输入关键词
                     for (String keyword : keywords) {
                         if (role.getKeywords() != null &&
-                            role.getKeywords().stream()
-                                .anyMatch(k -> k.equalsIgnoreCase(keyword))) {
+                                role.getKeywords().stream()
+                                        .anyMatch(k -> k.equalsIgnoreCase(keyword))) {
                             return true;
                         }
                     }
