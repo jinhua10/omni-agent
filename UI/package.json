@@ -16,6 +16,7 @@
     "@ant-design/icons": "^6.1.0",
     "antd": "^6.1.0",
     "axios": "^1.6.2",
+    "framer-motion": "^11.0.0",
     "highlight.js": "^11.9.0",
     "html2pdf.js": "^0.10.1",
     "marked": "^11.1.0",

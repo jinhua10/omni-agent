@@ -33,6 +33,7 @@ import {
 import GiteeIcon from '../icons/GiteeIcon'
 import { useLanguage } from '../../contexts/LanguageContext'
 import './LandingPage.css'
+import KnowledgeNetworkDiagram from './KnowledgeNetworkDiagram'
 
 // 导入二维码图片
 import PaymentQRCode from '../../assets/images/Payment QR Code.png'
@@ -931,6 +932,9 @@ const LandingPage = ({ onEnterApp }) => {
           </div>
         </div>
       </section>
+
+      {/* 知识网络架构 */}
+      <KnowledgeNetworkDiagram />
 
       {/* 核心特性 */}
       <section className="features-section">
