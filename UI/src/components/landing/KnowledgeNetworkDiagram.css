@@ -37,16 +37,22 @@
   margin-bottom: 64px;
 }
 
-.knowledge-network-section .section-title {
+.knowledge-network-section .section-title,
+.knowledge-network-section .section-title.ant-typography,
+.knowledge-network-section .section-header .section-title,
+.knowledge-network-section h2.ant-typography {
   color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   font-size: 42px !important;
   font-weight: 700 !important;
   margin-bottom: 16px !important;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-.knowledge-network-section .section-subtitle {
-  color: rgba(255, 255, 255, 0.85) !important;
+.knowledge-network-section .section-subtitle,
+.knowledge-network-section .section-subtitle.ant-typography {
+  color: rgba(255, 255, 255, 0.9) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
   font-size: 18px !important;
   max-width: 700px;
   margin: 0 auto;
@@ -159,11 +165,15 @@
   margin-bottom: 80px;
 }
 
-.architecture-title {
+.architecture-title,
+.architecture-title.ant-typography,
+.knowledge-network-section .architecture-title {
   color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   text-align: center;
   margin-bottom: 48px !important;
   font-size: 28px !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* 层级样式 */
@@ -398,11 +408,15 @@
   margin-bottom: 48px;
 }
 
-.advantages-title {
+.advantages-title,
+.advantages-title.ant-typography,
+.knowledge-network-section .advantages-title {
   color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   text-align: center;
   margin-bottom: 32px !important;
   font-size: 28px !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .advantage-card {
