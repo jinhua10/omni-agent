@@ -8,7 +8,7 @@ import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.ai.api.model.AIRequest;
 import top.yumbo.ai.omni.ai.api.model.AIResponse;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
-import top.yumbo.ai.omni.knowledge.registry.qa.util.ContextBuilder;
+import top.yumbo.ai.omni.common.util.ContextBuilder;
 import top.yumbo.ai.omni.web.dto.ApiDtos.*;
 import top.yumbo.ai.omni.web.util.JsonUtil;
 import top.yumbo.ai.omni.rag.RagService;

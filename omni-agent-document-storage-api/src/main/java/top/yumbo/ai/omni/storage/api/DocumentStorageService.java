@@ -1,11 +1,7 @@
 package top.yumbo.ai.omni.storage.api;
 
 import top.yumbo.ai.omni.chunking.Chunk;
-import top.yumbo.ai.omni.storage.api.model.Image;
-import top.yumbo.ai.omni.storage.api.model.PPLData;
-import top.yumbo.ai.omni.storage.api.model.OptimizationData;
-import top.yumbo.ai.omni.storage.api.model.StorageStatistics;
-import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
+import top.yumbo.ai.omni.storage.api.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +26,7 @@ import java.util.Optional;
  *
  * <h3>不适用场景 (Not For)</h3>
  * <ul>
- *   <li>❌ 系统配置管理（请使用 {@link top.yumbo.ai.persistence.api.QuestionClassifierPersistence}）</li>
+ *   <li>❌ 系统配置管理（请使用 {top.yumbo.ai.rag.hope.persistence.QuestionClassifierPersistence}）</li>
  *   <li>❌ 规则和元数据（请使用 Persistence API）</li>
  *   <li>❌ 需要复杂查询的结构化数据（请使用 Persistence API）</li>
  * </ul>
@@ -49,7 +45,7 @@ import java.util.Optional;
  *
  * @author OmniAgent Team
  * @since 1.0.0
- * @see top.yumbo.ai.persistence.api.QuestionClassifierPersistence 配置和元数据持久化服务
+ * top.yumbo.ai.rag.hope.persistence.QuestionClassifierPersistence 配置和元数据持久化服务
  */
 public interface DocumentStorageService {
 
@@ -65,6 +61,41 @@ public interface DocumentStorageService {
     String saveDocument(String documentId, String filename, byte[] fileData);
 
     /**
+     * 批量保存原始文档 ⭐ NEW
+     * @param documents 文档列表（Map包含documentId, filename, fileData）
+     * @return 批量操作结果
+     */
+    default BatchOperationResult saveDocuments(List<Map<String, Object>> documents) {
+        List<String> successIds = new ArrayList<>();
+        List<String> failureIds = new ArrayList<>();
+        Map<String, String> errorMessages = new java.util.HashMap<>();
+
+        for (Map<String, Object> doc : documents) {
+            try {
+                String documentId = (String) doc.get("documentId");
+                String filename = (String) doc.get("filename");
+                byte[] fileData = (byte[]) doc.get("fileData");
+
+                String id = saveDocument(documentId, filename, fileData);
+                successIds.add(id);
+            } catch (Exception e) {
+                String documentId = (String) doc.getOrDefault("documentId", "unknown");
+                failureIds.add(documentId);
+                errorMessages.put(documentId, e.getMessage());
+            }
+        }
+
+        return BatchOperationResult.builder()
+                .successCount(successIds.size())
+                .failureCount(failureIds.size())
+                .totalCount(documents.size())
+                .successIds(successIds)
+                .failureIds(failureIds)
+                .errorMessages(errorMessages)
+                .build();
+    }
+
+    /**
      * 获取原始文档文件
      * @param documentId 文档ID
      * @return 文档数据
@@ -76,6 +107,36 @@ public interface DocumentStorageService {
      * @param documentId 文档ID
      */
     void deleteDocument(String documentId);
+
+    /**
+     * 批量删除原始文档 ⭐ NEW
+     * @param documentIds 文档ID列表
+     * @return 批量操作结果
+     */
+    default BatchOperationResult deleteDocuments(List<String> documentIds) {
+        List<String> successIds = new ArrayList<>();
+        List<String> failureIds = new ArrayList<>();
+        Map<String, String> errorMessages = new java.util.HashMap<>();
+
+        for (String documentId : documentIds) {
+            try {
+                deleteDocument(documentId);
+                successIds.add(documentId);
+            } catch (Exception e) {
+                failureIds.add(documentId);
+                errorMessages.put(documentId, e.getMessage());
+            }
+        }
+
+        return BatchOperationResult.builder()
+                .successCount(successIds.size())
+                .failureCount(failureIds.size())
+                .totalCount(documentIds.size())
+                .successIds(successIds)
+                .failureIds(failureIds)
+                .errorMessages(errorMessages)
+                .build();
+    }
 
     // ========== 提取文本存储 (Extracted Text Storage) ⭐ NEW ==========
 
@@ -280,12 +341,111 @@ public interface DocumentStorageService {
      */
     void deleteAllOptimizationData(String documentId);
 
-    // ========== 文档管理 (Document Management) ==========
+    // ========== 文档元数据管理 (Document Metadata Management) ⭐ ENHANCED ==========
 
     /**
-     * 列出所有文档
-     * @return 文档信息列表
+     * 保存文档元数据
+     * @param metadata 文档元数据
      */
+    void saveMetadata(DocumentMetadata metadata);
+
+    /**
+     * 获取文档元数据
+     * @param documentId 文档ID
+     * @return 文档元数据
+     */
+    Optional<DocumentMetadata> getMetadata(String documentId);
+
+    /**
+     * 获取所有文档元数据（不推荐用于大数据量）
+     * @return 文档元数据列表
+     * @deprecated 推荐使用 {@link #getAllMetadata(PageRequest)} 分页查询
+     */
+    @Deprecated
+    List<DocumentMetadata> getAllMetadata();
+
+    /**
+     * 分页查询文档元数据 ⭐ NEW
+     * @param pageRequest 分页请求
+     * @return 分页结果
+     */
+    default PageResult<DocumentMetadata> getAllMetadata(PageRequest pageRequest) {
+        // 默认实现：使用旧方法并手动分页
+        List<DocumentMetadata> allMetadata = getAllMetadata();
+        int offset = pageRequest.getOffset();
+        int limit = pageRequest.getLimit();
+
+        List<DocumentMetadata> pagedContent = allMetadata.stream()
+                .skip(offset)
+                .limit(limit)
+                .toList();
+
+        return PageResult.of(pagedContent, pageRequest, allMetadata.size());
+    }
+
+    /**
+     * 搜索文档元数据（支持分页）⭐ NEW
+     * @param keyword 关键词
+     * @param pageRequest 分页请求
+     * @return 分页结果
+     */
+    default PageResult<DocumentMetadata> searchMetadata(String keyword, PageRequest pageRequest) {
+        List<DocumentMetadata> searchResults = searchDocuments(keyword);
+        int offset = pageRequest.getOffset();
+        int limit = pageRequest.getLimit();
+
+        List<DocumentMetadata> pagedContent = searchResults.stream()
+                .skip(offset)
+                .limit(limit)
+                .toList();
+
+        return PageResult.of(pagedContent, pageRequest, searchResults.size());
+    }
+
+    /**
+     * 删除文档元数据
+     * @param documentId 文档ID
+     */
+    void deleteMetadata(String documentId);
+
+    /**
+     * 批量删除文档元数据 ⭐ NEW
+     * @param documentIds 文档ID列表
+     * @return 批量操作结果
+     */
+    default BatchOperationResult deleteMetadataBatch(List<String> documentIds) {
+        List<String> successIds = new ArrayList<>();
+        List<String> failureIds = new ArrayList<>();
+        Map<String, String> errorMessages = new java.util.HashMap<>();
+
+        for (String documentId : documentIds) {
+            try {
+                deleteMetadata(documentId);
+                successIds.add(documentId);
+            } catch (Exception e) {
+                failureIds.add(documentId);
+                errorMessages.put(documentId, e.getMessage());
+            }
+        }
+
+        return BatchOperationResult.builder()
+                .successCount(successIds.size())
+                .failureCount(failureIds.size())
+                .totalCount(documentIds.size())
+                .successIds(successIds)
+                .failureIds(failureIds)
+                .errorMessages(errorMessages)
+                .build();
+    }
+
+    // ========== 文档管理 (Document Management) ⭐ ENHANCED ==========
+
+    /**
+     * 列出所有文档（不推荐用于大数据量）
+     * @return 文档信息列表
+     * @deprecated 推荐使用 {@link #listDocuments(PageRequest)} 分页查询
+     */
+    @Deprecated
     List<DocumentMetadata> listAllDocuments();
 
     /**
@@ -295,6 +455,20 @@ public interface DocumentStorageService {
      * @return 文档信息列表
      */
     List<DocumentMetadata> listDocuments(int offset, int limit);
+
+    /**
+     * 列出文档（分页增强版）⭐ NEW
+     * @param pageRequest 分页请求
+     * @return 分页结果
+     */
+    default PageResult<DocumentMetadata> listDocuments(PageRequest pageRequest) {
+        List<DocumentMetadata> documents = listDocuments(
+                pageRequest.getOffset(),
+                pageRequest.getLimit()
+        );
+        long total = getDocumentCount();
+        return PageResult.of(documents, pageRequest, total);
+    }
 
     /**
      * 搜索文档（按文件名）
@@ -317,11 +491,64 @@ public interface DocumentStorageService {
     void cleanupDocument(String documentId);
 
     /**
+     * 批量清理文档 ⭐ NEW
+     * @param documentIds 文档ID列表
+     * @return 批量操作结果
+     */
+    default BatchOperationResult cleanupDocuments(List<String> documentIds) {
+        List<String> successIds = new ArrayList<>();
+        List<String> failureIds = new ArrayList<>();
+        Map<String, String> errorMessages = new java.util.HashMap<>();
+
+        for (String documentId : documentIds) {
+            try {
+                cleanupDocument(documentId);
+                successIds.add(documentId);
+            } catch (Exception e) {
+                failureIds.add(documentId);
+                errorMessages.put(documentId, e.getMessage());
+            }
+        }
+
+        return BatchOperationResult.builder()
+                .successCount(successIds.size())
+                .failureCount(failureIds.size())
+                .totalCount(documentIds.size())
+                .successIds(successIds)
+                .failureIds(failureIds)
+                .errorMessages(errorMessages)
+                .build();
+    }
+
+    /**
      * 检查文档是否存在
      * @param documentId 文档ID
      * @return 是否存在
      */
     boolean documentExists(String documentId);
+
+    /**
+     * 批量检查文档是否存在 ⭐ NEW
+     * @param documentIds 文档ID列表
+     * @return 存在的文档ID列表和不存在的文档ID列表
+     */
+    default Map<String, List<String>> checkDocumentsExist(List<String> documentIds) {
+        List<String> existingIds = new ArrayList<>();
+        List<String> missingIds = new ArrayList<>();
+
+        for (String documentId : documentIds) {
+            if (documentExists(documentId)) {
+                existingIds.add(documentId);
+            } else {
+                missingIds.add(documentId);
+            }
+        }
+
+        Map<String, List<String>> result = new java.util.HashMap<>();
+        result.put("existing", existingIds);
+        result.put("missing", missingIds);
+        return result;
+    }
 
     /**
      * 获取文档大小（字节数）

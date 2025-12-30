@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.qa.util;
+package top.yumbo.ai.omni.common.util;
 
 import top.yumbo.ai.omni.rag.model.SearchResult;
 
