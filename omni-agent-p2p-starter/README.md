@@ -161,6 +161,127 @@ List<SharedKnowledge> receivedKnowledge = p2pService.receiveKnowledge(
 );
 ```
 
+#### 3.2 跨网络 IP 直连 🌐
+
+P2P 模块支持通过 IP 地址进行跨网络连接，适用于以下场景：
+- 💼 企业内部跨部门知识共享
+- 🏢 跨地域分支机构协作
+- 🌍 互联网远程节点连接
+- 🔒 点对点加密数据传输
+
+##### 服务端（被连接方）
+
+```java
+@Autowired
+private P2PEndpointDiscovery endpointDiscovery;
+
+// 1. 创建并注册端点
+P2PConnection.EndpointInfo localEndpoint = new P2PConnection.EndpointInfo(
+    "storage-node-01",
+    "sqlite"
+);
+localEndpoint.setHost("192.168.1.100");  // 本地 IP
+localEndpoint.setPort(8081);              // 服务端口
+
+// 2. 生成连接码（10分钟有效）
+String connectionCode = endpointDiscovery.generateConnectionCode(
+    localEndpoint.getEndpointId(),
+    10  // 有效期（分钟）
+);
+
+// 3. 注册到网络
+EndpointRegistration registration = endpointDiscovery.registerEndpoint(
+    localEndpoint, 
+    connectionCode
+);
+
+// 4. 将连接码分享给客户端
+System.out.println("连接码: " + connectionCode);
+System.out.println("本地地址: " + localEndpoint.getHost() + ":" + localEndpoint.getPort());
+```
+
+##### 客户端（发起连接方）
+
+**方法 1: 仅通过 IP + 连接码连接**
+
+```java
+@Autowired
+private P2PConnectionManager connectionManager;
+
+// 从服务端获取的信息
+String remoteIp = "203.0.113.50";        // 远程 IP（公网或内网）
+int remotePort = 8081;                    // 远程端口
+String connectionCode = "ABC12345";       // 服务端生成的连接码
+
+// 连接配置
+Map<String, Object> config = new HashMap<>();
+config.put("local_storage_type", "sqlite");
+config.put("timeout_seconds", 30);
+
+// 建立连接
+P2PConnection connection = connectionManager.connectByIp(
+    remoteIp,
+    remotePort,
+    connectionCode,
+    config
+);
+
+System.out.println("连接成功: " + connection.getConnectionId());
+```
+
+**方法 2: 通过 IP + 端点 ID + 连接码连接（更精确）**
+
+```java
+String remoteIp = "203.0.113.50";
+int remotePort = 8081;
+String endpointId = "storage-node-01";    // 服务端端点 ID
+String connectionCode = "ABC12345";
+
+Map<String, Object> config = new HashMap<>();
+config.put("local_storage_type", "sqlite");
+
+P2PConnection connection = connectionManager.connectByIpAndEndpoint(
+    remoteIp,
+    remotePort,
+    endpointId,
+    connectionCode,
+    config
+);
+```
+
+##### 网络配置要求
+
+**局域网连接**
+- ✅ 端点在同一局域网内可相互访问
+- ✅ 无需公网 IP
+- ✅ 防火墙允许指定端口
+
+**跨网络连接**
+- 🌐 服务端需要公网 IP 或配置端口映射（NAT）
+- 🔓 防火墙开放指定端口
+- 🔒 建议使用 HTTPS/TLS 加密
+- ⏱️ 注意网络延迟和超时设置
+
+##### 安全建议
+
+1. **连接码管理**
+   - ✅ 设置合理的有效期（建议 5-30 分钟）
+   - ✅ 连接码一次性使用
+   - ✅ 通过安全渠道传递（加密消息、电话等）
+
+2. **网络安全**
+   - 🔒 使用 VPN 或专线连接
+   - 🔒 启用 IP 白名单
+   - 🔒 配置 SSL/TLS 证书
+   - 🔒 定期轮换连接码
+
+3. **访问控制**
+   - 👤 验证用户身份
+   - 🔑 使用强密码/密钥
+   - 📝 记录连接日志
+   - ⚠️ 监控异常连接
+
+    
 ## 📦 项目结构
 
 ```

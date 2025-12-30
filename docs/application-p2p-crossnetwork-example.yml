@@ -1,0 +1,213 @@
+# OmniAgent P2P 跨网络连接配置示例
+# P2P Cross-Network Connection Configuration Example
+
+# ==============================================================================
+# 场景1: 局域网 P2P 连接（默认配置）
+# ==============================================================================
+omni-agent:
+  p2p:
+    enabled: true
+    storage-type: sqlite
+    sqlite:
+      db-path: ./data/p2p/sqlite/p2p.db
+
+    # 端点配置
+    endpoint:
+      # 端点ID（唯一标识）
+      id: local-node-01
+      # 本地 IP 地址（自动检测）
+      host: auto
+      # 服务端口
+      port: 8081
+      # 端点名称
+      name: "本地存储节点"
+
+    # 连接码配置
+    connection-code:
+      # 默认有效期（分钟）
+      default-validity-minutes: 10
+      # 最大有效期（分钟）
+      max-validity-minutes: 60
+      # 是否允许重复使用（建议false）
+      allow-reuse: false
+
+# ==============================================================================
+# 场景2: 跨网络 P2P 服务端配置（被连接方）
+# ==============================================================================
+---
+spring:
+  profiles: p2p-server
+
+omni-agent:
+  p2p:
+    enabled: true
+    storage-type: sqlite
+
+    # 服务端端点配置
+    endpoint:
+      id: storage-server-01
+      # 公网 IP 或域名
+      host: 203.0.113.50
+      # 公开的服务端口（确保防火墙开放）
+      port: 8081
+      name: "企业知识库服务器"
+
+      # 网络配置
+      network:
+        # 是否启用公网访问
+        public-access: true
+        # IP 白名单（可选，增强安全性）
+        ip-whitelist:
+          - 203.0.113.0/24
+          - 198.51.100.0/24
+        # 是否启用 SSL/TLS
+        ssl-enabled: true
+        # SSL 证书路径
+        ssl-cert-path: /etc/ssl/certs/omni-agent.crt
+        ssl-key-path: /etc/ssl/private/omni-agent.key
+
+    # 安全配置
+    security:
+      # 是否强制连接码验证
+      require-connection-code: true
+      # 最大并发连接数
+      max-connections: 100
+      # 连接超时（秒）
+      connection-timeout-seconds: 30
+      # 是否记录连接日志
+      enable-audit-log: true
+
+# ==============================================================================
+# 场景3: 跨网络 P2P 客户端配置（发起连接方）
+# ==============================================================================
+---
+spring:
+  profiles: p2p-client
+
+omni-agent:
+  p2p:
+    enabled: true
+    storage-type: sqlite
+
+    # 客户端端点配置
+    endpoint:
+      id: client-node-01
+      # 客户端本地 IP（可选）
+      host: auto
+      port: 8082
+      name: "客户端节点"
+
+    # 远程连接配置
+    remote-connections:
+      # 预配置的远程服务器列表
+      - name: "总部服务器"
+        ip: 203.0.113.50
+        port: 8081
+        endpoint-id: storage-server-01
+        # 连接码（从服务端获取后配置）
+        connection-code: ${REMOTE_CONNECTION_CODE:}
+        # 连接方式: ip, endpoint, scan
+        connection-mode: ip
+        # 自动重连
+        auto-reconnect: true
+        # 重连间隔（秒）
+        reconnect-interval-seconds: 60
+
+      - name: "分部服务器"
+        ip: 198.51.100.20
+        port: 8081
+        endpoint-id: storage-server-02
+        connection-code: ${BRANCH_CONNECTION_CODE:}
+        connection-mode: endpoint
+
+    # 客户端安全配置
+    security:
+      # 连接超时
+      connection-timeout-seconds: 30
+      # 心跳间隔（秒）
+      heartbeat-interval-seconds: 30
+      # 是否验证服务端证书
+      verify-ssl-cert: true
+
+# ==============================================================================
+# 场景4: 企业级多节点配置（分布式部署）
+# ==============================================================================
+---
+spring:
+  profiles: p2p-cluster
+
+omni-agent:
+  p2p:
+    enabled: true
+    storage-type: redis  # 使用 Redis 共享连接状态
+
+    redis:
+      key-prefix: "p2p:cluster:"
+      ttl: 3600
+
+    # 集群模式配置
+    cluster:
+      enabled: true
+      # 集群名称
+      name: omni-agent-cluster
+      # 节点角色: server, client, hybrid
+      role: hybrid
+
+      # 服务发现
+      discovery:
+        # 发现方式: static, consul, eureka, nacos
+        type: static
+        # 静态节点列表
+        static-nodes:
+          - id: node-01
+            ip: 192.168.1.100
+            port: 8081
+          - id: node-02
+            ip: 192.168.1.101
+            port: 8081
+          - id: node-03
+            ip: 192.168.1.102
+            port: 8081
+
+      # 负载均衡
+      load-balance:
+        # 策略: round-robin, random, least-connections
+        strategy: least-connections
+
+      # 容错配置
+      failover:
+        enabled: true
+        # 故障检测间隔（秒）
+        health-check-interval-seconds: 10
+        # 失败重试次数
+        max-retry-attempts: 3
+
+# ==============================================================================
+# Spring Data Redis 配置（集群模式需要）
+# ==============================================================================
+spring:
+  redis:
+    host: localhost
+    port: 6379
+    password: ${REDIS_PASSWORD:}
+    database: 0
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: 2000ms
+
+# ==============================================================================
+# 日志配置
+# ==============================================================================
+logging:
+  level:
+    top.yumbo.ai.omni.p2p: DEBUG
+    top.yumbo.ai.p2p: DEBUG
+  file:
+    name: ./logs/p2p.log
+    max-size: 10MB
+    max-history: 30
+
