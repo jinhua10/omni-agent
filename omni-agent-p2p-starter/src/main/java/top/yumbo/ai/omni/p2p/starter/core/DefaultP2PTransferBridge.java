@@ -1,4 +1,4 @@
-package top.yumbo.ai.p2p.core;
+package top.yumbo.ai.omni.p2p.starter.core;
 
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.p2p.api.P2PDataTransferService;
@@ -163,4 +163,5 @@ public class DefaultP2PTransferBridge implements P2PTransferBridge {
             .collect(Collectors.toSet());
     }
 }
+
 

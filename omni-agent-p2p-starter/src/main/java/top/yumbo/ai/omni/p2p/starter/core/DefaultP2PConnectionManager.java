@@ -1,4 +1,4 @@
-package top.yumbo.ai.p2p.core;
+package top.yumbo.ai.omni.p2p.starter.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -515,4 +515,5 @@ public class DefaultP2PConnectionManager implements P2PConnectionManager {
         }
     }
 }
+
 

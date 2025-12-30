@@ -1,4 +1,4 @@
-package top.yumbo.ai.p2p.core.config;
+package top.yumbo.ai.omni.p2p.starter.core.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import top.yumbo.ai.omni.p2p.api.P2PConnectionManager;
 import top.yumbo.ai.omni.p2p.api.P2PDataTransferService;
 import top.yumbo.ai.omni.p2p.api.P2PTransferBridge;
-import top.yumbo.ai.p2p.core.DefaultP2PConnectionManager;
+import top.yumbo.ai.omni.p2p.starter.core.DefaultP2PConnectionManager;
 
 import java.util.List;
 
@@ -93,4 +93,5 @@ public class P2PConnectionAutoConfiguration {
         return className.replace("p2pdatatransferservice", "");
     }
 }
+
 
