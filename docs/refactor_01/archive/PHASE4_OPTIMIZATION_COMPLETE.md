@@ -284,7 +284,7 @@ omni-agent:
    - TTL过期机制
    - 缓存命中可提升50倍性能
 
-**详细文档：** [Phase 4 扩展功能完成报告](./PHASE4_EXTENSIONS_COMPLETE.md)
+**详细文档：** [Phase 4 扩展功能完成报告](PHASE4_EXTENSIONS_COMPLETE.md)
 
 **新增代码：** ~850行  
 **性能提升：** 缓存命中提升50倍，个性化提升15%满意度

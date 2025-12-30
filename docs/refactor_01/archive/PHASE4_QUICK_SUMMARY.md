@@ -106,10 +106,10 @@ var recommendations = associationService.recommendDomains("性能优化", 3);
 
 ## 📚 相关文档
 
-- **[Phase 4 完整报告](./PHASE4_COMPLETE_REPORT.md)** - 详细的实施报告
+- **[Phase 4 完整报告](PHASE4_COMPLETE_REPORT.md)** - 详细的实施报告
 - **[知识网络实施状态](./core/KNOWLEDGE_NETWORK_IMPLEMENTATION_STATUS.md)** - 整体架构状态
-- **[Phase 1 完成报告](./PHASE1_COMPLETE_REPORT.md)** - 基础架构
-- **[Phase 2 完成报告](./PHASE2_FINAL_SUMMARY.md)** - 角色系统
+- **[Phase 1 完成报告](PHASE1_COMPLETE_REPORT.md)** - 基础架构
+- **[Phase 2 完成报告](PHASE2_FINAL_SUMMARY.md)** - 角色系统
 
 ---
 

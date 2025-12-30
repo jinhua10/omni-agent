@@ -283,8 +283,8 @@ public class SchedulingConfig {
 
 ## 参考文档
 
-- [PHASE4_EXTENSIONS_COMPLETE.md](./PHASE4_EXTENSIONS_COMPLETE.md) - 完整的扩展功能文档
-- [计划.txt](../../计划.txt) - 原始开发计划
+- [PHASE4_EXTENSIONS_COMPLETE.md](PHASE4_EXTENSIONS_COMPLETE.md) - 完整的扩展功能文档
+- [计划.txt](../../../计划.txt) - 原始开发计划
 
 ---
 

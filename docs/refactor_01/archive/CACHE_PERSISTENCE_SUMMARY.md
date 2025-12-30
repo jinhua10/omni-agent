@@ -129,7 +129,7 @@ queryResultCache.put(query, domains, results); // 自动持久化
 
 ---
 
-**详细文档：** [CACHE_PERSISTENCE_IMPLEMENTATION.md](./CACHE_PERSISTENCE_IMPLEMENTATION.md)
+**详细文档：** [CACHE_PERSISTENCE_IMPLEMENTATION.md](CACHE_PERSISTENCE_IMPLEMENTATION.md)
 
 **状态：** ✅ 完成并编译通过  
 **特性：** 系统重启后缓存不丢失 🎉
