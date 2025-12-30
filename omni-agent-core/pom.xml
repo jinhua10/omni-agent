@@ -47,15 +47,26 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Knowledge Registry API      -->
+        <!-- Knowledge Registry API -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
             <artifactId>omni-agent-knowledge-registry-api</artifactId>
             <version>${project.version}</version>
-            <scope>compile</scope>
         </dependency>
 
+        <!-- HOPE API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-hope-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
+        <!-- Orchestrator -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-orchestrator</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- ========== 工具库 ========== -->
 
@@ -65,7 +76,11 @@
             <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
 
-        <!-- ========== 其他工具库 ========== -->
+        <!-- Jackson (for JSON) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
 
         <!-- Lombok -->
         <dependency>
@@ -74,49 +89,12 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Apache Lucene (for RAG) -->
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queryparser</artifactId>
-        </dependency>
-
-        <!-- Apache POI (for document processing) -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-        </dependency>
-
-        <!-- Apache POI Scratchpad (for legacy Office formats: .ppt, .doc, .xls) -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-scratchpad</artifactId>
-        </dependency>
-
-        <!-- Apache PDFBox (for PDF processing) ⭐ -->
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-        </dependency>
-
-        <!-- Apache Tika (for document parsing) -->
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-        </dependency>
-
-        <!-- Jackson (for JSON) -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
+        <!-- ========== 以下依赖已移除，应在对应的 Starter 中 ========== -->
+        <!-- Apache Lucene → 移到 omni-agent-rag-starter-adapter -->
+        <!-- Apache POI → 移到 omni-agent-document-processor-starter -->
+        <!-- Apache PDFBox → 移到 omni-agent-document-processor-starter -->
+        <!-- Apache Tika → 移到 omni-agent-document-processor-starter -->
+        <!-- Caffeine → 移到 omni-agent-hope-starter -->
 
         <!-- ========== 测试依赖 ========== -->
 

@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.query.cache;
+package top.yumbo.ai.omni.orchestrator.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

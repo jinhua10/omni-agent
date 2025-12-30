@@ -45,6 +45,20 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- HOPE Starter ⭐ 新增 -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-hope-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Orchestrator ⭐ 新增 -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-orchestrator</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Boot Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

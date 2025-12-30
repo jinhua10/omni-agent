@@ -531,7 +531,7 @@ HOPE系统通过Spring Boot自动配置启用：
 
 ```
 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports:
-top.yumbo.ai.omni.core.hope.config.HopePersistenceAutoConfiguration
+top.yumbo.ai.omni.hope.starter.config.HopePersistenceAutoConfiguration
 ```
 
 **默认行为：**

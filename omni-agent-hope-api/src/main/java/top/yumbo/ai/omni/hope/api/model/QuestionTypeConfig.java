@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.hope.model;
+package top.yumbo.ai.omni.hope.api.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

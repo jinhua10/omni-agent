@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.hope.persistence.impl;
+package top.yumbo.ai.omni.hope.starter.persistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,6 @@
-package top.yumbo.ai.omni.core.hope.persistence;
+package top.yumbo.ai.omni.hope.api.persistence;
 
-import top.yumbo.ai.omni.core.hope.model.QuestionTypeConfig;
+import top.yumbo.ai.omni.hope.api.model.QuestionTypeConfig;
 
 import java.util.List;
 import java.util.Optional;

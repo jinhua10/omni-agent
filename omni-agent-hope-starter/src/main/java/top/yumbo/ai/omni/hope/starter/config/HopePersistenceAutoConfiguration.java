@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.hope.config;
+package top.yumbo.ai.omni.hope.starter.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

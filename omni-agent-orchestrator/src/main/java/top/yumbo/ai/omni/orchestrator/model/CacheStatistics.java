@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.core.query.model;
+package top.yumbo.ai.omni.orchestrator.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

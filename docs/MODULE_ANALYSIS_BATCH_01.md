@@ -1030,7 +1030,7 @@ public class HopePersistenceAutoConfiguration {
 **Spring Boot自动配置文件：**
 ```
 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports:
-top.yumbo.ai.omni.core.hope.config.HopePersistenceAutoConfiguration
+top.yumbo.ai.omni.hope.starter.config.HopePersistenceAutoConfiguration
 ```
 
 **评价：** ⭐⭐⭐⭐⭐ 符合Spring Boot Starter规范

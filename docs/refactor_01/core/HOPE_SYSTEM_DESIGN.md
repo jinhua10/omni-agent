@@ -162,7 +162,7 @@ if (questionStats.getAccessCount() > HIGH_FREQUENCY_THRESHOLD) {
 
 ### 3.1 HOPEKnowledgeManager（知识管理器）
 
-**位置：** `top.yumbo.ai.omni.core.hope.HOPEKnowledgeManager`
+**位置：** `top.yumbo.ai.omni.hope.starter.impl.HOPEKnowledgeManager`
 
 **职责：**
 - 协调三层知识结构
@@ -234,7 +234,7 @@ public class QueryResult {
 
 ### 3.2 QuestionClassifier（问题分类器）
 
-**位置：** `top.yumbo.ai.omni.core.hope.QuestionClassifier`
+**位置：** `top.yumbo.ai.omni.hope.starter.impl.QuestionClassifier`
 
 **职责：**
 - 分析用户问题
@@ -424,7 +424,7 @@ public class LayerStats {
 
 ### 5.1 HopePersistence 接口
 
-**位置：** `top.yumbo.ai.omni.core.hope.persistence.HopePersistence`
+**位置：** `top.yumbo.ai.omni.hope.api.persistence.HopePersistence`
 
 **接口定义：**
 
@@ -478,7 +478,7 @@ public interface HopePersistence {
 
 #### 5.2.1 InMemoryHopePersistence（默认实现）
 
-**位置：** `top.yumbo.ai.omni.core.hope.persistence.impl.InMemoryHopePersistence`
+**位置：** `top.yumbo.ai.omni.hope.starter.persistence.InMemoryHopePersistence`
 
 **特点：**
 - ✅ 零依赖，开箱即用
@@ -517,7 +517,7 @@ public class InMemoryHopePersistence implements HopePersistence {
 
 #### 5.2.2 KnowledgeRegistryHopePersistence（推荐实现）
 
-**位置：** `top.yumbo.ai.omni.core.hope.persistence.impl.KnowledgeRegistryHopePersistence`
+**位置：** `top.yumbo.ai.omni.hope.starter.persistence.KnowledgeRegistryHopePersistence`
 
 **特点：**
 - ✅ 数据持久化
@@ -627,7 +627,7 @@ omni:
 
 ### 6.3 自动配置
 
-**位置：** `top.yumbo.ai.omni.core.hope.config.HopePersistenceAutoConfiguration`
+**位置：** `top.yumbo.ai.omni.hope.starter.config.HopePersistenceAutoConfiguration`
 
 ```java
 @Configuration

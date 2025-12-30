@@ -45,7 +45,21 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- 2. Document Storage Starters - 异构冗余 -->
+        <!-- 2. HOPE Starter（HOPE 系统） ⭐ 新增 -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-hope-starter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 3. Orchestrator（服务编排器） ⭐ 新增 -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-orchestrator</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 4. Document Storage Starters - 异构冗余 -->
         <!-- 主存储：File（本地文件系统） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
@@ -53,7 +67,7 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- 3. RAG Starters - 异构冗余 -->
+        <!-- 5. RAG Starters - 异构冗余 -->
         <!-- 主检索：Lucene（高性能全文检索） -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
@@ -61,7 +75,7 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- 4. AI Starter - 使用本地 Ollama -->
+        <!-- 6. AI Starter - 使用本地 Ollama -->
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
             <artifactId>omni-agent-ai-starter</artifactId>
