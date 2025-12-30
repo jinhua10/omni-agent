@@ -12,7 +12,7 @@ import top.yumbo.ai.omni.knowledge.registry.qa.service.IntelligentQAService;
 import top.yumbo.ai.omni.knowledge.registry.qa.service.QAOrchestrationService;
 import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
 import top.yumbo.ai.omni.knowledge.registry.role.service.RoleService;
-import top.yumbo.ai.omni.common.util.ContextBuilder;
+import top.yumbo.ai.omni.rag.model.ContextBuilder;
 import top.yumbo.ai.omni.marketplace.EnhancedQueryService;
 import top.yumbo.ai.omni.web.service.AsyncStreamQAService;
 import top.yumbo.ai.omni.web.util.JsonUtil;

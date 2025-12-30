@@ -1,6 +1,5 @@
-package top.yumbo.ai.omni.common.util;
+package top.yumbo.ai.omni.rag.model;
 
-import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
 

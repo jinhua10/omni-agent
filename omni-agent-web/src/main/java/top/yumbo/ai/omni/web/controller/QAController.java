@@ -11,7 +11,7 @@ import top.yumbo.ai.omni.knowledge.registry.qa.service.QAOrchestrationService.QA
 import top.yumbo.ai.omni.knowledge.registry.qa.service.QAOrchestrationService.QAResult;
 import top.yumbo.ai.omni.web.service.AsyncStreamQAService;
 import top.yumbo.ai.omni.knowledge.registry.qa.service.IntelligentQAService;
-import top.yumbo.ai.omni.common.util.ContextBuilder;
+import top.yumbo.ai.omni.rag.model.ContextBuilder;
 import top.yumbo.ai.omni.web.dto.ApiDtos.*;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.SearchResult;
