@@ -466,6 +466,41 @@ omni-agent/
 └─ omni-agent-example-production # 生产环境示例
 ```
 
+
+```declarative
+应用层
+├── omni-agent-web
+├── omni-agent-example-basic
+└── omni-agent-example-production
+    ↓ 依赖
+服务编排层
+└── omni-agent-orchestrator
+    ├── 查询服务 ✅
+    └── 只依赖 API 接口 ✅
+    ↓ 依赖
+Starter 实现层
+├── omni-agent-hope-starter
+│   ├── HOPE 系统实现 ✅
+│   ├── 问题分类器 ✅
+│   └── 依赖 Caffeine ✅
+├── omni-agent-rag-starter-adapter
+│   └── 依赖 Lucene ✅
+└── omni-agent-document-processor-starter
+    └── 依赖 POI, PDFBox, Tika ✅
+    ↓ 依赖
+API 接口层
+├── omni-agent-hope-api
+│   ├── HopePersistence 接口 ✅
+│   └── QuestionTypeConfig 模型 ✅
+└── 其他 API 模块
+    ↓ 依赖
+核心层
+└── omni-agent-core
+    ├── 只依赖 API 接口 ✅
+    ├── 不再依赖具体实现库 ✅
+    └── 职责清晰 ✅
+```
+
 ### 前端技术栈
 
 - ⚛️ **React 18** - 现代UI框架
