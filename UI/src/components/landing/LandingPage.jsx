@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Button, Row, Col, Card, Typography, Space, Statistic } from 'antd'
+import { Button, Row, Col, Card, Typography, Space, Statistic, Image } from 'antd'
 import {
   RocketOutlined,
   ThunderboltOutlined,
@@ -26,11 +26,17 @@ import {
   ShareAltOutlined,
   UserOutlined,
   LeftOutlined,
-  RightOutlined
+  RightOutlined,
+  HeartOutlined,
+  WechatOutlined
 } from '@ant-design/icons'
 import GiteeIcon from '../icons/GiteeIcon'
 import { useLanguage } from '../../contexts/LanguageContext'
 import './LandingPage.css'
+
+// 导入二维码图片
+import PaymentQRCode from '../../assets/images/Payment QR Code.png'
+import ConnectMeQRCode from '../../assets/images/Connect Me.png'
 
 const { Title, Paragraph, Text } = Typography
 
@@ -1252,6 +1258,80 @@ npm run dev`}</pre>
               </ul>
             </Col>
           </Row>
+
+          {/* 二维码区域 */}
+          <div className="footer-qr-codes" style={{
+            marginTop: 48,
+            paddingTop: 32,
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <Title level={4} style={{ textAlign: 'center', marginBottom: 32 }}>
+              {t('landingPage.footer.qrCodes')}
+            </Title>
+            <Row gutter={[48, 24]} justify="center">
+              <Col xs={24} sm={12} md={8} style={{ textAlign: 'center' }}>
+                <div className="qr-code-card">
+                  <div className="qr-code-icon" style={{
+                    fontSize: 32,
+                    color: '#ff4d4f',
+                    marginBottom: 16
+                  }}>
+                    <HeartOutlined />
+                  </div>
+                  <Title level={5} style={{ marginBottom: 12 }}>
+                    {t('landingPage.footer.sponsorTitle')}
+                  </Title>
+                  <Image
+                    src={PaymentQRCode}
+                    alt={t('landingPage.footer.sponsorTitle')}
+                    width={180}
+                    preview={{
+                      mask: <div>{t('landingPage.footer.sponsorDesc')}</div>
+                    }}
+                    style={{
+                      border: '2px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: 8,
+                      marginBottom: 12
+                    }}
+                  />
+                  <Text type="secondary" style={{ fontSize: 13, display: 'block' }}>
+                    {t('landingPage.footer.sponsorDesc')}
+                  </Text>
+                </div>
+              </Col>
+
+              <Col xs={24} sm={12} md={8} style={{ textAlign: 'center' }}>
+                <div className="qr-code-card">
+                  <div className="qr-code-icon" style={{
+                    fontSize: 32,
+                    color: '#52c41a',
+                    marginBottom: 16
+                  }}>
+                    <WechatOutlined />
+                  </div>
+                  <Title level={5} style={{ marginBottom: 12 }}>
+                    {t('landingPage.footer.contactTitle')}
+                  </Title>
+                  <Image
+                    src={ConnectMeQRCode}
+                    alt={t('landingPage.footer.contactTitle')}
+                    width={180}
+                    preview={{
+                      mask: <div>{t('landingPage.footer.contactDesc')}</div>
+                    }}
+                    style={{
+                      border: '2px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: 8,
+                      marginBottom: 12
+                    }}
+                  />
+                  <Text type="secondary" style={{ fontSize: 13, display: 'block' }}>
+                    {t('landingPage.footer.contactDesc')}
+                  </Text>
+                </div>
+              </Col>
+            </Row>
+          </div>
 
           <div className="footer-bottom">
             <Text type="secondary">

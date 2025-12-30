@@ -1240,6 +1240,41 @@
   color: #1890ff;
 }
 
+/* 二维码区域 */
+.footer-qr-codes {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.qr-code-card {
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.3s ease;
+}
+
+.qr-code-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.qr-code-icon {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.qr-code-card .ant-image {
+  transition: transform 0.3s ease;
+}
+
+.qr-code-card:hover .ant-image {
+  transform: scale(1.05);
+}
+
 .footer-bottom {
   text-align: center;
   margin-top: 48px;
