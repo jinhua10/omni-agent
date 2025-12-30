@@ -2,11 +2,12 @@ package top.yumbo.ai.omni.orchestrator.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.omni.core.query.model.CacheStatistics;
+import top.yumbo.ai.omni.orchestrator.model.CacheStatistics;
 import top.yumbo.ai.omni.rag.model.SearchResult;
 
 import java.util.List;
@@ -38,11 +39,13 @@ public class QueryExpansionCacheService {
     /**
      * 缓存最大条目数
      */
+    @Setter
     private int maxSize = 1000;
 
     /**
      * 缓存过期时间（分钟）
      */
+    @Setter
     private int expireMinutes = 60;
 
     /**
@@ -84,15 +87,6 @@ public class QueryExpansionCacheService {
 
         log.info("✅ 查询扩展缓存服务初始化完成: maxSize={}, expireMinutes={}",
                 maxSize, expireMinutes);
-    }
-
-    // Setters for Spring Boot configuration properties
-    public void setMaxSize(int maxSize) {
-        this.maxSize = maxSize;
-    }
-
-    public void setExpireMinutes(int expireMinutes) {
-        this.expireMinutes = expireMinutes;
     }
 
     /**

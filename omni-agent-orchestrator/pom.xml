@@ -88,6 +88,12 @@
 
         <!-- ========== 工具库 ========== -->
 
+        <!-- Caffeine Cache (for QueryExpansionCacheService) -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

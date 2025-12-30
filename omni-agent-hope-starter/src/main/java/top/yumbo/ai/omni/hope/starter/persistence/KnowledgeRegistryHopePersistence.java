@@ -2,8 +2,8 @@ package top.yumbo.ai.omni.hope.starter.persistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.omni.core.hope.model.QuestionTypeConfig;
-import top.yumbo.ai.omni.core.hope.persistence.HopePersistence;
+import top.yumbo.ai.omni.hope.api.model.QuestionTypeConfig;
+import top.yumbo.ai.omni.hope.api.persistence.HopePersistence;
 import top.yumbo.ai.omni.knowledge.registry.model.domain.KnowledgeDomain;
 import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainType;
 import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainStatus;

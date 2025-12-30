@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.ai.api.model.ChatMessage;
-import top.yumbo.ai.omni.core.hope.HOPEKnowledgeManager;
+import top.yumbo.ai.omni.hope.starter.impl.HOPEKnowledgeManager;
 import top.yumbo.ai.omni.knowledge.registry.qa.service.IntelligentQAService;
 import top.yumbo.ai.omni.knowledge.registry.qa.service.QAOrchestrationService;
 import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
@@ -382,10 +382,16 @@ public class AdvancedQAController {
 
                 String roleContext = ContextBuilder.buildRoleContext(references);
                 String rightPrompt = String.format(
-                        "你是%s，%s\n\n" +
-                                "作为专业角色，请基于以下知识给出你的专业见解：\n\n%s\n\n" +
-                                "问题：%s\n\n" +
-                                "请以你的角色身份，结合专业知识回答。",
+                        """
+                                你是%s，%s
+                                
+                                作为专业角色，请基于以下知识给出你的专业见解：
+                                
+                                %s
+                                
+                                问题：%s
+                                
+                                请以你的角色身份，结合专业知识回答。""",
                         role.getRoleName(),
                         role.getDescription(),
                         roleContext.isEmpty() ? "暂无特定知识，请基于角色专业性回答" : roleContext,

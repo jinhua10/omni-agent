@@ -6,9 +6,9 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import top.yumbo.ai.omni.core.hope.persistence.HopePersistence;
-import top.yumbo.ai.omni.core.hope.persistence.impl.InMemoryHopePersistence;
-import top.yumbo.ai.omni.core.hope.persistence.impl.KnowledgeRegistryHopePersistence;
+import top.yumbo.ai.omni.hope.api.persistence.HopePersistence;
+import top.yumbo.ai.omni.hope.starter.persistence.InMemoryHopePersistence;
+import top.yumbo.ai.omni.hope.starter.persistence.KnowledgeRegistryHopePersistence;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 
 /**

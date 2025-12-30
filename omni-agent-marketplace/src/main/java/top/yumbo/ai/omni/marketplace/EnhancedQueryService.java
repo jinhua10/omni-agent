@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.ai.api.AIService;
-import top.yumbo.ai.omni.core.query.cache.QueryExpansionCacheService;
+import top.yumbo.ai.omni.orchestrator.service.QueryExpansionCacheService;
 import top.yumbo.ai.omni.marketplace.config.QueryExpansionConfig;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.SearchResult;
@@ -209,7 +209,7 @@ public class EnhancedQueryService {
                         },
                         executorService
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         // 等待所有查询完成（带超时）
         try {

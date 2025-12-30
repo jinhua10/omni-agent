@@ -3,8 +3,8 @@ package top.yumbo.ai.omni.hope.starter.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.core.hope.model.QuestionTypeConfig;
-import top.yumbo.ai.omni.core.hope.persistence.HopePersistence;
+import top.yumbo.ai.omni.hope.api.model.QuestionTypeConfig;
+import top.yumbo.ai.omni.hope.api.persistence.HopePersistence;
 
 import jakarta.annotation.PostConstruct;
 import java.util.*;
