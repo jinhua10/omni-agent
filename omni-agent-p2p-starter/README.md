@@ -121,6 +121,8 @@ spring:
 
 ### 3. 使用
 
+#### 3.1 基础 P2P 连接（局域网）
+
 ```java
 @Autowired
 private P2PCollaborationService p2pService;

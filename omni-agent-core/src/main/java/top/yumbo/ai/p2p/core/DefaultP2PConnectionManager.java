@@ -249,6 +249,104 @@ public class DefaultP2PConnectionManager implements P2PConnectionManager {
         return connection.getStatistics();
     }
 
+    @Override
+    public P2PConnection connectByIp(
+            String remoteIp,
+            int remotePort,
+            String connectionCode,
+            Map<String, Object> config) {
+
+        log.info("通过 IP 直接连接: {}:{} (跨网络)", remoteIp, remotePort);
+
+        if (endpointDiscovery == null) {
+            throw new IllegalStateException("P2PEndpointDiscovery 服务未配置，无法进行 IP 直连");
+        }
+
+        // 步骤1: 验证远程端点的连接码
+        boolean codeValid = endpointDiscovery.validateRemoteConnectionCode(remoteIp, remotePort, connectionCode);
+        if (!codeValid) {
+            throw new SecurityException("连接码验证失败: " + remoteIp + ":" + remotePort);
+        }
+
+        log.info("✓ 连接码验证成功");
+
+        // 步骤2: 通过 IP 查找端点信息
+        Optional<P2PEndpointDiscovery.DiscoveredEndpoint> discoveredOpt =
+            endpointDiscovery.findEndpointByIp(remoteIp, remotePort);
+
+        if (discoveredOpt.isEmpty()) {
+            throw new IllegalArgumentException("端点未找到: " + remoteIp + ":" + remotePort);
+        }
+
+        P2PEndpointDiscovery.DiscoveredEndpoint discovered = discoveredOpt.get();
+        P2PConnection.EndpointInfo targetEndpoint = discovered.getEndpointInfo();
+
+        log.info("✓ 找到远程端点: {} ({})", targetEndpoint.getEndpointId(), targetEndpoint.getStorageType());
+
+        // 步骤3: 创建本地端点信息
+        P2PConnection.EndpointInfo sourceEndpoint = new P2PConnection.EndpointInfo(
+                "local-" + UUID.randomUUID().toString().substring(0, 8),
+                config.getOrDefault("local_storage_type", "default").toString()
+        );
+
+        // 步骤4: 建立安全连接
+        return establishWithHandshake(sourceEndpoint, targetEndpoint, connectionCode, config);
+    }
+
+    @Override
+    public P2PConnection connectByIpAndEndpoint(
+            String remoteIp,
+            int remotePort,
+            String endpointId,
+            String connectionCode,
+            Map<String, Object> config) {
+
+        log.info("通过 IP 和端点 ID 连接: {}:{} (端点: {})", remoteIp, remotePort, endpointId);
+
+        if (endpointDiscovery == null) {
+            throw new IllegalStateException("P2PEndpointDiscovery 服务未配置，无法进行 IP 直连");
+        }
+
+        // 步骤1: 验证连接码
+        boolean codeValid = endpointDiscovery.validateConnectionCode(endpointId, connectionCode);
+        if (!codeValid) {
+            throw new SecurityException("连接码验证失败: " + endpointId);
+        }
+
+        log.info("✓ 连接码验证成功");
+
+        // 步骤2: 查找端点
+        Optional<P2PEndpointDiscovery.DiscoveredEndpoint> discoveredOpt =
+            endpointDiscovery.findEndpoint(endpointId);
+
+        if (discoveredOpt.isEmpty()) {
+            throw new IllegalArgumentException("端点未找到: " + endpointId);
+        }
+
+        P2PEndpointDiscovery.DiscoveredEndpoint discovered = discoveredOpt.get();
+        P2PConnection.EndpointInfo targetEndpoint = discovered.getEndpointInfo();
+
+        // 验证 IP 和端口匹配
+        if (!remoteIp.equals(targetEndpoint.getHost()) || remotePort != targetEndpoint.getPort()) {
+            log.warn("端点 IP/端口不匹配: 预期 {}:{}, 实际 {}:{}",
+                    remoteIp, remotePort, targetEndpoint.getHost(), targetEndpoint.getPort());
+            // 更新端点信息为实际提供的 IP 和端口
+            targetEndpoint.setHost(remoteIp);
+            targetEndpoint.setPort(remotePort);
+        }
+
+        log.info("✓ 找到远程端点: {} ({})", targetEndpoint.getEndpointId(), targetEndpoint.getStorageType());
+
+        // 步骤3: 创建本地端点信息
+        P2PConnection.EndpointInfo sourceEndpoint = new P2PConnection.EndpointInfo(
+                "local-" + UUID.randomUUID().toString().substring(0, 8),
+                config.getOrDefault("local_storage_type", "default").toString()
+        );
+
+        // 步骤4: 建立安全连接
+        return establishWithHandshake(sourceEndpoint, targetEndpoint, connectionCode, config);
+    }
+
     private P2PDataTransferService getService(String storageType) {
         return serviceRegistry.get(storageType.toLowerCase());
     }

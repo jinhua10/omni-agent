@@ -99,6 +99,42 @@ public interface P2PConnectionManager {
     );
 
     /**
+     * 通过 IP 地址直接连接（跨网络）
+     * (Connect directly via IP address - cross-network)
+     *
+     * @param remoteIp 远程 IP 地址
+     * @param remotePort 远程端口
+     * @param connectionCode 连接码
+     * @param config 连接配置
+     * @return 连接对象
+     */
+    P2PConnection connectByIp(
+        String remoteIp,
+        int remotePort,
+        String connectionCode,
+        Map<String, Object> config
+    );
+
+    /**
+     * 通过 IP 地址和端点 ID 连接
+     * (Connect via IP address and endpoint ID)
+     *
+     * @param remoteIp 远程 IP 地址
+     * @param remotePort 远程端口
+     * @param endpointId 远程端点 ID
+     * @param connectionCode 连接码
+     * @param config 连接配置
+     * @return 连接对象
+     */
+    P2PConnection connectByIpAndEndpoint(
+        String remoteIp,
+        int remotePort,
+        String endpointId,
+        String connectionCode,
+        Map<String, Object> config
+    );
+
+    /**
      * 获取连接统计信息
      * (Get connection statistics)
      *

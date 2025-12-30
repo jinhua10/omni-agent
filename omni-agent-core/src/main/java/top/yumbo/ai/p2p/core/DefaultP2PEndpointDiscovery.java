@@ -210,6 +210,55 @@ public class DefaultP2PEndpointDiscovery implements P2PEndpointDiscovery {
         return code;
     }
 
+    @Override
+    public Optional<DiscoveredEndpoint> findEndpointByIp(String ipAddress, int port) {
+        log.info("通过 IP 查找端点: {}:{}", ipAddress, port);
+
+        // 清理过期端点
+        cleanupExpiredEndpoints();
+
+        // 在注册表中查找匹配 IP 和端口的端点
+        Optional<RegisteredEndpoint> found = endpointRegistry.values().stream()
+                .filter(reg -> ipAddress.equals(reg.endpointInfo.getHost()))
+                .filter(reg -> port == reg.endpointInfo.getPort())
+                .filter(reg -> reg.status == EndpointStatus.ONLINE)
+                .findFirst();
+
+        if (found.isEmpty()) {
+            log.warn("未找到端点: {}:{}", ipAddress, port);
+            return Optional.empty();
+        }
+
+        RegisteredEndpoint registered = found.get();
+        DiscoveredEndpoint discovered = new DiscoveredEndpoint(
+                registered.endpointInfo,
+                registered.status,
+                registered.registeredAt,
+                registered.capabilities,
+                connectionCodes.containsKey(registered.endpointInfo.getEndpointId())
+        );
+
+        log.info("✓ 找到端点: {} ({}:{})", registered.endpointInfo.getEndpointId(), ipAddress, port);
+        return Optional.of(discovered);
+    }
+
+    @Override
+    public boolean validateRemoteConnectionCode(String ipAddress, int port, String connectionCode) {
+        log.info("验证远程端点连接码: {}:{}", ipAddress, port);
+
+        // 首先通过 IP 查找端点
+        Optional<DiscoveredEndpoint> endpoint = findEndpointByIp(ipAddress, port);
+        if (endpoint.isEmpty()) {
+            log.warn("端点不存在: {}:{}", ipAddress, port);
+            return false;
+        }
+
+        String endpointId = endpoint.get().getEndpointInfo().getEndpointId();
+
+        // 验证连接码
+        return validateConnectionCode(endpointId, connectionCode);
+    }
+
     /**
      * 清理过期端点
      */

@@ -77,6 +77,27 @@ public interface P2PEndpointDiscovery {
     String generateConnectionCode(String endpointId, int validityMinutes);
 
     /**
+     * 通过 IP 地址查找端点（跨网络）
+     * (Find endpoint by IP address - cross-network)
+     *
+     * @param ipAddress IP 地址 (IP address)
+     * @param port 端口 (Port)
+     * @return 端点信息 (Endpoint information)
+     */
+    Optional<DiscoveredEndpoint> findEndpointByIp(String ipAddress, int port);
+
+    /**
+     * 验证远程端点的连接码（通过 IP）
+     * (Validate remote endpoint connection code via IP)
+     *
+     * @param ipAddress IP 地址 (IP address)
+     * @param port 端口 (Port)
+     * @param connectionCode 连接码 (Connection code)
+     * @return 验证结果 (Validation result)
+     */
+    boolean validateRemoteConnectionCode(String ipAddress, int port, String connectionCode);
+
+    /**
      * 端点注册信息
      */
     @Data
