@@ -1,9 +1,13 @@
 package top.yumbo.ai.omni.knowledge.registry.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import top.yumbo.ai.omni.knowledge.registry.jackson.DomainTypeDeserializer;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -32,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonDeserialize(using = DomainTypeDeserializer.class)
 public class DomainType implements Serializable {
 
     @Serial
@@ -45,6 +50,7 @@ public class DomainType implements Serializable {
     /**
      * 类型代码（唯一标识）
      */
+    @JsonProperty("code")
     private String code;
 
     /**
@@ -188,11 +194,14 @@ public class DomainType implements Serializable {
 
     /**
      * 根据代码获取域类型
+     * 
+     * <p>此方法也用于JSON反序列化和Spring参数转换</p>
      *
      * @param code 类型代码
      * @return 域类型，如果不存在返回null
      */
-    public static DomainType of(String code) {
+    @JsonCreator
+    public static DomainType of(@JsonProperty("code") String code) {
         if (code == null) {
             return null;
         }

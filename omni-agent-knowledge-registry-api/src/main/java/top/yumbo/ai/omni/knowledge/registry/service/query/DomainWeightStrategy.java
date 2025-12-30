@@ -75,30 +75,30 @@ public class DomainWeightStrategy {
 
         // 源码相关查询
         if (containsAny(lowerQuery, "代码", "源码", "bug", "漏洞", "重构", "code")) {
-            if (domainType == DomainType.SOURCE_CODE) {
+            if (DomainType.SOURCE_CODE.equals(domainType)) {
                 return 1.5; // 源码域权重提升
-            } else if (domainType == DomainType.ROLE_KNOWLEDGE) {
+            } else if (DomainType.ROLE_KNOWLEDGE.equals(domainType)) {
                 return 1.2; // 角色域也相关
             }
         }
 
         // 文档查询
         if (containsAny(lowerQuery, "文档", "教程", "指南", "说明", "doc", "guide")) {
-            if (domainType == DomainType.DOCUMENT) {
+            if (DomainType.DOCUMENT.equals(domainType)) {
                 return 1.5;
             }
         }
 
         // 角色专业知识查询
         if (containsAny(lowerQuery, "分析", "评审", "建议", "优化", "review")) {
-            if (domainType == DomainType.ROLE_KNOWLEDGE) {
+            if (DomainType.ROLE_KNOWLEDGE.equals(domainType)) {
                 return 1.4;
             }
         }
 
         // API相关查询
         if (containsAny(lowerQuery, "api", "接口", "调用", "参数")) {
-            if (domainType == DomainType.API_DOCUMENTATION) {
+            if (DomainType.API_DOCUMENTATION.equals(domainType)) {
                 return 1.5;
             }
         }
