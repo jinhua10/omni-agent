@@ -1,8 +1,6 @@
 package top.yumbo.ai.omni.knowledge.registry.network;
 
-import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
-import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -127,7 +125,7 @@ public interface KnowledgeRegistry {
      * @param role 知识角色对象
      * @return 角色ID
      */
-    String saveRole(top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole role);
+    String saveRole(KnowledgeRole role);
 
     /**
      * 查找知识角色
@@ -135,14 +133,14 @@ public interface KnowledgeRegistry {
      * @param roleId 角色ID
      * @return 知识角色对象（Optional）
      */
-    Optional<top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole> findRoleById(String roleId);
+    Optional<KnowledgeRole> findRoleById(String roleId);
 
     /**
      * 列出所有知识角色
      *
      * @return 知识角色列表
      */
-    List<top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole> findAllRoles();
+    List<KnowledgeRole> findAllRoles();
 
     /**
      * 根据状态查找角色
@@ -150,7 +148,7 @@ public interface KnowledgeRegistry {
      * @param status 角色状态
      * @return 知识角色列表
      */
-    List<top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole> findRolesByStatus(top.yumbo.ai.omni.knowledge.registry.model.RoleStatus status);
+    List<KnowledgeRole> findRolesByStatus(RoleStatus status);
 
     /**
      * 更新知识角色
@@ -158,7 +156,7 @@ public interface KnowledgeRegistry {
      * @param role 知识角色对象
      * @return 是否成功
      */
-    boolean updateRole(top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole role);
+    boolean updateRole(KnowledgeRole role);
 
     /**
      * 删除知识角色

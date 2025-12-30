@@ -1,6 +1,7 @@
 package top.yumbo.ai.omni.knowledge.registry.network;
 
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
 import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public interface KnowledgeRefinementService {
      */
     RefinedKnowledge refineKnowledge(
             KnowledgeDocument document,
-            top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole role,
+            KnowledgeRole role,
             boolean useAI
     );
 
@@ -38,7 +39,7 @@ public interface KnowledgeRefinementService {
      */
     List<RefinedKnowledge> batchRefineKnowledge(
             List<KnowledgeDocument> documents,
-            top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole role,
+            KnowledgeRole role,
             boolean useAI
     );
 }
