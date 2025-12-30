@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.knowlede;
+package top.yumbo.ai.omni.knowledge.registry.knowledge;
 
 import lombok.Data;
 import lombok.Getter;
@@ -41,12 +41,8 @@ public class KnowledgeLoader {
     /** LRU缓存 */
     private final LRUCache<String, KnowledgeEntry> cache;
 
-    /** 统计信息
-     * -- GETTER --
-     *  获取统计信息
-     *  (Get statistics)
-     *
-     * @return 统计信息
+    /**
+     *  获取统计信息 (Get statistics)
      */
     @Getter
     private final LoadStatistics statistics;
