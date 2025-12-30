@@ -4,6 +4,11 @@
 
 **知识网络**是 Omni-Agent 系统的增强层，独立于原有的文档处理流程，基于已提取的文本在后台构建知识图谱和关联网络。
 
+**相关系统：**
+- 🧠 [HOPE 系统](./HOPE_SYSTEM_DESIGN.md) - 分层智能持久化引擎，提供智能查询和知识分层管理
+- 🔍 [RAG 架构](./KNOWLEDGE_NETWORK_AND_RAG_ARCHITECTURE.md) - 检索增强生成系统
+- 💬 [智能问答系统](./INTELLIGENT_QA_SYSTEM_DESIGN.md) - 类似 Copilot 的问答服务
+
 ## 🏗️ 架构定位
 
 ```

@@ -71,13 +71,17 @@ OmniAgent 知识网络上下文构建：
 ┌─────────────────────────────────────────┐
 │  Level 1: 用户问题（Query）              │  用户输入
 ├─────────────────────────────────────────┤
-│  Level 2: 意图理解（AI分析）             │  AIService.chat()
+│  Level 2: 问题分类（HOPE系统）           │  QuestionClassifier
 ├─────────────────────────────────────────┤
-│  Level 3: 相关域识别（路由）             │  DomainRouter
+│  Level 3: 意图理解（AI分析）             │  AIService.chat()
 ├─────────────────────────────────────────┤
-│  Level 4: RAG 语义搜索                   │  KnowledgeExtractionService
+│  Level 4: 知识层级选择（HOPE）           │  Permanent/Ordinary/HighFreq
 ├─────────────────────────────────────────┤
-│  Level 5: 角色知识提炼                   │  RoleLearningService
+│  Level 5: 相关域识别（路由）             │  DomainRouter
+├─────────────────────────────────────────┤
+│  Level 6: RAG 语义搜索                   │  KnowledgeExtractionService
+├─────────────────────────────────────────┤
+│  Level 7: 角色知识提炼                   │  RoleLearningService
 ├─────────────────────────────────────────┤
 │  Level 6: 用户偏好优化                   │  UserPreferenceLearner
 └─────────────────────────────────────────┘

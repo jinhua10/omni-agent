@@ -241,12 +241,45 @@ Web层（1个）
 
 ### 2. 模块功能验证
 
-#### 批次1：API层核心模块（7个）
+#### 批次1：核心模块（4个）✅ 已完成
 
-- [ ] **omni-agent-document-storage-api**
+- [x] **omni-agent-common** ✅
+  - 验证点：通用工具类
+  - 实际功能：HTTP客户端（RestTemplate/OkHttp3）、I18N支持（UTF-8 YAML）
+  - 状态：✅ 完整实现，设计合理
+
+- [x] **omni-agent-document-storage-api** ✅
   - 验证点：是否定义了完整的文档存储接口
   - 关键文件：`DocumentStorageService.java`
-  - 预期功能：文档上传、下载、元数据管理
+  - 实际功能：文档/文本/分块/图像存储、批量操作、元数据管理、优化数据、PPL数据
+  - 状态：✅ API设计非常完整，考虑周全
+
+- [x] **omni-agent-knowledge-registry-api** ⭐ ✅
+  - 验证点：知识注册表、知识网络接口
+  - 关键包：`network/`, `qa/`, `model/`
+  - 实际功能：
+    - ✅ 知识域管理（DOCUMENT/SOURCE_CODE/ROLE_KNOWLEDGE）
+    - ✅ 知识角色系统（角色定义、学习、匹配）
+    - ✅ 知识网络服务（异步构建、批量处理）
+    - ✅ 智能问答模型（意图分析、对话管理、知识缺口）
+  - 状态：✅ **核心模块**，API设计完整，完全符合文档架构
+
+- [x] **omni-agent-core** ⭐ ✅
+  - 验证点：核心业务逻辑实现
+  - 关键包：`hope/`, `query/`
+  - 实际功能：
+    - ✅ **HOPE系统**（三层知识结构：Permanent/Ordinary/HighFrequency）
+    - ✅ 问题分类器（基于关键词和模式匹配）
+    - ✅ 持久化抽象（Memory/KnowledgeRegistry）
+    - ✅ 查询服务（文本搜索、向量搜索、混合检索）
+  - 状态：✅ **隐藏宝藏**，HOPE系统文档未提及但已实现
+  - **重要发现**：HOPE = Hierarchical Omni-Agent Persistent Engine
+
+**分析报告：** `docs/analysis/BATCH_01_CORE_MODULES_ANALYSIS.md`
+
+---
+
+#### 批次2：API层核心模块（3个）⏳ 待验证
 
 - [ ] **omni-agent-rag-api**
   - 验证点：RAG检索接口定义
@@ -260,11 +293,6 @@ Web层（1个）
   - 验证点：P2P协作接口
   - 预期功能：节点发现、数据传输
 
-- [ ] **omni-agent-knowledge-registry-api** ⭐
-  - 验证点：知识注册表、知识网络接口
-  - 关键包：`network/`, `router/`, `qa/`
-  - 预期功能：知识域管理、智能路由、问答服务
-
 - [ ] **omni-agent-chunking-api**
   - 验证点：文档分块接口
   - 预期功能：PPL分块策略
@@ -273,16 +301,6 @@ Web层（1个）
   - 验证点：文档处理接口
   - 预期功能：文本提取、格式转换
 
-#### 批次2：核心模块（2个）
-
-- [ ] **omni-agent-common**
-  - 验证点：通用工具类
-  - 预期功能：HTTP客户端、国际化、工具类
-
-- [ ] **omni-agent-core** ⭐
-  - 验证点：核心业务逻辑实现
-  - 关键包：`knowledge/network/`, `query/`, `hope/`
-  - 预期功能：知识网络构建、查询服务、HOPE系统
 
 #### 批次3：Starter实现层（8个）
 
@@ -480,7 +498,9 @@ Web层（1个）
 
 - ⭐ 标记的模块是文档重点提及的
 - ⏸️ 标记的模块已在pom.xml中注释，暂未启用
-- 本文档基于 pom.xml 和 3个核心文档生成
+- ✅ 标记表示已完成深度分析
+- ⏳ 标记表示待验证
+- 本文档基于 pom.xml 和核心文档生成
 - 所有"预期功能"均需通过代码验证
 
 **文档来源：**
@@ -488,9 +508,12 @@ Web层（1个）
 - `docs/refactor_01/core/KNOWLEDGE_NETWORK_AND_RAG_ARCHITECTURE.md`
 - `docs/refactor_01/core/KNOWLEDGE_NETWORK_ARCHITECTURE.md`
 
+**分析报告：**
+- 批次1（核心模块）：`docs/analysis/BATCH_01_CORE_MODULES_ANALYSIS.md` ✅ 已完成
+
 ---
 
-**待更新：** 本文档将在每批模块分析后更新验证结果
-**最后更新：** 2025-12-30（第一批完成）
+**创建时间：** 2025-12-30  
+**最后更新：** 2025-12-31（第一批完成）
 
 
