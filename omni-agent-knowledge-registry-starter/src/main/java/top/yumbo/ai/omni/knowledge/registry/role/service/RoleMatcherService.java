@@ -186,7 +186,7 @@ public class RoleMatcherService {
         }
 
         // 角色描述
-        if (reason.length() > 0) {
+        if (!reason.isEmpty()) {
             reason.append(" | ");
         }
         reason.append(role.getDescription());
