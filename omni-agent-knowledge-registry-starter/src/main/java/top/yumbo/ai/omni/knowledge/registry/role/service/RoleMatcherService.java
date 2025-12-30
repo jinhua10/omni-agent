@@ -135,19 +135,15 @@ public class RoleMatcherService {
             return 0.0;
         }
 
-        // 检查角色的属性中是否定义了领域
-        Object domainsProp = role.getConfig().get("domains");
-        if (!(domainsProp instanceof List)) {
+        // 使用角色的domains字段
+        if (role.getDomains() == null || role.getDomains().isEmpty()) {
             return 0.0;
         }
-
-        @SuppressWarnings("unchecked")
-        List<String> roleDomains = (List<String>) domainsProp;
 
         // 计算领域重叠度
         double maxScore = 0.0;
         for (DomainAnalyzer.DomainMatch domainMatch : domainResult.getDomains()) {
-            if (roleDomains.contains(domainMatch.getDomainId())) {
+            if (role.getDomains().contains(domainMatch.getDomainId())) {
                 maxScore = Math.max(maxScore, domainMatch.getConfidence());
             }
         }
@@ -183,14 +179,9 @@ public class RoleMatcherService {
 
         // 领域匹配原因
         if (domainResult.getPrimaryDomain() != null) {
-            Object domainsProp = role.getConfig().get("domains");
-            if (domainsProp instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<String> roleDomains = (List<String>) domainsProp;
-
-                if (roleDomains.contains(domainResult.getPrimaryDomain().getDomainId())) {
-                    reason.append("领域匹配: ").append(domainResult.getPrimaryDomain().getDomainName());
-                }
+            if (role.getDomains() != null &&
+                role.getDomains().contains(domainResult.getPrimaryDomain().getDomainId())) {
+                reason.append("领域匹配: ").append(domainResult.getPrimaryDomain().getDomainName());
             }
         }
 

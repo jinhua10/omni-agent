@@ -70,6 +70,20 @@ public class KnowledgeRole implements Serializable {
     private List<String> sourceDomainIds = new ArrayList<>();
 
     /**
+     * 擅长的领域列表（用于角色匹配）
+     * 例如：["security", "architecture", "code-review"]
+     */
+    @Builder.Default
+    private List<String> domains = new ArrayList<>();
+
+    /**
+     * 关键词列表（用于角色匹配）
+     * 例如：["安全", "漏洞", "CVE", "SQL注入"]
+     */
+    @Builder.Default
+    private List<String> keywords = new ArrayList<>();
+
+    /**
      * 优先级（非主要匹配因素）
      * - 主要用途：决胜（分数相同时）
      * - 次要用途：降级（资源受限时）
@@ -129,6 +143,12 @@ public class KnowledgeRole implements Serializable {
         }
         if (sourceDomainIds == null) {
             sourceDomainIds = new ArrayList<>();
+        }
+        if (domains == null) {
+            domains = new ArrayList<>();
+        }
+        if (keywords == null) {
+            keywords = new ArrayList<>();
         }
         if (config == null) {
             config = new HashMap<>();
