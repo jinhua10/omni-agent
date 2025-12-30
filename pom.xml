@@ -50,6 +50,9 @@
         <!-- Document Processor API (文档处理 API) ⭐ 新增 -->
         <module>omni-agent-document-processor-api</module>
 
+        <!-- HOPE API (HOPE System API) ⭐ 新增 -->
+        <module>omni-agent-hope-api</module>
+
         <!-- ========== 通用工具模块 (Common Module) ========== -->
 
         <module>omni-agent-common</module>
