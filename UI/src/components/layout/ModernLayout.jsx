@@ -52,6 +52,17 @@ function ModernLayout({ children, activeKey, onMenuChange }) {
   const [uiThemeSwitcherOpen, setUiThemeSwitcherOpen] = useState(false);
   const [clearCacheModalOpen, setClearCacheModalOpen] = useState(false);
   
+  // 从localStorage读取菜单宽度，默认240
+  const [siderWidth, setSiderWidth] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sider_width');
+      return saved ? parseInt(saved, 10) : 240;
+    } catch (e) {
+      console.error('Failed to load sider width:', e);
+      return 240;
+    }
+  });
+
   // 从 localStorage 读取上次的选择 / Load last selection from localStorage
   const [clearOptions, setClearOptions] = useState(() => {
     try {
@@ -85,6 +96,29 @@ function ModernLayout({ children, activeKey, onMenuChange }) {
       }
       return newOptions;
     });
+  }, []);
+
+  /**
+   * 处理Logo点击 - 跳转到首页
+   */
+  const handleLogoClick = useCallback(() => {
+    window.location.hash = '#/';
+  }, []);
+
+  /**
+   * 处理菜单宽度调整
+   */
+  const handleSiderWidthChange = useCallback((newWidth) => {
+    const minWidth = 200;
+    const maxWidth = 400;
+    const validWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
+
+    setSiderWidth(validWidth);
+    try {
+      localStorage.setItem('sider_width', validWidth.toString());
+    } catch (e) {
+      console.error('Failed to save sider width:', e);
+    }
   }, []);
 
   /**
@@ -220,15 +254,21 @@ function ModernLayout({ children, activeKey, onMenuChange }) {
         collapsed={collapsed}
         breakpoint="lg"
         collapsedWidth={80}
-        width={240}
+        width={siderWidth}
         className="modern-layout__sider"
         style={{
           background: 'var(--theme-surface)',
           borderRight: '1px solid var(--theme-border)',
+          position: 'relative',
         }}
       >
         {/* Logo区域 / Logo area */}
-        <div className="modern-layout__logo">
+        <div
+          className="modern-layout__logo"
+          onClick={handleLogoClick}
+          style={{ cursor: 'pointer' }}
+          title={t('common.backToHome') || '返回首页'}
+        >
           <span className="modern-layout__logo-icon">🤖</span>
           {!collapsed && (
             <span className="modern-layout__logo-text">Omni Agent</span>
@@ -248,6 +288,52 @@ function ModernLayout({ children, activeKey, onMenuChange }) {
             borderRight: 'none',
           }}
         />
+
+        {/* 调整宽度的拖动条 */}
+        {!collapsed && (
+          <div
+            className="modern-layout__sider-resizer"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const startX = e.clientX;
+              const startWidth = siderWidth;
+
+              const handleMouseMove = (moveEvent) => {
+                const deltaX = moveEvent.clientX - startX;
+                const newWidth = startWidth + deltaX;
+                handleSiderWidthChange(newWidth);
+              };
+
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+              };
+
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+              document.body.style.cursor = 'ew-resize';
+              document.body.style.userSelect = 'none';
+            }}
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: '4px',
+              cursor: 'ew-resize',
+              background: 'transparent',
+              zIndex: 10,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--theme-primary, #1890ff)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          />
+        )}
       </Sider>
 
       <Layout className="modern-layout__main">
