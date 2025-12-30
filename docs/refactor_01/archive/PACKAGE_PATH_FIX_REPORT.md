@@ -59,7 +59,7 @@ import top.yumbo.ai.knowledge.registry.model.DomainType;
 
 // 修改后
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
-import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainType;
 ```
 
 ### spring.factories 更新

@@ -3,7 +3,7 @@ package top.yumbo.ai.omni.knowledge.registry.converter;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainType;
 
 /**
  * DomainType 字符串转换器

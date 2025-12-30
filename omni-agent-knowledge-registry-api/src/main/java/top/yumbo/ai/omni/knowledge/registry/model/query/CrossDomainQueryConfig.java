@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.model;
+package top.yumbo.ai.omni.knowledge.registry.model.query;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

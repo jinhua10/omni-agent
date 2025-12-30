@@ -10,7 +10,7 @@ import top.yumbo.ai.omni.ai.api.model.ChatMessage;
 import top.yumbo.ai.omni.core.hope.HOPEKnowledgeManager;
 import top.yumbo.ai.omni.knowledge.registry.qa.service.IntelligentQAService;
 import top.yumbo.ai.omni.knowledge.registry.qa.service.QAOrchestrationService;
-import top.yumbo.ai.omni.knowledge.registry.role.Role;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
 import top.yumbo.ai.omni.knowledge.registry.role.service.RoleService;
 import top.yumbo.ai.omni.knowledge.registry.qa.util.ContextBuilder;
 import top.yumbo.ai.omni.marketplace.EnhancedQueryService;
@@ -320,8 +320,8 @@ public class AdvancedQAController {
                                  List<SearchResult> references, StringBuilder fullAnswerBuilder) {
         log.info("🚂 双轨模式：RAG + 角色知识库 (role={})（并行执行）", roleName);
 
-        Role role = roleService.getRole(roleName != null ? roleName : "default");
-        log.info("🎭 使用角色: {} - {}", role.getName(), role.getDescription());
+        KnowledgeRole role = roleService.getRole(roleName != null ? roleName : "default");
+        log.info("🎭 使用角色: {} - {}", role.getRoleName(), role.getDescription());
 
         CountDownLatch bothTracksLatch = new CountDownLatch(2);
         AtomicBoolean hasError = new AtomicBoolean(false);
@@ -378,7 +378,7 @@ public class AdvancedQAController {
         // 右轨：角色专业回答
         executorService.submit(() -> {
             try {
-                log.info("➡️ 启动右轨：角色 [{}] 专业回答", role.getName());
+                log.info("➡️ 启动右轨：角色 [{}] 专业回答", role.getRoleName());
 
                 String roleContext = ContextBuilder.buildRoleContext(references);
                 String rightPrompt = String.format(
@@ -386,7 +386,7 @@ public class AdvancedQAController {
                                 "作为专业角色，请基于以下知识给出你的专业见解：\n\n%s\n\n" +
                                 "问题：%s\n\n" +
                                 "请以你的角色身份，结合专业知识回答。",
-                        role.getName(),
+                        role.getRoleName(),
                         role.getDescription(),
                         roleContext.isEmpty() ? "暂无特定知识，请基于角色专业性回答" : roleContext,
                         question

@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.ai.api.AIService;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument;
+import top.yumbo.ai.omni.knowledge.registry.model.document.KnowledgeDocument;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeExtractionService;
 import top.yumbo.ai.omni.knowledge.registry.qa.model.*;
 import top.yumbo.ai.omni.knowledge.registry.router.DomainRouter;

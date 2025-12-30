@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.knowledge.registry.role.service.RoleService;
-import top.yumbo.ai.omni.knowledge.registry.role.Role;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,12 +44,12 @@ public class RoleController {
                 page, pageSize, keyword, enabled);
 
             // 获取所有角色
-            List<Role> allRoles = roleService.getAllRoles();
+            List<KnowledgeRole> allRoles = roleService.getAllRoles();
 
             // 过滤
-            List<Role> filtered = allRoles.stream()
+            List<KnowledgeRole> filtered = allRoles.stream()
                 .filter(role -> keyword == null || keyword.isEmpty() ||
-                    role.getName().contains(keyword) ||
+                    role.getRoleName().contains(keyword) ||
                     role.getDescription().contains(keyword))
                 .filter(role -> enabled == null || role.isEnabled() == enabled)
                 .sorted((r1, r2) -> Integer.compare(r2.getPriority(), r1.getPriority()))
@@ -59,7 +59,7 @@ public class RoleController {
             int start = (page - 1) * pageSize;
             int end = Math.min(start + pageSize, filtered.size());
 
-            List<Role> pageRoles = start < filtered.size()
+            List<KnowledgeRole> pageRoles = start < filtered.size()
                 ? filtered.subList(start, end)
                 : List.of();
 
@@ -83,11 +83,11 @@ public class RoleController {
      * GET /api/roles/{roleName}
      */
     @GetMapping("/{roleName}")
-    public ResponseEntity<Role> getRole(@PathVariable String roleName) {
+    public ResponseEntity<KnowledgeRole> getRole(@PathVariable String roleName) {
         try {
             log.debug("获取角色详情: {}", roleName);
 
-            Role role = roleService.getRole(roleName);
+            KnowledgeRole role = roleService.getRole(roleName);
 
             return ResponseEntity.ok(role);
 
@@ -102,17 +102,17 @@ public class RoleController {
      * POST /api/roles
      */
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createRole(@RequestBody Role role) {
+    public ResponseEntity<Map<String, Object>> createRole(@RequestBody KnowledgeRole role) {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            log.info("创建角色: {}", role.getName());
+            log.info("创建角色: {}", role.getRoleName());
 
             roleService.registerRole(role);
 
             result.put("status", "success");
             result.put("message", "角色创建成功");
-            result.put("roleName", role.getName());
+            result.put("roleName", role.getRoleName());
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
@@ -130,7 +130,7 @@ public class RoleController {
     @PutMapping("/{roleName}")
     public ResponseEntity<Map<String, Object>> updateRole(
             @PathVariable String roleName,
-            @RequestBody Role role) {
+            @RequestBody KnowledgeRole role) {
 
         Map<String, Object> result = new HashMap<>();
 
@@ -138,7 +138,7 @@ public class RoleController {
             log.info("更新角色: {}", roleName);
 
             // 确保名称一致
-            role.setName(roleName);
+            role.setRoleName(roleName);
 
             roleService.updateRole(role);
 
@@ -198,7 +198,7 @@ public class RoleController {
         try {
             log.info("切换角色状态: {}", roleName);
 
-            Role role = roleService.getRole(roleName);
+            KnowledgeRole role = roleService.getRole(roleName);
             role.setEnabled(!role.isEnabled());
 
             roleService.updateRole(role);
@@ -222,9 +222,9 @@ public class RoleController {
      * GET /api/roles/default
      */
     @GetMapping("/default")
-    public ResponseEntity<Role> getDefaultRole() {
+    public ResponseEntity<KnowledgeRole> getDefaultRole() {
         try {
-            Role defaultRole = roleService.getDefaultRole();
+            KnowledgeRole defaultRole = roleService.getDefaultRole();
             return ResponseEntity.ok(defaultRole);
         } catch (Exception e) {
             log.error("获取默认角色失败", e);
@@ -244,13 +244,13 @@ public class RoleController {
             int successCount = 0;
             int failCount = 0;
 
-            for (Role role : request.getRoles()) {
+            for (KnowledgeRole role : request.getRoles()) {
                 try {
                     roleService.registerRole(role);
                     successCount++;
                 } catch (Exception e) {
                     failCount++;
-                    log.warn("创建角色失败: {}", role.getName(), e);
+                    log.warn("创建角色失败: {}", role.getRoleName(), e);
                 }
             }
 
@@ -274,7 +274,7 @@ public class RoleController {
 
     @Data
     public static class RolePageResponse {
-        private List<Role> list;
+        private List<KnowledgeRole> list;
         private long total;
         private int page;
         private int pageSize;
@@ -283,7 +283,7 @@ public class RoleController {
 
     @Data
     public static class BatchCreateRequest {
-        private List<Role> roles;
+        private List<KnowledgeRole> roles;
     }
 }
 

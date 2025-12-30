@@ -288,7 +288,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.impl.*;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.KnowledgeDomain;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

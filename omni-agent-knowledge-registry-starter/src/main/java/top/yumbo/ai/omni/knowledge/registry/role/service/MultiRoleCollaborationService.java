@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.ai.api.AIService;
-import top.yumbo.ai.omni.knowledge.registry.role.Role;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -109,7 +109,7 @@ public class MultiRoleCollaborationService {
         log.info("📝 处理简单问题（单角色）");
 
         // 找到最佳角色
-        Role bestRole = roleMatcherService.findBestRole(question);
+        KnowledgeRole bestRole = roleMatcherService.findBestRole(question);
 
         // 构建提示词
         String prompt = buildRolePrompt(bestRole, question, context);
@@ -139,7 +139,7 @@ public class MultiRoleCollaborationService {
         log.info("问题分解: {} 个子问题", subQuestions.size());
 
         // 2. 为每个子问题匹配角色
-        Map<SubQuestion, Role> assignments = assignRolesToSubQuestions(subQuestions);
+        Map<SubQuestion, KnowledgeRole> assignments = assignRolesToSubQuestions(subQuestions);
 
         // 3. 并行查询
         List<SubResult> subResults = queryInParallel(assignments, context);
@@ -148,7 +148,7 @@ public class MultiRoleCollaborationService {
         String synthesizedAnswer = synthesizeAnswers(question, subResults);
 
         // 收集所有参与的角色
-        List<Role> involvedRoles = subResults.stream()
+        List<KnowledgeRole> involvedRoles = subResults.stream()
                 .map(SubResult::getRole)
                 .distinct()
                 .collect(Collectors.toList());
@@ -179,7 +179,7 @@ public class MultiRoleCollaborationService {
         // 3. 复合句检查
         boolean hasMultipleClauses = question.contains("并且") || question.contains("以及") ||
                                    question.contains("同时") || question.contains("，") ||
-                                   question.split("\\?|？").length > 1;
+                                   question.split("[?？]").length > 1;
 
         // 4. 综合判断
         ComplexityLevel level;
@@ -239,13 +239,13 @@ public class MultiRoleCollaborationService {
     /**
      * 为子问题分配角色
      */
-    private Map<SubQuestion, Role> assignRolesToSubQuestions(List<SubQuestion> subQuestions) {
-        Map<SubQuestion, Role> assignments = new HashMap<>();
+    private Map<SubQuestion, KnowledgeRole> assignRolesToSubQuestions(List<SubQuestion> subQuestions) {
+        Map<SubQuestion, KnowledgeRole> assignments = new HashMap<>();
 
         for (SubQuestion subQ : subQuestions) {
-            Role bestRole = roleMatcherService.findBestRole(subQ.getQuestion());
+            KnowledgeRole bestRole = roleMatcherService.findBestRole(subQ.getQuestion());
             assignments.put(subQ, bestRole);
-            log.info("子问题分配: [{}] -> 角色 [{}]", subQ.getQuestion(), bestRole.getName());
+            log.info("子问题分配: [{}] -> 角色 [{}]", subQ.getQuestion(), bestRole.getRoleName());
         }
 
         return assignments;
@@ -254,14 +254,14 @@ public class MultiRoleCollaborationService {
     /**
      * 并行查询多个角色
      */
-    private List<SubResult> queryInParallel(Map<SubQuestion, Role> assignments, String context) {
+    private List<SubResult> queryInParallel(Map<SubQuestion, KnowledgeRole> assignments, String context) {
         log.info("🚀 并行查询 {} 个角色", assignments.size());
 
         List<CompletableFuture<SubResult>> futures = new ArrayList<>();
 
-        for (Map.Entry<SubQuestion, Role> entry : assignments.entrySet()) {
+        for (Map.Entry<SubQuestion, KnowledgeRole> entry : assignments.entrySet()) {
             SubQuestion subQ = entry.getKey();
-            Role role = entry.getValue();
+            KnowledgeRole role = entry.getValue();
 
             CompletableFuture<SubResult> future = CompletableFuture.supplyAsync(() -> {
                 try {
@@ -326,7 +326,7 @@ public class MultiRoleCollaborationService {
                 synthesized.append(String.format("**%d. %s（由%s回答）**\n\n",
                         i + 1,
                         result.getSubQuestion().getQuestion(),
-                        result.getRole().getName()));
+                        result.getRole().getRoleName()));
                 synthesized.append(result.getAnswer()).append("\n\n");
             }
         }
@@ -340,13 +340,13 @@ public class MultiRoleCollaborationService {
     /**
      * 构建角色提示词
      */
-    private String buildRolePrompt(Role role, String question, String context) {
+    private String buildRolePrompt(KnowledgeRole role, String question, String context) {
         return String.format(
                 "你是%s，%s\n\n" +
                 "基于以下知识回答问题：\n\n%s\n\n" +
                 "问题：%s\n\n" +
                 "请以你的专业角色身份回答。",
-                role.getName(),
+                role.getRoleName(),
                 role.getDescription(),
                 context.isEmpty() ? "暂无特定知识" : context,
                 question
@@ -398,7 +398,7 @@ public class MultiRoleCollaborationService {
     @AllArgsConstructor
     public static class SubResult {
         private SubQuestion subQuestion;
-        private Role role;
+        private KnowledgeRole role;
         private String answer;
         private boolean success;
         private String error;
@@ -427,7 +427,7 @@ public class MultiRoleCollaborationService {
         private CollaborationType collaborationType;
 
         /** 参与的角色列表 */
-        private List<Role> roles;
+        private List<KnowledgeRole> roles;
 
         /** 最终答案 */
         private String answer;

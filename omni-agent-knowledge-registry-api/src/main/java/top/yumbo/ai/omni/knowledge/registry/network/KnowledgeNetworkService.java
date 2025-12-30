@@ -1,8 +1,8 @@
 package top.yumbo.ai.omni.knowledge.registry.network;
 
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeBuildResult;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeBuildStatus;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeNetworkStatistics;
+import top.yumbo.ai.omni.knowledge.registry.model.build.KnowledgeBuildResult;
+import top.yumbo.ai.omni.knowledge.registry.model.build.KnowledgeBuildStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.statistics.KnowledgeNetworkStatistics;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

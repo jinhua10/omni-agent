@@ -2,8 +2,8 @@ package top.yumbo.ai.omni.example.basic.domain;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.KnowledgeDomain;
 
 import jakarta.annotation.PostConstruct;
 import java.util.Map;

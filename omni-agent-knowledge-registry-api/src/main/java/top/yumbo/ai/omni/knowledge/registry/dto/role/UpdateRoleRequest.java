@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.role.RoleStatus;
 
 import java.util.List;
 

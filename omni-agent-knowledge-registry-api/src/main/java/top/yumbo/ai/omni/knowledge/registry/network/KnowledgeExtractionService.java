@@ -1,6 +1,6 @@
 package top.yumbo.ai.omni.knowledge.registry.network;
 
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument;
+import top.yumbo.ai.omni.knowledge.registry.model.document.KnowledgeDocument;
 
 import java.util.List;
 

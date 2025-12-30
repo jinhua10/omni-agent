@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.model;
+package top.yumbo.ai.omni.knowledge.registry.model.statistics;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

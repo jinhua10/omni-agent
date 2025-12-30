@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.model;
+package top.yumbo.ai.omni.knowledge.registry.model.role;
 
 /**
  * 角色状态枚举
@@ -7,7 +7,10 @@ package top.yumbo.ai.omni.knowledge.registry.model;
  * @since 1.0.0
  */
 public enum RoleStatus {
-
+    /**
+     * 禁用状态
+     */
+    DISABLED("禁用"),
     /**
      * 活跃状态
      */

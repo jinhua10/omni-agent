@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.model;
+package top.yumbo.ai.omni.knowledge.registry.model.role;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -68,6 +68,15 @@ public class KnowledgeRole implements Serializable {
      */
     @Builder.Default
     private List<String> sourceDomainIds = new ArrayList<>();
+
+    /**
+     * 优先级（非主要匹配因素）
+     * - 主要用途：决胜（分数相同时）
+     * - 次要用途：降级（资源受限时）
+     * - 辅助用途：冷启动（新角色无历史数据时）
+     * 注意：不应作为主要的角色选择依据！主要依据是动态计算的匹配分数。
+     */
+    private int priority = 5;  // 默认中等优先级
 
     /**
      * 角色状态

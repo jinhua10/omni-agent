@@ -6,9 +6,9 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeNetworkStatistics;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.statistics.KnowledgeNetworkStatistics;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.ArrayList;

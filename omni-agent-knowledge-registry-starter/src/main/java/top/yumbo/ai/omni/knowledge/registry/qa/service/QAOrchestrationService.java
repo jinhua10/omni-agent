@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.knowledge.registry.qa.model.IntelligentQARequest;
 import top.yumbo.ai.omni.knowledge.registry.qa.model.IntelligentQAResponse;
-import top.yumbo.ai.omni.knowledge.registry.role.Role;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
 import top.yumbo.ai.omni.knowledge.registry.role.service.RoleService;
 import top.yumbo.ai.omni.knowledge.registry.qa.util.ContextBuilder;
 import top.yumbo.ai.omni.rag.RagService;
@@ -112,7 +112,7 @@ public class QAOrchestrationService {
             return QAResult.error("roleName is required for role mode");
         }
 
-        Role roleEntity = roleService.getRole(roleName);
+        KnowledgeRole roleEntity = roleService.getRole(roleName);
         List<Document> roleDocuments = ragService.semanticSearch(request.getQuestion(), 5);
 
         String roleContext = ContextBuilder.buildRoleContext(
@@ -123,7 +123,7 @@ public class QAOrchestrationService {
 
         String rolePrompt = String.format(
                 "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                roleEntity.getName(),
+                roleEntity.getRoleName(),
                 roleEntity.getDescription(),
                 roleContext,
                 request.getQuestion()
@@ -172,7 +172,7 @@ public class QAOrchestrationService {
         if ("none".equals(knowledgeMode)) {
             return question;
         } else if ("role".equals(knowledgeMode) && roleName != null) {
-            Role role = roleService.getRole(roleName);
+            KnowledgeRole role = roleService.getRole(roleName);
             var documents = ragService.semanticSearch(question, 5);
             var references = documents.stream()
                     .map(top.yumbo.ai.omni.rag.model.SearchResult::fromDocument)
@@ -180,7 +180,7 @@ public class QAOrchestrationService {
             String context = ContextBuilder.buildRoleContext(references);
             return String.format(
                     "你是%s，%s\n\n基于以下知识回答问题：\n\n%s\n\n问题：%s",
-                    role.getName(), role.getDescription(), context, question
+                    role.getRoleName(), role.getDescription(), context, question
             );
         } else {
             var documents = ragService.semanticSearch(question, 5);

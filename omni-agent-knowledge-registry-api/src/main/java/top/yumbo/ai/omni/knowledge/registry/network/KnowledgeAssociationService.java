@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
+import top.yumbo.ai.omni.knowledge.registry.model.refinement.RefinedKnowledge;
 
 import java.util.List;
 

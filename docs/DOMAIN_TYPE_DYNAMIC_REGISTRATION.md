@@ -135,7 +135,7 @@ public int hashCode() {
 预定义类型可以直接使用，就像以前的枚举一样：
 
 ```java
-import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainType;
 
 // 创建知识域时使用预定义类型
 KnowledgeDomain domain = KnowledgeDomain.builder()

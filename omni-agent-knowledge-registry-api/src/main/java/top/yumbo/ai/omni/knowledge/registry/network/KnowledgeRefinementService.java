@@ -1,8 +1,8 @@
 package top.yumbo.ai.omni.knowledge.registry.network;
 
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
-import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
+import top.yumbo.ai.omni.knowledge.registry.model.document.KnowledgeDocument;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.refinement.RefinedKnowledge;
 import java.util.List;
 
 /**

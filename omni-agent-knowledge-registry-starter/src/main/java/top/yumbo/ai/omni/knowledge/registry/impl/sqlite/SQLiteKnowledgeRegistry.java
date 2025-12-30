@@ -8,11 +8,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.exception.KnowledgeRegistryException;
-import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
-import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
-import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.role.RoleStatus;
 
 import jakarta.annotation.PostConstruct;
 import java.util.List;

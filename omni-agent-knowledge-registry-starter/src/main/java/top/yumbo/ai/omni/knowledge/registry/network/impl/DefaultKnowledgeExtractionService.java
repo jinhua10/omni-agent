@@ -1,8 +1,8 @@
 package top.yumbo.ai.omni.knowledge.registry.network.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument;
-import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
+import top.yumbo.ai.omni.knowledge.registry.model.document.KnowledgeDocument;
+import top.yumbo.ai.omni.knowledge.registry.model.refinement.RefinedKnowledge;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeExtractionService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
 

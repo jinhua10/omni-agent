@@ -6,7 +6,10 @@ import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.knowledge.registry.dto.domain.CreateDomainRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.CreateRoleRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.UpdateRoleRequest;
-import top.yumbo.ai.omni.knowledge.registry.model.*;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.role.RoleStatus;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 import top.yumbo.ai.omni.knowledge.registry.network.impl.KnowledgeDomainService;
 

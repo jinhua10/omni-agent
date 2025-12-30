@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.CreateRoleRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.LearnFromDomainsRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.UpdateRoleRequest;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
-import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
+import top.yumbo.ai.omni.knowledge.registry.model.role.RoleStatus;
 import top.yumbo.ai.omni.knowledge.registry.role.service.KnowledgeRoleService;
 import top.yumbo.ai.omni.knowledge.registry.role.service.RoleLearningService;
 

@@ -5,7 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.ai.api.AIService;
-import top.yumbo.ai.omni.knowledge.registry.model.*;
+import top.yumbo.ai.omni.knowledge.registry.model.build.KnowledgeBuildResult;
+import top.yumbo.ai.omni.knowledge.registry.model.build.KnowledgeBuildStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.domain.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.refinement.RefinedKnowledge;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 

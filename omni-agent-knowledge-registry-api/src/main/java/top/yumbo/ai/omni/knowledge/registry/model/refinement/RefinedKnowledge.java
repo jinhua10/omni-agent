@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.model;
+package top.yumbo.ai.omni.knowledge.registry.model.refinement;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,13 +8,11 @@ import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * 知识文档模型
+ * 提炼的知识模型
  *
- * <p>用于在知识域之间传递文档数据</p>
+ * <p>表示经过AI或规则处理后的精炼知识</p>
  *
  * @author OmniAgent Team
  * @since 1.0.0
@@ -23,30 +21,30 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class KnowledgeDocument implements Serializable {
+public class RefinedKnowledge implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     /**
-     * 文档ID
+     * 知识ID
      */
-    private String id;
+    private String knowledgeId;
 
     /**
-     * 文档标题
+     * 知识标题
      */
     private String title;
 
     /**
-     * 文档内容
+     * 提炼后的知识内容
      */
-    private String content;
+    private String refinedContent;
 
     /**
-     * 文档摘要
+     * 原始文档ID
      */
-    private String summary;
+    private String sourceDocumentId;
 
     /**
      * 来源域ID
@@ -54,20 +52,19 @@ public class KnowledgeDocument implements Serializable {
     private String sourceDomainId;
 
     /**
-     * 文档类型
+     * 角色ID
      */
-    private String documentType;
+    private String roleId;
 
     /**
-     * 元数据
+     * 知识类型
      */
-    @Builder.Default
-    private Map<String, Object> metadata = new HashMap<>();
+    private String knowledgeType;
 
     /**
-     * 相关性得分（用于排序）
+     * 重要性等级（0.0-1.0）
      */
-    private Double relevanceScore;
+    private Double importance;
 
     /**
      * 创建时间

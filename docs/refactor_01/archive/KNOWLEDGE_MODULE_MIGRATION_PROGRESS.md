@@ -15,12 +15,12 @@ omni-agent-knowledge-registry-api/
 #### 1.2 迁移模型类 ✅
 - ✅ **RefinedKnowledge.java**
   - 从：`top.yumbo.ai.omni.core.model.RefinedKnowledge`
-  - 到：`top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge`
+  - 到：`top.yumbo.ai.omni.knowledge.registry.model.refinement.RefinedKnowledge`
   - 增强：添加 Serializable、createdAt、updatedAt
 
 - ✅ **KnowledgeDocument.java**
   - 从：`top.yumbo.ai.omni.core.model.KnowledgeDocument`
-  - 到：`top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument`
+  - 到：`top.yumbo.ai.omni.knowledge.registry.model.document.KnowledgeDocument`
   - 增强：添加 Serializable、createdAt、updatedAt
 
 #### 1.3 创建服务接口 ✅
@@ -83,8 +83,8 @@ import top.yumbo.ai.omni.core.model.KnowledgeDocument;
 import top.yumbo.ai.omni.core.service.knowledge.*;
 
 // 新的导入
-import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument;
+import top.yumbo.ai.omni.knowledge.registry.model.refinement.RefinedKnowledge;
+import top.yumbo.ai.omni.knowledge.registry.model.document.KnowledgeDocument;
 
 ```
 

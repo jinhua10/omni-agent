@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
-import top.yumbo.ai.omni.knowledge.registry.role.Role;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +33,7 @@ public class RoleService {
      * 角色存储 (Role storage)
      * Key: roleId, Value: Role
      */
-    private final Map<String, Role> roles = new ConcurrentHashMap<>();
+    private final Map<String, KnowledgeRole> roles = new ConcurrentHashMap<>();
 
     /**
      * 角色使用统计 (Role usage statistics)
@@ -49,14 +49,14 @@ public class RoleService {
     @PostConstruct
     public void init() {
         // 初始化默认角色 (Initialize default role)
-        Role defaultRole = Role.builder()
-                .id(DEFAULT_ROLE_ID)
-                .name("Default Role")
+        KnowledgeRole defaultRole = KnowledgeRole.builder()
+                .roleId(DEFAULT_ROLE_ID)
+                .roleName("Default Role")
                 .description("Default role for general questions")
                 .keywords(Arrays.asList("general", "common", "default"))
                 .enabled(true)
                 .priority(0)
-                .properties(new HashMap<>())
+                .config(new HashMap<>())
                 .build();
 
         roles.put(DEFAULT_ROLE_ID, defaultRole);
@@ -68,13 +68,13 @@ public class RoleService {
      *
      * @param role 角色对象 (Role object)
      */
-    public void registerRole(Role role) {
-        if (role == null || role.getId() == null) {
+    public void registerRole(KnowledgeRole role) {
+        if (role == null || role.getRoleId() == null) {
             throw new IllegalArgumentException("Role or role ID cannot be null");
         }
 
-        roles.put(role.getId(), role);
-        log.info("Role registered: {} - {}", role.getId(), role.getName());
+        roles.put(role.getRoleId(), role);
+        log.info("Role registered: {} - {}", role.getRoleId(), role.getRoleName());
     }
 
     /**
@@ -83,8 +83,8 @@ public class RoleService {
      * @param roleId 角色ID (Role ID)
      * @return 角色对象，不存在则返回默认角色 (Role object, or default role if not exists)
      */
-    public Role getRole(String roleId) {
-        Role role = roles.get(roleId);
+    public KnowledgeRole getRole(String roleId) {
+        KnowledgeRole role = roles.get(roleId);
         if (role == null) {
             log.warn("Role not found: {}, returning default role", roleId);
             return roles.get(DEFAULT_ROLE_ID);
@@ -97,10 +97,10 @@ public class RoleService {
      *
      * @return 启用的角色列表 (List of enabled roles)
      */
-    public List<Role> getEnabledRoles() {
+    public List<KnowledgeRole> getEnabledRoles() {
         return roles.values().stream()
-                .filter(Role::isEnabled)
-                .sorted(Comparator.comparingInt(Role::getPriority).reversed())
+                .filter(KnowledgeRole::isEnabled)
+                .sorted(Comparator.comparingInt(KnowledgeRole::getPriority).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -120,7 +120,7 @@ public class RoleService {
      * @param keywords 关键词列表 (Keywords list)
      * @return 匹配的角色列表，按优先级排序 (Matched roles list, sorted by priority)
      */
-    public List<Role> matchRolesByKeywords(List<String> keywords) {
+    public List<KnowledgeRole> matchRolesByKeywords(List<String> keywords) {
         if (keywords == null || keywords.isEmpty()) {
             return Collections.singletonList(getDefaultRole());
         }
@@ -137,7 +137,7 @@ public class RoleService {
                     }
                     return false;
                 })
-                .sorted(Comparator.comparingInt(Role::getPriority).reversed())
+                .sorted(Comparator.comparingInt(KnowledgeRole::getPriority).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -165,7 +165,7 @@ public class RoleService {
      *
      * @return 默认角色 (Default role)
      */
-    public Role getDefaultRole() {
+    public KnowledgeRole getDefaultRole() {
         return roles.get(DEFAULT_ROLE_ID);
     }
 
@@ -174,7 +174,7 @@ public class RoleService {
      *
      * @return 所有角色列表 (List of all roles)
      */
-    public List<Role> getAllRoles() {
+    public List<KnowledgeRole> getAllRoles() {
         return new ArrayList<>(roles.values());
     }
 
@@ -190,7 +190,7 @@ public class RoleService {
             return false;
         }
 
-        Role removed = roles.remove(roleId);
+        KnowledgeRole removed = roles.remove(roleId);
         if (removed != null) {
             usageStats.remove(roleId);
             log.info("Role deleted: {}", roleId);
@@ -204,17 +204,17 @@ public class RoleService {
      *
      * @param role 角色对象 (Role object)
      */
-    public void updateRole(Role role) {
-        if (role == null || role.getId() == null) {
+    public void updateRole(KnowledgeRole role) {
+        if (role == null || role.getRoleId() == null) {
             throw new IllegalArgumentException("Role or role ID cannot be null");
         }
 
-        if (!roles.containsKey(role.getId())) {
-            throw new IllegalArgumentException("Role not found: " + role.getId());
+        if (!roles.containsKey(role.getRoleId())) {
+            throw new IllegalArgumentException("Role not found: " + role.getRoleId());
         }
 
-        roles.put(role.getId(), role);
-        log.info("Role updated: {} - {}", role.getId(), role.getName());
+        roles.put(role.getRoleId(), role);
+        log.info("Role updated: {} - {}", role.getRoleId(), role.getRoleName());
     }
 
     /**

@@ -2,7 +2,7 @@ package top.yumbo.ai.omni.knowledge.registry.network.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
+import top.yumbo.ai.omni.knowledge.registry.model.refinement.RefinedKnowledge;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeAssociationService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
 

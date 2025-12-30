@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import top.yumbo.ai.omni.knowledge.registry.router.DomainRouter;
-import top.yumbo.ai.omni.knowledge.registry.router.QueryRouteResult;
+import top.yumbo.ai.omni.knowledge.registry.dto.router.QueryRouteResult;
 
 /**
  * 领域路由器控制器

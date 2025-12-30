@@ -3,7 +3,7 @@ package top.yumbo.ai.omni.knowledge.registry.role.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.yumbo.ai.omni.knowledge.registry.role.Role;
+import top.yumbo.ai.omni.knowledge.registry.model.role.KnowledgeRole;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,7 +47,7 @@ public class RoleMatcherService {
      * @param question 用户问题
      * @return 最佳角色，找不到则返回默认角色
      */
-    public Role findBestRole(String question) {
+    public KnowledgeRole findBestRole(String question) {
         log.info("为问题匹配最佳角色: {}", question);
 
         List<RoleMatch> matches = matchRoles(question, 5);
@@ -59,7 +59,7 @@ public class RoleMatcherService {
 
         RoleMatch bestMatch = matches.get(0);
         log.info("最佳角色: {} (置信度: {:.2f})",
-                bestMatch.getRole().getName(), bestMatch.getScore());
+                bestMatch.getRole().getRoleName(), bestMatch.getScore());
 
         return bestMatch.getRole();
     }
@@ -78,7 +78,7 @@ public class RoleMatcherService {
         DomainAnalyzer.DomainAnalysisResult domainResult = domainAnalyzer.analyzeDomain(question);
 
         // 2. 获取所有启用的角色
-        List<Role> enabledRoles = roleService.getEnabledRoles();
+        List<KnowledgeRole> enabledRoles = roleService.getEnabledRoles();
 
         if (enabledRoles.isEmpty()) {
             log.warn("没有启用的角色");
@@ -88,7 +88,7 @@ public class RoleMatcherService {
         // 3. 计算每个角色的匹配分数
         List<RoleMatch> matches = new ArrayList<>();
 
-        for (Role role : enabledRoles) {
+        for (KnowledgeRole role : enabledRoles) {
             double score = calculateRoleScore(question, role, domainResult);
 
             if (score > 0.1) { // 最低阈值
@@ -115,7 +115,7 @@ public class RoleMatcherService {
     /**
      * 计算角色匹配分数
      */
-    private double calculateRoleScore(String question, Role role,
+    private double calculateRoleScore(String question, KnowledgeRole role,
                                       DomainAnalyzer.DomainAnalysisResult domainResult) {
         double domainScore = calculateDomainScore(role, domainResult);
         double keywordScore = calculateKeywordScore(question, role);
@@ -130,13 +130,13 @@ public class RoleMatcherService {
     /**
      * 计算领域匹配分数
      */
-    private double calculateDomainScore(Role role, DomainAnalyzer.DomainAnalysisResult domainResult) {
+    private double calculateDomainScore(KnowledgeRole role, DomainAnalyzer.DomainAnalysisResult domainResult) {
         if (domainResult.getDomains().isEmpty()) {
             return 0.0;
         }
 
         // 检查角色的属性中是否定义了领域
-        Object domainsProp = role.getProperties().get("domains");
+        Object domainsProp = role.getConfig().get("domains");
         if (!(domainsProp instanceof List)) {
             return 0.0;
         }
@@ -158,7 +158,7 @@ public class RoleMatcherService {
     /**
      * 计算关键词匹配分数
      */
-    private double calculateKeywordScore(String question, Role role) {
+    private double calculateKeywordScore(String question, KnowledgeRole role) {
         if (role.getKeywords() == null || role.getKeywords().isEmpty()) {
             return 0.0;
         }
@@ -178,12 +178,12 @@ public class RoleMatcherService {
     /**
      * 构建匹配原因说明
      */
-    private String buildMatchReason(Role role, DomainAnalyzer.DomainAnalysisResult domainResult) {
+    private String buildMatchReason(KnowledgeRole role, DomainAnalyzer.DomainAnalysisResult domainResult) {
         StringBuilder reason = new StringBuilder();
 
         // 领域匹配原因
         if (domainResult.getPrimaryDomain() != null) {
-            Object domainsProp = role.getProperties().get("domains");
+            Object domainsProp = role.getConfig().get("domains");
             if (domainsProp instanceof List) {
                 @SuppressWarnings("unchecked")
                 List<String> roleDomains = (List<String>) domainsProp;
@@ -212,7 +212,7 @@ public class RoleMatcherService {
     @lombok.AllArgsConstructor
     public static class RoleMatch {
         /** 角色对象 */
-        private Role role;
+        private KnowledgeRole role;
 
         /** 匹配分数 (0.0 - 1.0) */
         private double score;
