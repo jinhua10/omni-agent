@@ -66,6 +66,14 @@
         <!-- Document Processor Starter (文档处理实现) ⭐ 新增 -->
         <module>omni-agent-document-processor-starter</module>
 
+        <!-- HOPE Starter (HOPE 系统实现) ⭐ 新增 -->
+        <module>omni-agent-hope-starter</module>
+
+        <!-- ========== 服务编排层 (Orchestration Layer) ⭐ 新增 ========== -->
+
+        <!-- Orchestrator (服务编排器) -->
+        <module>omni-agent-orchestrator</module>
+
         <!-- ========== Web 层 (Web Layer) ========== -->
 
         <module>omni-agent-web</module>
@@ -488,6 +496,27 @@
             <dependency>
                 <groupId>top.yumbo.ai.omni</groupId>
                 <artifactId>omni-agent-knowledge-registry-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- HOPE API -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-hope-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- HOPE Starter -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-hope-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Orchestrator -->
+            <dependency>
+                <groupId>top.yumbo.ai.omni</groupId>
+                <artifactId>omni-agent-orchestrator</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
