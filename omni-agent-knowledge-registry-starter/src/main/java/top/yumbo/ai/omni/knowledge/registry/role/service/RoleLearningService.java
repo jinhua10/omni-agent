@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.role;
+package top.yumbo.ai.omni.knowledge.registry.role.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

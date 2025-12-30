@@ -1,8 +1,9 @@
-package top.yumbo.ai.omni.knowledge.registry.network;
+package top.yumbo.ai.omni.knowledge.registry.network.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
 

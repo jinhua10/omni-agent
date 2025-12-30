@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.role;
+package top.yumbo.ai.omni.knowledge.registry.role.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +8,7 @@ import top.yumbo.ai.omni.knowledge.registry.dto.role.CreateRoleRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.UpdateRoleRequest;
 import top.yumbo.ai.omni.knowledge.registry.model.*;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
+import top.yumbo.ai.omni.knowledge.registry.network.impl.KnowledgeDomainService;
 
 
 import java.util.List;

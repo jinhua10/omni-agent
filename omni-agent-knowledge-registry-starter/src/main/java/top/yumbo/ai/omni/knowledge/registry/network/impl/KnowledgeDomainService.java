@@ -1,10 +1,13 @@
-package top.yumbo.ai.omni.knowledge.registry.model;
+package top.yumbo.ai.omni.knowledge.registry.network.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.knowledge.registry.dto.domain.CreateDomainRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.domain.UpdateDomainRequest;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainStatus;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRegistry;
 
 

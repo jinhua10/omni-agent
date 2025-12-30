@@ -9,8 +9,8 @@ import top.yumbo.ai.omni.knowledge.registry.dto.role.LearnFromDomainsRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.role.UpdateRoleRequest;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
 import top.yumbo.ai.omni.knowledge.registry.model.RoleStatus;
-import top.yumbo.ai.omni.knowledge.registry.role.KnowledgeRoleService;
-import top.yumbo.ai.omni.knowledge.registry.role.RoleLearningService;
+import top.yumbo.ai.omni.knowledge.registry.role.service.KnowledgeRoleService;
+import top.yumbo.ai.omni.knowledge.registry.role.service.RoleLearningService;
 
 import java.util.HashMap;
 import java.util.List;

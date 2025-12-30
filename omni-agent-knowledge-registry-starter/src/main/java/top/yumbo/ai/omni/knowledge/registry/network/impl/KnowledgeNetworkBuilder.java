@@ -1,10 +1,11 @@
-package top.yumbo.ai.omni.knowledge.registry.model;
+package top.yumbo.ai.omni.knowledge.registry.network.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.ai.api.AIService;
+import top.yumbo.ai.omni.knowledge.registry.model.*;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 

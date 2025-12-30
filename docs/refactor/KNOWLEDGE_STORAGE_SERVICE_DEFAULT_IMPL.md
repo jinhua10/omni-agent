@@ -12,7 +12,7 @@
 
 **错误信息**：
 ```
-Field knowledgeStorage in top.yumbo.ai.omni.knowledge.registry.model.KnowledgeNetworkBuilder 
+Field knowledgeStorage in top.yumbo.ai.omni.knowledge.registry.network.impl.KnowledgeNetworkBuilder 
 required a bean of type 'top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService' 
 that could not be found.
 ```

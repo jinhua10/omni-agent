@@ -9,7 +9,7 @@ import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
 import top.yumbo.ai.omni.knowledge.registry.dto.domain.CreateDomainRequest;
 import top.yumbo.ai.omni.knowledge.registry.dto.domain.UpdateDomainRequest;
-import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomainService;
+import top.yumbo.ai.omni.knowledge.registry.network.impl.KnowledgeDomainService;
 
 import java.util.HashMap;
 import java.util.List;

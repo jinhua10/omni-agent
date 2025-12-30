@@ -1,12 +1,12 @@
-package top.yumbo.ai.omni.knowledge.registry.network;
+package top.yumbo.ai.omni.knowledge.registry.network.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.ai.api.AIService;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDocument;
 import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeRole;
 import top.yumbo.ai.omni.knowledge.registry.model.RefinedKnowledge;
+import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRefinementService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;

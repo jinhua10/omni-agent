@@ -1,4 +1,4 @@
-package top.yumbo.ai.omni.knowledge.registry.model;
+package top.yumbo.ai.omni.knowledge.registry.network.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -6,6 +6,9 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import top.yumbo.ai.omni.knowledge.registry.model.DomainType;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeDomain;
+import top.yumbo.ai.omni.knowledge.registry.model.KnowledgeNetworkStatistics;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 import java.util.ArrayList;

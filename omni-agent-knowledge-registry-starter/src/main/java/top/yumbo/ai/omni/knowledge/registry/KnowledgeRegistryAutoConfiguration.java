@@ -12,6 +12,10 @@ import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeAssociationService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeExtractionService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeRefinementService;
 import top.yumbo.ai.omni.knowledge.registry.network.KnowledgeStorageService;
+import top.yumbo.ai.omni.knowledge.registry.network.impl.DefaultKnowledgeAssociationService;
+import top.yumbo.ai.omni.knowledge.registry.network.impl.DefaultKnowledgeExtractionService;
+import top.yumbo.ai.omni.knowledge.registry.network.impl.DefaultKnowledgeRefinementService;
+import top.yumbo.ai.omni.knowledge.registry.network.impl.DefaultKnowledgeStorageService;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 
 /**
@@ -39,7 +43,7 @@ public class KnowledgeRegistryAutoConfiguration {
     @ConditionalOnMissingBean(KnowledgeStorageService.class)
     public KnowledgeStorageService knowledgeStorageService(DocumentStorageService documentStorage) {
         log.info("📦 创建默认知识存储服务（基于 DocumentStorageService）");
-        return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeStorageService(documentStorage);
+        return new DefaultKnowledgeStorageService(documentStorage);
     }
 
     /**
@@ -49,7 +53,7 @@ public class KnowledgeRegistryAutoConfiguration {
     @ConditionalOnMissingBean(KnowledgeAssociationService.class)
     public KnowledgeAssociationService knowledgeAssociationService(KnowledgeStorageService storageService) {
         log.info("🔗 创建默认知识关联服务（基于 KnowledgeStorageService）");
-        return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeAssociationService(storageService);
+        return new DefaultKnowledgeAssociationService(storageService);
     }
 
     /**
@@ -59,7 +63,7 @@ public class KnowledgeRegistryAutoConfiguration {
     @ConditionalOnMissingBean(KnowledgeExtractionService.class)
     public KnowledgeExtractionService knowledgeExtractionService(KnowledgeStorageService storageService) {
         log.info("🔍 创建默认知识提取服务（基于 KnowledgeStorageService）");
-        return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeExtractionService(storageService);
+        return new DefaultKnowledgeExtractionService(storageService);
     }
 
     /**
@@ -73,7 +77,7 @@ public class KnowledgeRegistryAutoConfiguration {
         if (aiService == null) {
             log.warn("⚠️ AIService 不可用，知识提炼将仅使用规则方式");
         }
-        return new top.yumbo.ai.omni.knowledge.registry.network.DefaultKnowledgeRefinementService(aiService);
+        return new DefaultKnowledgeRefinementService(aiService);
     }
 }
 

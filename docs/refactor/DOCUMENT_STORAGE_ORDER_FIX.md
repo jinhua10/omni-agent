@@ -4,7 +4,7 @@
 
 ### 错误信息
 ```
-Field documentStorage in top.yumbo.ai.omni.knowledge.registry.model.KnowledgeNetworkBuilder 
+Field documentStorage in top.yumbo.ai.omni.knowledge.registry.network.impl.KnowledgeNetworkBuilder 
 required a bean of type 'top.yumbo.ai.omni.storage.api.DocumentStorageService' that could not be found.
 ```
 

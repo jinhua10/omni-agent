@@ -11,7 +11,7 @@ import top.yumbo.ai.omni.core.hope.HOPEKnowledgeManager;
 import top.yumbo.ai.omni.knowledge.registry.qa.service.IntelligentQAService;
 import top.yumbo.ai.omni.knowledge.registry.qa.service.QAOrchestrationService;
 import top.yumbo.ai.omni.knowledge.registry.role.Role;
-import top.yumbo.ai.omni.knowledge.registry.role.RoleService;
+import top.yumbo.ai.omni.knowledge.registry.role.service.RoleService;
 import top.yumbo.ai.omni.knowledge.registry.qa.util.ContextBuilder;
 import top.yumbo.ai.omni.marketplace.EnhancedQueryService;
 import top.yumbo.ai.omni.web.service.AsyncStreamQAService;
