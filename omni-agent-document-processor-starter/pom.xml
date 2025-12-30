@@ -44,17 +44,30 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- ========== 文档处理库（从 omni-agent-core 迁移） ========== -->
+
         <!-- Apache POI for Word/Excel/PPT -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
         </dependency>
 
+        <!-- Apache POI Scratchpad (for legacy Office formats: .ppt, .doc, .xls) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-scratchpad</artifactId>
+        </dependency>
+
         <!-- Apache PDFBox for PDF -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>2.0.29</version>
+        </dependency>
+
+        <!-- Apache Tika (for document parsing) -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
         </dependency>
 
         <!-- Jsoup for HTML -->
@@ -63,15 +76,13 @@
             <artifactId>jsoup</artifactId>
             <version>1.17.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-scratchpad</artifactId>
-        </dependency>
+
+        <!-- ========== 其他依赖 ========== -->
+
         <dependency>
             <groupId>top.yumbo.ai.omni</groupId>
             <artifactId>omni-agent-document-storage-api</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
