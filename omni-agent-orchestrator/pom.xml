@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>top.yumbo.ai.omni</groupId>
+        <artifactId>omni-agent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>omni-agent-orchestrator</artifactId>
+    <packaging>jar</packaging>
+
+    <name>OmniAgent Orchestrator</name>
+    <description>服务编排器 - 协调各个服务组件的工作流程</description>
+
+    <dependencies>
+        <!-- ========== API 依赖 ========== -->
+
+        <!-- HOPE API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-hope-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Document Storage API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-document-storage-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- RAG API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-rag-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- AI API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-ai-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Knowledge Registry API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-knowledge-registry-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Document Processor API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-document-processor-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Chunking API -->
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-chunking-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- ========== Spring Boot ========== -->
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ========== 工具库 ========== -->
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Jackson YAML (for workflow definitions) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+
+        <!-- ========== 测试依赖 ========== -->
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
