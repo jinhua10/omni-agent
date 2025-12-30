@@ -701,65 +701,6 @@ const LandingPage = ({ onEnterApp }) => {
             </div>
           </div>
 
-          {/* 域索引架构详解 */}
-          <div className="domain-architecture-section" style={{ marginTop: 80 }}>
-            <Title level={3} className="section-subtitle" style={{ marginBottom: 32, textAlign: 'center' }}>
-              {t('landingPage.workflow.domainArchDetail')}
-            </Title>
-            <Row gutter={48} align="middle">
-              <Col xs={24} md={12}>
-                <Card style={{ background: '#f9f9f9', border: '2px solid #e8e8e8' }}>
-                  <Title level={4} style={{ color: '#8c8c8c', marginBottom: 16 }}>
-                    {t('landingPage.workflow.traditionalWay')}
-                  </Title>
-                  <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                    <DatabaseOutlined style={{ fontSize: 64, color: '#ff4d4f' }} />
-                    <Paragraph style={{ marginTop: 16, color: '#8c8c8c' }}>
-                      {t('landingPage.workflow.traditionalDesc1')}<br/>
-                      {t('landingPage.workflow.traditionalDesc2')}<br/>
-                      {t('landingPage.workflow.traditionalDesc3')}
-                    </Paragraph>
-                  </div>
-                </Card>
-              </Col>
-              <Col xs={24} md={12}>
-                <Card style={{ background: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)', border: '2px solid #52c41a' }}>
-                  <Title level={4} style={{ color: '#52c41a', marginBottom: 16 }}>
-                    {t('landingPage.workflow.omniAgentWay')}
-                  </Title>
-                  <Row gutter={[8, 8]} style={{ marginTop: 20 }}>
-                    <Col span={8}>
-                      <div style={{ textAlign: 'center', padding: '16px 8px', background: '#fff', borderRadius: 8, border: '1px solid #b7eb8f' }}>
-                        <FileTextOutlined style={{ fontSize: 32, color: '#52c41a' }} />
-                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>{t('landingPage.workflow.techDataDomain')}</div>
-                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>{t('landingPage.workflow.independentIndex')}</div>
-                      </div>
-                    </Col>
-                    <Col span={8}>
-                      <div style={{ textAlign: 'center', padding: '16px 8px', background: '#fff', borderRadius: 8, border: '1px solid #b7eb8f' }}>
-                        <DatabaseOutlined style={{ fontSize: 32, color: '#52c41a' }} />
-                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>{t('landingPage.workflow.financeDataDomain')}</div>
-                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>{t('landingPage.workflow.independentIndex')}</div>
-                      </div>
-                    </Col>
-                    <Col span={8}>
-                      <div style={{ textAlign: 'center', padding: '16px 8px', background: '#fff', borderRadius: 8, border: '1px solid #b7eb8f' }}>
-                        <SafetyOutlined style={{ fontSize: 32, color: '#52c41a' }} />
-                        <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600 }}>{t('landingPage.workflow.legalContractDomain')}</div>
-                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>{t('landingPage.workflow.independentIndex')}</div>
-                      </div>
-                    </Col>
-                  </Row>
-                  <Paragraph style={{ marginTop: 20, color: '#389e0d', textAlign: 'center', fontWeight: 500 }}>
-                    {t('landingPage.workflow.omniAgentDesc1')}<br/>
-                    {t('landingPage.workflow.omniAgentDesc2')}<br/>
-                    {t('landingPage.workflow.omniAgentDesc3')}
-                  </Paragraph>
-                </Card>
-              </Col>
-            </Row>
-          </div>
-
           {/* 知识网络增强层 */}
           <Title level={3} className="section-subtitle" style={{ marginTop: 64, marginBottom: 32, textAlign: 'center' }}>
             {t('landingPage.workflow.knowledgeNetworkLayer')}
@@ -812,7 +753,8 @@ const LandingPage = ({ onEnterApp }) => {
               </div>
             </div>
           </div>
-
+          {/* 知识网络架构 */}
+          <KnowledgeNetworkDiagram />
           {/* P2P分布式架构 */}
           <div className="p2p-architecture-section" style={{ marginTop: 80 }}>
             <Title level={3} className="section-subtitle" style={{ marginBottom: 32, textAlign: 'center' }}>
@@ -932,9 +874,6 @@ const LandingPage = ({ onEnterApp }) => {
           </div>
         </div>
       </section>
-
-      {/* 知识网络架构 */}
-      <KnowledgeNetworkDiagram />
 
       {/* 核心特性 */}
       <section className="features-section">
