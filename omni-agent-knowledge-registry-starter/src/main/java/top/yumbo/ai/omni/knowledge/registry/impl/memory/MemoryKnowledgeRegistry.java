@@ -50,7 +50,7 @@ public class MemoryKnowledgeRegistry implements KnowledgeRegistry {
     @Override
     public List<KnowledgeDomain> findDomainsByType(DomainType type) {
         return domainStore.values().stream()
-                .filter(d -> d.getDomainType() == type)
+                .filter(d -> type != null && type.equals(d.getDomainType()))
                 .collect(Collectors.toList());
     }
 
@@ -104,7 +104,7 @@ public class MemoryKnowledgeRegistry implements KnowledgeRegistry {
     @Override
     public long countDomainsByType(DomainType type) {
         return domainStore.values().stream()
-                .filter(d -> d.getDomainType() == type)
+                .filter(d -> type != null && type.equals(d.getDomainType()))
                 .count();
     }
 

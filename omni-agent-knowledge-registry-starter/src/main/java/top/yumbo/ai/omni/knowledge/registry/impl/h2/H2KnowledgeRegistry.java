@@ -128,7 +128,7 @@ public class H2KnowledgeRegistry implements KnowledgeRegistry {
             jdbcTemplate.update(sql,
                     domain.getDomainId(),
                     domain.getDomainName(),
-                    domain.getDomainType().name(),
+                    domain.getDomainType() != null ? domain.getDomainType().getCode() : null,
                     domain.getStatus().name(),
                     json,
                     domain.getCreatedAt(),
@@ -169,7 +169,7 @@ public class H2KnowledgeRegistry implements KnowledgeRegistry {
     public List<KnowledgeDomain> findDomainsByType(DomainType type) {
         try {
             String sql = String.format("SELECT * FROM %s WHERE domain_type = ?", tableName);
-            return jdbcTemplate.query(sql, getDomainRowMapper(), type.name());
+            return jdbcTemplate.query(sql, getDomainRowMapper(), type.getCode());
         } catch (Exception e) {
             log.error("从 H2 按类型查询知识域失败: {}", type, e);
             return List.of();
@@ -245,7 +245,7 @@ public class H2KnowledgeRegistry implements KnowledgeRegistry {
     public long countDomainsByType(DomainType type) {
         try {
             String sql = String.format("SELECT COUNT(*) FROM %s WHERE domain_type = ?", tableName);
-            Long count = jdbcTemplate.queryForObject(sql, Long.class, type.name());
+            Long count = jdbcTemplate.queryForObject(sql, Long.class, type.getCode());
             return count != null ? count : 0;
         } catch (Exception e) {
             log.error("统计 H2 中指定类型知识域数量失败: {}", type, e);

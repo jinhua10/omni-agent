@@ -102,7 +102,7 @@ public class RedisKnowledgeRegistry implements KnowledgeRegistry {
     @Override
     public List<KnowledgeDomain> findDomainsByType(DomainType type) {
         return findAllDomains().stream()
-                .filter(d -> d.getDomainType() == type)
+                .filter(d -> type != null && type.equals(d.getDomainType()))
                 .collect(Collectors.toList());
     }
 

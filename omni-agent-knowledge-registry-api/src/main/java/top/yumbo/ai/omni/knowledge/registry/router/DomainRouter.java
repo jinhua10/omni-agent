@@ -154,7 +154,7 @@ public class DomainRouter {
         // 如果有明确的域类型，优先匹配
         if (intent.getDomainType() != null) {
             List<String> typedDomains = allDomains.stream()
-                    .filter(d -> d.getDomainType() == intent.getDomainType())
+                    .filter(d -> intent.getDomainType().equals(d.getDomainType()))
                     .map(KnowledgeDomain::getDomainId)
                     .collect(Collectors.toList());
 

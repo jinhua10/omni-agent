@@ -76,7 +76,7 @@ public class ElasticsearchKnowledgeRegistry implements KnowledgeRegistry {
     @Override
     public List<KnowledgeDomain> findDomainsByType(DomainType type) {
         try {
-            Criteria criteria = new Criteria("domainType").is(type.name());
+            Criteria criteria = new Criteria("domainType.code").is(type.getCode());
             Query query = new CriteriaQuery(criteria);
             return elasticsearchOperations.search(query, KnowledgeDomain.class)
                     .stream()
@@ -167,7 +167,7 @@ public class ElasticsearchKnowledgeRegistry implements KnowledgeRegistry {
     @Override
     public long countDomainsByType(DomainType type) {
         try {
-            Criteria criteria = new Criteria("domainType").is(type.name());
+            Criteria criteria = new Criteria("domainType.code").is(type.getCode());
             Query query = new CriteriaQuery(criteria);
             return elasticsearchOperations.count(query, KnowledgeDomain.class);
         } catch (Exception e) {
