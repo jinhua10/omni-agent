@@ -2425,9 +2425,9 @@ export default {
       // P2P部分
       distributedNetwork: '🌐 分布式知识网络',
       connectCodePairing: '连接码快速配对',
-      connectCodeDesc: '输入连接码即可建立P2P连接，无需复杂配置',
-      enterpriseSharing: '企业级知识共享',
-      enterpriseSharingDesc: '团队、部门、跨组织知识实时同步与共享',
+      connectCodeDesc: '局域网扫描发现 + 连接码验证，零配置快速连接',
+      crossNetworkIP: '跨网络IP直连',
+      crossNetworkIPDesc: 'IP地址 + 端口 + 连接码，支持公网/VPN跨网络连接',
       distributedMonolithic: '分布式单体架构',
       distributedMonolithicDesc: '每个节点独立可用，集群协同工作，高可用保障',
       knowledgePropagation: '知识自动传播',
@@ -2437,7 +2437,7 @@ export default {
       departmentB: '部门B',
       departmentC: '部门C',
       remoteTeam: '远程团队',
-      connectCodeTip: '🔗 通过连接码建立分布式知识网络',
+      connectCodeTip: '🔗 局域网扫描 / IP直连 双模式，灵活应对各种网络环境',
       monolithicDistributed: '单体可用 + 分布式协同 = 全能Agent架构',
     },
     // 核心特性

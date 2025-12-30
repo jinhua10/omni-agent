@@ -2373,9 +2373,9 @@ export default {
       // P2P Section
       distributedNetwork: '🌐 Distributed Knowledge Network',
       connectCodePairing: 'Quick Connection Code Pairing',
-      connectCodeDesc: 'Enter connection code to establish P2P connection, no complex configuration needed',
-      enterpriseSharing: 'Enterprise Knowledge Sharing',
-      enterpriseSharingDesc: 'Team, department, cross-org knowledge real-time sync and sharing',
+      connectCodeDesc: 'LAN discovery + connection code verification, zero-config quick connection',
+      crossNetworkIP: 'Cross-Network IP Direct Connection',
+      crossNetworkIPDesc: 'IP address + port + connection code, supports public/VPN cross-network connection',
       distributedMonolithic: 'Distributed Monolithic Architecture',
       distributedMonolithicDesc: 'Each node independently usable, cluster collaboration, high availability guarantee',
       knowledgePropagation: 'Automatic Knowledge Propagation',
@@ -2385,7 +2385,7 @@ export default {
       departmentB: 'Department B',
       departmentC: 'Department C',
       remoteTeam: 'Remote Team',
-      connectCodeTip: '🔗 Establish distributed knowledge network via connection code',
+      connectCodeTip: '🔗 LAN scan / IP direct connection dual mode, flexible for various network environments',
       monolithicDistributed: 'Standalone Available + Distributed Collaboration = All-Purpose Agent Architecture',
     },
     // Features Section

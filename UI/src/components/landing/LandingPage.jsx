@@ -847,10 +847,10 @@ const LandingPage = ({ onEnterApp }) => {
                           </div>
                           <div>
                             <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
-                              {t('landingPage.workflow.enterpriseSharing')}
+                              {t('landingPage.workflow.crossNetworkIP')}
                             </Text>
                             <Text type="secondary" style={{ fontSize: 13 }}>
-                              {t('landingPage.workflow.enterpriseSharingDesc')}
+                              {t('landingPage.workflow.crossNetworkIPDesc')}
                             </Text>
                           </div>
                         </div>
