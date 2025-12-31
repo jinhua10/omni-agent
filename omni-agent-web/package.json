@@ -1,0 +1,16 @@
+{
+  "name": "omni-agent-web-i18n",
+  "version": "1.0.0",
+  "description": "OmniAgent Web i18n build tools",
+  "scripts": {
+    "build:i18n": "node scripts/build-i18n.js",
+    "watch:i18n": "nodemon --watch src/i18n-source --exec \"npm run build:i18n\""
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

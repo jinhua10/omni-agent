@@ -14,7 +14,7 @@
     <artifactId>omni-agent-common</artifactId>
     <packaging>jar</packaging>
     <name>OmniAgent Common</name>
-    <description>通用工具模块 - HTTP客户端、工具类等</description>
+    <description>通用工具模块 - HTTP客户端适配器</description>
 
     <dependencies>
         <!-- Lombok -->
@@ -41,12 +41,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <!-- SnakeYAML (for I18N) -->
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
         </dependency>
     </dependencies>
 
