@@ -1,8 +1,11 @@
 package top.yumbo.ai.omni.storage.api;
 
 import top.yumbo.ai.omni.chunking.Chunk;
+import top.yumbo.ai.omni.storage.api.exception.*;
 import top.yumbo.ai.omni.storage.api.model.*;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +65,9 @@ public interface DocumentStorageService {
 
     /**
      * 批量保存原始文档 ⭐ NEW
+     * <p>注意：默认实现不保证事务性，部分成功部分失败时不会回滚</p>
+     * <p>如需事务支持，请使用 {@link #saveDocumentsTransactional(List)}</p>
+     *
      * @param documents 文档列表（Map包含documentId, filename, fileData）
      * @return 批量操作结果
      */
@@ -96,11 +102,117 @@ public interface DocumentStorageService {
     }
 
     /**
+     * 批量保存原始文档（事务性） ⭐ NEW
+     * <p>所有文档都保存成功才提交，任何一个失败则全部回滚</p>
+     *
+     * @param documents 文档列表（Map包含documentId, filename, fileData）
+     * @return 批量操作结果
+     * @throws BatchOperationException 如果批量操作失败
+     */
+    default BatchOperationResult saveDocumentsTransactional(List<Map<String, Object>> documents) throws BatchOperationException {
+        // 默认实现：先尝试保存所有文档，如果有失败则回滚已保存的
+        List<String> successIds = new ArrayList<>();
+        List<String> failureIds = new ArrayList<>();
+        Map<String, String> errorMessages = new java.util.HashMap<>();
+
+        try {
+            for (Map<String, Object> doc : documents) {
+                String documentId = (String) doc.get("documentId");
+                String filename = (String) doc.get("filename");
+                byte[] fileData = (byte[]) doc.get("fileData");
+
+                String id = saveDocument(documentId, filename, fileData);
+                successIds.add(id);
+            }
+
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documents.size())
+                    .successIds(successIds)
+                    .failureIds(failureIds)
+                    .errorMessages(errorMessages)
+                    .build();
+        } catch (Exception e) {
+            // 回滚已保存的文档
+            for (String docId : successIds) {
+                try {
+                    deleteDocument(docId);
+                } catch (Exception rollbackError) {
+                    // 记录回滚错误
+                    errorMessages.put(docId, "Rollback failed: " + rollbackError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch save operation failed and rolled back",
+                e,
+                new ArrayList<>(),
+                successIds,
+                errorMessages
+            );
+        }
+    }
+
+    /**
      * 获取原始文档文件
      * @param documentId 文档ID
      * @return 文档数据
      */
     Optional<byte[]> getDocument(String documentId);
+
+    /**
+     * 流式读取原始文档 ⭐ NEW
+     * <p>适用于大文件读取，避免内存溢出</p>
+     *
+     * @param documentId 文档ID
+     * @return 文档输入流，使用完需要关闭
+     * @throws DocumentNotFoundException 如果文档不存在
+     * @throws StorageIOException 如果读取失败
+     */
+    default InputStream getDocumentStream(String documentId) throws StorageException {
+        Optional<byte[]> data = getDocument(documentId);
+        if (data.isEmpty()) {
+            throw new DocumentNotFoundException(documentId);
+        }
+        return new java.io.ByteArrayInputStream(data.get());
+    }
+
+    /**
+     * 流式写入原始文档 ⭐ NEW
+     * <p>适用于大文件上传，避免内存溢出</p>
+     *
+     * @param documentId 文档ID
+     * @param filename 文件名
+     * @param inputStream 文件输入流
+     * @return 文档存储ID
+     * @throws StorageIOException 如果写入失败
+     */
+    default String saveDocumentStream(String documentId, String filename, InputStream inputStream) throws StorageException {
+        try {
+            byte[] fileData = inputStream.readAllBytes();
+            return saveDocument(documentId, filename, fileData);
+        } catch (java.io.IOException e) {
+            throw new StorageIOException(documentId, "Failed to read input stream for document: " + documentId, e);
+        }
+    }
+
+    /**
+     * 流式复制文档到输出流 ⭐ NEW
+     * <p>避免将整个文件加载到内存</p>
+     *
+     * @param documentId 文档ID
+     * @param outputStream 输出流
+     * @throws DocumentNotFoundException 如果文档不存在
+     * @throws StorageIOException 如果复制失败
+     */
+    default void copyDocumentToStream(String documentId, OutputStream outputStream) throws StorageException {
+        try (InputStream inputStream = getDocumentStream(documentId)) {
+            inputStream.transferTo(outputStream);
+        } catch (java.io.IOException e) {
+            throw new StorageIOException(documentId, "Failed to copy document to stream: " + documentId, e);
+        }
+    }
 
     /**
      * 删除原始文档文件
@@ -110,6 +222,8 @@ public interface DocumentStorageService {
 
     /**
      * 批量删除原始文档 ⭐ NEW
+     * <p>注意：默认实现不保证事务性</p>
+     *
      * @param documentIds 文档ID列表
      * @return 批量操作结果
      */
@@ -138,6 +252,67 @@ public interface DocumentStorageService {
                 .build();
     }
 
+    /**
+     * 批量删除原始文档（事务性） ⭐ NEW
+     * <p>使用备份-删除-恢复机制实现事务性删除</p>
+     * <p>注意：此方法需要实现类提供备份和恢复支持</p>
+     *
+     * @param documentIds 文档ID列表
+     * @return 批量操作结果
+     * @throws BatchOperationException 如果批量操作失败
+     */
+    default BatchOperationResult deleteDocumentsTransactional(List<String> documentIds) throws BatchOperationException {
+        // 默认实现：创建备份映射
+        Map<String, byte[]> backups = new java.util.HashMap<>();
+        List<String> successIds = new ArrayList<>();
+        Map<String, String> errorMessages = new java.util.HashMap<>();
+
+        try {
+            // 先备份所有文档
+            for (String documentId : documentIds) {
+                Optional<byte[]> data = getDocument(documentId);
+                if (data.isPresent()) {
+                    backups.put(documentId, data.get());
+                }
+            }
+
+            // 删除文档
+            for (String documentId : documentIds) {
+                deleteDocument(documentId);
+                successIds.add(documentId);
+            }
+
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documentIds.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(errorMessages)
+                    .build();
+        } catch (Exception e) {
+            // 恢复已删除的文档
+            for (Map.Entry<String, byte[]> entry : backups.entrySet()) {
+                try {
+                    String docId = entry.getKey();
+                    if (successIds.contains(docId)) {
+                        saveDocument(docId, "restored_" + docId, entry.getValue());
+                    }
+                } catch (Exception rollbackError) {
+                    errorMessages.put(entry.getKey(), "Rollback failed: " + rollbackError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch delete operation failed and rolled back",
+                e,
+                new ArrayList<>(),
+                successIds,
+                errorMessages
+            );
+        }
+    }
+
     // ========== 提取文本存储 (Extracted Text Storage) ⭐ NEW ==========
 
     /**
@@ -154,6 +329,41 @@ public interface DocumentStorageService {
      * @return 提取的文本内容
      */
     Optional<String> getExtractedText(String documentId);
+
+    /**
+     * 流式读取提取的文本 ⭐ NEW
+     * <p>适用于大文本读取，避免内存溢出</p>
+     *
+     * @param documentId 文档ID
+     * @return 文本输入流
+     * @throws DocumentNotFoundException 如果文本不存在
+     * @throws StorageIOException 如果读取失败
+     */
+    default InputStream getExtractedTextStream(String documentId) throws StorageException {
+        Optional<String> text = getExtractedText(documentId);
+        if (text.isEmpty()) {
+            throw new DocumentNotFoundException(documentId, "Extracted text not found for document: " + documentId);
+        }
+        return new java.io.ByteArrayInputStream(text.get().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    /**
+     * 流式保存提取的文本 ⭐ NEW
+     * <p>适用于大文本写入，避免内存溢出</p>
+     *
+     * @param documentId 文档ID
+     * @param inputStream 文本输入流（UTF-8编码）
+     * @return 存储ID
+     * @throws StorageIOException 如果写入失败
+     */
+    default String saveExtractedTextStream(String documentId, InputStream inputStream) throws StorageException {
+        try {
+            String text = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            return saveExtractedText(documentId, text);
+        } catch (java.io.IOException e) {
+            throw new StorageIOException(documentId, "Failed to read input stream for extracted text: " + documentId, e);
+        }
+    }
 
     /**
      * 删除提取的文本
