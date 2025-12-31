@@ -117,10 +117,12 @@ String message = I18N.get("document.upload.success", filename);
 - ✅ 存储 RAG 优化分析数据
 - ✅ 管理 PPL 数据
 
-**不适用场景：**
-- ❌ 系统配置管理（使用 Persistence API）
-- ❌ 规则和元数据（使用 Persistence API）
-- ❌ 复杂查询的结构化数据（使用 Persistence API）
+**设计特点：**
+- 🔌 多后端支持 - 统一接口，6种存储后端可选（File、MongoDB、MinIO、S3、Redis、Elasticsearch）
+- 🔄 可切换 - 通过配置切换存储后端，无需修改业务代码
+- 📦 批量操作 - 支持批量保存、删除，提供事务性和非事务性两种模式
+- 🌊 流式API - 支持大文件流式读写，避免内存溢出
+- 🎯 简单CRUD - 专注于文件和内容存储，不涉及复杂业务逻辑
 
 #### 2.2.2 核心方法分组
 
