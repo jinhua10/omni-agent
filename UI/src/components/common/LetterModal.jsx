@@ -59,49 +59,61 @@ const getLetters = (t, language) => [
 ]
 
 /**
- * 信件选择卡片组件
+ * 角色卡片组件 - 场景式设计
  */
-const LetterCard = ({ letter, onSelect, t }) => {
+const CharacterCard = ({ letter, onSelect, t }) => {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
-    <Card
-      className={`letter-card ${isHovered ? 'letter-card-hovered' : ''}`}
-      hoverable
+    <div
+      className="character-wrapper"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onSelect(letter)}
-      style={{
-        borderColor: isHovered ? letter.color : undefined,
-      }}
     >
-      <div className="letter-card-content">
-        <div
-          className="letter-card-emoji"
-          style={{
-            animation: isHovered ? 'bounce 0.6s ease' : 'none'
-          }}
-        >
-          {letter.emoji}
+      {/* 悬挂的信封气泡 */}
+      <div className={`envelope-bubble ${isHovered ? 'envelope-bubble-hover' : ''}`}>
+        <div className="envelope-icon">
+          <MailOutlined style={{ fontSize: 32, color: letter.color }} />
+          <div className="envelope-badge">1</div>
         </div>
-        <h3 className="letter-card-title" style={{ color: letter.color }}>
-          {letter.title}
-        </h3>
-        <p className="letter-card-description">
-          {letter.description}
-        </p>
-        <Button
-          type="primary"
-          className="letter-card-button"
+        <div className="bubble-arrow" style={{ borderTopColor: '#fff' }}></div>
+      </div>
+
+      {/* 角色小人 */}
+      <div className={`character-avatar ${isHovered ? 'character-avatar-hover' : ''}`}>
+        <div
+          className="avatar-circle"
           style={{
-            backgroundColor: letter.color,
-            borderColor: letter.color,
+            background: `linear-gradient(135deg, ${letter.color}15 0%, ${letter.color}30 100%)`,
+            borderColor: letter.color
           }}
         >
-          {t('letter.user.buttonText')}
-        </Button>
+          <div className="avatar-emoji">{letter.emoji}</div>
+        </div>
+
+        {/* 角色名称 */}
+        <div className="character-name" style={{ color: letter.color }}>
+          {letter.key === 'user' && (t('letter.user.title').split('的')[0] || 'User')}
+          {letter.key === 'developer' && (t('letter.developer.title').split('的')[0] || 'Developer')}
+          {letter.key === 'enterprise' && (t('letter.enterprise.title').split('的')[0] || 'Enterprise')}
+        </div>
+
+        {/* 悬停时显示描述 */}
+        {isHovered && (
+          <div className="character-description">
+            {letter.description}
+          </div>
+        )}
       </div>
-    </Card>
+
+      {/* 点击提示 */}
+      {isHovered && (
+        <div className="click-hint" style={{ color: letter.color }}>
+          ✨ {t('letter.user.buttonText')}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -254,71 +266,84 @@ const LetterModal = ({ open, onClose, onLetterRead }) => {
         open={open && !selectedLetter}
         onCancel={handleCloseAll}
         footer={null}
-        width={900}
-        className="letter-selection-modal"
+        width={1000}
+        className="letter-selection-modal letter-scene-modal"
         closeIcon={!isFirstVisit ? <CloseOutlined /> : null}
         maskClosable={!isFirstVisit}
         keyboard={!isFirstVisit}
         centered
       >
-        <div className="letter-modal-header">
-          {showConfetti && (
-            <div className="confetti-container">
-              <span className="confetti">🎉</span>
-              <span className="confetti">✨</span>
-              <span className="confetti">🎊</span>
-              <span className="confetti">💫</span>
-              <span className="confetti">⭐</span>
-            </div>
-          )}
-
-          {/* 语言切换按钮 */}
-          <div className="letter-language-switcher">
-            <GlobalOutlined className="letter-language-icon" />
-            <Radio.Group
-              value={language}
-              onChange={handleLanguageChange}
-              buttonStyle="solid"
-              size="small"
-            >
-              <Radio.Button value="zh">中文</Radio.Button>
-              <Radio.Button value="en">English</Radio.Button>
-            </Radio.Group>
+        {/* 庆祝动画 */}
+        {showConfetti && (
+          <div className="confetti-container">
+            <span className="confetti">🎉</span>
+            <span className="confetti">✨</span>
+            <span className="confetti">🎊</span>
+            <span className="confetti">💫</span>
+            <span className="confetti">⭐</span>
           </div>
+        )}
 
-          <h2 className="letter-modal-title">
-            <MailOutlined className="letter-modal-icon" />
-            {t('letter.modalTitle')}
-          </h2>
-          <p className="letter-modal-subtitle">
+        {/* 语言切换按钮 */}
+        <div className="letter-language-switcher">
+          <GlobalOutlined className="letter-language-icon" />
+          <Radio.Group
+            value={language}
+            onChange={handleLanguageChange}
+            buttonStyle="solid"
+            size="small"
+          >
+            <Radio.Button value="zh">中文</Radio.Button>
+            <Radio.Button value="en">English</Radio.Button>
+          </Radio.Group>
+        </div>
+
+        {/* 艺术标题 */}
+        <div className="letter-art-header">
+          <h1 className="art-title">
+            <span className="title-gradient">
+              {t('letter.modalTitle')}
+            </span>
+          </h1>
+          <p className="art-subtitle">
             {t('letter.modalSubtitle')}
           </p>
           {isFirstVisit && (
-            <p className="letter-modal-hint">
-              {language === 'zh'
-                ? '📖 请至少阅读一封信后即可进入系统'
-                : '📖 Please read at least one letter to enter the system'}
-            </p>
+            <div className="first-visit-badge">
+              <span className="badge-icon">📖</span>
+              <span className="badge-text">
+                {language === 'zh'
+                  ? '请选择并阅读一封信后即可进入系统'
+                  : 'Please read at least one letter to continue'}
+              </span>
+            </div>
           )}
         </div>
 
-        <div className="letter-cards-container">
-          <Space size={24} wrap>
-            {LETTERS.map(letter => (
-              <LetterCard
+        {/* 场景区域 - 三个角色 */}
+        <div className="character-scene">
+          <div className="scene-stage">
+            {LETTERS.map((letter, index) => (
+              <CharacterCard
                 key={letter.key}
                 letter={letter}
                 onSelect={handleSelectLetter}
                 t={t}
+                style={{ animationDelay: `${index * 0.15}s` }}
               />
             ))}
-          </Space>
+          </div>
         </div>
 
+        {/* 底部提示 */}
         {!isFirstVisit && (
           <div className="letter-modal-footer">
-            <Button onClick={handleCloseAll}>
-              {t('letter.laterButton')}
+            <Button
+              onClick={handleCloseAll}
+              type="text"
+              className="later-button"
+            >
+              {t('letter.laterButton')} →
             </Button>
           </div>
         )}

@@ -1,47 +1,350 @@
 /**
- * 信件模态框样式 (Letter Modal Styles)
+ * 信件模态框样式 - 场景式设计 (Letter Modal Styles - Scene Design)
  *
  * @author omni-agent team
  * @since 2026-01-01
  */
 
-/* ========== 信件选择模态框 ========== */
-.letter-selection-modal .ant-modal-content {
-  border-radius: 16px;
+/* ========== Modal 基础样式 ========== */
+.letter-scene-modal .ant-modal-content {
+  border-radius: 24px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+  padding: 0;
 }
 
-.letter-selection-modal .ant-modal-mask {
-  background-color: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
+.letter-scene-modal .ant-modal-mask {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.4) 0%, rgba(118, 75, 162, 0.4) 100%);
+  backdrop-filter: blur(12px);
 }
 
-.letter-modal-header {
+.letter-scene-modal .ant-modal-body {
+  padding: 0;
+}
+
+/* ========== 艺术标题区域 ========== */
+.letter-art-header {
   text-align: center;
-  padding: 32px 24px 24px;
+  padding: 48px 32px 24px;
+  background: linear-gradient(180deg, rgba(102, 126, 234, 0.03) 0%, transparent 100%);
   position: relative;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
 }
 
-.letter-modal-hint {
-  margin: 12px 0 0 0;
-  padding: 8px 16px;
-  background: rgba(24, 144, 255, 0.1);
-  border: 1px solid rgba(24, 144, 255, 0.3);
-  border-radius: 8px;
-  color: #1890ff;
-  font-size: 14px;
-  font-weight: 500;
+.art-title {
+  margin: 0;
+  padding: 0;
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+
+.title-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
   display: inline-block;
+  transform: perspective(500px) rotateX(-5deg);
+  text-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  animation: titleFloat 3s ease-in-out infinite;
 }
 
-/* 语言切换器 */
+@keyframes titleFloat {
+  0%, 100% {
+    transform: perspective(500px) rotateX(-5deg) translateY(0);
+  }
+  50% {
+    transform: perspective(500px) rotateX(-5deg) translateY(-5px);
+  }
+}
+
+.art-subtitle {
+  margin: 16px 0 0;
+  font-size: 16px;
+  color: #666;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.first-visit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(114, 46, 209, 0.1) 100%);
+  border: 2px solid rgba(24, 144, 255, 0.2);
+  border-radius: 50px;
+  font-size: 14px;
+  color: #1890ff;
+  font-weight: 500;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+.badge-icon {
+  font-size: 20px;
+  animation: bookFlip 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(24, 144, 255, 0);
+  }
+}
+
+@keyframes bookFlip {
+  0%, 100% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(180deg);
+  }
+}
+
+/* ========== 场景舞台 ========== */
+.character-scene {
+  padding: 40px 32px 60px;
+  min-height: 400px;
+  position: relative;
+}
+
+.scene-stage {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 80px;
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ========== 角色小人 ========== */
+.character-wrapper {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  position: relative;
+  animation: characterEnter 0.6s ease-out both;
+}
+
+@keyframes characterEnter {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 悬挂的信封气泡 */
+.envelope-bubble {
+  position: relative;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: envelopeFloat 3s ease-in-out infinite;
+}
+
+.envelope-bubble::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
+}
+
+@keyframes envelopeFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.envelope-bubble-hover {
+  transform: translateY(-12px) scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  animation: none;
+}
+
+.envelope-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.envelope-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
+  animation: badgeBounce 1s ease-in-out infinite;
+}
+
+@keyframes badgeBounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* 气泡箭头 */
+.bubble-arrow {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #ffffff;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* 角色头像 */
+.character-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.character-avatar-hover {
+  transform: translateY(-4px);
+}
+
+.avatar-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.avatar-circle::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.character-wrapper:hover .avatar-circle::before {
+  transform: translateX(100%);
+}
+
+.avatar-emoji {
+  font-size: 56px;
+  animation: emojiDance 2s ease-in-out infinite;
+}
+
+@keyframes emojiDance {
+  0%, 100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.character-name {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.character-description {
+  position: absolute;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  white-space: nowrap;
+  animation: fadeInUp 0.3s ease;
+  max-width: 200px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.click-hint {
+  position: absolute;
+  bottom: -80px;
+  font-size: 14px;
+  font-weight: 600;
+  animation: hintPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* ========== 语言切换器 ========== */
 .letter-language-switcher {
   position: absolute;
-  top: 16px;
+  top: 20px;
   right: 24px;
   display: flex;
   align-items: center;
@@ -51,14 +354,32 @@
 
 .letter-language-icon {
   font-size: 18px;
-  color: #1890ff;
+  color: #667eea;
 }
 
 .letter-language-switcher .ant-radio-group {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
 }
 
-/* 庆祝动画 */
+/* ========== 底部按钮 ========== */
+.letter-modal-footer {
+  text-align: center;
+  padding: 0 32px 32px;
+}
+
+.later-button {
+  color: #666;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.later-button:hover {
+  color: #1890ff;
+  transform: translateX(4px);
+}
+
+/* ========== 庆祝动画 ========== */
 .confetti-container {
   position: absolute;
   top: 0;
@@ -67,6 +388,7 @@
   bottom: 0;
   pointer-events: none;
   overflow: hidden;
+  z-index: 1;
 }
 
 .confetti {
@@ -113,115 +435,70 @@
   }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .letter-scene-modal .ant-modal-content {
+    border-radius: 16px;
   }
-  50% {
-    transform: translateY(-10px);
+
+  .letter-art-header {
+    padding: 32px 20px 20px;
+  }
+
+  .art-title {
+    font-size: 32px;
+  }
+
+  .art-subtitle {
+    font-size: 14px;
+  }
+
+  .first-visit-badge {
+    font-size: 12px;
+    padding: 10px 20px;
+  }
+
+  .character-scene {
+    padding: 24px 16px 40px;
+    min-height: auto;
+  }
+
+  .scene-stage {
+    flex-direction: column;
+    gap: 60px;
+    align-items: center;
+  }
+
+  .character-wrapper {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .avatar-circle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .avatar-emoji {
+    font-size: 48px;
+  }
+
+  .character-description {
+    bottom: -50px;
+    max-width: 160px;
+    font-size: 12px;
+  }
+
+  .click-hint {
+    bottom: -70px;
+    font-size: 13px;
+  }
+
+  .letter-language-switcher {
+    top: 12px;
+    right: 12px;
   }
 }
-
-.letter-modal-title {
-  font-size: 28px;
-  font-weight: bold;
-  margin: 0 0 12px 0;
-  color: #1890ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.letter-modal-icon {
-  font-size: 28px;
-}
-
-.letter-modal-subtitle {
-  font-size: 16px;
-  color: #666;
-  margin: 0;
-}
-
-.letter-cards-container {
-  padding: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-}
-
-.letter-cards-container .ant-space {
-  width: 100%;
-  justify-content: center;
-  flex-wrap: nowrap;
-}
-
-.letter-cards-container .ant-space-item {
-  flex: 0 0 auto;
-}
-
-.letter-modal-footer {
-  text-align: center;
-  padding: 16px 24px 24px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* ========== 信件卡片 ========== */
-.letter-card {
-  width: 240px;
-  height: 280px;
-  text-align: center;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.letter-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.letter-card-hovered {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.letter-card-content {
-  padding: 24px 16px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.letter-card-emoji {
-  font-size: 48px;
-  transition: transform 0.3s ease;
-}
-
-.letter-card:hover .letter-card-emoji {
-  transform: scale(1.1);
-}
-
-.letter-card-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 16px 0 0 0;
-}
-
-.letter-card-description {
-  color: #666;
-  font-size: 14px;
-  margin: 12px 0 0 0;
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.letter-card-button {
-  margin-top: 16px;
-}
-
-/* ========== 信件查看器 ========== */
 .letter-viewer-modal .ant-modal-content {
   border-radius: 12px;
   max-height: 90vh;
