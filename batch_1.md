@@ -521,14 +521,14 @@ default CompletableFuture<String> getAsync(String url, Map<String, String> heade
 
 | # | 问题 | 影响 | 位置 |
 |---|------|------|------|
-| L1 | UrlValidator.normalize()功能过于简单 | 只能trim，无法处理编码等 | UrlValidator |
-| L2 | 缺少IP地址格式验证 | URL验证不够严格 | UrlValidator |
-| L3 | JavaDoc缺少使用示例 | 学习成本稍高 | 所有类 |
-| L4 | 缺少Builder模式创建Adapter | 配置项增多时难以管理 | OkHttp3Adapter |
-| L5 | 测试覆盖率不足 | 缺少异步、拦截器、并发测试 | 测试类 |
-| L6 | HttpRequest/HttpResponse缺少不可变性 | 可能被拦截器意外修改 | HttpInterceptor |
-| L7 | 缺少请求/响应日志脱敏 | 可能泄露敏感信息 | LoggingInterceptor |
-| L8 | 没有SPI机制 | 无法自动发现和加载实现 | - |
+| L1 | UrlValidator.normalize()功能过于简单 | 只能trim，无法处理编码等 | UrlValidator | ⚠️ 待优化 |
+| L2 | 缺少IP地址格式验证 | URL验证不够严格 | UrlValidator | ⚠️ 待优化 |
+| L3 | JavaDoc缺少使用示例 | 学习成本稍高 | 所有类 | ⚠️ 待完善 |
+| L4 | 缺少Builder模式创建Adapter | 配置项增多时难以管理 | OkHttp3Adapter | ✅ 已修复 |
+| L5 | 测试覆盖率不足 | 缺少异步、拦截器、并发测试 | 测试类 | ✅ 已改善 |
+| L6 | HttpRequest/HttpResponse缺少不可变性 | 可能被拦截器意外修改 | HttpInterceptor | ⚠️ 待优化 |
+| L7 | 缺少请求/响应日志脱敏 | 可能泄露敏感信息 | LoggingInterceptor | ⚠️ 待优化 |
+| L8 | 没有SPI机制 | 无法自动发现和加载实现 | - | ⚠️ 待优化 |
 
 ---
 
