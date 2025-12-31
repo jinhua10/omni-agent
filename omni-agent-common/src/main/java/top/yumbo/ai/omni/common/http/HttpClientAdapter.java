@@ -7,7 +7,7 @@ import java.util.concurrent.ForkJoinPool;
 
 /**
  * HTTP 客户端适配器接口
- *
+ * <p>
  * 支持多种 HTTP 客户端实现：
  * - RestTemplate（默认，Spring 自带，零依赖）
  * - OkHttpClient（可选，需引入依赖，高性能）
@@ -20,58 +20,58 @@ public interface HttpClientAdapter {
     /**
      * 发送 GET 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
      * @return 响应体（JSON字符串）
      * @throws IllegalArgumentException URL格式错误
-     * @throws Exception 请求失败时抛出异常
+     * @throws Exception                请求失败时抛出异常
      */
     String get(String url, Map<String, String> headers) throws Exception;
 
     /**
      * 发送 POST 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
-     * @param body 请求体（JSON字符串，可为null）
+     * @param body    请求体（JSON字符串，可为null）
      * @return 响应体（JSON字符串）
      * @throws IllegalArgumentException URL格式错误
-     * @throws Exception 请求失败时抛出异常
+     * @throws Exception                请求失败时抛出异常
      */
     String post(String url, Map<String, String> headers, String body) throws Exception;
 
     /**
      * 发送 PUT 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
-     * @param body 请求体（JSON字符串，可为null）
+     * @param body    请求体（JSON字符串，可为null）
      * @return 响应体（JSON字符串）
      * @throws IllegalArgumentException URL格式错误
-     * @throws Exception 请求失败时抛出异常
+     * @throws Exception                请求失败时抛出异常
      */
     String put(String url, Map<String, String> headers, String body) throws Exception;
 
     /**
      * 发送 DELETE 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
      * @return 响应体（JSON字符串）
      * @throws IllegalArgumentException URL格式错误
-     * @throws Exception 请求失败时抛出异常
+     * @throws Exception                请求失败时抛出异常
      */
     String delete(String url, Map<String, String> headers) throws Exception;
 
     /**
      * 发送 PATCH 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
-     * @param body 请求体（JSON字符串，可为null）
+     * @param body    请求体（JSON字符串，可为null）
      * @return 响应体（JSON字符串）
      * @throws IllegalArgumentException URL格式错误
-     * @throws Exception 请求失败时抛出异常
+     * @throws Exception                请求失败时抛出异常
      */
     String patch(String url, Map<String, String> headers, String body) throws Exception;
 
@@ -79,7 +79,7 @@ public interface HttpClientAdapter {
      * 设置超时时间
      *
      * @param connectTimeoutSeconds 连接超时时间（秒）
-     * @param readTimeoutSeconds 读取超时时间（秒）
+     * @param readTimeoutSeconds    读取超时时间（秒）
      */
     default void setTimeout(int connectTimeoutSeconds, int readTimeoutSeconds) {
         // 默认实现为空，子类可选择性实现
@@ -122,6 +122,24 @@ public interface HttpClientAdapter {
     }
 
     /**
+     * 设置重试策略
+     *
+     * @param retryPolicy 重试策略，null表示不重试
+     */
+    default void setRetryPolicy(RetryPolicy retryPolicy) {
+        // 默认实现为空，子类可选择性实现
+    }
+
+    /**
+     * 获取重试策略
+     *
+     * @return 当前重试策略，默认为不重试
+     */
+    default RetryPolicy getRetryPolicy() {
+        return RetryPolicy.noRetry();
+    }
+
+    /**
      * 获取适配器名称
      *
      * @return 适配器名称
@@ -141,7 +159,7 @@ public interface HttpClientAdapter {
     /**
      * 发送异步 GET 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
      * @return CompletableFuture包装的响应体
      */
@@ -158,9 +176,9 @@ public interface HttpClientAdapter {
     /**
      * 发送异步 POST 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
-     * @param body 请求体（JSON字符串，可为null）
+     * @param body    请求体（JSON字符串，可为null）
      * @return CompletableFuture包装的响应体
      */
     default CompletableFuture<String> postAsync(String url, Map<String, String> headers, String body) {
@@ -176,9 +194,9 @@ public interface HttpClientAdapter {
     /**
      * 发送异步 PUT 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
-     * @param body 请求体（JSON字符串，可为null）
+     * @param body    请求体（JSON字符串，可为null）
      * @return CompletableFuture包装的响应体
      */
     default CompletableFuture<String> putAsync(String url, Map<String, String> headers, String body) {
@@ -194,7 +212,7 @@ public interface HttpClientAdapter {
     /**
      * 发送异步 DELETE 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
      * @return CompletableFuture包装的响应体
      */
@@ -211,9 +229,9 @@ public interface HttpClientAdapter {
     /**
      * 发送异步 PATCH 请求
      *
-     * @param url 请求URL
+     * @param url     请求URL
      * @param headers 请求头（可为null）
-     * @param body 请求体（JSON字符串，可为null）
+     * @param body    请求体（JSON字符串，可为null）
      * @return CompletableFuture包装的响应体
      */
     default CompletableFuture<String> patchAsync(String url, Map<String, String> headers, String body) {

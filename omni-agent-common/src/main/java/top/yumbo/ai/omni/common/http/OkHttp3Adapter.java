@@ -45,6 +45,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
     private long maxRequestSize = 10 * 1024 * 1024; // 默认10MB
     private long maxResponseSize = 10 * 1024 * 1024; // 默认10MB
     private Executor asyncExecutor; // null表示使用默认ForkJoinPool
+    private RetryPolicy retryPolicy = RetryPolicy.noRetry(); // 默认不重试
     /**
      * -- GETTER --
      *  获取连接池监控器
@@ -93,7 +94,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             headers.forEach(requestBuilder::addHeader);
         }
 
-        return executeRequest(requestBuilder.build(), "GET", url, headers, null);
+        return executeWithRetry(requestBuilder.build(), "GET", url, headers, null);
     }
 
     @Override
@@ -102,8 +103,8 @@ public class OkHttp3Adapter implements HttpClientAdapter {
         validateRequestSize(body);
 
         RequestBody requestBody = body != null
-                ? RequestBody.create(body, JSON)
-                : RequestBody.create("", JSON);
+            ? RequestBody.create(body, JSON)
+            : RequestBody.create("", JSON);
 
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
@@ -113,7 +114,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             headers.forEach(requestBuilder::addHeader);
         }
 
-        return executeRequest(requestBuilder.build(), "POST", url, headers, body);
+        return executeWithRetry(requestBuilder.build(), "POST", url, headers, body);
     }
 
     @Override
@@ -122,8 +123,8 @@ public class OkHttp3Adapter implements HttpClientAdapter {
         validateRequestSize(body);
 
         RequestBody requestBody = body != null
-                ? RequestBody.create(body, JSON)
-                : RequestBody.create("", JSON);
+            ? RequestBody.create(body, JSON)
+            : RequestBody.create("", JSON);
 
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
@@ -133,7 +134,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             headers.forEach(requestBuilder::addHeader);
         }
 
-        return executeRequest(requestBuilder.build(), "PUT", url, headers, body);
+        return executeWithRetry(requestBuilder.build(), "PUT", url, headers, body);
     }
 
     @Override
@@ -148,7 +149,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             headers.forEach(requestBuilder::addHeader);
         }
 
-        return executeRequest(requestBuilder.build(), "DELETE", url, headers, null);
+        return executeWithRetry(requestBuilder.build(), "DELETE", url, headers, null);
     }
 
     @Override
@@ -157,8 +158,8 @@ public class OkHttp3Adapter implements HttpClientAdapter {
         validateRequestSize(body);
 
         RequestBody requestBody = body != null
-                ? RequestBody.create(body, JSON)
-                : RequestBody.create("", JSON);
+            ? RequestBody.create(body, JSON)
+            : RequestBody.create("", JSON);
 
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
@@ -168,7 +169,41 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             headers.forEach(requestBuilder::addHeader);
         }
 
-        return executeRequest(requestBuilder.build(), "PATCH", url, headers, body);
+        return executeWithRetry(requestBuilder.build(), "PATCH", url, headers, body);
+    }
+
+    /**
+     * 带重试的执行HTTP请求
+     */
+    private String executeWithRetry(Request request, String method, String url,
+                                    Map<String, String> headers, String body) throws Exception {
+        int attempt = 0;
+        Exception lastException = null;
+
+        while (true) {
+            attempt++;
+            try {
+                return executeRequest(request, method, url, headers, body);
+            } catch (Exception e) {
+                lastException = e;
+
+                // 检查是否应该重试
+                if (!retryPolicy.shouldRetry(attempt, e)) {
+                    throw e;
+                }
+
+                // 获取延迟时间
+                long delayMillis = retryPolicy.getDelayMillis(attempt);
+                if (delayMillis > 0) {
+                    try {
+                        Thread.sleep(delayMillis);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw e;
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -272,6 +307,16 @@ public class OkHttp3Adapter implements HttpClientAdapter {
         return interceptors.stream()
                 .sorted(java.util.Comparator.comparingInt(HttpInterceptor::getOrder))
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public void setRetryPolicy(RetryPolicy retryPolicy) {
+        this.retryPolicy = retryPolicy != null ? retryPolicy : RetryPolicy.noRetry();
+    }
+
+    @Override
+    public RetryPolicy getRetryPolicy() {
+        return retryPolicy;
     }
 
     @Override
