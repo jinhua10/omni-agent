@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.model.*;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
+import top.yumbo.ai.omni.storage.api.exception.*;
 
 import java.io.*;
 import java.nio.file.*;
@@ -176,6 +177,94 @@ public class FileDocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== 流式读写 API ⭐ NEW ==========
+
+    /**
+     * 流式读取原始文档
+     * <p>适用于大文件读取，避免内存溢出</p>
+     */
+    @Override
+    public InputStream getDocumentStream(String documentId) throws StorageException {
+        try {
+            Path targetPath;
+            String actualFilename;
+
+            if (documentId.startsWith("extracted/")) {
+                actualFilename = documentId.substring("extracted/".length());
+                targetPath = extractedPath;
+            } else {
+                actualFilename = documentId;
+                targetPath = documentsPath;
+            }
+
+            Path documentFile = targetPath.resolve(actualFilename);
+
+            if (!Files.exists(documentFile)) {
+                throw new DocumentNotFoundException(documentId);
+            }
+
+            // 直接返回文件流，不加载到内存
+            return Files.newInputStream(documentFile);
+
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to open input stream for document", e);
+        }
+    }
+
+    /**
+     * 流式保存原始文档
+     * <p>适用于大文件上传，避免内存溢出</p>
+     */
+    @Override
+    public String saveDocumentStream(String documentId, String filename, InputStream inputStream)
+            throws StorageException {
+        try {
+            Path targetPath;
+            String actualFilename;
+
+            if (filename.startsWith("extracted/")) {
+                actualFilename = filename.substring("extracted/".length());
+                targetPath = extractedPath;
+            } else {
+                actualFilename = filename;
+                targetPath = documentsPath;
+            }
+
+            Path documentFile = targetPath.resolve(actualFilename);
+
+            // 确保父目录存在
+            Path parentDir = documentFile.getParent();
+            if (parentDir != null) {
+                Files.createDirectories(parentDir);
+            }
+
+            // 流式写入，边读边写
+            try (OutputStream outputStream = Files.newOutputStream(documentFile)) {
+                inputStream.transferTo(outputStream);
+            }
+
+            log.debug("✅ Saved document via stream: {} to {}", actualFilename, targetPath.getFileName());
+            return documentId;
+
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to save document via stream", e);
+        }
+    }
+
+    /**
+     * 流式复制文档到输出流
+     */
+    @Override
+    public void copyDocumentToStream(String documentId, OutputStream outputStream)
+            throws StorageException {
+        try (InputStream inputStream = getDocumentStream(documentId)) {
+            inputStream.transferTo(outputStream);
+            log.debug("✅ Copied document to stream: {}", documentId);
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to copy document to stream", e);
+        }
+    }
+
     // ========== Extracted Text Storage ⭐ NEW ==========
 
     @Override
@@ -234,6 +323,120 @@ public class FileDocumentStorage implements DocumentStorageService {
         } catch (IOException e) {
             log.error("❌ Failed to delete extracted text: {}", documentId, e);
         }
+    }
+
+    // ========== 提取文本流式 API ⭐ NEW ==========
+
+    /**
+     * 流式读取提取的文本
+     * <p>适用于大文本读取，避免内存溢出</p>
+     */
+    @Override
+    public InputStream getExtractedTextStream(String documentId) throws StorageException {
+        try {
+            Path textFile = extractedPath.resolve(documentId + ".md");
+
+            if (!Files.exists(textFile)) {
+                throw new DocumentNotFoundException(documentId, "Extracted text not found for document: " + documentId);
+            }
+
+            // 直接返回文件流
+            return Files.newInputStream(textFile);
+
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to open input stream for extracted text", e);
+        }
+    }
+
+    /**
+     * 流式保存提取的文本
+     * <p>适用于大文本写入，避免内存溢出</p>
+     */
+    @Override
+    public String saveExtractedTextStream(String documentId, InputStream inputStream)
+            throws StorageException {
+        try {
+            Path textFile = extractedPath.resolve(documentId + ".md");
+
+            // 确保父目录存在
+            Path parentDir = textFile.getParent();
+            if (parentDir != null) {
+                Files.createDirectories(parentDir);
+            }
+
+            // 流式写入
+            try (OutputStream outputStream = Files.newOutputStream(textFile)) {
+                inputStream.transferTo(outputStream);
+            }
+
+            log.debug("✅ Saved extracted text via stream: {}", documentId);
+            return documentId;
+
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to save extracted text via stream", e);
+        }
+    }
+
+    // ========== 元数据管理 ⭐ NEW ==========
+
+    /**
+     * 保存文档元数据
+     * <p>注意：FileDocumentStorage 使用文件系统属性存储元数据，此方法为空实现</p>
+     * <p>元数据通过 buildDocumentMetadata() 从文件系统实时构建</p>
+     */
+    @Override
+    public void saveMetadata(DocumentMetadata metadata) {
+        // 文件系统实现不需要单独保存元数据
+        // 元数据从文件系统属性实时读取
+        log.debug("💾 Metadata save skipped for file storage: {}", metadata.getDocumentId());
+    }
+
+    /**
+     * 获取文档元数据
+     * <p>从文件系统实时构建元数据</p>
+     */
+    @Override
+    public Optional<DocumentMetadata> getMetadata(String documentId) {
+        try {
+            // 在 documents 目录中查找文档文件
+            Path documentFile = documentsPath.resolve(documentId);
+
+            if (Files.exists(documentFile) && Files.isRegularFile(documentFile)) {
+                DocumentMetadata metadata = buildDocumentMetadata(documentFile);
+                return Optional.ofNullable(metadata);
+            }
+
+            // 如果直接路径不存在，尝试搜索
+            List<DocumentMetadata> allDocs = listAllDocuments();
+            return allDocs.stream()
+                    .filter(meta -> meta.getDocumentId().equals(documentId) ||
+                                   meta.getFilename().equals(documentId))
+                    .findFirst();
+
+        } catch (Exception e) {
+            log.error("Failed to get metadata for: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * 删除文档元数据
+     * <p>注意：FileDocumentStorage 使用文件系统属性，元数据随文件删除而删除</p>
+     */
+    @Override
+    public void deleteMetadata(String documentId) {
+        // 文件系统实现不需要单独删除元数据
+        // 元数据随文档文件删除而自动清除
+        log.debug("🗑️ Metadata delete skipped for file storage: {}", documentId);
+    }
+
+    /**
+     * 获取所有文档元数据
+     * <p>从文件系统实时构建所有文档的元数据</p>
+     */
+    @Override
+    public List<DocumentMetadata> getAllMetadata() {
+        return listAllDocuments();
     }
 
     // ========== Chunk Storage ==========
@@ -1807,6 +2010,165 @@ public class FileDocumentStorage implements DocumentStorageService {
         } catch (Exception e) {
             log.error("路径安全检查失败", e);
             return false;
+        }
+    }
+
+    // ========== 事务性批量操作 ⭐ NEW ==========
+
+    /**
+     * 事务性批量保存文档
+     * <p>使用备份机制实现事务性：所有文档都保存成功才提交，任何一个失败则全部回滚</p>
+     */
+    @Override
+    public BatchOperationResult saveDocumentsTransactional(List<Map<String, Object>> documents)
+            throws BatchOperationException {
+
+        List<String> successIds = new ArrayList<>();
+        List<String> failureIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            // 尝试保存所有文档
+            for (Map<String, Object> doc : documents) {
+                String documentId = (String) doc.get("documentId");
+                String filename = (String) doc.get("filename");
+                byte[] fileData = (byte[]) doc.get("fileData");
+
+                try {
+                    String id = saveDocument(documentId, filename, fileData);
+                    if (id != null) {
+                        successIds.add(id);
+                    } else {
+                        throw new StorageException("SAVE_FAILED", documentId, "Failed to save document");
+                    }
+                } catch (Exception e) {
+                    // 记录错误并抛出，触发回滚
+                    errorMessages.put(documentId, e.getMessage());
+                    throw e;
+                }
+            }
+
+            // 全部成功
+            log.info("✅ Transaction: All {} documents saved successfully", successIds.size());
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documents.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            // 回滚：删除已保存的文档
+            log.warn("⏮ Transaction failed, rolling back {} documents...", successIds.size());
+
+            for (String docId : successIds) {
+                try {
+                    deleteDocument(docId);
+                    log.debug("  ↩ Rolled back: {}", docId);
+                } catch (Exception rollbackError) {
+                    log.error("  ❌ Rollback failed for {}: {}", docId, rollbackError.getMessage());
+                    errorMessages.put(docId, "Rollback failed: " + rollbackError.getMessage());
+                }
+            }
+
+            // 抛出批量操作异常
+            throw new BatchOperationException(
+                "Batch save operation failed and rolled back: " + e.getMessage(),
+                e,
+                new ArrayList<>(),  // 回滚后成功列表为空
+                successIds,         // 失败列表包含所有尝试保存的
+                errorMessages
+            );
+        }
+    }
+
+    /**
+     * 事务性批量删除文档
+     * <p>使用备份-删除-恢复机制实现事务性：先备份所有文档，全部删除成功才提交，失败则恢复</p>
+     */
+    @Override
+    public BatchOperationResult deleteDocumentsTransactional(List<String> documentIds)
+            throws BatchOperationException {
+
+        // 备份映射：documentId -> 文件内容
+        Map<String, byte[]> backups = new HashMap<>();
+        List<String> successIds = new ArrayList<>();
+        List<String> failureIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            // 第一阶段：备份所有文档
+            log.debug("📦 Phase 1: Backing up {} documents...", documentIds.size());
+            for (String documentId : documentIds) {
+                try {
+                    Optional<byte[]> data = getDocument(documentId);
+                    if (data.isPresent()) {
+                        backups.put(documentId, data.get());
+                        log.debug("  ✓ Backed up: {}", documentId);
+                    } else {
+                        log.warn("  ⚠ Document not found (will skip): {}", documentId);
+                    }
+                } catch (Exception e) {
+                    log.error("  ❌ Backup failed for {}: {}", documentId, e.getMessage());
+                    errorMessages.put(documentId, "Backup failed: " + e.getMessage());
+                    throw e;  // 备份失败则中止
+                }
+            }
+
+            // 第二阶段：删除所有文档
+            log.debug("🗑️ Phase 2: Deleting {} documents...", documentIds.size());
+            for (String documentId : documentIds) {
+                try {
+                    if (backups.containsKey(documentId)) {
+                        deleteDocument(documentId);
+                        successIds.add(documentId);
+                        log.debug("  ✓ Deleted: {}", documentId);
+                    }
+                } catch (Exception e) {
+                    log.error("  ❌ Delete failed for {}: {}", documentId, e.getMessage());
+                    errorMessages.put(documentId, "Delete failed: " + e.getMessage());
+                    throw e;  // 删除失败则触发恢复
+                }
+            }
+
+            // 全部成功
+            log.info("✅ Transaction: All {} documents deleted successfully", successIds.size());
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documentIds.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            // 恢复：重新保存已删除的文档
+            log.warn("⏮ Transaction failed, restoring {} documents...", successIds.size());
+
+            for (String docId : successIds) {
+                try {
+                    byte[] data = backups.get(docId);
+                    if (data != null) {
+                        saveDocument(docId, docId, data);
+                        log.debug("  ↩ Restored: {}", docId);
+                    }
+                } catch (Exception restoreError) {
+                    log.error("  ❌ Restore failed for {}: {}", docId, restoreError.getMessage());
+                    errorMessages.put(docId, "Restore failed: " + restoreError.getMessage());
+                }
+            }
+
+            // 抛出批量操作异常
+            throw new BatchOperationException(
+                "Batch delete operation failed and restored: " + e.getMessage(),
+                e,
+                new ArrayList<>(),  // 恢复后成功列表为空
+                successIds,         // 失败列表包含所有尝试删除的
+                errorMessages
+            );
         }
     }
 }
