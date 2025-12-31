@@ -368,6 +368,33 @@
   color: #667eea;
 }
 
+/* 设置区域 */
+.modal-settings {
+  padding: 20px 32px 32px;
+  text-align: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.01) 100%);
+}
+
+.auto-show-setting {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 100px;
+  transition: all 0.3s ease;
+}
+
+.auto-show-setting:hover {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.setting-text {
+  font-size: 14px;
+  color: #666;
+  user-select: none;
+}
+
 /* ========== 庆祝动画 ========== */
 .confetti-animation {
   position: absolute;
@@ -647,8 +674,25 @@
   color: #aaa;
 }
 
-.theme-dark .modal-footer {
+.theme-dark .modal-footer,
+.theme-dark .modal-settings {
   border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .modal-settings {
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.theme-dark .auto-show-setting {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.theme-dark .auto-show-setting:hover {
+  background: rgba(102, 126, 234, 0.15);
+}
+
+.theme-dark .setting-text {
+  color: #aaa;
 }
 
 .theme-dark .letter-viewer-content {

@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { Modal, Card, Button, Space, Radio } from 'antd'
+import { Modal, Card, Button, Space, Radio, Switch } from 'antd'
 import {
   UserOutlined,
   CodeOutlined,
@@ -18,9 +18,7 @@ import {
   CloseOutlined,
   GlobalOutlined
 } from '@ant-design/icons'
-import ReactMarkdown from 'react-markdown'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import MarkdownRenderer from './MarkdownRenderer'
 import { useLanguage } from '../../contexts/LanguageContext'
 import '../../assets/css/common/LetterModal.css'
 
@@ -214,29 +212,7 @@ const LetterViewer = ({ letter, onClose, t, language }) => {
             <p>{t('letter.loading')}</p>
           </div>
         ) : (
-          <ReactMarkdown
-            components={{
-              code({ node, inline, className, children, ...props }) {
-                const match = /language-(\w+)/.exec(className || '')
-                return !inline && match ? (
-                  <SyntaxHighlighter
-                    style={tomorrow}
-                    language={match[1]}
-                    PreTag="div"
-                    {...props}
-                  >
-                    {String(children).replace(/\n$/, '')}
-                  </SyntaxHighlighter>
-                ) : (
-                  <code className={className} {...props}>
-                    {children}
-                  </code>
-                )
-              }
-            }}
-          >
-            {content}
-          </ReactMarkdown>
+          <MarkdownRenderer content={content} />
         )}
       </div>
     </Modal>
@@ -251,14 +227,17 @@ const LetterModal = ({ open, onClose, onLetterRead }) => {
   const [selectedLetter, setSelectedLetter] = useState(null)
   const [showConfetti, setShowConfetti] = useState(false)
   const [isFirstVisit, setIsFirstVisit] = useState(false)
+  const [autoShowEnabled, setAutoShowEnabled] = useState(true)
 
   // 获取信件列表
   const LETTERS = getLetters(t, language)
 
-  // 检查是否首次访问
+  // 检查是否首次访问和自动显示设置
   useEffect(() => {
     const hasSeenLetter = localStorage.getItem('omni_agent_letter_seen')
+    const autoShow = localStorage.getItem('omni_agent_auto_show_letter')
     setIsFirstVisit(!hasSeenLetter)
+    setAutoShowEnabled(autoShow !== 'false')
   }, [])
 
   // 当模态框打开时显示庆祝动画
@@ -292,6 +271,11 @@ const LetterModal = ({ open, onClose, onLetterRead }) => {
 
   const handleLanguageChange = (e) => {
     setLanguage(e.target.value)
+  }
+
+  const handleAutoShowChange = (checked) => {
+    setAutoShowEnabled(checked)
+    localStorage.setItem('omni_agent_auto_show_letter', checked ? 'true' : 'false')
   }
 
   return (
@@ -385,6 +369,24 @@ const LetterModal = ({ open, onClose, onLetterRead }) => {
             </Button>
           </div>
         )}
+
+        {/* 自动显示设置（所有用户可见） */}
+        <div className="modal-settings">
+          <div className="auto-show-setting">
+            <Space size={8}>
+              <Switch
+                checked={autoShowEnabled}
+                onChange={handleAutoShowChange}
+                size="small"
+              />
+              <span className="setting-text">
+                {language === 'zh'
+                  ? '下次自动显示欢迎信'
+                  : 'Auto-show welcome letter next time'}
+              </span>
+            </Space>
+          </div>
+        </div>
 
         {/* 庆祝动画 */}
         {showConfetti && (

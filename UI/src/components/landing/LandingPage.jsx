@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Button, Row, Col, Card, Typography, Space, Statistic, Image, Modal, Switch, message } from 'antd'
+import { Button, Row, Col, Card, Typography, Space, Statistic, Image } from 'antd'
 import {
   RocketOutlined,
   ThunderboltOutlined,
@@ -28,8 +28,7 @@ import {
   LeftOutlined,
   RightOutlined,
   HeartOutlined,
-  WechatOutlined,
-  SettingOutlined
+  WechatOutlined
 } from '@ant-design/icons'
 import GiteeIcon from '../icons/GiteeIcon'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -50,7 +49,6 @@ const LandingPage = ({ onEnterApp }) => {
   // 信件模态框状态
   const [letterModalOpen, setLetterModalOpen] = useState(false)
   const [showLetterBadge, setShowLetterBadge] = useState(false)
-  const [showSettingsModal, setShowSettingsModal] = useState(false)
 
   // 图标映射对象 - 避免使用eval导致生产环境问题
   const iconMap = {
@@ -148,22 +146,27 @@ const LandingPage = ({ onEnterApp }) => {
     const hasSeenLetter = localStorage.getItem('omni_agent_letter_seen')
     const autoShowLetterEnabled = localStorage.getItem('omni_agent_auto_show_letter')
 
+    console.log('🔍 Letter Modal Check:', {
+      hasSeenLetter,
+      autoShowLetterEnabled,
+      shouldShow: !hasSeenLetter && autoShowLetterEnabled !== 'false'
+    })
+
     // 首次访问且开关开启（默认开启）
     if (!hasSeenLetter && autoShowLetterEnabled !== 'false') {
-      setLetterModalOpen(true)
+      console.log('✅ Opening letter modal on first visit')
+      setTimeout(() => {
+        setLetterModalOpen(true)
+      }, 500) // 延迟500ms确保页面完全加载
     } else if (hasSeenLetter) {
       // 已经看过信件，显示徽章提示可以再次查看
       setShowLetterBadge(true)
     }
   }, [])
 
-  // 关闭信件模态框（只有阅读过信件后才能关闭）
+  // 关闭信件模态框
   const handleCloseLetterModal = () => {
-    // 只有已经看过信件的用户才能直接关闭
-    const hasSeenLetter = localStorage.getItem('omni_agent_letter_seen')
-    if (hasSeenLetter) {
-      setLetterModalOpen(false)
-    }
+    setLetterModalOpen(false)
   }
 
   // 信件阅读完成回调
@@ -1337,79 +1340,28 @@ npm run dev`}</pre>
         showBadge={showLetterBadge}
       />
 
-      {/* 设置按钮（右下角第二个位置） */}
-      <Button
-        type="default"
-        shape="circle"
-        size="large"
-        icon={<SettingOutlined />}
-        onClick={() => setShowSettingsModal(true)}
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '100px',
-          width: '48px',
-          height: '48px',
-          fontSize: '20px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          zIndex: 999
-        }}
-      />
-
-      {/* 设置模态框 */}
-      <Modal
-        title={
-          <Space>
-            <SettingOutlined />
-            {language === 'zh' ? '首页设置' : 'Landing Page Settings'}
-          </Space>
-        }
-        open={showSettingsModal}
-        onCancel={() => setShowSettingsModal(false)}
-        footer={null}
-        width={500}
-      >
-        <div style={{ padding: '20px 0' }}>
-          <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <div>
-              <div style={{ marginBottom: 12 }}>
-                <Text strong style={{ fontSize: 15 }}>
-                  {language === 'zh' ? '自动显示欢迎信' : 'Auto Show Welcome Letter'}
-                </Text>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text type="secondary" style={{ fontSize: 14 }}>
-                  {language === 'zh'
-                    ? '首次访问时自动弹出欢迎信件选择窗口'
-                    : 'Automatically show letter selection on first visit'}
-                </Text>
-                <Switch
-                  checked={localStorage.getItem('omni_agent_auto_show_letter') !== 'false'}
-                  onChange={(checked) => {
-                    localStorage.setItem('omni_agent_auto_show_letter', checked ? 'true' : 'false')
-                    message.success(language === 'zh' ? '设置已保存' : 'Settings saved')
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <Button
-                block
-                onClick={() => {
-                  localStorage.removeItem('omni_agent_letter_seen')
-                  localStorage.setItem('omni_agent_auto_show_letter', 'true')
-                  setShowSettingsModal(false)
-                  setLetterModalOpen(true)
-                  message.success(language === 'zh' ? '已重置，欢迎信将再次显示' : 'Reset complete, letter will show again')
-                }}
-              >
-                {language === 'zh' ? '重置并重新显示欢迎信' : 'Reset and Show Letter Again'}
-              </Button>
-            </div>
-          </Space>
-        </div>
-      </Modal>
+      {/* 开发调试：重置按钮 */}
+      {process.env.NODE_ENV === 'development' && (
+        <Button
+          type="dashed"
+          size="small"
+          onClick={() => {
+            localStorage.removeItem('omni_agent_letter_seen')
+            localStorage.removeItem('omni_agent_auto_show_letter')
+            console.log('🔄 LocalStorage cleared, reloading...')
+            window.location.reload()
+          }}
+          style={{
+            position: 'fixed',
+            bottom: '100px',
+            right: '24px',
+            zIndex: 999,
+            opacity: 0.5
+          }}
+        >
+          重置信件
+        </Button>
+      )}
 
       {/* 信件选择模态框 */}
       <LetterModal
