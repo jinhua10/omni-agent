@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -256,10 +257,10 @@ class OkHttp3AdapterTest {
         // when
         adapter.post(baseUrl + "test", headers, "{}");
 
-        // then
+        //  then
         RecordedRequest request = mockWebServer.takeRequest();
         assertEquals("Bearer token123", request.getHeader("Authorization"));
-        assertEquals("application/json", request.getHeader("Content-Type"));
+        assertTrue(Objects.requireNonNull(request.getHeader("Content-Type")).contains("application/json")); // OkHttp会自动添加charset
         assertEquals("custom-value", request.getHeader("X-Custom-Header"));
     }
 }
