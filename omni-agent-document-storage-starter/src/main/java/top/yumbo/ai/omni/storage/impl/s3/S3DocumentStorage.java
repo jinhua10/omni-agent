@@ -7,14 +7,11 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import top.yumbo.ai.omni.chunking.Chunk;
-import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
-import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
-import top.yumbo.ai.omni.storage.api.model.Image;
-import top.yumbo.ai.omni.storage.api.model.PPLData;
-import top.yumbo.ai.omni.storage.api.model.StorageStatistics;
+import top.yumbo.ai.omni.storage.api.exception.*;
+import top.yumbo.ai.omni.storage.api.model.*;
 
-import java.io.ByteArrayOutputStream;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1080,6 +1077,355 @@ public class S3DocumentStorage implements DocumentStorageService {
                     "totalFolders", 0L,
                     "totalSize", 0L
             );
+        }
+    }
+
+    // ========== 流式读写 API ⭐ NEW ==========
+
+    @Override
+    public InputStream getDocumentStream(String documentId) throws StorageException {
+        try {
+            String key = getDocumentKey(documentId);
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            return s3Client.getObject(request);
+        } catch (NoSuchKeyException e) {
+            throw new DocumentNotFoundException(documentId);
+        } catch (S3Exception e) {
+            throw new StorageIOException(documentId, "Failed to get document stream", e);
+        }
+    }
+
+    @Override
+    public String saveDocumentStream(String documentId, String filename, InputStream inputStream)
+            throws StorageException {
+        try {
+            String key = getDocumentKey(documentId);
+
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .metadata(Map.of(
+                            "documentId", documentId,
+                            "filename", filename,
+                            "uploadTime", String.valueOf(System.currentTimeMillis())
+                    ))
+                    .build();
+
+            s3Client.putObject(putRequest, RequestBody.fromInputStream(inputStream, -1));
+            log.debug("✅ Saved document via stream: {}", documentId);
+            return documentId;
+        } catch (S3Exception e) {
+            throw new StorageIOException(documentId, "Failed to save document via stream", e);
+        }
+    }
+
+    @Override
+    public void copyDocumentToStream(String documentId, OutputStream outputStream)
+            throws StorageException {
+        try (InputStream inputStream = getDocumentStream(documentId)) {
+            inputStream.transferTo(outputStream);
+            log.debug("✅ Copied document to stream: {}", documentId);
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to copy document to stream", e);
+        }
+    }
+
+    @Override
+    public InputStream getExtractedTextStream(String documentId) throws StorageException {
+        try {
+            String key = "extracted/" + documentId + ".md";
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            return s3Client.getObject(request);
+        } catch (NoSuchKeyException e) {
+            throw new DocumentNotFoundException(documentId, "Extracted text not found");
+        } catch (S3Exception e) {
+            throw new StorageIOException(documentId, "Failed to get text stream", e);
+        }
+    }
+
+    @Override
+    public String saveExtractedTextStream(String documentId, InputStream inputStream)
+            throws StorageException {
+        try {
+            String key = "extracted/" + documentId + ".md";
+
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .contentType("text/plain; charset=utf-8")
+                    .build();
+
+            s3Client.putObject(putRequest, RequestBody.fromInputStream(inputStream, -1));
+            log.debug("✅ Saved extracted text via stream: {}", documentId);
+            return documentId;
+        } catch (S3Exception e) {
+            throw new StorageIOException(documentId, "Failed to save text via stream", e);
+        }
+    }
+
+    // ========== 事务性批量操作 ⭐ NEW ==========
+
+    @Override
+    public BatchOperationResult saveDocumentsTransactional(List<Map<String, Object>> documents)
+            throws BatchOperationException {
+
+        List<String> successIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            for (Map<String, Object> doc : documents) {
+                String documentId = (String) doc.get("documentId");
+                String filename = (String) doc.get("filename");
+                byte[] fileData = (byte[]) doc.get("fileData");
+
+                try {
+                    String id = saveDocument(documentId, filename, fileData);
+                    if (id != null) {
+                        successIds.add(id);
+                    } else {
+                        throw new StorageException("SAVE_FAILED", documentId, "Failed to save");
+                    }
+                } catch (Exception e) {
+                    errorMessages.put(documentId, e.getMessage());
+                    throw e;
+                }
+            }
+
+            log.info("✅ Transaction: All {} documents saved", successIds.size());
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documents.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("⏮ Rolling back {} documents...", successIds.size());
+
+            // S3支持批量删除
+            if (!successIds.isEmpty()) {
+                try {
+                    List<ObjectIdentifier> objectsToDelete = successIds.stream()
+                            .map(docId -> ObjectIdentifier.builder()
+                                    .key(getDocumentKey(docId))
+                                    .build())
+                            .collect(Collectors.toList());
+
+                    Delete delete = Delete.builder()
+                            .objects(objectsToDelete)
+                            .build();
+
+                    DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                            .bucket(properties.getBucketName())
+                            .delete(delete)
+                            .build();
+
+                    s3Client.deleteObjects(deleteRequest);
+                    log.debug("  ↩ Rolled back {} documents", successIds.size());
+                } catch (Exception rollbackError) {
+                    log.error("Rollback failed", rollbackError);
+                    errorMessages.put("rollback", "Rollback failed: " + rollbackError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch save failed and rolled back: " + e.getMessage(),
+                e, new ArrayList<>(), successIds, errorMessages
+            );
+        }
+    }
+
+    @Override
+    public BatchOperationResult deleteDocumentsTransactional(List<String> documentIds)
+            throws BatchOperationException {
+
+        Map<String, byte[]> backups = new HashMap<>();
+        List<String> successIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            // 备份阶段
+            log.debug("📦 Phase 1: Backing up {} documents...", documentIds.size());
+            for (String documentId : documentIds) {
+                try {
+                    Optional<byte[]> data = getDocument(documentId);
+                    if (data.isPresent()) {
+                        backups.put(documentId, data.get());
+                        log.debug("  ✓ Backed up: {}", documentId);
+                    }
+                } catch (Exception e) {
+                    errorMessages.put(documentId, "Backup failed: " + e.getMessage());
+                    throw e;
+                }
+            }
+
+            // 删除阶段 - 使用S3批量删除
+            log.debug("🗑️ Phase 2: Deleting {} documents...", documentIds.size());
+            List<ObjectIdentifier> objectsToDelete = backups.keySet().stream()
+                    .map(docId -> ObjectIdentifier.builder()
+                            .key(getDocumentKey(docId))
+                            .build())
+                    .collect(Collectors.toList());
+
+            if (!objectsToDelete.isEmpty()) {
+                Delete delete = Delete.builder()
+                        .objects(objectsToDelete)
+                        .build();
+
+                DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .delete(delete)
+                        .build();
+
+                DeleteObjectsResponse deleteResponse = s3Client.deleteObjects(deleteRequest);
+
+                // 检查删除结果
+                successIds.addAll(backups.keySet());
+
+                if (!deleteResponse.errors().isEmpty()) {
+                    for (var error : deleteResponse.errors()) {
+                        log.error("Delete error: {} - {}", error.key(), error.message());
+                        errorMessages.put(error.key(), error.message());
+                    }
+                    throw new StorageException("BATCH_DELETE_ERROR", "Some deletions failed");
+                }
+            }
+
+            log.info("✅ Transaction: All {} documents deleted", successIds.size());
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documentIds.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("⏮ Restoring {} documents...", successIds.size());
+
+            // 恢复已删除的文档
+            for (String docId : successIds) {
+                try {
+                    byte[] data = backups.get(docId);
+                    if (data != null) {
+                        saveDocument(docId, docId, data);
+                        log.debug("  ↩ Restored: {}", docId);
+                    }
+                } catch (Exception restoreError) {
+                    log.error("Restore failed: {}", docId, restoreError);
+                    errorMessages.put(docId, "Restore failed: " + restoreError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch delete failed and restored: " + e.getMessage(),
+                e, new ArrayList<>(), successIds, errorMessages
+            );
+        }
+    }
+
+    // ========== 元数据管理 ⭐ NEW ==========
+
+    @Override
+    public void saveMetadata(DocumentMetadata metadata) {
+        try {
+            String key = "metadata/" + metadata.getDocumentId() + ".json";
+            String json = objectMapper.writeValueAsString(metadata);
+
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .contentType("application/json")
+                    .build();
+
+            s3Client.putObject(putRequest, RequestBody.fromString(json));
+            log.debug("💾 Saved metadata: {}", metadata.getDocumentId());
+        } catch (Exception e) {
+            log.error("Failed to save metadata: {}", metadata.getDocumentId(), e);
+        }
+    }
+
+    @Override
+    public Optional<DocumentMetadata> getMetadata(String documentId) {
+        try {
+            String key = "metadata/" + documentId + ".json";
+
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+            DocumentMetadata metadata = objectMapper.readValue(data, DocumentMetadata.class);
+            return Optional.of(metadata);
+        } catch (NoSuchKeyException e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get metadata: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<DocumentMetadata> getAllMetadata() {
+        try {
+            String prefix = "metadata/";
+            List<DocumentMetadata> metadataList = new ArrayList<>();
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            for (S3Object s3Object : listResponse.contents()) {
+                try {
+                    GetObjectRequest getRequest = GetObjectRequest.builder()
+                            .bucket(properties.getBucketName())
+                            .key(s3Object.key())
+                            .build();
+
+                    byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+                    DocumentMetadata metadata = objectMapper.readValue(data, DocumentMetadata.class);
+                    metadataList.add(metadata);
+                } catch (Exception e) {
+                    log.error("Failed to read metadata: {}", s3Object.key(), e);
+                }
+            }
+
+            return metadataList;
+        } catch (Exception e) {
+            log.error("Failed to get all metadata", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void deleteMetadata(String documentId) {
+        try {
+            String key = "metadata/" + documentId + ".json";
+
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+            log.debug("🗑️ Deleted metadata: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete metadata: {}", documentId, e);
         }
     }
 }

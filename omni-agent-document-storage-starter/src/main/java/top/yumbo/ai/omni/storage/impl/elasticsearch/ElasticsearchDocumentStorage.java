@@ -9,13 +9,11 @@ import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.chunking.Chunk;
-import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
-import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
-import top.yumbo.ai.omni.storage.api.model.Image;
-import top.yumbo.ai.omni.storage.api.model.PPLData;
-import top.yumbo.ai.omni.storage.api.model.StorageStatistics;
+import top.yumbo.ai.omni.storage.api.exception.*;
+import top.yumbo.ai.omni.storage.api.model.*;
 
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Base64;
@@ -1102,6 +1100,285 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
                     "totalFolders", 0L,
                     "totalSize", 0L
             );
+        }
+    }
+
+    // ========== 流式读写 API ⭐ NEW ==========
+    // 注意：ES不适合存储大文件，这里提供Base64编码的流式接口
+
+    @Override
+    public InputStream getDocumentStream(String documentId) throws StorageException {
+        try {
+            GetResponse<Map> response = client.get(g -> g
+                .index(properties.getIndexPrefix() + "documents")
+                .id(documentId), Map.class);
+
+            if (!response.found()) {
+                throw new DocumentNotFoundException(documentId);
+            }
+
+            String base64Data = (String) response.source().get("data");
+            byte[] data = Base64.getDecoder().decode(base64Data);
+            return new ByteArrayInputStream(data);
+        } catch (DocumentNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StorageIOException(documentId, "Failed to get stream", e);
+        }
+    }
+
+    @Override
+    public String saveDocumentStream(String documentId, String filename, InputStream inputStream)
+            throws StorageException {
+        try {
+            byte[] data = inputStream.readAllBytes();
+            String base64Data = Base64.getEncoder().encodeToString(data);
+
+            Map<String, Object> doc = new HashMap<>();
+            doc.put("documentId", documentId);
+            doc.put("filename", filename);
+            doc.put("data", base64Data);
+            doc.put("timestamp", System.currentTimeMillis());
+
+            client.index(i -> i
+                .index(properties.getIndexPrefix() + "documents")
+                .id(documentId)
+                .document(doc));
+
+            log.debug("✅ Saved document via stream: {}", documentId);
+            return documentId;
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to save stream", e);
+        }
+    }
+
+    @Override
+    public void copyDocumentToStream(String documentId, OutputStream outputStream)
+            throws StorageException {
+        try (InputStream inputStream = getDocumentStream(documentId)) {
+            inputStream.transferTo(outputStream);
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to copy to stream", e);
+        }
+    }
+
+    @Override
+    public InputStream getExtractedTextStream(String documentId) throws StorageException {
+        try {
+            GetResponse<Map> response = client.get(g -> g
+                .index(properties.getIndexPrefix() + "extracted_text")
+                .id(documentId), Map.class);
+
+            if (!response.found()) {
+                throw new DocumentNotFoundException(documentId, "Extracted text not found");
+            }
+
+            String text = (String) response.source().get("text");
+            return new ByteArrayInputStream(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (DocumentNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StorageIOException(documentId, "Failed to get text stream", e);
+        }
+    }
+
+    @Override
+    public String saveExtractedTextStream(String documentId, InputStream inputStream)
+            throws StorageException {
+        try {
+            String text = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+
+            Map<String, Object> doc = new HashMap<>();
+            doc.put("documentId", documentId);
+            doc.put("text", text);
+            doc.put("timestamp", System.currentTimeMillis());
+
+            client.index(i -> i
+                .index(properties.getIndexPrefix() + "extracted_text")
+                .id(documentId)
+                .document(doc));
+
+            log.debug("✅ Saved text via stream: {}", documentId);
+            return documentId;
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to save text stream", e);
+        }
+    }
+
+    // ========== 事务性批量操作 ⭐ NEW ==========
+
+    @Override
+    public BatchOperationResult saveDocumentsTransactional(List<Map<String, Object>> documents)
+            throws BatchOperationException {
+
+        List<String> successIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            for (Map<String, Object> doc : documents) {
+                String documentId = (String) doc.get("documentId");
+                String filename = (String) doc.get("filename");
+                byte[] fileData = (byte[]) doc.get("fileData");
+
+                try {
+                    String id = saveDocument(documentId, filename, fileData);
+                    if (id != null) {
+                        successIds.add(id);
+                    } else {
+                        throw new StorageException("SAVE_FAILED", documentId, "Failed to save");
+                    }
+                } catch (Exception e) {
+                    errorMessages.put(documentId, e.getMessage());
+                    throw e;
+                }
+            }
+
+            log.info("✅ Transaction: All {} documents saved", successIds.size());
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documents.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("⏮ Rolling back {} documents...", successIds.size());
+
+            for (String docId : successIds) {
+                try {
+                    deleteDocument(docId);
+                } catch (Exception rollbackError) {
+                    log.error("Rollback failed: {}", docId, rollbackError);
+                    errorMessages.put(docId, "Rollback failed: " + rollbackError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch save failed and rolled back: " + e.getMessage(),
+                e, new ArrayList<>(), successIds, errorMessages
+            );
+        }
+    }
+
+    @Override
+    public BatchOperationResult deleteDocumentsTransactional(List<String> documentIds)
+            throws BatchOperationException {
+
+        Map<String, byte[]> backups = new HashMap<>();
+        List<String> successIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            // 备份
+            log.debug("📦 Backing up {} documents...", documentIds.size());
+            for (String documentId : documentIds) {
+                try {
+                    Optional<byte[]> data = getDocument(documentId);
+                    if (data.isPresent()) {
+                        backups.put(documentId, data.get());
+                    }
+                } catch (Exception e) {
+                    errorMessages.put(documentId, "Backup failed: " + e.getMessage());
+                    throw e;
+                }
+            }
+
+            // 删除
+            log.debug("🗑️ Deleting {} documents...", documentIds.size());
+            for (String documentId : documentIds) {
+                if (backups.containsKey(documentId)) {
+                    deleteDocument(documentId);
+                    successIds.add(documentId);
+                }
+            }
+
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documentIds.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("⏮ Restoring {} documents...", successIds.size());
+
+            for (String docId : successIds) {
+                try {
+                    byte[] data = backups.get(docId);
+                    if (data != null) {
+                        saveDocument(docId, docId, data);
+                    }
+                } catch (Exception restoreError) {
+                    log.error("Restore failed: {}", docId, restoreError);
+                    errorMessages.put(docId, "Restore failed: " + restoreError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch delete failed and restored: " + e.getMessage(),
+                e, new ArrayList<>(), successIds, errorMessages
+            );
+        }
+    }
+
+    // ========== 元数据管理 ⭐ NEW ==========
+
+    @Override
+    public void saveMetadata(DocumentMetadata metadata) {
+        try {
+            client.index(i -> i
+                .index(properties.getIndexPrefix() + "metadata")
+                .id(metadata.getDocumentId())
+                .document(metadata));
+            log.debug("💾 Saved metadata: {}", metadata.getDocumentId());
+        } catch (Exception e) {
+            log.error("Failed to save metadata: {}", metadata.getDocumentId(), e);
+        }
+    }
+
+    @Override
+    public Optional<DocumentMetadata> getMetadata(String documentId) {
+        try {
+            GetResponse<DocumentMetadata> response = client.get(g -> g
+                .index(properties.getIndexPrefix() + "metadata")
+                .id(documentId), DocumentMetadata.class);
+
+            return response.found() ? Optional.of(response.source()) : Optional.empty();
+        } catch (Exception e) {
+            log.error("Failed to get metadata: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<DocumentMetadata> getAllMetadata() {
+        try {
+            SearchResponse<DocumentMetadata> response = client.search(s -> s
+                .index(properties.getIndexPrefix() + "metadata")
+                .size(10000), DocumentMetadata.class);
+
+            return response.hits().hits().stream()
+                .map(Hit::source)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to get all metadata", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void deleteMetadata(String documentId) {
+        try {
+            client.delete(d -> d
+                .index(properties.getIndexPrefix() + "metadata")
+                .id(documentId));
+            log.debug("🗑️ Deleted metadata: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete metadata: {}", documentId, e);
         }
     }
 }

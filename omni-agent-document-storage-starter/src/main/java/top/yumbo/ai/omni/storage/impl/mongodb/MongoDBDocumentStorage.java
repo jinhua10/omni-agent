@@ -13,12 +13,10 @@ import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
 import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
-import top.yumbo.ai.omni.storage.api.model.Image;
-import top.yumbo.ai.omni.storage.api.model.PPLData;
-import top.yumbo.ai.omni.storage.api.model.StorageStatistics;
+import top.yumbo.ai.omni.storage.api.exception.*;
+import top.yumbo.ai.omni.storage.api.model.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -109,6 +107,53 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
         }
     }
 
+    // ========== 流式读写 API ⭐ NEW ==========
+
+    @Override
+    public InputStream getDocumentStream(String documentId) throws StorageException {
+        try {
+            GridFSFile file = gridFSBucket.find(new Document("filename", documentId)).first();
+            if (file == null) {
+                throw new DocumentNotFoundException(documentId);
+            }
+            return gridFSBucket.openDownloadStream(file.getObjectId());
+        } catch (DocumentNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StorageIOException(documentId, "Failed to open download stream", e);
+        }
+    }
+
+    @Override
+    public String saveDocumentStream(String documentId, String filename, InputStream inputStream)
+            throws StorageException {
+        try {
+            Document metadata = new Document()
+                    .append("documentId", documentId)
+                    .append("filename", filename)
+                    .append("type", "document");
+
+            GridFSUploadOptions options = new GridFSUploadOptions().metadata(metadata);
+
+            ObjectId fileId = gridFSBucket.uploadFromStream(documentId, inputStream, options);
+            log.debug("✅ Saved document via stream: {}", documentId);
+            return documentId;
+        } catch (Exception e) {
+            throw new StorageIOException(documentId, "Failed to save document via stream", e);
+        }
+    }
+
+    @Override
+    public void copyDocumentToStream(String documentId, OutputStream outputStream)
+            throws StorageException {
+        try (InputStream inputStream = getDocumentStream(documentId)) {
+            inputStream.transferTo(outputStream);
+            log.debug("✅ Copied document to stream: {}", documentId);
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to copy document to stream", e);
+        }
+    }
+
     // ========== Extracted Text Storage ⭐ NEW ==========
 
     @Override
@@ -176,6 +221,50 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
             }
         } catch (Exception e) {
             log.error("❌ Failed to delete extracted text: {}", documentId, e);
+        }
+    }
+
+    // ========== 提取文本流式 API ⭐ NEW ==========
+
+    @Override
+    public InputStream getExtractedTextStream(String documentId) throws StorageException {
+        try {
+            GridFSFile file = gridFSBucket.find(
+                    new Document("filename", "extracted-" + documentId)
+            ).first();
+
+            if (file == null) {
+                throw new DocumentNotFoundException(documentId, "Extracted text not found");
+            }
+
+            return gridFSBucket.openDownloadStream(file.getObjectId());
+        } catch (DocumentNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StorageIOException(documentId, "Failed to open text stream", e);
+        }
+    }
+
+    @Override
+    public String saveExtractedTextStream(String documentId, InputStream inputStream)
+            throws StorageException {
+        try {
+            Document metadata = new Document()
+                    .append("documentId", documentId)
+                    .append("type", "extracted-text")
+                    .append("createdAt", System.currentTimeMillis());
+
+            GridFSUploadOptions options = new GridFSUploadOptions().metadata(metadata);
+
+            // 删除旧的
+            deleteExtractedText(documentId);
+
+            ObjectId fileId = gridFSBucket.uploadFromStream(
+                    "extracted-" + documentId, inputStream, options);
+            log.debug("✅ Saved extracted text via stream: {}", documentId);
+            return documentId;
+        } catch (Exception e) {
+            throw new StorageIOException(documentId, "Failed to save text via stream", e);
         }
     }
 
@@ -998,6 +1087,184 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
                 "totalFolders", 0L,
                 "totalSize", 0L
             );
+        }
+    }
+
+    // ========== 事务性批量操作 ⭐ NEW ==========
+
+    @Override
+    public BatchOperationResult saveDocumentsTransactional(List<Map<String, Object>> documents)
+            throws BatchOperationException {
+
+        List<String> successIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            for (Map<String, Object> doc : documents) {
+                String documentId = (String) doc.get("documentId");
+                String filename = (String) doc.get("filename");
+                byte[] fileData = (byte[]) doc.get("fileData");
+
+                try {
+                    String id = saveDocument(documentId, filename, fileData);
+                    if (id != null) {
+                        successIds.add(id);
+                    } else {
+                        throw new StorageException("SAVE_FAILED", documentId, "Failed to save");
+                    }
+                } catch (Exception e) {
+                    errorMessages.put(documentId, e.getMessage());
+                    throw e;
+                }
+            }
+
+            log.info("✅ Transaction: All {} documents saved successfully", successIds.size());
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documents.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("⏮ Transaction failed, rolling back {} documents...", successIds.size());
+
+            for (String docId : successIds) {
+                try {
+                    deleteDocument(docId);
+                    log.debug("  ↩ Rolled back: {}", docId);
+                } catch (Exception rollbackError) {
+                    log.error("  ❌ Rollback failed: {}", docId, rollbackError);
+                    errorMessages.put(docId, "Rollback failed: " + rollbackError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch save operation failed and rolled back: " + e.getMessage(),
+                e, new ArrayList<>(), successIds, errorMessages
+            );
+        }
+    }
+
+    @Override
+    public BatchOperationResult deleteDocumentsTransactional(List<String> documentIds)
+            throws BatchOperationException {
+
+        Map<String, byte[]> backups = new HashMap<>();
+        List<String> successIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            // 备份阶段
+            log.debug("📦 Phase 1: Backing up {} documents...", documentIds.size());
+            for (String documentId : documentIds) {
+                try {
+                    Optional<byte[]> data = getDocument(documentId);
+                    if (data.isPresent()) {
+                        backups.put(documentId, data.get());
+                        log.debug("  ✓ Backed up: {}", documentId);
+                    }
+                } catch (Exception e) {
+                    errorMessages.put(documentId, "Backup failed: " + e.getMessage());
+                    throw e;
+                }
+            }
+
+            // 删除阶段
+            log.debug("🗑️ Phase 2: Deleting {} documents...", documentIds.size());
+            for (String documentId : documentIds) {
+                try {
+                    if (backups.containsKey(documentId)) {
+                        deleteDocument(documentId);
+                        successIds.add(documentId);
+                        log.debug("  ✓ Deleted: {}", documentId);
+                    }
+                } catch (Exception e) {
+                    errorMessages.put(documentId, "Delete failed: " + e.getMessage());
+                    throw e;
+                }
+            }
+
+            log.info("✅ Transaction: All {} documents deleted successfully", successIds.size());
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documentIds.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("⏮ Transaction failed, restoring {} documents...", successIds.size());
+
+            for (String docId : successIds) {
+                try {
+                    byte[] data = backups.get(docId);
+                    if (data != null) {
+                        saveDocument(docId, docId, data);
+                        log.debug("  ↩ Restored: {}", docId);
+                    }
+                } catch (Exception restoreError) {
+                    log.error("  ❌ Restore failed: {}", docId, restoreError);
+                    errorMessages.put(docId, "Restore failed: " + restoreError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch delete operation failed and restored: " + e.getMessage(),
+                e, new ArrayList<>(), successIds, errorMessages
+            );
+        }
+    }
+
+    // ========== 元数据管理 ⭐ NEW ==========
+
+    @Override
+    public void saveMetadata(DocumentMetadata metadata) {
+        try {
+            mongoTemplate.save(metadata, "document_metadata");
+            log.debug("💾 Saved metadata: {}", metadata.getDocumentId());
+        } catch (Exception e) {
+            log.error("Failed to save metadata: {}", metadata.getDocumentId(), e);
+        }
+    }
+
+    @Override
+    public Optional<DocumentMetadata> getMetadata(String documentId) {
+        try {
+            DocumentMetadata metadata = mongoTemplate.findById(documentId, DocumentMetadata.class, "document_metadata");
+            return Optional.ofNullable(metadata);
+        } catch (Exception e) {
+            log.error("Failed to get metadata: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<DocumentMetadata> getAllMetadata() {
+        try {
+            return mongoTemplate.findAll(DocumentMetadata.class, "document_metadata");
+        } catch (Exception e) {
+            log.error("Failed to get all metadata", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void deleteMetadata(String documentId) {
+        try {
+            mongoTemplate.remove(
+                new org.springframework.data.mongodb.core.query.Query(
+                    org.springframework.data.mongodb.core.query.Criteria.where("_id").is(documentId)
+                ),
+                "document_metadata"
+            );
+            log.debug("🗑️ Deleted metadata: {}", documentId);
+        } catch (Exception e) {
+            log.error("Failed to delete metadata: {}", documentId, e);
         }
     }
 }

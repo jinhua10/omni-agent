@@ -7,10 +7,10 @@ import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
 import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
-import top.yumbo.ai.omni.storage.api.model.Image;
-import top.yumbo.ai.omni.storage.api.model.PPLData;
-import top.yumbo.ai.omni.storage.api.model.StorageStatistics;
+import top.yumbo.ai.omni.storage.api.exception.*;
+import top.yumbo.ai.omni.storage.api.model.*;
 
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -939,6 +939,245 @@ public class RedisDocumentStorage implements DocumentStorageService {
                 "totalFolders", 0L,
                 "totalSize", 0L
             );
+        }
+    }
+
+    // ========== 流式读写 API ⭐ NEW ==========
+
+    @Override
+    public InputStream getDocumentStream(String documentId) throws StorageException {
+        try {
+            String key = getDocumentKey(documentId);
+            byte[] data = (byte[]) redisTemplate.opsForValue().get(key);
+            if (data == null) {
+                throw new DocumentNotFoundException(documentId);
+            }
+            return new ByteArrayInputStream(data);
+        } catch (DocumentNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StorageIOException(documentId, "Failed to get document stream", e);
+        }
+    }
+
+    @Override
+    public String saveDocumentStream(String documentId, String filename, InputStream inputStream)
+            throws StorageException {
+        try {
+            byte[] data = inputStream.readAllBytes();
+            String key = getDocumentKey(documentId);
+            redisTemplate.opsForValue().set(key, data);
+            if (properties.getTtl() > 0) {
+                redisTemplate.expire(key, properties.getTtl(), TimeUnit.SECONDS);
+            }
+            log.debug("✅ Saved document via stream: {}", documentId);
+            return documentId;
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to save document via stream", e);
+        }
+    }
+
+    @Override
+    public InputStream getExtractedTextStream(String documentId) throws StorageException {
+        try {
+            String key = properties.getKeyPrefix() + "extracted:" + documentId;
+            String text = (String) redisTemplate.opsForValue().get(key);
+            if (text == null) {
+                throw new DocumentNotFoundException(documentId, "Extracted text not found");
+            }
+            return new ByteArrayInputStream(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (DocumentNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StorageIOException(documentId, "Failed to get text stream", e);
+        }
+    }
+
+    @Override
+    public String saveExtractedTextStream(String documentId, InputStream inputStream)
+            throws StorageException {
+        try {
+            String text = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            String key = properties.getKeyPrefix() + "extracted:" + documentId;
+            redisTemplate.opsForValue().set(key, text);
+            if (properties.getTtl() > 0) {
+                redisTemplate.expire(key, properties.getTtl(), TimeUnit.SECONDS);
+            }
+            log.debug("✅ Saved text via stream: {}", documentId);
+            return documentId;
+        } catch (IOException e) {
+            throw new StorageIOException(documentId, "Failed to save text via stream", e);
+        }
+    }
+
+    // ========== 事务性批量操作 ⭐ NEW ==========
+
+    @Override
+    public BatchOperationResult saveDocumentsTransactional(List<Map<String, Object>> documents)
+            throws BatchOperationException {
+
+        List<String> successIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            for (Map<String, Object> doc : documents) {
+                String documentId = (String) doc.get("documentId");
+                String filename = (String) doc.get("filename");
+                byte[] fileData = (byte[]) doc.get("fileData");
+
+                try {
+                    String key = getDocumentKey(documentId);
+                    redisTemplate.opsForValue().set(key, fileData);
+                    if (properties.getTtl() > 0) {
+                        redisTemplate.expire(key, properties.getTtl(), TimeUnit.SECONDS);
+                    }
+                    successIds.add(documentId);
+                } catch (Exception e) {
+                    errorMessages.put(documentId, e.getMessage());
+                    throw e;
+                }
+            }
+
+            log.info("✅ Transaction: All {} documents saved", successIds.size());
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documents.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("⏮ Rolling back {} documents...", successIds.size());
+            for (String docId : successIds) {
+                try {
+                    redisTemplate.delete(getDocumentKey(docId));
+                } catch (Exception rollbackError) {
+                    log.error("Rollback failed: {}", docId, rollbackError);
+                    errorMessages.put(docId, "Rollback failed: " + rollbackError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch save failed and rolled back: " + e.getMessage(),
+                e, new ArrayList<>(), successIds, errorMessages
+            );
+        }
+    }
+
+    @Override
+    public BatchOperationResult deleteDocumentsTransactional(List<String> documentIds)
+            throws BatchOperationException {
+
+        Map<String, byte[]> backups = new HashMap<>();
+        List<String> successIds = new ArrayList<>();
+        Map<String, String> errorMessages = new HashMap<>();
+
+        try {
+            // 备份
+            for (String documentId : documentIds) {
+                String key = getDocumentKey(documentId);
+                byte[] data = (byte[]) redisTemplate.opsForValue().get(key);
+                if (data != null) {
+                    backups.put(documentId, data);
+                }
+            }
+
+            // 删除
+            for (String documentId : documentIds) {
+                if (backups.containsKey(documentId)) {
+                    redisTemplate.delete(getDocumentKey(documentId));
+                    successIds.add(documentId);
+                }
+            }
+
+            return BatchOperationResult.builder()
+                    .successCount(successIds.size())
+                    .failureCount(0)
+                    .totalCount(documentIds.size())
+                    .successIds(successIds)
+                    .failureIds(new ArrayList<>())
+                    .errorMessages(new HashMap<>())
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("⏮ Restoring {} documents...", successIds.size());
+            for (String docId : successIds) {
+                try {
+                    byte[] data = backups.get(docId);
+                    if (data != null) {
+                        redisTemplate.opsForValue().set(getDocumentKey(docId), data);
+                    }
+                } catch (Exception restoreError) {
+                    log.error("Restore failed: {}", docId, restoreError);
+                    errorMessages.put(docId, "Restore failed: " + restoreError.getMessage());
+                }
+            }
+
+            throw new BatchOperationException(
+                "Batch delete failed and restored: " + e.getMessage(),
+                e, new ArrayList<>(), successIds, errorMessages
+            );
+        }
+    }
+
+    // ========== 元数据管理 ⭐ NEW ==========
+
+    @Override
+    public void saveMetadata(DocumentMetadata metadata) {
+        try {
+            String key = properties.getKeyPrefix() + "metadata:" + metadata.getDocumentId();
+            redisTemplate.opsForValue().set(key, metadata);
+            if (properties.getTtl() > 0) {
+                redisTemplate.expire(key, properties.getTtl(), TimeUnit.SECONDS);
+            }
+        } catch (Exception e) {
+            log.error("Failed to save metadata: {}", metadata.getDocumentId(), e);
+        }
+    }
+
+    @Override
+    public Optional<DocumentMetadata> getMetadata(String documentId) {
+        try {
+            String key = properties.getKeyPrefix() + "metadata:" + documentId;
+            DocumentMetadata metadata = (DocumentMetadata) redisTemplate.opsForValue().get(key);
+            return Optional.ofNullable(metadata);
+        } catch (Exception e) {
+            log.error("Failed to get metadata: {}", documentId, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<DocumentMetadata> getAllMetadata() {
+        try {
+            Set<String> keys = redisTemplate.keys(properties.getKeyPrefix() + "metadata:*");
+            if (keys == null || keys.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            List<DocumentMetadata> result = new ArrayList<>();
+            for (String key : keys) {
+                DocumentMetadata metadata = (DocumentMetadata) redisTemplate.opsForValue().get(key);
+                if (metadata != null) {
+                    result.add(metadata);
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("Failed to get all metadata", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void deleteMetadata(String documentId) {
+        try {
+            String key = properties.getKeyPrefix() + "metadata:" + documentId;
+            redisTemplate.delete(key);
+        } catch (Exception e) {
+            log.error("Failed to delete metadata: {}", documentId, e);
         }
     }
 }
