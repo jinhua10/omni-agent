@@ -32,6 +32,7 @@ import {
 } from '@ant-design/icons'
 import GiteeIcon from '../icons/GiteeIcon'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { LetterModal, FloatingLetterButton } from '../common'
 import './LandingPage.css'
 import KnowledgeNetworkDiagram from './KnowledgeNetworkDiagram'
 
@@ -44,6 +45,10 @@ const { Title, Paragraph, Text } = Typography
 
 const LandingPage = ({ onEnterApp }) => {
   const { t, language, toggleLanguage } = useLanguage()
+
+  // 信件模态框状态
+  const [letterModalOpen, setLetterModalOpen] = useState(false)
+  const [showLetterBadge, setShowLetterBadge] = useState(false)
 
   // 图标映射对象 - 避免使用eval导致生产环境问题
   const iconMap = {
@@ -135,6 +140,34 @@ const LandingPage = ({ onEnterApp }) => {
 
     return () => clearInterval(timer)
   }, [])
+
+  // 检查是否首次访问，显示信件模态框
+  useEffect(() => {
+    const hasSeenLetter = localStorage.getItem('omni_agent_letter_seen')
+    if (!hasSeenLetter) {
+      // 延迟1秒显示，让页面先加载
+      const timer = setTimeout(() => {
+        setLetterModalOpen(true)
+      }, 1000)
+      return () => clearTimeout(timer)
+    } else {
+      // 已经看过信件，显示徽章提示可以再次查看
+      setShowLetterBadge(true)
+    }
+  }, [])
+
+  // 关闭信件模态框
+  const handleCloseLetterModal = () => {
+    setLetterModalOpen(false)
+    localStorage.setItem('omni_agent_letter_seen', 'true')
+    setShowLetterBadge(true)
+  }
+
+  // 打开信件模态框
+  const handleOpenLetterModal = () => {
+    setLetterModalOpen(true)
+    setShowLetterBadge(false)
+  }
 
   // 自动轮播统计数据
   useEffect(() => {
@@ -1287,6 +1320,18 @@ npm run dev`}</pre>
           </div>
         </div>
       </footer>
+
+      {/* 悬浮信件按钮 */}
+      <FloatingLetterButton
+        onClick={handleOpenLetterModal}
+        showBadge={showLetterBadge}
+      />
+
+      {/* 信件选择模态框 */}
+      <LetterModal
+        open={letterModalOpen}
+        onClose={handleCloseLetterModal}
+      />
     </div>
   )
 }

@@ -110,35 +110,6 @@ function AppContent() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  // 检查是否第一次进入应用，显示信件模态框
-  React.useEffect(() => {
-    if (currentView === 'app') {
-      const hasSeenLetter = localStorage.getItem('omni_agent_letter_seen')
-      if (!hasSeenLetter) {
-        // 延迟500ms显示，让页面先加载
-        const timer = setTimeout(() => {
-          setLetterModalOpen(true)
-        }, 500)
-        return () => clearTimeout(timer)
-      } else {
-        // 已经看过信件，显示徽章提示可以再次查看
-        setShowLetterBadge(true)
-      }
-    }
-  }, [currentView])
-
-  // 关闭信件模态框
-  const handleCloseLetterModal = () => {
-    setLetterModalOpen(false)
-    localStorage.setItem('omni_agent_letter_seen', 'true')
-    setShowLetterBadge(true)
-  }
-
-  // 打开信件模态框
-  const handleOpenLetterModal = () => {
-    setLetterModalOpen(true)
-    setShowLetterBadge(false)
-  }
 
   // 监听localStorage变化
   React.useEffect(() => {
@@ -375,18 +346,6 @@ function AppContent() {
             {/* 浮动AI分析按钮和面板 */}
             <FloatingAIButton />
             <FloatingAIPanel />
-
-            {/* 悬浮信件按钮 */}
-            <FloatingLetterButton
-              onClick={handleOpenLetterModal}
-              showBadge={showLetterBadge}
-            />
-
-            {/* 信件选择模态框 */}
-            <LetterModal
-              open={letterModalOpen}
-              onClose={handleCloseLetterModal}
-            />
           </>
         )}
       </ErrorBoundary>

@@ -201,7 +201,7 @@ const LetterViewer = ({ letter, onClose, t, language }) => {
  * 信件选择模态框主组件
  */
 const LetterModal = ({ open, onClose }) => {
-  const { t, language, changeLanguage } = useLanguage()
+  const { t, language, setLanguage } = useLanguage()
   const [selectedLetter, setSelectedLetter] = useState(null)
   const [showConfetti, setShowConfetti] = useState(false)
 
@@ -231,7 +231,7 @@ const LetterModal = ({ open, onClose }) => {
   }
 
   const handleLanguageChange = (e) => {
-    changeLanguage(e.target.value)
+    setLanguage(e.target.value)
   }
 
   return (
