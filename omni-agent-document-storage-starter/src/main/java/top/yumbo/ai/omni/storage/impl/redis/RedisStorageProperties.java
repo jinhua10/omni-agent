@@ -48,5 +48,30 @@ public class RedisStorageProperties {
      * 0 表示不过期，默认: 0
      */
     private long ttl = 0;
+
+    /**
+     * 索引过期时间偏移（秒）
+     * 索引的TTL = 数据TTL + 此偏移值，避免孤儿引用
+     * 默认: 3600（1小时）
+     */
+    private long indexTtlOffset = 3600;
+
+    /**
+     * Pipeline批量处理大小 - Chunks
+     * 默认: 100
+     */
+    private int chunkBatchSize = 100;
+
+    /**
+     * Pipeline批量处理大小 - Images
+     * 默认: 50（图片通常较大）
+     */
+    private int imageBatchSize = 50;
+
+    /**
+     * 是否启用性能优化
+     * 默认: true
+     */
+    private boolean enableOptimizations = true;
 }
 

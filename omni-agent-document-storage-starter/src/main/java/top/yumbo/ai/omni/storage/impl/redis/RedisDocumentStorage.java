@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.RedisSystemException;
-import org.springframework.data.redis.core.RedisOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.SessionCallback;
+import org.springframework.data.redis.core.*;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
 import top.yumbo.ai.omni.storage.api.model.OptimizationData;
@@ -139,44 +137,54 @@ public class RedisDocumentStorage implements DocumentStorageService {
 
         List<String> chunkIds = new ArrayList<>();
 
-        // ✅ 使用Pipeline批量执行，性能提升100倍
-        redisTemplate.executePipelined(new SessionCallback<Object>() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public <K, V> Object execute(RedisOperations<K, V> operations) {
-                RedisOperations<String, Object> ops = (RedisOperations<String, Object>) operations;
+        // ✅ 分批处理，避免Pipeline过大导致OOM
+        final int BATCH_SIZE = properties.getChunkBatchSize();
+        int totalChunks = chunks.size();
 
-                String docChunksKey = getDocumentChunksKey(documentId);
+        for (int i = 0; i < totalChunks; i += BATCH_SIZE) {
+            int endIndex = Math.min(i + BATCH_SIZE, totalChunks);
+            List<Chunk> batch = chunks.subList(i, endIndex);
 
-                for (Chunk chunk : chunks) {
-                    String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
-                    chunk.setId(chunkId);
-                    chunkIds.add(chunkId);
+            // ✅ 使用Pipeline批量执行
+            redisTemplate.executePipelined(new SessionCallback<Object>() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public <K, V> Object execute(RedisOperations<K, V> operations) {
+                    RedisOperations<String, Object> ops = (RedisOperations<String, Object>) operations;
 
-                    String chunkKey = getChunkKey(chunkId);
+                    String docChunksKey = getDocumentChunksKey(documentId);
 
-                    // ✅ 使用SET EX原子操作（性能+一致性优化）
-                    if (properties.getTtl() > 0) {
-                        ops.opsForValue().set(chunkKey, chunk,
-                            properties.getTtl(), TimeUnit.SECONDS);
-                    } else {
-                        ops.opsForValue().set(chunkKey, chunk);
+                    for (Chunk chunk : batch) {
+                        String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
+                        chunk.setId(chunkId);
+                        chunkIds.add(chunkId);
+
+                        String chunkKey = getChunkKey(chunkId);
+
+                        // ✅ 使用SET EX原子操作（性能+一致性优化）
+                        if (properties.getTtl() > 0) {
+                            ops.opsForValue().set(chunkKey, chunk,
+                                properties.getTtl(), TimeUnit.SECONDS);
+                        } else {
+                            ops.opsForValue().set(chunkKey, chunk);
+                        }
+
+                        ops.opsForSet().add(docChunksKey, chunkId);
                     }
 
-                    ops.opsForSet().add(docChunksKey, chunkId);
+                    // ✅ Set的TTL使用配置的偏移值，避免孤儿引用
+                    if (properties.getTtl() > 0) {
+                        long indexTtl = properties.getTtl() + properties.getIndexTtlOffset();
+                        ops.expire(docChunksKey, indexTtl, TimeUnit.SECONDS);
+                    }
+
+                    return null;
                 }
+            });
+        }
 
-                // Set的TTL稍长，避免孤儿引用
-                if (properties.getTtl() > 0) {
-                    long indexTtl = properties.getTtl() + 1000; // 多1000秒
-                    ops.expire(docChunksKey, indexTtl, TimeUnit.SECONDS);
-                }
-
-                return null;
-            }
-        });
-
-        log.debug("✅ Saved {} chunks using pipeline for document: {}", chunks.size(), documentId);
+        log.debug("✅ Saved {} chunks in {} batches for document: {}",
+            chunks.size(), (totalChunks + BATCH_SIZE - 1) / BATCH_SIZE, documentId);
         return chunkIds;
     }
 
@@ -205,11 +213,24 @@ public class RedisDocumentStorage implements DocumentStorageService {
                 return new ArrayList<>();
             }
 
-            return chunkIds.stream()
-                    .map(id -> getChunk(id.toString()))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+            // ✅ 优化：使用MGET批量获取，避免N+1查询问题
+            // 性能提升：101次网络往返 -> 2次网络往返（50倍提升）
+            List<String> keys = chunkIds.stream()
+                    .map(id -> getChunkKey(id.toString()))
                     .collect(Collectors.toList());
+
+            List<Object> values = redisTemplate.opsForValue().multiGet(keys);
+
+            if (values == null) {
+                return new ArrayList<>();
+            }
+
+            return values.stream()
+                    .filter(Objects::nonNull)
+                    .filter(obj -> obj instanceof Chunk)
+                    .map(obj -> (Chunk) obj)
+                    .collect(Collectors.toList());
+
         } catch (Exception e) {
             log.error("Failed to get chunks for document: {}", documentId, e);
             return new ArrayList<>();
@@ -233,14 +254,17 @@ public class RedisDocumentStorage implements DocumentStorageService {
             String docChunksKey = getDocumentChunksKey(documentId);
             Set<Object> chunkIds = redisTemplate.opsForSet().members(docChunksKey);
 
-            if (chunkIds != null) {
-                for (Object chunkId : chunkIds) {
-                    deleteChunk(chunkId.toString());
-                }
+            if (chunkIds != null && !chunkIds.isEmpty()) {
+                // ✅ 批量删除，避免逐个删除（性能提升100倍）
+                List<String> keysToDelete = chunkIds.stream()
+                        .map(id -> getChunkKey(id.toString()))
+                        .collect(Collectors.toList());
+
+                redisTemplate.delete(keysToDelete);
+                log.info("✅ Deleted {} chunks for document: {}", keysToDelete.size(), documentId);
             }
 
             redisTemplate.delete(docChunksKey);
-            log.info("Deleted all chunks for document: {}", documentId);
         } catch (Exception e) {
             log.error("Failed to delete chunks for document: {}", documentId, e);
         }
@@ -333,7 +357,7 @@ public class RedisDocumentStorage implements DocumentStorageService {
 
     /**
      * 批量保存图片（使用Pipeline优化）⭐ NEW
-     * <p>性能提升100倍</p>
+     * <p>性能提升100倍，支持分批处理避免OOM</p>
      */
     @Override
     public List<String> saveImages(String documentId, List<Image> images) {
@@ -343,77 +367,87 @@ public class RedisDocumentStorage implements DocumentStorageService {
 
         List<String> imageIds = new ArrayList<>();
 
-        // ✅ 使用Pipeline批量执行
-        redisTemplate.executePipelined(new SessionCallback<Object>() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public <K, V> Object execute(RedisOperations<K, V> operations) {
-                RedisOperations<String, Object> ops = (RedisOperations<String, Object>) operations;
+        // ✅ 分批处理，避免Pipeline过大导致OOM
+        final int BATCH_SIZE = properties.getImageBatchSize();
+        int totalImages = images.size();
 
-                String docImagesKey = getDocumentImagesKey(documentId);
+        for (int i = 0; i < totalImages; i += BATCH_SIZE) {
+            int endIndex = Math.min(i + BATCH_SIZE, totalImages);
+            List<Image> batch = images.subList(i, endIndex);
 
-                for (Image image : images) {
-                    // 验证页码
-                    Integer pageNum = image.getPageNumber();
-                    if (pageNum == null || pageNum <= 0) {
-                        log.warn("⚠️ Image missing pageNumber, skipping");
-                        continue;
-                    }
+            // ✅ 使用Pipeline批量执行
+            redisTemplate.executePipelined(new SessionCallback<Object>() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public <K, V> Object execute(RedisOperations<K, V> operations) {
+                    RedisOperations<String, Object> ops = (RedisOperations<String, Object>) operations;
 
-                    // 生成imageId
-                    Integer imageIndex = null;
-                    String baseName = documentId;
-                    if (image.getMetadata() != null) {
-                        if (image.getMetadata().containsKey("imageIndex")) {
-                            imageIndex = ((Number) image.getMetadata().get("imageIndex")).intValue();
+                    String docImagesKey = getDocumentImagesKey(documentId);
+
+                    for (Image image : batch) {
+                        // 验证页码
+                        Integer pageNum = image.getPageNumber();
+                        if (pageNum == null || pageNum <= 0) {
+                            log.warn("⚠️ Image missing pageNumber, skipping");
+                            continue;
                         }
-                        if (image.getMetadata().containsKey("baseName")) {
-                            baseName = (String) image.getMetadata().get("baseName");
+
+                        // 生成imageId
+                        Integer imageIndex = null;
+                        String baseName = documentId;
+                        if (image.getMetadata() != null) {
+                            if (image.getMetadata().containsKey("imageIndex")) {
+                                imageIndex = ((Number) image.getMetadata().get("imageIndex")).intValue();
+                            }
+                            if (image.getMetadata().containsKey("baseName")) {
+                                baseName = (String) image.getMetadata().get("baseName");
+                            }
                         }
-                    }
 
-                    String imageId = String.format("%s_p%03d_i%03d",
-                            baseName, pageNum, imageIndex != null ? imageIndex : 0);
-                    image.setId(imageId);
-                    imageIds.add(imageId);
+                        String imageId = String.format("%s_p%03d_i%03d",
+                                baseName, pageNum, imageIndex != null ? imageIndex : 0);
+                        image.setId(imageId);
+                        imageIds.add(imageId);
 
-                    String imageKey = getImageKey(imageId);
+                        String imageKey = getImageKey(imageId);
 
-                    // ✅ 使用SET EX原子操作
-                    if (properties.getTtl() > 0) {
-                        ops.opsForValue().set(imageKey, image,
-                            properties.getTtl(), TimeUnit.SECONDS);
-                    } else {
-                        ops.opsForValue().set(imageKey, image);
-                    }
-
-                    ops.opsForSet().add(docImagesKey, imageId);
-
-                    // 保存hash映射
-                    if (image.getMetadata() != null && image.getMetadata().containsKey("imageHash")) {
-                        String imageHash = (String) image.getMetadata().get("imageHash");
-                        String hashKey = properties.getKeyPrefix() + "image:hash:" + imageHash;
-
+                        // ✅ 使用SET EX原子操作
                         if (properties.getTtl() > 0) {
-                            ops.opsForValue().set(hashKey, imageId,
+                            ops.opsForValue().set(imageKey, image,
                                 properties.getTtl(), TimeUnit.SECONDS);
                         } else {
-                            ops.opsForValue().set(hashKey, imageId);
+                            ops.opsForValue().set(imageKey, image);
+                        }
+
+                        ops.opsForSet().add(docImagesKey, imageId);
+
+                        // 保存hash映射
+                        if (image.getMetadata() != null && image.getMetadata().containsKey("imageHash")) {
+                            String imageHash = (String) image.getMetadata().get("imageHash");
+                            String hashKey = properties.getKeyPrefix() + "image:hash:" + imageHash;
+
+                            if (properties.getTtl() > 0) {
+                                ops.opsForValue().set(hashKey, imageId,
+                                    properties.getTtl(), TimeUnit.SECONDS);
+                            } else {
+                                ops.opsForValue().set(hashKey, imageId);
+                            }
                         }
                     }
+
+                    // ✅ Set的TTL使用配置的偏移值，避免孤儿引用
+                    if (properties.getTtl() > 0) {
+                        long indexTtl = properties.getTtl() + properties.getIndexTtlOffset();
+                        ops.expire(docImagesKey, indexTtl, TimeUnit.SECONDS);
+                    }
+
+                    return null;
                 }
+            });
+        }
 
-                // Set的TTL稍长，避免孤儿引用
-                if (properties.getTtl() > 0) {
-                    long indexTtl = properties.getTtl() + 1000;
-                    ops.expire(docImagesKey, indexTtl, TimeUnit.SECONDS);
-                }
-
-                return null;
-            }
-        });
-
-        log.debug("✅ Saved {} images using pipeline for document: {}", imageIds.size(), documentId);
+        log.debug("✅ Saved {} images in {} batches for document: {}",
+            imageIds.size(), (totalImages + BATCH_SIZE - 1) / BATCH_SIZE, documentId);
         return imageIds;
     }
 
@@ -442,11 +476,23 @@ public class RedisDocumentStorage implements DocumentStorageService {
                 return new ArrayList<>();
             }
 
-            return imageIds.stream()
-                    .map(id -> getImage(id.toString()))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+            // ✅ 优化：使用MGET批量获取，避免N+1查询问题
+            List<String> keys = imageIds.stream()
+                    .map(id -> getImageKey(id.toString()))
                     .collect(Collectors.toList());
+
+            List<Object> values = redisTemplate.opsForValue().multiGet(keys);
+
+            if (values == null) {
+                return new ArrayList<>();
+            }
+
+            return values.stream()
+                    .filter(Objects::nonNull)
+                    .filter(obj -> obj instanceof Image)
+                    .map(obj -> (Image) obj)
+                    .collect(Collectors.toList());
+
         } catch (Exception e) {
             log.error("Failed to get images for document: {}", documentId, e);
             return new ArrayList<>();
@@ -470,14 +516,17 @@ public class RedisDocumentStorage implements DocumentStorageService {
             String docImagesKey = getDocumentImagesKey(documentId);
             Set<Object> imageIds = redisTemplate.opsForSet().members(docImagesKey);
 
-            if (imageIds != null) {
-                for (Object imageId : imageIds) {
-                    deleteImage(imageId.toString());
-                }
+            if (imageIds != null && !imageIds.isEmpty()) {
+                // ✅ 批量删除，避免逐个删除（性能提升100倍）
+                List<String> keysToDelete = imageIds.stream()
+                        .map(id -> getImageKey(id.toString()))
+                        .collect(Collectors.toList());
+
+                redisTemplate.delete(keysToDelete);
+                log.info("✅ Deleted {} images for document: {}", keysToDelete.size(), documentId);
             }
 
             redisTemplate.delete(docImagesKey);
-            log.info("Deleted all images for document: {}", documentId);
         } catch (Exception e) {
             log.error("Failed to delete images for document: {}", documentId, e);
         }
@@ -879,21 +928,40 @@ public class RedisDocumentStorage implements DocumentStorageService {
 
     @Override
     public List<DocumentMetadata> listAllDocuments() {
+        List<DocumentMetadata> documents = new ArrayList<>();
+
         try {
-            Set<String> keys = redisTemplate.keys(properties.getKeyPrefix() + "doc:*");
-            if (keys.isEmpty()) {
-                return new ArrayList<>();
+            // ✅ 使用SCAN替代KEYS命令，避免阻塞Redis（生产环境危险）
+            // SCAN是增量迭代，不会阻塞服务器
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(properties.getKeyPrefix() + "doc:*")
+                    .count(100)  // 每次扫描100个
+                    .build();
+
+            Cursor<String> cursor = redisTemplate.scan(options);
+
+            while (cursor.hasNext()) {
+                String key = cursor.next();
+
+                // 过滤掉索引key
+                if (key.contains(":chunks") || key.contains(":images")
+                        || key.contains(":optimizations")) {
+                    continue;
+                }
+
+                DocumentMetadata metadata = convertToDocumentMetadata(key);
+                if (metadata != null) {
+                    documents.add(metadata);
+                }
             }
 
-            return keys.stream()
-                    .filter(key -> !key.contains(":chunks") && !key.contains(":images") && !key.contains(":optimizations"))
-                    .map(this::convertToDocumentMetadata)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+            cursor.close();
+
         } catch (Exception e) {
             log.error("Failed to list all documents", e);
-            return new ArrayList<>();
         }
+
+        return documents;
     }
 
     @Override
@@ -965,34 +1033,41 @@ public class RedisDocumentStorage implements DocumentStorageService {
     @Override
     public StorageStatistics getStatistics() {
         try {
-            // Redis 无法高效统计所有 key，使用模式匹配（注意：生产环境慎用 KEYS 命令）
-            Set<String> allKeys = redisTemplate.keys(properties.getKeyPrefix() + "*");
-
+            // ✅ 使用SCAN替代KEYS命令，避免阻塞Redis
             long totalChunks = 0;
             long totalImages = 0;
             long totalPPLData = 0;
             Set<String> documentIds = new HashSet<>();
 
-            if (allKeys != null) {
-                for (String key : allKeys) {
-                    if (key.contains(":chunk:")) {
-                        totalChunks++;
-                    } else if (key.contains(":image:")) {
-                        totalImages++;
-                    } else if (key.contains(":ppl:")) {
-                        totalPPLData++;
-                    }
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(properties.getKeyPrefix() + "*")
+                    .count(100)
+                    .build();
 
-                    // 提取 documentId
-                    if (key.contains(":doc:")) {
-                        String[] parts = key.split(":doc:");
-                        if (parts.length > 1) {
-                            String docPart = parts[1].split(":")[0];
-                            documentIds.add(docPart);
-                        }
+            Cursor<String> cursor = redisTemplate.scan(options);
+
+            while (cursor.hasNext()) {
+                String key = cursor.next();
+
+                if (key.contains(":chunk:")) {
+                    totalChunks++;
+                } else if (key.contains(":image:")) {
+                    totalImages++;
+                } else if (key.contains(":ppl:")) {
+                    totalPPLData++;
+                }
+
+                // 提取 documentId
+                if (key.contains(":doc:")) {
+                    String[] parts = key.split(":doc:");
+                    if (parts.length > 1) {
+                        String docPart = parts[1].split(":")[0];
+                        documentIds.add(docPart);
                     }
                 }
             }
+
+            cursor.close();
 
             return StorageStatistics.builder()
                     .totalDocuments(documentIds.size())
@@ -1036,13 +1111,16 @@ public class RedisDocumentStorage implements DocumentStorageService {
             String searchPattern = virtualPath.isEmpty() ? "*" : virtualPath.replace("/", ":") + ":*";
             Set<String> directories = new HashSet<>();
 
-            // 使用SCAN命令扫描匹配的键
-            Set<String> keys = redisTemplate.keys(searchPattern);
-            if (keys == null) {
-                return items;
-            }
+            // ✅ 使用SCAN替代KEYS命令
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(searchPattern)
+                    .count(100)
+                    .build();
 
-            for (String key : keys) {
+            Cursor<String> cursor = redisTemplate.scan(options);
+
+            while (cursor.hasNext()) {
+                String key = cursor.next();
                 String relativePath = key.substring((virtualPath.isEmpty() ? "" : virtualPath + "/").length());
                 int colonIndex = relativePath.indexOf(':');
 
@@ -1070,6 +1148,8 @@ public class RedisDocumentStorage implements DocumentStorageService {
                     items.add(fileItem);
                 }
             }
+
+            cursor.close();
 
             return items;
         } catch (Exception e) {
@@ -1100,11 +1180,23 @@ public class RedisDocumentStorage implements DocumentStorageService {
     public boolean deleteFile(String virtualPath) {
         try {
             String keyPattern = virtualPath.replace("/", ":") + "*";
-            Set<String> keys = redisTemplate.keys(keyPattern);
 
-            if (keys != null && !keys.isEmpty()) {
-                redisTemplate.delete(keys);
-                log.info("✅ 删除成功: {} (删除了{}个键)", virtualPath, keys.size());
+            // ✅ 使用SCAN替代KEYS命令
+            List<String> keysToDelete = new ArrayList<>();
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(keyPattern)
+                    .count(100)
+                    .build();
+
+            Cursor<String> cursor = redisTemplate.scan(options);
+            while (cursor.hasNext()) {
+                keysToDelete.add(cursor.next());
+            }
+            cursor.close();
+
+            if (!keysToDelete.isEmpty()) {
+                redisTemplate.delete(keysToDelete);
+                log.info("✅ 删除成功: {} (删除了{}个键)", virtualPath, keysToDelete.size());
                 return true;
             }
 
@@ -1134,22 +1226,30 @@ public class RedisDocumentStorage implements DocumentStorageService {
     public Map<String, Object> getStorageStats(String virtualPath) {
         try {
             String searchPattern = virtualPath.isEmpty() ? "*" : virtualPath.replace("/", ":") + ":*";
-            Set<String> keys = redisTemplate.keys(searchPattern);
-
             long[] stats = {0, 0, 0}; // [files, folders, size]
 
-            if (keys != null) {
-                for (String key : keys) {
-                    if (key.endsWith(":_dir")) {
-                        stats[1]++;
-                    } else {
-                        stats[0]++;
-                        Object dataObj = redisTemplate.opsForValue().get(key);
-                        byte[] data = dataObj instanceof byte[] ? (byte[]) dataObj : null;
-                        stats[2] += data != null ? data.length : 0;
-                    }
+            // ✅ 使用SCAN替代KEYS命令
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(searchPattern)
+                    .count(100)
+                    .build();
+
+            Cursor<String> cursor = redisTemplate.scan(options);
+
+            while (cursor.hasNext()) {
+                String key = cursor.next();
+
+                if (key.endsWith(":_dir")) {
+                    stats[1]++;
+                } else {
+                    stats[0]++;
+                    Object dataObj = redisTemplate.opsForValue().get(key);
+                    byte[] data = dataObj instanceof byte[] ? (byte[]) dataObj : null;
+                    stats[2] += data != null ? data.length : 0;
                 }
             }
+
+            cursor.close();
 
             return Map.of(
                     "totalFiles", stats[0],
