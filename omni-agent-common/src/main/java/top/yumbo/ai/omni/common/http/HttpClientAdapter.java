@@ -84,12 +84,7 @@ public interface HttpClientAdapter {
      * @throws IllegalArgumentException URL格式错误
      */
     default void validateUrl(String url) {
-        if (url == null || url.trim().isEmpty()) {
-            throw new IllegalArgumentException("URL cannot be null or empty");
-        }
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            throw new IllegalArgumentException("Invalid URL protocol, must be http:// or https://");
-        }
+        UrlValidator.validateFull(url);
     }
 }
 
