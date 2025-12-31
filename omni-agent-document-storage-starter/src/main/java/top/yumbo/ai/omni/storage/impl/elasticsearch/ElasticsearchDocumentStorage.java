@@ -1588,4 +1588,181 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
             log.error("Failed to delete metadata: {}", documentId, e);
         }
     }
+
+    // ========== P2优化：全文检索功能 ==========
+
+    /**
+     * ✅ P2优化1：全文检索Chunks
+     * 利用Elasticsearch的全文检索能力搜索内容
+     *
+     * @param documentId 文档ID
+     * @param keyword 搜索关键词
+     * @return 匹配的chunks列表
+     */
+    @Retryable(
+        retryFor = {ElasticsearchException.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
+    public List<Chunk> searchChunks(String documentId, String keyword) {
+        try {
+            SearchRequest request = SearchRequest.of(s -> s
+                .index(chunkIndex)
+                .query(q -> q
+                    .bool(b -> b
+                        .must(m -> m
+                            .term(t -> t
+                                .field("documentId.keyword")
+                                .value(documentId)
+                            )
+                        )
+                        .must(m -> m
+                            .match(ma -> ma
+                                .field("content")
+                                .query(keyword)
+                            )
+                        )
+                    )
+                )
+                .highlight(h -> h
+                    .fields("content", hf -> hf
+                        .preTags("<em>")
+                        .postTags("</em>")
+                        .fragmentSize(150)
+                        .numberOfFragments(3)
+                    )
+                )
+                .size(100)
+                .sort(so -> so
+                    .score(sc -> sc.order(SortOrder.Desc))
+                )
+            );
+
+            SearchResponse<Chunk> response = client.search(request, Chunk.class);
+
+            log.debug("✅ Found {} chunks matching keyword: {}",
+                    response.hits().total().value(), keyword);
+
+            return response.hits().hits().stream()
+                .map(Hit::source)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Failed to search chunks with keyword: {}", keyword, e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * ✅ P2优化1：全局全文检索（跨文档）
+     * 在所有chunks中搜索关键词
+     *
+     * @param keyword 搜索关键词
+     * @param maxResults 最大结果数
+     * @return 匹配的chunks列表（包含所属文档ID）
+     */
+    @Retryable(
+        retryFor = {ElasticsearchException.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
+    public List<Chunk> searchChunksGlobal(String keyword, int maxResults) {
+        try {
+            SearchRequest request = SearchRequest.of(s -> s
+                .index(chunkIndex)
+                .query(q -> q
+                    .match(m -> m
+                        .field("content")
+                        .query(keyword)
+                    )
+                )
+                .highlight(h -> h
+                    .fields("content", hf -> hf
+                        .preTags("<em>")
+                        .postTags("</em>")
+                        .fragmentSize(150)
+                        .numberOfFragments(3)
+                    )
+                )
+                .size(maxResults)
+                .sort(so -> so
+                    .score(sc -> sc.order(SortOrder.Desc))
+                )
+            );
+
+            SearchResponse<Chunk> response = client.search(request, Chunk.class);
+
+            log.debug("✅ Global search found {} chunks matching keyword: {}",
+                    response.hits().total().value(), keyword);
+
+            return response.hits().hits().stream()
+                .map(Hit::source)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Failed to search chunks globally with keyword: {}", keyword, e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * ✅ P2优化1：模糊搜索
+     * 使用模糊查询支持容错搜索
+     *
+     * @param documentId 文档ID
+     * @param keyword 搜索关键词
+     * @param fuzziness 模糊度（AUTO, 0, 1, 2）
+     * @return 匹配的chunks列表
+     */
+    @Retryable(
+        retryFor = {ElasticsearchException.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
+    public List<Chunk> fuzzySearchChunks(String documentId, String keyword, String fuzziness) {
+        try {
+            SearchRequest request = SearchRequest.of(s -> s
+                .index(chunkIndex)
+                .query(q -> q
+                    .bool(b -> b
+                        .must(m -> m
+                            .term(t -> t
+                                .field("documentId.keyword")
+                                .value(documentId)
+                            )
+                        )
+                        .must(m -> m
+                            .match(ma -> ma
+                                .field("content")
+                                .query(keyword)
+                                .fuzziness(fuzziness)  // ✅ 模糊匹配
+                            )
+                        )
+                    )
+                )
+                .highlight(h -> h
+                    .fields("content", hf -> hf
+                        .preTags("<em>")
+                        .postTags("</em>")
+                    )
+                )
+                .size(100)
+            );
+
+            SearchResponse<Chunk> response = client.search(request, Chunk.class);
+
+            log.debug("✅ Fuzzy search found {} chunks", response.hits().total().value());
+
+            return response.hits().hits().stream()
+                .map(Hit::source)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Failed to fuzzy search chunks", e);
+            return new ArrayList<>();
+        }
+    }
 }

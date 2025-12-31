@@ -1,0 +1,151 @@
+# ✅ Elasticsearch文档存储 - P0+P1+P2优化配置示例
+#
+# 包含以下优化：
+# - P0优化：Bulk API、Search After、Mapping定义、异步删除
+# - P1优化：重试机制、MultiSearch统计
+# - P2优化：全文检索功能、连接池优化
+#
+# @author OmniAgent Team
+# @since 2.0.0
+# @version P2 Optimized
+
+spring:
+  elasticsearch:
+    # Elasticsearch连接URI
+    uris: http://localhost:9200
+
+    # ✅ P2优化：连接池配置
+    rest:
+      # 连接超时
+      connection-timeout: 10s
+      # 读取超时
+      read-timeout: 30s
+
+    # Socket配置
+    socket-timeout: 30s
+
+    # ✅ P2优化：连接池参数
+    connection-pool:
+      # 最大连接数
+      max-total: 100
+      # 每个路由的最大连接数
+      max-per-route: 50
+      # 连接空闲超时
+      connection-idle-timeout: 60s
+      # 连接生命周期
+      connection-time-to-live: 300s
+
+    # 认证配置（如需要）
+    # username: elastic
+    # password: changeme
+
+  # ✅ P1优化：重试机制配置
+  retry:
+    elasticsearch:
+      enabled: true
+      max-attempts: 3           # 最大重试次数
+      initial-interval: 100ms   # 初始延迟
+      multiplier: 2.0          # 延迟倍增系数
+      max-interval: 2000ms     # 最大延迟
+
+# OmniAgent文档存储配置
+omni-agent:
+  document-storage:
+    # 存储类型选择
+    type: elasticsearch
+
+    # 主实例配置
+    primary: elasticsearch-main
+
+    # 实例列表
+    instances:
+      elasticsearch-main:
+        type: elasticsearch
+        elasticsearch:
+          # 索引前缀
+          index-prefix: omni-agent
+
+          # ✅ P0优化：索引分片和副本配置
+          number-of-shards: 3        # 分片数（根据集群规模调整）
+          number-of-replicas: 1      # 副本数（至少1个保证高可用）
+
+          # ✅ P2优化：批量操作配置
+          bulk:
+            # 批量大小
+            batch-size: 1000
+            # 批量超时
+            timeout: 30s
+
+          # ✅ P2优化：全文检索配置
+          search:
+            # 默认最大结果数
+            max-results: 100
+            # 高亮片段大小
+            highlight-fragment-size: 150
+            # 高亮片段数量
+            highlight-fragments: 3
+
+# Elasticsearch连接池详细配置说明
+# 参数调优建议：
+#
+# 1. max-total (最大连接数)
+#    - 小规模应用：50-100
+#    - 中等规模应用：100-200
+#    - 大规模应用：200-500
+#
+# 2. max-per-route (每路由最大连接)
+#    - 通常设置为 max-total 的 50%
+#    - 单节点ES：等于 max-total
+#    - 多节点ES：max-total / 节点数
+#
+# 3. connection-timeout (连接超时)
+#    - 网络良好：5-10s
+#    - 网络一般：10-30s
+#    - 跨地域：30-60s
+#
+# 4. read-timeout (读取超时)
+#    - 简单查询：10-30s
+#    - 复杂聚合：30-60s
+#    - 大数据导出：60-300s
+#
+# 5. connection-idle-timeout (空闲超时)
+#    - 推荐：60s
+#    - 高并发场景可以更短：30s
+#    - 低并发场景可以更长：120s
+
+# 性能监控（可选）
+management:
+  metrics:
+    enable:
+      elasticsearch: true
+  endpoint:
+    health:
+      show-details: always
+
+# 日志配置（可选）
+logging:
+  level:
+    top.yumbo.ai.omni.storage.impl.elasticsearch: DEBUG  # ES存储日志
+    org.elasticsearch.client: INFO                       # ES客户端日志
+    org.springframework.retry: DEBUG                     # 重试机制日志
+
+# ✅ P2优化：Elasticsearch集群配置（多节点）
+# 如果使用ES集群，可以配置多个节点
+# spring:
+#   elasticsearch:
+#     uris:
+#       - http://es-node1:9200
+#       - http://es-node2:9200
+#       - http://es-node3:9200
+
+# ✅ P2优化：安全配置（生产环境推荐）
+# spring:
+#   elasticsearch:
+#     username: elastic
+#     password: ${ES_PASSWORD:changeme}  # 使用环境变量
+#     # SSL配置
+#     ssl:
+#       enabled: true
+#       key-store: classpath:elastic-keystore.p12
+#       key-store-password: ${ES_KEYSTORE_PASSWORD}
+
