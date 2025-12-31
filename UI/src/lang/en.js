@@ -2581,7 +2581,7 @@ export default {
       sponsorTitle: 'Sponsor',
       sponsorDesc: 'If this project helps you, feel free to sponsor',
       contactTitle: 'Contact Me',
-      contactDesc: 'Scan to add WeChat for technical discussion',
+      contactDesc: 'Scan the QR code to add WeChat, and please state your purpose.',
       copyright: '© 2025 OmniAgent. Apache License 2.0. Made with ❤️ by Jinhua Yu',
     },
   },

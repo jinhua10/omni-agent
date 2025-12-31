@@ -2633,7 +2633,7 @@ export default {
       sponsorTitle: '赞助支持',
       sponsorDesc: '如果这个项目对您有帮助，欢迎赞助支持',
       contactTitle: '联系作者',
-      contactDesc: '扫码添加微信，交流技术问题',
+      contactDesc: '扫码添加微信，请注明来意',
       copyright: '© 2025 OmniAgent. Apache License 2.0. Made with ❤️ by Jinhua Yu',
     },
   },

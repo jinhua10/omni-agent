@@ -1,0 +1,331 @@
+# ✅ MinIO存储 - P2优化配置示例
+#
+# 包含以下优化：
+# - P0优化：并行流、并行删除、实现缺失方法
+# - P1优化：重试机制、流式统计
+# - P2优化：连接池优化、监控指标、分段上传
+#
+# @author OmniAgent Team
+# @since 3.0.0
+# @version P2 Optimized
+
+spring:
+  # ✅ P1优化：重试机制配置
+  retry:
+    minio:
+      enabled: true
+      max-attempts: 3           # 最大重试次数
+      initial-interval: 100ms   # 初始延迟
+      multiplier: 2.0          # 延迟倍增系数
+      max-interval: 2000ms     # 最大延迟
+
+# OmniAgent文档存储配置
+omni-agent:
+  document-storage:
+    # 存储类型选择
+    type: minio
+
+    # 主实例配置
+    primary: minio-main
+
+    # 实例列表
+    instances:
+      minio-main:
+        type: minio
+        minio:
+          # 基础配置
+          endpoint: http://localhost:9000
+          bucket-name: omni-agent-storage
+
+          # 认证配置
+          access-key: ${MINIO_ACCESS_KEY:minioadmin}
+          secret-key: ${MINIO_SECRET_KEY:minioadmin}
+
+          # ✅ P2优化1：连接池配置（基于OkHttp）
+          client:
+            # HTTP客户端配置
+            http:
+              # 连接超时
+              connect-timeout: 10s
+              # 写入超时
+              write-timeout: 30s
+              # 读取超时
+              read-timeout: 30s
+              # 连接池配置
+              connection-pool:
+                # 最大空闲连接数
+                max-idle-connections: 100
+                # 连接保持时间
+                keep-alive-duration: 5m
+
+          # ✅ P2优化2：分段上传配置
+          multipart:
+            # 启用分段上传
+            enabled: true
+            # 分段大小（建议5MB-100MB）
+            part-size: 10MB
+            # 分段上传阈值（超过此大小使用分段上传）
+            threshold: 10MB
+            # 最小分段大小
+            minimum-part-size: 5MB
+
+          # ✅ P2优化：重试策略配置
+          retry:
+            # 最大重试次数
+            max-attempts: 3
+            # 基础延迟
+            base-delay: 100ms
+            # 最大退避时间
+            max-backoff-time: 20s
+            # 重试条件
+            retry-on-network-error: true
+            retry-on-server-error: true
+
+          # ✅ P2优化3：监控指标
+          metrics:
+            enabled: true
+            # 记录详细指标
+            detailed: true
+            # 指标前缀
+            prefix: minio.storage
+            # 记录的操作类型
+            operations:
+              - PUT_OBJECT
+              - GET_OBJECT
+              - REMOVE_OBJECT
+              - LIST_OBJECTS
+              - STAT_OBJECT
+
+# ✅ P2优化：监控和指标导出
+management:
+  metrics:
+    enable:
+      minio: true
+    export:
+      # Prometheus导出
+      prometheus:
+        enabled: true
+      # JMX导出
+      jmx:
+        enabled: true
+    tags:
+      application: omni-agent
+      storage: minio
+
+  endpoint:
+    health:
+      show-details: always
+
+  # 健康检查
+  health:
+    minio:
+      enabled: true
+
+# 日志配置（可选）
+logging:
+  level:
+    top.yumbo.ai.omni.storage.impl.minio: DEBUG
+    io.minio: INFO
+    org.springframework.retry: DEBUG
+
+# =========================================
+# 配置说明和调优建议
+# =========================================
+
+# 1. 连接池配置调优
+# - max-idle-connections: 根据并发量调整
+#   - 低并发（<10）：50
+#   - 中等并发（10-50）：100
+#   - 高并发（50-200）：200-500
+# - connect-timeout: 根据网络状况
+#   - 内网/同服务器：5-10s
+#   - 跨服务器：10-30s
+#   - 跨网络：30-60s
+
+# 2. 分段上传配置
+# - part-size建议：
+#   - 小文件（<100MB）：5-10MB
+#   - 中等文件（100MB-1GB）：10-50MB
+#   - 大文件（>1GB）：50-100MB
+# - threshold设置：
+#   - 一般设置为part-size的1-2倍
+#   - 建议不小于5MB（MinIO最小分段大小）
+
+# 3. 重试策略
+# - max-attempts: 建议3次
+# - base-delay: 100ms起步
+# - 指数退避：100ms → 200ms → 400ms
+
+# 4. 监控指标
+# - 记录的关键指标：
+#   - 请求延迟（latency）
+#   - 请求成功率（success_rate）
+#   - 重试次数（retry_count）
+#   - 传输速率（throughput）
+#   - 错误类型分布
+
+# =========================================
+# 生产环境配置示例
+# =========================================
+
+---
+# 生产环境配置
+spring:
+  config:
+    activate:
+      on-profile: production
+
+omni-agent:
+  document-storage:
+    instances:
+      minio-main:
+        minio:
+          # 使用环境变量
+          endpoint: ${MINIO_ENDPOINT:http://minio.production.svc:9000}
+          access-key: ${MINIO_ACCESS_KEY}
+          secret-key: ${MINIO_SECRET_KEY}
+
+          # 生产环境优化配置
+          client:
+            http:
+              connect-timeout: 10s
+              write-timeout: 30s
+              read-timeout: 30s
+              connection-pool:
+                max-idle-connections: 200
+                keep-alive-duration: 5m
+
+          multipart:
+            enabled: true
+            part-size: 20MB
+            threshold: 20MB
+
+          retry:
+            max-attempts: 3
+            base-delay: 100ms
+
+          metrics:
+            enabled: true
+            detailed: true
+
+---
+# 开发环境配置
+spring:
+  config:
+    activate:
+      on-profile: development
+
+omni-agent:
+  document-storage:
+    instances:
+      minio-main:
+        minio:
+          # 开发环境使用本地MinIO
+          endpoint: http://localhost:9000
+          access-key: minioadmin
+          secret-key: minioadmin
+
+          client:
+            http:
+              connect-timeout: 5s
+              write-timeout: 30s
+              read-timeout: 30s
+              connection-pool:
+                max-idle-connections: 50
+                keep-alive-duration: 5m
+
+          multipart:
+            enabled: true
+            part-size: 10MB
+
+          metrics:
+            enabled: true
+            detailed: false
+
+# =========================================
+# MinIO特定优化
+# =========================================
+
+# MinIO与S3的区别：
+# 1. MinIO不支持传输加速（S3专有）
+# 2. MinIO在内网部署，延迟更低
+# 3. MinIO完全兼容S3 API
+# 4. MinIO支持分布式部署
+
+# MinIO优势：
+# 1. 私有云部署，数据完全自主可控
+# 2. 高性能（内网延迟<1ms）
+# 3. 无限扩展能力
+# 4. 开源免费
+
+# =========================================
+# 性能基准测试配置
+# =========================================
+
+# 测试场景1：高并发上传
+# - max-idle-connections: 200
+# - part-size: 10MB
+# - 预期：1000个文件/分钟
+
+# 测试场景2：大文件传输
+# - part-size: 50MB
+# - max-idle-connections: 100
+# - 预期：200MB/s上传速度（内网）
+
+# 测试场景3：内网访问
+# - connect-timeout: 5s
+# - retry: 3次
+# - 预期：延迟<10ms
+
+# =========================================
+# MinIO分布式部署配置（可选）
+# =========================================
+
+# 如果使用MinIO分布式集群：
+# omni-agent:
+#   document-storage:
+#     instances:
+#       minio-cluster:
+#         minio:
+#           # 使用负载均衡器地址
+#           endpoint: http://minio-lb.production.svc:9000
+#           # 或使用多个节点
+#           endpoints:
+#             - http://minio-node1:9000
+#             - http://minio-node2:9000
+#             - http://minio-node3:9000
+#             - http://minio-node4:9000
+#           # 客户端会自动负载均衡
+
+# =========================================
+# 安全配置建议
+# =========================================
+
+# 1. 使用HTTPS（生产环境必须）
+#    endpoint: https://minio.production.com:9000
+
+# 2. 使用强密码
+#    建议使用环境变量或密钥管理服务
+
+# 3. 启用MinIO Server端加密
+#    MinIO支持SSE-C, SSE-S3, SSE-KMS
+
+# 4. 配置访问策略
+#    在MinIO Server上配置bucket策略
+
+# =========================================
+# 监控告警配置
+# =========================================
+
+# Prometheus指标示例：
+# - minio_storage_put_object_latency_seconds
+# - minio_storage_get_object_latency_seconds
+# - minio_storage_operation_success_rate
+# - minio_storage_retry_count_total
+
+# Grafana仪表板：
+# - 请求延迟趋势
+# - 错误率变化
+# - 传输速率统计
+# - 重试次数分析
+

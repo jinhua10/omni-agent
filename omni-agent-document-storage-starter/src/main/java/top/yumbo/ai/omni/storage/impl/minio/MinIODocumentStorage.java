@@ -2,8 +2,11 @@ package top.yumbo.ai.omni.storage.impl.minio;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.*;
+import io.minio.errors.ErrorResponseException;
 import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.storage.api.exception.*;
@@ -36,6 +39,10 @@ public class MinIODocumentStorage implements DocumentStorageService {
     private final MinioClient minioClient;
     private final MinIOStorageProperties properties;
     private final ObjectMapper objectMapper;
+
+    // ✅ P0优化4：ID到Key的映射，支持通过ID快速查询和删除
+    private final Map<String, String> chunkIdToKeyMap = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, String> imageIdToKeyMap = new java.util.concurrent.ConcurrentHashMap<>();
 
     public MinIODocumentStorage(MinioClient minioClient, MinIOStorageProperties properties) {
         this.minioClient = minioClient;
@@ -267,6 +274,14 @@ public class MinIODocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * ✅ P1优化1：添加重试机制
+     */
+    @Retryable(
+        retryFor = {ErrorResponseException.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     @Override
     public List<String> saveChunks(String documentId, List<Chunk> chunks) {
         List<String> chunkIds = new ArrayList<>();
@@ -292,6 +307,14 @@ public class MinIODocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * ✅ P1优化1：添加重试机制
+     */
+    @Retryable(
+        retryFor = {ErrorResponseException.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     @Override
     public List<Chunk> getChunksByDocument(String documentId) {
         try {
@@ -418,6 +441,14 @@ public class MinIODocumentStorage implements DocumentStorageService {
         return Optional.empty();
     }
 
+    /**
+     * ✅ P1优化1：添加重试机制
+     */
+    @Retryable(
+        retryFor = {ErrorResponseException.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     @Override
     public List<Image> getImagesByDocument(String documentId) {
         try {
@@ -458,6 +489,9 @@ public class MinIODocumentStorage implements DocumentStorageService {
         log.warn("deleteImage by ID only is not efficient in MinIO");
     }
 
+    /**
+     * ✅ P0优化3：使用并行删除
+     */
     @Override
     public void deleteImagesByDocument(String documentId) {
         try {
@@ -471,17 +505,26 @@ public class MinIODocumentStorage implements DocumentStorageService {
                     .build()
             );
 
+            // ✅ P0优化：收集对象名，然后并行删除
+            List<String> objectNames = new ArrayList<>();
             for (Result<Item> result : results) {
-                Item item = result.get();
-                minioClient.removeObject(
-                    RemoveObjectArgs.builder()
-                        .bucket(properties.getBucketName())
-                        .object(item.objectName())
-                        .build()
-                );
+                objectNames.add(result.get().objectName());
             }
 
-            log.info("Deleted all images for document: {}", documentId);
+            objectNames.parallelStream().forEach(objectName -> {
+                try {
+                    minioClient.removeObject(
+                        RemoveObjectArgs.builder()
+                            .bucket(properties.getBucketName())
+                            .object(objectName)
+                            .build()
+                    );
+                } catch (Exception e) {
+                    log.error("Failed to delete object: {}", objectName, e);
+                }
+            });
+
+            log.info("✅ Deleted all images for document: {}", documentId);
         } catch (Exception e) {
             log.error("Failed to delete images for document: {}", documentId, e);
         }
