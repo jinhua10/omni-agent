@@ -126,15 +126,41 @@ public class S3DocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * ✅ P0优化1：使用并行流加速批量保存
+     * 预期收益：性能提升4-8倍
+     */
     @Override
     public List<String> saveChunks(String documentId, List<Chunk> chunks) {
-        List<String> chunkIds = new ArrayList<>();
-        for (Chunk chunk : chunks) {
-            String chunkId = saveChunk(documentId, chunk);
-            if (chunkId != null) {
-                chunkIds.add(chunkId);
-            }
+        if (chunks == null || chunks.isEmpty()) {
+            return new ArrayList<>();
         }
+
+        List<String> chunkIds = Collections.synchronizedList(new ArrayList<>());
+
+        chunks.parallelStream().forEach(chunk -> {
+            try {
+                String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
+                chunk.setId(chunkId);
+
+                String key = getChunkKey(documentId, chunkId);
+                byte[] data = objectMapper.writeValueAsBytes(chunk);
+
+                PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .key(key)
+                        .contentType("application/json")
+                        .build();
+
+                s3Client.putObject(putObjectRequest, RequestBody.fromBytes(data));
+                chunkIds.add(chunkId);
+
+            } catch (Exception e) {
+                log.error("Failed to save chunk in batch", e);
+            }
+        });
+
+        log.debug("✅ Saved {} chunks in parallel for document: {}", chunkIds.size(), documentId);
         return chunkIds;
     }
 
@@ -144,11 +170,15 @@ public class S3DocumentStorage implements DocumentStorageService {
         return Optional.empty();
     }
 
+    /**
+     * ✅ P0优化2：使用并行流加速批量查询
+     * 预期收益：性能提升4-8倍
+     */
     @Override
     public List<Chunk> getChunksByDocument(String documentId) {
         try {
             String prefix = "chunks/" + documentId + "/";
-            List<Chunk> chunks = new ArrayList<>();
+            List<Chunk> chunks = Collections.synchronizedList(new ArrayList<>());
 
             ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
                     .bucket(properties.getBucketName())
@@ -157,7 +187,7 @@ public class S3DocumentStorage implements DocumentStorageService {
 
             ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
 
-            for (S3Object s3Object : listResponse.contents()) {
+            listResponse.contents().parallelStream().forEach(s3Object -> {
                 try {
                     GetObjectRequest getRequest = GetObjectRequest.builder()
                             .bucket(properties.getBucketName())
@@ -170,8 +200,11 @@ public class S3DocumentStorage implements DocumentStorageService {
                 } catch (Exception e) {
                     log.error("Failed to read chunk: {}", s3Object.key(), e);
                 }
-            }
+            });
 
+            chunks.sort(Comparator.comparingInt(Chunk::getSequence));
+
+            log.debug("✅ Retrieved {} chunks in parallel for document: {}", chunks.size(), documentId);
             return chunks;
         } catch (Exception e) {
             log.error("Failed to get chunks for document: {}", documentId, e);
@@ -184,6 +217,10 @@ public class S3DocumentStorage implements DocumentStorageService {
         log.warn("deleteChunk by ID only is not efficient in S3");
     }
 
+    /**
+     * ✅ P0优化3：使用S3批量删除API
+     * 预期收益：性能提升100倍（100次请求 → 1次请求）
+     */
     @Override
     public void deleteChunksByDocument(String documentId) {
         try {
@@ -196,16 +233,36 @@ public class S3DocumentStorage implements DocumentStorageService {
 
             ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
 
-            for (S3Object s3Object : listResponse.contents()) {
-                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
-                        .bucket(properties.getBucketName())
-                        .key(s3Object.key())
-                        .build();
-
-                s3Client.deleteObject(deleteRequest);
+            if (listResponse.contents().isEmpty()) {
+                return;
             }
 
-            log.info("Deleted all chunks for document: {}", documentId);
+            List<ObjectIdentifier> objectsToDelete = listResponse.contents().stream()
+                    .map(s3Object -> ObjectIdentifier.builder()
+                            .key(s3Object.key())
+                            .build())
+                    .collect(Collectors.toList());
+
+            int batchSize = 1000;
+            for (int i = 0; i < objectsToDelete.size(); i += batchSize) {
+                int end = Math.min(i + batchSize, objectsToDelete.size());
+                List<ObjectIdentifier> batch = objectsToDelete.subList(i, end);
+
+                Delete delete = Delete.builder()
+                        .objects(batch)
+                        .build();
+
+                DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .delete(delete)
+                        .build();
+
+                DeleteObjectsResponse response = s3Client.deleteObjects(deleteRequest);
+
+                log.debug("✅ Deleted {} chunks in batch", response.deleted().size());
+            }
+
+            log.info("✅ Deleted all chunks for document: {}", documentId);
         } catch (Exception e) {
             log.error("Failed to delete chunks for document: {}", documentId, e);
         }
@@ -267,11 +324,14 @@ public class S3DocumentStorage implements DocumentStorageService {
         return Optional.empty();
     }
 
+    /**
+     * ✅ P0优化2：使用并行流加速批量查询
+     */
     @Override
     public List<Image> getImagesByDocument(String documentId) {
         try {
             String prefix = "images/" + documentId + "/";
-            List<Image> images = new ArrayList<>();
+            List<Image> images = Collections.synchronizedList(new ArrayList<>());
 
             ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
                     .bucket(properties.getBucketName())
@@ -280,7 +340,7 @@ public class S3DocumentStorage implements DocumentStorageService {
 
             ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
 
-            for (S3Object s3Object : listResponse.contents()) {
+            listResponse.contents().parallelStream().forEach(s3Object -> {
                 try {
                     GetObjectRequest getRequest = GetObjectRequest.builder()
                             .bucket(properties.getBucketName())
@@ -293,8 +353,9 @@ public class S3DocumentStorage implements DocumentStorageService {
                 } catch (Exception e) {
                     log.error("Failed to read image: {}", s3Object.key(), e);
                 }
-            }
+            });
 
+            log.debug("✅ Retrieved {} images in parallel for document: {}", images.size(), documentId);
             return images;
         } catch (Exception e) {
             log.error("Failed to get images for document: {}", documentId, e);
@@ -307,6 +368,9 @@ public class S3DocumentStorage implements DocumentStorageService {
         log.warn("deleteImage by ID only is not efficient in S3");
     }
 
+    /**
+     * ✅ P0优化3：使用S3批量删除API
+     */
     @Override
     public void deleteImagesByDocument(String documentId) {
         try {
@@ -319,16 +383,34 @@ public class S3DocumentStorage implements DocumentStorageService {
 
             ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
 
-            for (S3Object s3Object : listResponse.contents()) {
-                DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
-                        .bucket(properties.getBucketName())
-                        .key(s3Object.key())
-                        .build();
-
-                s3Client.deleteObject(deleteRequest);
+            if (listResponse.contents().isEmpty()) {
+                return;
             }
 
-            log.info("Deleted all images for document: {}", documentId);
+            List<ObjectIdentifier> objectsToDelete = listResponse.contents().stream()
+                    .map(s3Object -> ObjectIdentifier.builder()
+                            .key(s3Object.key())
+                            .build())
+                    .collect(Collectors.toList());
+
+            int batchSize = 1000;
+            for (int i = 0; i < objectsToDelete.size(); i += batchSize) {
+                int end = Math.min(i + batchSize, objectsToDelete.size());
+                List<ObjectIdentifier> batch = objectsToDelete.subList(i, end);
+
+                Delete delete = Delete.builder()
+                        .objects(batch)
+                        .build();
+
+                DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                        .bucket(properties.getBucketName())
+                        .delete(delete)
+                        .build();
+
+                s3Client.deleteObjects(deleteRequest);
+            }
+
+            log.info("✅ Deleted all images for document: {}", documentId);
         } catch (Exception e) {
             log.error("Failed to delete images for document: {}", documentId, e);
         }
