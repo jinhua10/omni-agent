@@ -2,6 +2,8 @@ package top.yumbo.ai.omni.common.http;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * HTTP 客户端适配器接口
@@ -90,6 +92,24 @@ public interface HttpClientAdapter {
     }
 
     /**
+     * 设置异步请求执行器
+     *
+     * @param executor 自定义执行器，null表示使用默认ForkJoinPool
+     */
+    default void setAsyncExecutor(Executor executor) {
+        // 默认实现为空，子类可选择性实现
+    }
+
+    /**
+     * 获取异步请求执行器
+     *
+     * @return 当前使用的执行器，默认返回ForkJoinPool.commonPool()
+     */
+    default Executor getAsyncExecutor() {
+        return ForkJoinPool.commonPool();
+    }
+
+    /**
      * 获取适配器名称
      *
      * @return 适配器名称
@@ -118,9 +138,9 @@ public interface HttpClientAdapter {
             try {
                 return get(url, headers);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new java.util.concurrent.CompletionException(e);
             }
-        });
+        }, getAsyncExecutor());
     }
 
     /**
@@ -136,9 +156,9 @@ public interface HttpClientAdapter {
             try {
                 return post(url, headers, body);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new java.util.concurrent.CompletionException(e);
             }
-        });
+        }, getAsyncExecutor());
     }
 
     /**
@@ -154,9 +174,9 @@ public interface HttpClientAdapter {
             try {
                 return put(url, headers, body);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new java.util.concurrent.CompletionException(e);
             }
-        });
+        }, getAsyncExecutor());
     }
 
     /**
@@ -171,9 +191,9 @@ public interface HttpClientAdapter {
             try {
                 return delete(url, headers);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new java.util.concurrent.CompletionException(e);
             }
-        });
+        }, getAsyncExecutor());
     }
 
     /**

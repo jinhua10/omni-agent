@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 
 /**
  * RestTemplate 适配器
@@ -35,6 +36,7 @@ public class RestTemplateAdapter implements HttpClientAdapter {
     private final List<HttpInterceptor> interceptors = new CopyOnWriteArrayList<>();
     private long maxRequestSize = 10 * 1024 * 1024; // 默认10MB
     private long maxResponseSize = 10 * 1024 * 1024; // 默认10MB
+    private Executor asyncExecutor; // null表示使用默认ForkJoinPool
 
     public RestTemplateAdapter(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -170,6 +172,16 @@ public class RestTemplateAdapter implements HttpClientAdapter {
     @Override
     public void setMaxResponseSize(long maxBytes) {
         this.maxResponseSize = maxBytes;
+    }
+
+    @Override
+    public void setAsyncExecutor(Executor executor) {
+        this.asyncExecutor = executor;
+    }
+
+    @Override
+    public Executor getAsyncExecutor() {
+        return asyncExecutor != null ? asyncExecutor : HttpClientAdapter.super.getAsyncExecutor();
     }
 
     /**
