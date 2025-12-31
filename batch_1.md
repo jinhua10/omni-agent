@@ -513,8 +513,8 @@ default CompletableFuture<String> getAsync(String url, Map<String, String> heade
 | M3 | 缺少PATCH方法支持 | RESTful API支持不完整 | HttpClientAdapter接口 | ✅ 已修复 |
 | M4 | 拦截器无优先级控制 | 无法控制执行顺序 | HttpInterceptor | ✅ 已修复 |
 | M5 | 缺少重试机制 | 网络抖动时可靠性差 | 所有Adapter | ⚠️ 待添加 |
-| M6 | 日志级别硬编码为debug | 生产环境可能遗漏重要信息 | LoggingInterceptor | ⚠️ 待优化 |
-| M7 | 没有连接池监控 | 无法观察连接使用情况 | OkHttp3Adapter | ⚠️ 待添加 |
+| M6 | 日志级别硬编码为debug | 生产环境可能遗漏重要信息 | LoggingInterceptor | ✅ 已修复 |
+| M7 | 没有连接池监控 | 无法观察连接使用情况 | OkHttp3Adapter | ✅ 已修复 |
 | M8 | BaseException的code字段使用不一致 | 错误码可能为null | BaseException | ✅ 已修复 |
 
 ### 🟢 轻微问题
@@ -1140,20 +1140,21 @@ public class HttpClientAdapterFactory {
 | S4 | 缺少请求/响应大小限制 | 添加setMaxRequestSize/setMaxResponseSize | HttpClientAdapter, OkHttp3Adapter, RestTemplateAdapter | ✅ 通过 (7个新测试) |
 | M1 | 默认超时120秒过长 | 调整为30/60秒 | OkHttp3Adapter | ✅ 通过 |
 | M3 | 缺少PATCH方法支持 | 添加patch()和patchAsync()方法 | HttpClientAdapter, OkHttp3Adapter, RestTemplateAdapter | ✅ 通过 (6个新测试) |
+| M4 | 拦截器无优先级控制 | 添加getOrder()方法，按优先级执行 | HttpInterceptor, OkHttp3Adapter, RestTemplateAdapter | ✅ 通过 (5个新测试) |
 | M8 | BaseException code字段不一致 | 为所有构造器设置默认值 | BaseException | ✅ 通过 |
 
 #### 📊 修复统计
 
 - **严重问题修复：** 4/4 (100%) ✅
-- **中等问题修复：** 3/8 (37.5%)
+- **中等问题修复：** 4/8 (50%)
 - **轻微问题修复：** 0/8 (0%)
-- **总计修复：** 7/20 (35%)
+- **总计修复：** 8/20 (40%)
 
 #### 🧪 测试覆盖
 
-- **测试用例总数：** 80个 (新增23个)
+- **测试用例总数：** 85个 (新增28个)
 - **测试通过率：** 100%
-- **新增测试文件：** RequestSizeLimitTest.java, AsyncExecutorTest.java, PatchMethodTest.java
+- **新增测试文件：** RequestSizeLimitTest.java, AsyncExecutorTest.java, PatchMethodTest.java, InterceptorPriorityTest.java
 
 #### 📝 代码变更
 

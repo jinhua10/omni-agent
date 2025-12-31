@@ -1,5 +1,6 @@
 package top.yumbo.ai.omni.common.http;
 
+import lombok.Getter;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,12 +45,19 @@ public class OkHttp3Adapter implements HttpClientAdapter {
     private long maxRequestSize = 10 * 1024 * 1024; // 默认10MB
     private long maxResponseSize = 10 * 1024 * 1024; // 默认10MB
     private Executor asyncExecutor; // null表示使用默认ForkJoinPool
+    /**
+     * -- GETTER --
+     *  获取连接池监控器
+     */
+    @Getter
+    private ConnectionPoolMonitor poolMonitor; // 连接池监控器
 
     /**
      * 使用默认配置的 OkHttpClient
      */
     public OkHttp3Adapter() {
         this.client = createDefaultClient();
+        this.poolMonitor = new ConnectionPoolMonitor(this.client);
     }
 
     /**
@@ -57,6 +65,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
      */
     public OkHttp3Adapter(OkHttpClient client) {
         this.client = client;
+        this.poolMonitor = new ConnectionPoolMonitor(this.client);
     }
 
     /**
@@ -236,6 +245,11 @@ public class OkHttp3Adapter implements HttpClientAdapter {
                 interceptor.onError(httpRequest, e);
             }
             throw new HttpException(0, "请求执行失败: " + e.getMessage(), url, e);
+        } finally {
+            // 记录请求结束
+            if (poolMonitor != null) {
+                poolMonitor.onRequestEnd();
+            }
         }
     }
 
@@ -313,9 +327,9 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             long bodySize = responseBody.getBytes().length;
             if (bodySize > maxResponseSize) {
                 throw new top.yumbo.ai.omni.common.exception.ValidationException(
-                        "responseBody",
-                        bodySize,
-                        "Response body size " + bodySize + " bytes exceeds maximum allowed size " + maxResponseSize + " bytes"
+                    "responseBody",
+                    bodySize,
+                    "Response body size " + bodySize + " bytes exceeds maximum allowed size " + maxResponseSize + " bytes"
                 );
             }
         }
