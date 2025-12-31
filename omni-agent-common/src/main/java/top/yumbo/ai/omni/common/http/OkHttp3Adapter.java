@@ -5,10 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.yumbo.ai.omni.common.exception.HttpException;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,7 +39,9 @@ public class OkHttp3Adapter implements HttpClientAdapter {
     private static final Logger log = LoggerFactory.getLogger(OkHttp3Adapter.class);
     private OkHttpClient client;
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private final List<HttpInterceptor> interceptors = new ArrayList<>();
+    private final List<HttpInterceptor> interceptors = new CopyOnWriteArrayList<>();
+    private long maxRequestSize = 10 * 1024 * 1024; // 默认10MB
+    private long maxResponseSize = 10 * 1024 * 1024; // 默认10MB
 
     /**
      * 使用默认配置的 OkHttpClient
@@ -60,9 +62,9 @@ public class OkHttp3Adapter implements HttpClientAdapter {
      */
     private static OkHttpClient createDefaultClient() {
         return new OkHttpClient.Builder()
-                .connectTimeout(120, TimeUnit.SECONDS)
-                .readTimeout(120, TimeUnit.SECONDS)
-                .writeTimeout(120, TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .connectionPool(new ConnectionPool(20, 5, TimeUnit.MINUTES))
                 .retryOnConnectionFailure(true)
                 .build();
@@ -86,6 +88,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
     @Override
     public String post(String url, Map<String, String> headers, String body) throws Exception {
         validateUrl(url);
+        validateRequestSize(body);
 
         RequestBody requestBody = body != null
             ? RequestBody.create(body, JSON)
@@ -105,6 +108,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
     @Override
     public String put(String url, Map<String, String> headers, String body) throws Exception {
         validateUrl(url);
+        validateRequestSize(body);
 
         RequestBody requestBody = body != null
             ? RequestBody.create(body, JSON)
@@ -182,6 +186,9 @@ public class OkHttp3Adapter implements HttpClientAdapter {
 
             String responseBodyString = responseBody.string();
 
+            // 验证响应体大小
+            validateResponseSize(responseBodyString);
+
             // 执行拦截器 - afterResponse
             HttpInterceptor.HttpResponse httpResponse = new HttpInterceptor.HttpResponse(
                 response.code(),
@@ -196,6 +203,9 @@ public class OkHttp3Adapter implements HttpClientAdapter {
 
             return httpResponse.getBody();
 
+        } catch (top.yumbo.ai.omni.common.exception.ValidationException e) {
+            // ValidationException直接抛出，不包装
+            throw e;
         } catch (HttpException e) {
             throw e;
         } catch (Exception e) {
@@ -217,6 +227,57 @@ public class OkHttp3Adapter implements HttpClientAdapter {
     @Override
     public void clearInterceptors() {
         interceptors.clear();
+    }
+
+    @Override
+    public void setTimeout(int connectTimeoutSeconds, int readTimeoutSeconds) {
+        this.client = this.client.newBuilder()
+                .connectTimeout(connectTimeoutSeconds, TimeUnit.SECONDS)
+                .readTimeout(readTimeoutSeconds, TimeUnit.SECONDS)
+                .writeTimeout(readTimeoutSeconds, TimeUnit.SECONDS)
+                .build();
+    }
+
+    @Override
+    public void setMaxRequestSize(long maxBytes) {
+        this.maxRequestSize = maxBytes;
+    }
+
+    @Override
+    public void setMaxResponseSize(long maxBytes) {
+        this.maxResponseSize = maxBytes;
+    }
+
+    /**
+     * 验证请求体大小
+     */
+    private void validateRequestSize(String body) {
+        if (body != null && maxRequestSize > 0) {
+            long bodySize = body.getBytes().length;
+            if (bodySize > maxRequestSize) {
+                throw new top.yumbo.ai.omni.common.exception.ValidationException(
+                    "body",
+                    bodySize,
+                    "Request body size " + bodySize + " bytes exceeds maximum allowed size " + maxRequestSize + " bytes"
+                );
+            }
+        }
+    }
+
+    /**
+     * 验证响应体大小
+     */
+    private void validateResponseSize(String responseBody) {
+        if (responseBody != null && maxResponseSize > 0) {
+            long bodySize = responseBody.getBytes().length;
+            if (bodySize > maxResponseSize) {
+                throw new top.yumbo.ai.omni.common.exception.ValidationException(
+                    "responseBody",
+                    bodySize,
+                    "Response body size " + bodySize + " bytes exceeds maximum allowed size " + maxResponseSize + " bytes"
+                );
+            }
+        }
     }
 
     @Override

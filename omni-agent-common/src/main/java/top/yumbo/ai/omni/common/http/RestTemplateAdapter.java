@@ -6,10 +6,10 @@ import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import top.yumbo.ai.omni.common.exception.HttpException;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * RestTemplate 适配器
@@ -32,7 +32,9 @@ public class RestTemplateAdapter implements HttpClientAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(RestTemplateAdapter.class);
     private final RestTemplate restTemplate;
-    private final List<HttpInterceptor> interceptors = new ArrayList<>();
+    private final List<HttpInterceptor> interceptors = new CopyOnWriteArrayList<>();
+    private long maxRequestSize = 10 * 1024 * 1024; // 默认10MB
+    private long maxResponseSize = 10 * 1024 * 1024; // 默认10MB
 
     public RestTemplateAdapter(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -67,6 +69,9 @@ public class RestTemplateAdapter implements HttpClientAdapter {
      */
     private String executeRequest(String url, HttpMethod method, Map<String, String> headers, String body) {
         long startTime = System.currentTimeMillis();
+
+        // 验证请求体大小
+        validateRequestSize(body);
 
         // 执行拦截器 - beforeRequest
         HttpInterceptor.HttpRequest httpRequest = new HttpInterceptor.HttpRequest(
@@ -112,10 +117,15 @@ public class RestTemplateAdapter implements HttpClientAdapter {
                 throw exception;
             }
 
+            String responseBodyString = response.getBody();
+
+            // 验证响应体大小
+            validateResponseSize(responseBodyString);
+
             // 执行拦截器 - afterResponse
             HttpInterceptor.HttpResponse httpResponse = new HttpInterceptor.HttpResponse(
                 response.getStatusCode().value(),
-                response.getBody(),
+                responseBodyString,
                 new HashMap<>(),
                 duration
             );
@@ -126,6 +136,9 @@ public class RestTemplateAdapter implements HttpClientAdapter {
 
             return httpResponse.getBody();
 
+        } catch (top.yumbo.ai.omni.common.exception.ValidationException e) {
+            // ValidationException直接抛出，不包装
+            throw e;
         } catch (HttpException e) {
             throw e;
         } catch (Exception e) {
@@ -147,6 +160,48 @@ public class RestTemplateAdapter implements HttpClientAdapter {
     @Override
     public void clearInterceptors() {
         interceptors.clear();
+    }
+
+    @Override
+    public void setMaxRequestSize(long maxBytes) {
+        this.maxRequestSize = maxBytes;
+    }
+
+    @Override
+    public void setMaxResponseSize(long maxBytes) {
+        this.maxResponseSize = maxBytes;
+    }
+
+    /**
+     * 验证请求体大小
+     */
+    private void validateRequestSize(String body) {
+        if (body != null && maxRequestSize > 0) {
+            long bodySize = body.getBytes().length;
+            if (bodySize > maxRequestSize) {
+                throw new top.yumbo.ai.omni.common.exception.ValidationException(
+                    "body",
+                    bodySize,
+                    "Request body size " + bodySize + " bytes exceeds maximum allowed size " + maxRequestSize + " bytes"
+                );
+            }
+        }
+    }
+
+    /**
+     * 验证响应体大小
+     */
+    private void validateResponseSize(String responseBody) {
+        if (responseBody != null && maxResponseSize > 0) {
+            long bodySize = responseBody.getBytes().length;
+            if (bodySize > maxResponseSize) {
+                throw new top.yumbo.ai.omni.common.exception.ValidationException(
+                    "responseBody",
+                    bodySize,
+                    "Response body size " + bodySize + " bytes exceeds maximum allowed size " + maxResponseSize + " bytes"
+                );
+            }
+        }
     }
 
     @Override

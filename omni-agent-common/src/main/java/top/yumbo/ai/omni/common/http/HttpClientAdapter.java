@@ -72,6 +72,24 @@ public interface HttpClientAdapter {
     }
 
     /**
+     * 设置请求体最大大小
+     *
+     * @param maxBytes 最大字节数，0或负数表示不限制
+     */
+    default void setMaxRequestSize(long maxBytes) {
+        // 默认实现为空，子类可选择性实现
+    }
+
+    /**
+     * 设置响应体最大大小
+     *
+     * @param maxBytes 最大字节数，0或负数表示不限制
+     */
+    default void setMaxResponseSize(long maxBytes) {
+        // 默认实现为空，子类可选择性实现
+    }
+
+    /**
      * 获取适配器名称
      *
      * @return 适配器名称

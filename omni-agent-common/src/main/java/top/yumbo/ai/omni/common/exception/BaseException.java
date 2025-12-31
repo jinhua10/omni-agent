@@ -1,5 +1,7 @@
 package top.yumbo.ai.omni.common.exception;
 
+import lombok.Getter;
+
 /**
  * 基础异常类
  * <p>
@@ -8,16 +10,19 @@ package top.yumbo.ai.omni.common.exception;
  * @author OmniAgent Team
  * @since 3.0.0
  */
+@Getter
 public class BaseException extends RuntimeException {
 
     private String code;
 
     public BaseException(String message) {
         super(message);
+        this.code = "UNKNOWN_ERROR";
     }
 
     public BaseException(String message, Throwable cause) {
         super(message, cause);
+        this.code = "UNKNOWN_ERROR";
     }
 
     public BaseException(String code, String message) {
@@ -30,8 +35,5 @@ public class BaseException extends RuntimeException {
         this.code = code;
     }
 
-    public String getCode() {
-        return code;
-    }
 }
 
