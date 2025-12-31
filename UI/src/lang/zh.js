@@ -2637,5 +2637,41 @@ export default {
       copyright: '© 2025 OmniAgent. Apache License 2.0. Made with ❤️ by Jinhua Yu',
     },
   },
+
+  // ============================================================================
+  // 欢迎信 (Welcome Letter)
+  // ============================================================================
+  letter: {
+    // 模态框标题
+    modalTitle: '欢迎来到 omni-agent',
+    modalSubtitle: '我们为不同的用户准备了三封信，请选择适合您的一封',
+    laterButton: '稍后再看',
+
+    // 三封信
+    user: {
+      title: '致普通用户的一封信',
+      description: '了解 omni-agent 如何帮助您管理个人知识',
+      buttonText: '阅读信件',
+    },
+    developer: {
+      title: '致开发者的一封信',
+      description: '探索 omni-agent 的技术架构和创新',
+      buttonText: '阅读信件',
+    },
+    enterprise: {
+      title: '致企业用户的一封信',
+      description: '发现 omni-agent 为企业创造的价值',
+      buttonText: '阅读信件',
+    },
+
+    // 悬浮按钮
+    floatingButtonTooltip: '查看欢迎信',
+    floatingButtonLabel: '欢迎信',
+
+    // 加载状态
+    loading: '加载中...',
+    loadFailed: '加载失败',
+    loadFailedMessage: '抱歉，无法加载信件内容。请刷新页面重试。',
+  },
 }
 

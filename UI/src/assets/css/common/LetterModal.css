@@ -1,0 +1,434 @@
+/**
+ * 信件模态框样式 (Letter Modal Styles)
+ *
+ * @author omni-agent team
+ * @since 2026-01-01
+ */
+
+/* ========== 信件选择模态框 ========== */
+.letter-selection-modal .ant-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.letter-modal-header {
+  text-align: center;
+  padding: 32px 24px 24px;
+  position: relative;
+}
+
+/* 语言切换器 */
+.letter-language-switcher {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.letter-language-icon {
+  font-size: 18px;
+  color: #1890ff;
+}
+
+.letter-language-switcher .ant-radio-group {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 庆祝动画 */
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  font-size: 32px;
+  animation: fall 2s ease-in-out;
+}
+
+.confetti:nth-child(1) {
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.confetti:nth-child(2) {
+  left: 30%;
+  animation-delay: 0.2s;
+}
+
+.confetti:nth-child(3) {
+  left: 50%;
+  animation-delay: 0.4s;
+}
+
+.confetti:nth-child(4) {
+  left: 70%;
+  animation-delay: 0.6s;
+}
+
+.confetti:nth-child(5) {
+  left: 90%;
+  animation-delay: 0.8s;
+}
+
+@keyframes fall {
+  0% {
+    top: -50px;
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    transform: rotate(360deg) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.letter-modal-title {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0 0 12px 0;
+  color: #1890ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.letter-modal-icon {
+  font-size: 28px;
+}
+
+.letter-modal-subtitle {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+.letter-cards-container {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.letter-modal-footer {
+  text-align: center;
+  padding: 16px 24px 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* ========== 信件卡片 ========== */
+.letter-card {
+  width: 240px;
+  height: 280px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.letter-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.letter-card-hovered {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.letter-card-content {
+  padding: 24px 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.letter-card-emoji {
+  font-size: 48px;
+  transition: transform 0.3s ease;
+}
+
+.letter-card:hover .letter-card-emoji {
+  transform: scale(1.1);
+}
+
+.letter-card-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 16px 0 0 0;
+}
+
+.letter-card-description {
+  color: #666;
+  font-size: 14px;
+  margin: 12px 0 0 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.letter-card-button {
+  margin-top: 16px;
+}
+
+/* ========== 信件查看器 ========== */
+.letter-viewer-modal .ant-modal-content {
+  border-radius: 12px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.letter-viewer-modal .ant-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 48px;
+}
+
+.letter-viewer-content {
+  max-width: 900px;
+  margin: 0 auto;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.letter-viewer-loading {
+  text-align: center;
+  padding: 60px 0;
+}
+
+/* Markdown 样式 */
+.letter-viewer-content h1 {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 0 24px 0;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #1890ff;
+  color: #1890ff;
+}
+
+.letter-viewer-content h2 {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 32px 0 16px 0;
+  color: #333;
+}
+
+.letter-viewer-content h3 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 24px 0 12px 0;
+  color: #555;
+}
+
+.letter-viewer-content h4 {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 20px 0 10px 0;
+  color: #666;
+}
+
+.letter-viewer-content p {
+  margin: 12px 0;
+  color: #333;
+}
+
+.letter-viewer-content ul,
+.letter-viewer-content ol {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.letter-viewer-content li {
+  margin: 8px 0;
+  color: #333;
+}
+
+.letter-viewer-content code {
+  background-color: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  color: #d63384;
+}
+
+.letter-viewer-content pre {
+  background-color: #282c34;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.letter-viewer-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #abb2bf;
+}
+
+.letter-viewer-content blockquote {
+  border-left: 4px solid #1890ff;
+  padding-left: 16px;
+  margin: 16px 0;
+  color: #666;
+  font-style: italic;
+}
+
+.letter-viewer-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+.letter-viewer-content table th,
+.letter-viewer-content table td {
+  border: 1px solid #e8e8e8;
+  padding: 12px;
+  text-align: left;
+}
+
+.letter-viewer-content table th {
+  background-color: #fafafa;
+  font-weight: bold;
+}
+
+.letter-viewer-content table tr:hover {
+  background-color: #f5f5f5;
+}
+
+.letter-viewer-content hr {
+  border: none;
+  border-top: 1px solid #e8e8e8;
+  margin: 24px 0;
+}
+
+.letter-viewer-content a {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.letter-viewer-content a:hover {
+  text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .letter-language-switcher {
+    top: 8px;
+    right: 12px;
+  }
+
+  .letter-cards-container {
+    flex-direction: column;
+  }
+
+  .letter-card {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .letter-viewer-modal .ant-modal-body {
+    padding: 16px 24px;
+  }
+
+  .letter-viewer-content {
+    font-size: 14px;
+  }
+
+  .letter-viewer-content h1 {
+    font-size: 24px;
+  }
+
+  .letter-viewer-content h2 {
+    font-size: 20px;
+  }
+
+  .letter-viewer-content h3 {
+    font-size: 18px;
+  }
+}
+
+/* 暗色主题支持 */
+.theme-dark .letter-modal-title {
+  color: #40a9ff;
+}
+
+.theme-dark .letter-modal-subtitle {
+  color: #aaa;
+}
+
+.theme-dark .letter-language-icon {
+  color: #40a9ff;
+}
+
+.theme-dark .letter-card {
+  background-color: #1f1f1f;
+  border-color: #333;
+}
+
+.theme-dark .letter-card:hover {
+  border-color: #40a9ff;
+}
+
+.theme-dark .letter-card-title {
+  color: #fff;
+}
+
+.theme-dark .letter-card-description {
+  color: #aaa;
+}
+
+.theme-dark .letter-viewer-content h1,
+.theme-dark .letter-viewer-content h2,
+.theme-dark .letter-viewer-content h3,
+.theme-dark .letter-viewer-content h4 {
+  color: #fff;
+}
+
+.theme-dark .letter-viewer-content p,
+.theme-dark .letter-viewer-content li {
+  color: #ddd;
+}
+
+.theme-dark .letter-viewer-content code {
+  background-color: #2d2d2d;
+  color: #e06c75;
+}
+
+.theme-dark .letter-viewer-content blockquote {
+  color: #aaa;
+  border-left-color: #40a9ff;
+}
+
+.theme-dark .letter-viewer-content table th {
+  background-color: #2d2d2d;
+}
+
+.theme-dark .letter-viewer-content table td {
+  border-color: #333;
+}
+
+.theme-dark .letter-viewer-content table tr:hover {
+  background-color: #2d2d2d;
+}
+

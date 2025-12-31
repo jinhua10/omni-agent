@@ -15,7 +15,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import { UIThemeEngineProvider } from './contexts/UIThemeEngineContext'
 import { QAProvider } from './contexts/QAContext'
 import { ThemeRenderingEngine } from './components/theme'
-import { ErrorBoundary } from './components/common'
+import { ErrorBoundary, LetterModal, FloatingLetterButton } from './components/common'
 import ThemeEngineErrorBoundary from './components/theme/ThemeEngineErrorBoundary'
 import { FloatingAIButton, FloatingAIPanel, DOCK_POSITIONS } from './components/ai'
 import ResizeSplitter from './components/ai/ResizeSplitter'
@@ -32,7 +32,7 @@ import { WorkflowMarket, WorkflowBuilder } from './components/workflow'
 import LandingPage from './components/landing/LandingPage.jsx'
 import { initializeUserId } from './utils/userManager'
 import './assets/css/main.css'
-import './assets/css/error-boundary.css'
+import './assets/css/common/error-boundary.css'
 
 /**
  * 应用内容组件 / App Content Component
@@ -43,6 +43,8 @@ function AppContent() {
   const { theme: currentTheme, themeName } = useTheme()
   const [activeMenu, setActiveMenu] = useState('qa')
   const [currentView, setCurrentView] = useState('landing') // 'landing' 或 'app'
+  const [letterModalOpen, setLetterModalOpen] = useState(false)
+  const [showLetterBadge, setShowLetterBadge] = useState(false)
   const [aiPanelConfig, setAIPanelConfig] = useState(() => {
     // 从localStorage读取AI面板配置
     try {
@@ -107,6 +109,36 @@ function AppContent() {
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
+
+  // 检查是否第一次进入应用，显示信件模态框
+  React.useEffect(() => {
+    if (currentView === 'app') {
+      const hasSeenLetter = localStorage.getItem('omni_agent_letter_seen')
+      if (!hasSeenLetter) {
+        // 延迟500ms显示，让页面先加载
+        const timer = setTimeout(() => {
+          setLetterModalOpen(true)
+        }, 500)
+        return () => clearTimeout(timer)
+      } else {
+        // 已经看过信件，显示徽章提示可以再次查看
+        setShowLetterBadge(true)
+      }
+    }
+  }, [currentView])
+
+  // 关闭信件模态框
+  const handleCloseLetterModal = () => {
+    setLetterModalOpen(false)
+    localStorage.setItem('omni_agent_letter_seen', 'true')
+    setShowLetterBadge(true)
+  }
+
+  // 打开信件模态框
+  const handleOpenLetterModal = () => {
+    setLetterModalOpen(true)
+    setShowLetterBadge(false)
+  }
 
   // 监听localStorage变化
   React.useEffect(() => {
@@ -343,6 +375,18 @@ function AppContent() {
             {/* 浮动AI分析按钮和面板 */}
             <FloatingAIButton />
             <FloatingAIPanel />
+
+            {/* 悬浮信件按钮 */}
+            <FloatingLetterButton
+              onClick={handleOpenLetterModal}
+              showBadge={showLetterBadge}
+            />
+
+            {/* 信件选择模态框 */}
+            <LetterModal
+              open={letterModalOpen}
+              onClose={handleCloseLetterModal}
+            />
           </>
         )}
       </ErrorBoundary>

@@ -1229,7 +1229,7 @@ npm run dev`}</pre>
                     alt={t('landingPage.footer.sponsorTitle')}
                     width={180}
                     preview={{
-                      mask: <div>{t('landingPage.footer.sponsorDesc')}</div>
+                      maskClassName: 'custom-preview-mask'
                     }}
                     style={{
                       border: '2px solid rgba(255, 255, 255, 0.1)',
@@ -1260,7 +1260,7 @@ npm run dev`}</pre>
                     alt={t('landingPage.footer.contactTitle')}
                     width={180}
                     preview={{
-                      mask: <div>{t('landingPage.footer.contactDesc')}</div>
+                      maskClassName: 'custom-preview-mask'
                     }}
                     style={{
                       border: '2px solid rgba(255, 255, 255, 0.1)',

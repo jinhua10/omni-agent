@@ -2585,5 +2585,41 @@ export default {
       copyright: '© 2025 OmniAgent. Apache License 2.0. Made with ❤️ by Jinhua Yu',
     },
   },
+
+  // ============================================================================
+  // Welcome Letter
+  // ============================================================================
+  letter: {
+    // Modal title
+    modalTitle: 'Welcome to omni-agent',
+    modalSubtitle: 'We\'ve prepared three letters for different users, please choose the one that suits you',
+    laterButton: 'Later',
+
+    // Three letters
+    user: {
+      title: 'A Letter to Regular Users',
+      description: 'Learn how omni-agent helps you manage personal knowledge',
+      buttonText: 'Read Letter',
+    },
+    developer: {
+      title: 'A Letter to Developers',
+      description: 'Explore omni-agent\'s technical architecture and innovations',
+      buttonText: 'Read Letter',
+    },
+    enterprise: {
+      title: 'A Letter to Enterprise Users',
+      description: 'Discover the value omni-agent creates for enterprises',
+      buttonText: 'Read Letter',
+    },
+
+    // Floating button
+    floatingButtonTooltip: 'View welcome letter',
+    floatingButtonLabel: 'Welcome',
+
+    // Loading states
+    loading: 'Loading...',
+    loadFailed: 'Load Failed',
+    loadFailedMessage: 'Sorry, failed to load letter content. Please refresh and try again.',
+  },
 }
 

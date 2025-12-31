@@ -1,0 +1,86 @@
+/**
+ * 悬浮信件按钮样式 (Floating Letter Button Styles)
+ *
+ * @author omni-agent team
+ * @since 2026-01-01
+ */
+
+.floating-letter-button-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.floating-letter-button {
+  transition: all 0.3s ease;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.floating-letter-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(24, 144, 255, 0.5) !important;
+}
+
+.floating-letter-button-hovered {
+  animation: none;
+}
+
+.floating-letter-button-label {
+  background-color: #1890ff;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(24, 144, 255, 0.6);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .floating-letter-button-container {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .floating-letter-button {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 20px !important;
+  }
+
+  .floating-letter-button-label {
+    display: none;
+  }
+}
+
+/* 暗色主题支持 */
+.theme-dark .floating-letter-button-label {
+  background-color: #40a9ff;
+}
+
