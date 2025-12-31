@@ -26,27 +26,49 @@ import java.util.Optional;
  *   <li>✅ 保存提取的文本内容（可能很大）</li>
  *   <li>✅ 管理文档分块和图像</li>
  *   <li>✅ 存储RAG优化分析数据</li>
- *   <li>✅ 数据量大（MB-GB级别），简单CRUD</li>
+ *   <li>✅ 数据量大（MB-GB级别），简单CRUD操作</li>
  * </ul>
  *
- * <h3>不适用场景 (Not For)</h3>
+ * <h3>支持的存储后端 (Supported Storage Backends)</h3>
+ * <p>本接口支持多种存储后端实现，可根据实际需求灵活选择：</p>
  * <ul>
- *   <li>❌ 系统配置管理（请使用专门的 Persistence API）</li>
- *   <li>❌ 规则和元数据（请使用 Persistence API）</li>
- *   <li>❌ 需要复杂查询的结构化数据（请使用 Persistence API）</li>
+ *   <li><b>File</b> - 本地文件系统，零依赖，适合开发测试和小规模部署</li>
+ *   <li><b>MongoDB</b> - GridFS大文件存储，支持ACID事务，适合中大规模分布式部署</li>
+ *   <li><b>MinIO</b> - S3兼容对象存储，适合企业内部私有云大规模存储</li>
+ *   <li><b>S3</b> - AWS云存储，无限扩展，适合公有云大规模部署</li>
+ *   <li><b>Redis</b> - 内存存储，超高性能，支持TTL，适合缓存和临时数据</li>
+ *   <li><b>Elasticsearch</b> - 全文搜索引擎，适合可搜索文档库和知识库</li>
  * </ul>
  *
- * <h3>支持的后端 (Supported Backends)</h3>
- * <p>File, MongoDB, S3, MinIO, Redis, Elasticsearch</p>
+ * <h3>设计特点 (Design Features)</h3>
+ * <ul>
+ *   <li>🔌 <b>多后端支持</b> - 统一接口，多种存储后端可选</li>
+ *   <li>🔄 <b>可切换</b> - 通过配置切换存储后端，无需修改业务代码</li>
+ *   <li>📦 <b>批量操作</b> - 支持批量保存、删除，提供事务性和非事务性两种模式</li>
+ *   <li>🌊 <b>流式API</b> - 支持大文件流式读写，避免内存溢出</li>
+ *   <li>🎯 <b>简单CRUD</b> - 专注于文件和内容存储，不涉及复杂业务逻辑</li>
+ * </ul>
  *
- * <h3>与 Persistence 层的区别 (vs Persistence Layer)</h3>
- * <table border="1">
- *   <tr><th>特性</th><th>Storage (本接口)</th><th>Persistence</th></tr>
- *   <tr><td>数据类型</td><td>非结构化内容</td><td>结构化配置</td></tr>
- *   <tr><td>数据量</td><td>大（MB-GB）</td><td>小（KB）</td></tr>
- *   <tr><td>用途</td><td>业务数据</td><td>系统配置</td></tr>
- *   <tr><td>类比</td><td>图书馆"书架"</td><td>图书馆"目录"</td></tr>
- * </table>
+ * <h3>使用示例 (Usage Example)</h3>
+ * <pre>{@code
+ * // 1. 保存文档
+ * String docId = storage.saveDocument("doc-001", "report.pdf", fileData);
+ *
+ * // 2. 保存分块（用于RAG）
+ * List<Chunk> chunks = chunker.split(text);
+ * storage.saveChunks(docId, chunks);
+ *
+ * // 3. 保存图像
+ * storage.saveImages(docId, extractedImages);
+ *
+ * // 4. 批量操作（事务性）
+ * BatchOperationResult result = storage.saveDocumentsTransactional(documents);
+ *
+ * // 5. 流式处理大文件
+ * try (InputStream stream = storage.getDocumentStream(docId)) {
+ *     // 处理大文件，避免内存溢出
+ * }
+ * }</pre>
  *
  * @author OmniAgent Team
  * @since 1.0.0
