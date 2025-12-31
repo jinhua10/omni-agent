@@ -1,17 +1,20 @@
-# ✅ MongoDB文档存储 - P1优化配置示例
+# ✅ MongoDB文档存储 - P1+P2优化配置示例
 #
 # 包含以下优化：
+# - P1优化2：Jackson Afterburner（自动启用）
 # - P1优化3：连接池优化
 # - P1优化4：重试机制配置
+# - P2优化：MongoDB事务支持
 #
 # @author OmniAgent Team
 # @since 2.0.0
-# @version P1 Optimized
+# @version P2 Optimized
 
 spring:
   data:
     mongodb:
       # MongoDB连接URI
+      # 注意：事务需要副本集（Replica Set），单节点不支持
       uri: mongodb://localhost:27017/omni-agent
 
       # ✅ P1优化3：连接池优化配置
@@ -46,6 +49,27 @@ omni-agent:
         mongodb:
           database: documents  # GridFS bucket名称
 
+          # ✅ P2优化：启用MongoDB事务支持
+          # 注意：需要MongoDB副本集（Replica Set）才能使用事务
+          # 单节点MongoDB会自动降级为手动回滚模式
+          enable-transactions: false  # 默认关闭，副本集环境可设为true
+
+# MongoDB连接池详细配置（通过URI参数）
+# 参数说明：
+# - minPoolSize=10           # 最小连接数（避免冷启动）
+# - maxPoolSize=100          # 最大连接数（支持并发）
+# - maxWaitTime=2000         # 等待连接超时（毫秒）
+# - maxConnectionIdleTime=60000    # 空闲连接超时（1分钟）
+# - maxConnectionLifeTime=300000   # 连接最大生命周期（5分钟）
+# - connectTimeout=10000     # 连接超时（10秒）
+# - socketTimeout=30000      # Socket超时（30秒）
+# - serverSelectionTimeout=30000   # 服务器选择超时（30秒）
+
+# MongoDB事务配置说明：
+# 1. 单节点MongoDB：不支持事务，自动降级为手动回滚
+# 2. 副本集MongoDB：支持事务，设置 enable-transactions: true
+# 3. 分片集群MongoDB：支持分布式事务（4.2+版本）
+
 # MongoDB性能监控（可选）
 management:
   metrics:
@@ -54,4 +78,11 @@ management:
   endpoint:
     health:
       show-details: always
+
+# 日志配置（可选）
+logging:
+  level:
+    top.yumbo.ai.omni.storage.impl.mongodb: DEBUG  # MongoDB存储日志
+    org.springframework.data.mongodb: INFO         # Spring Data MongoDB日志
+    org.springframework.retry: DEBUG               # 重试机制日志
 

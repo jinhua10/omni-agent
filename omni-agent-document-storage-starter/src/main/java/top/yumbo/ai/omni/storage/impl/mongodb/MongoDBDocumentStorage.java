@@ -20,6 +20,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.transaction.annotation.Transactional;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
 import top.yumbo.ai.omni.storage.api.model.OptimizationData;
@@ -1272,7 +1273,12 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * ✅ P2优化：使用MongoDB事务自动回滚（需要副本集）
+     * 如果未启用事务，则降级为手动回滚模式
+     */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchOperationResult deleteDocumentsTransactional(List<String> documentIds)
             throws BatchOperationException {
 
@@ -1322,6 +1328,8 @@ public class MongoDBDocumentStorage implements DocumentStorageService {
                     .build();
 
         } catch (Exception e) {
+            // ✅ P2优化：如果启用了事务，Spring会自动回滚
+            // 如果未启用事务，执行手动回滚逻辑
             log.warn("⏮ Transaction failed, restoring {} documents...", successIds.size());
 
             for (String docId : successIds) {
