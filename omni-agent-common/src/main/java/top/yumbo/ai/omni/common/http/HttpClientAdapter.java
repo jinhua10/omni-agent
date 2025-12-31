@@ -64,6 +64,18 @@ public interface HttpClientAdapter {
     String delete(String url, Map<String, String> headers) throws Exception;
 
     /**
+     * 发送 PATCH 请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头（可为null）
+     * @param body 请求体（JSON字符串，可为null）
+     * @return 响应体（JSON字符串）
+     * @throws IllegalArgumentException URL格式错误
+     * @throws Exception 请求失败时抛出异常
+     */
+    String patch(String url, Map<String, String> headers, String body) throws Exception;
+
+    /**
      * 设置超时时间
      *
      * @param connectTimeoutSeconds 连接超时时间（秒）
@@ -190,6 +202,24 @@ public interface HttpClientAdapter {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return delete(url, headers);
+            } catch (Exception e) {
+                throw new java.util.concurrent.CompletionException(e);
+            }
+        }, getAsyncExecutor());
+    }
+
+    /**
+     * 发送异步 PATCH 请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头（可为null）
+     * @param body 请求体（JSON字符串，可为null）
+     * @return CompletableFuture包装的响应体
+     */
+    default CompletableFuture<String> patchAsync(String url, Map<String, String> headers, String body) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return patch(url, headers, body);
             } catch (Exception e) {
                 throw new java.util.concurrent.CompletionException(e);
             }

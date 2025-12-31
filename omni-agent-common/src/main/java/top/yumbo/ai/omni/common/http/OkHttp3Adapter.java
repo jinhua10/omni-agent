@@ -14,15 +14,15 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * OkHttp3 适配器
- *
+ * <p>
  * 使用 OkHttp3 实现 HTTP 请求
- *
+ * <p>
  * 优点：
  * - 性能更好，连接池管理更优
  * - 支持 HTTP/2
  * - 内存占用更低
  * - 适合高频调用场景
- *
+ * <p>
  * 注意：需要引入依赖
  * <pre>
  * &lt;dependency&gt;
@@ -93,8 +93,8 @@ public class OkHttp3Adapter implements HttpClientAdapter {
         validateRequestSize(body);
 
         RequestBody requestBody = body != null
-            ? RequestBody.create(body, JSON)
-            : RequestBody.create("", JSON);
+                ? RequestBody.create(body, JSON)
+                : RequestBody.create("", JSON);
 
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
@@ -113,8 +113,8 @@ public class OkHttp3Adapter implements HttpClientAdapter {
         validateRequestSize(body);
 
         RequestBody requestBody = body != null
-            ? RequestBody.create(body, JSON)
-            : RequestBody.create("", JSON);
+                ? RequestBody.create(body, JSON)
+                : RequestBody.create("", JSON);
 
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
@@ -142,16 +142,36 @@ public class OkHttp3Adapter implements HttpClientAdapter {
         return executeRequest(requestBuilder.build(), "DELETE", url, headers, null);
     }
 
+    @Override
+    public String patch(String url, Map<String, String> headers, String body) throws Exception {
+        validateUrl(url);
+        validateRequestSize(body);
+
+        RequestBody requestBody = body != null
+                ? RequestBody.create(body, JSON)
+                : RequestBody.create("", JSON);
+
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(url)
+                .patch(requestBody);
+
+        if (headers != null) {
+            headers.forEach(requestBuilder::addHeader);
+        }
+
+        return executeRequest(requestBuilder.build(), "PATCH", url, headers, body);
+    }
+
     /**
      * 执行HTTP请求
      */
     private String executeRequest(Request request, String method, String url,
-                                   Map<String, String> headers, String body) throws Exception {
+                                  Map<String, String> headers, String body) throws Exception {
         long startTime = System.currentTimeMillis();
 
-        // 执行拦截器 - beforeRequest
+        // 执行拦截器 - beforeRequest (按优先级排序)
         HttpInterceptor.HttpRequest httpRequest = new HttpInterceptor.HttpRequest(url, method, headers, body);
-        for (HttpInterceptor interceptor : interceptors) {
+        for (HttpInterceptor interceptor : getSortedInterceptors()) {
             httpRequest = interceptor.beforeRequest(httpRequest);
         }
 
@@ -166,15 +186,15 @@ public class OkHttp3Adapter implements HttpClientAdapter {
                 }
 
                 HttpException exception = new HttpException(
-                    response.code(),
-                    response.message(),
-                    url,
-                    errorBody,
-                    method
+                        response.code(),
+                        response.message(),
+                        url,
+                        errorBody,
+                        method
                 );
 
-                // 执行拦截器 - onError
-                for (HttpInterceptor interceptor : interceptors) {
+                // 执行拦截器 - onError (按优先级排序)
+                for (HttpInterceptor interceptor : getSortedInterceptors()) {
                     interceptor.onError(httpRequest, exception);
                 }
 
@@ -191,15 +211,15 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             // 验证响应体大小
             validateResponseSize(responseBodyString);
 
-            // 执行拦截器 - afterResponse
+            // 执行拦截器 - afterResponse (按优先级排序)
             HttpInterceptor.HttpResponse httpResponse = new HttpInterceptor.HttpResponse(
-                response.code(),
-                responseBodyString,
-                new HashMap<>(),
-                duration
+                    response.code(),
+                    responseBodyString,
+                    new HashMap<>(),
+                    duration
             );
 
-            for (HttpInterceptor interceptor : interceptors) {
+            for (HttpInterceptor interceptor : getSortedInterceptors()) {
                 httpResponse = interceptor.afterResponse(httpResponse);
             }
 
@@ -211,8 +231,8 @@ public class OkHttp3Adapter implements HttpClientAdapter {
         } catch (HttpException e) {
             throw e;
         } catch (Exception e) {
-            // 执行拦截器 - onError
-            for (HttpInterceptor interceptor : interceptors) {
+            // 执行拦截器 - onError (按优先级排序)
+            for (HttpInterceptor interceptor : getSortedInterceptors()) {
                 interceptor.onError(httpRequest, e);
             }
             throw new HttpException(0, "请求执行失败: " + e.getMessage(), url, e);
@@ -229,6 +249,15 @@ public class OkHttp3Adapter implements HttpClientAdapter {
     @Override
     public void clearInterceptors() {
         interceptors.clear();
+    }
+
+    /**
+     * 获取按优先级排序的拦截器列表
+     */
+    private List<HttpInterceptor> getSortedInterceptors() {
+        return interceptors.stream()
+                .sorted(java.util.Comparator.comparingInt(HttpInterceptor::getOrder))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
@@ -268,9 +297,9 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             long bodySize = body.getBytes().length;
             if (bodySize > maxRequestSize) {
                 throw new top.yumbo.ai.omni.common.exception.ValidationException(
-                    "body",
-                    bodySize,
-                    "Request body size " + bodySize + " bytes exceeds maximum allowed size " + maxRequestSize + " bytes"
+                        "body",
+                        bodySize,
+                        "Request body size " + bodySize + " bytes exceeds maximum allowed size " + maxRequestSize + " bytes"
                 );
             }
         }
@@ -284,9 +313,9 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             long bodySize = responseBody.getBytes().length;
             if (bodySize > maxResponseSize) {
                 throw new top.yumbo.ai.omni.common.exception.ValidationException(
-                    "responseBody",
-                    bodySize,
-                    "Response body size " + bodySize + " bytes exceeds maximum allowed size " + maxResponseSize + " bytes"
+                        "responseBody",
+                        bodySize,
+                        "Response body size " + bodySize + " bytes exceeds maximum allowed size " + maxResponseSize + " bytes"
                 );
             }
         }

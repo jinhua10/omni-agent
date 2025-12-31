@@ -1,5 +1,7 @@
 package top.yumbo.ai.omni.common.http;
 
+import lombok.Data;
+
 import java.util.Map;
 
 /**
@@ -41,7 +43,7 @@ public interface HttpInterceptor {
      * <p>
      * 在发生异常时调用
      *
-     * @param request 请求对象
+     * @param request   请求对象
      * @param exception 异常对象
      */
     default void onError(HttpRequest request, Exception exception) {
@@ -49,8 +51,22 @@ public interface HttpInterceptor {
     }
 
     /**
+     * 获取拦截器执行优先级
+     * <p>
+     * 数值越小优先级越高，越先执行
+     * <p>
+     * 默认优先级为 0
+     *
+     * @return 优先级值
+     */
+    default int getOrder() {
+        return 0;
+    }
+
+    /**
      * HTTP请求对象
      */
+    @Data
     class HttpRequest {
         private String url;
         private String method;
@@ -64,42 +80,12 @@ public interface HttpInterceptor {
             this.body = body;
         }
 
-        public String getUrl() {
-            return url;
-        }
-
-        public void setUrl(String url) {
-            this.url = url;
-        }
-
-        public String getMethod() {
-            return method;
-        }
-
-        public void setMethod(String method) {
-            this.method = method;
-        }
-
-        public Map<String, String> getHeaders() {
-            return headers;
-        }
-
-        public void setHeaders(Map<String, String> headers) {
-            this.headers = headers;
-        }
-
-        public String getBody() {
-            return body;
-        }
-
-        public void setBody(String body) {
-            this.body = body;
-        }
     }
 
     /**
      * HTTP响应对象
      */
+    @Data
     class HttpResponse {
         private int statusCode;
         private String body;
@@ -113,37 +99,6 @@ public interface HttpInterceptor {
             this.durationMs = durationMs;
         }
 
-        public int getStatusCode() {
-            return statusCode;
-        }
-
-        public void setStatusCode(int statusCode) {
-            this.statusCode = statusCode;
-        }
-
-        public String getBody() {
-            return body;
-        }
-
-        public void setBody(String body) {
-            this.body = body;
-        }
-
-        public Map<String, String> getHeaders() {
-            return headers;
-        }
-
-        public void setHeaders(Map<String, String> headers) {
-            this.headers = headers;
-        }
-
-        public long getDurationMs() {
-            return durationMs;
-        }
-
-        public void setDurationMs(long durationMs) {
-            this.durationMs = durationMs;
-        }
     }
 }
 

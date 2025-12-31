@@ -66,6 +66,12 @@ public class RestTemplateAdapter implements HttpClientAdapter {
         return executeRequest(url, HttpMethod.DELETE, headers, null);
     }
 
+    @Override
+    public String patch(String url, Map<String, String> headers, String body) throws Exception {
+        validateUrl(url);
+        return executeRequest(url, HttpMethod.PATCH, headers, body);
+    }
+
     /**
      * 执行HTTP请求
      */
@@ -75,10 +81,10 @@ public class RestTemplateAdapter implements HttpClientAdapter {
         // 验证请求体大小
         validateRequestSize(body);
 
-        // 执行拦截器 - beforeRequest
+        // 执行拦截器 - beforeRequest (按优先级排序)
         HttpInterceptor.HttpRequest httpRequest = new HttpInterceptor.HttpRequest(
             url, method.name(), headers, body);
-        for (HttpInterceptor interceptor : interceptors) {
+        for (HttpInterceptor interceptor : getSortedInterceptors()) {
             httpRequest = interceptor.beforeRequest(httpRequest);
         }
 
@@ -111,8 +117,8 @@ public class RestTemplateAdapter implements HttpClientAdapter {
                     method.name()
                 );
 
-                // 执行拦截器 - onError
-                for (HttpInterceptor interceptor : interceptors) {
+                // 执行拦截器 - onError (按优先级排序)
+                for (HttpInterceptor interceptor : getSortedInterceptors()) {
                     interceptor.onError(httpRequest, exception);
                 }
 
@@ -124,7 +130,7 @@ public class RestTemplateAdapter implements HttpClientAdapter {
             // 验证响应体大小
             validateResponseSize(responseBodyString);
 
-            // 执行拦截器 - afterResponse
+            // 执行拦截器 - afterResponse (按优先级排序)
             HttpInterceptor.HttpResponse httpResponse = new HttpInterceptor.HttpResponse(
                 response.getStatusCode().value(),
                 responseBodyString,
@@ -132,7 +138,7 @@ public class RestTemplateAdapter implements HttpClientAdapter {
                 duration
             );
 
-            for (HttpInterceptor interceptor : interceptors) {
+            for (HttpInterceptor interceptor : getSortedInterceptors()) {
                 httpResponse = interceptor.afterResponse(httpResponse);
             }
 
@@ -144,8 +150,8 @@ public class RestTemplateAdapter implements HttpClientAdapter {
         } catch (HttpException e) {
             throw e;
         } catch (Exception e) {
-            // 执行拦截器 - onError
-            for (HttpInterceptor interceptor : interceptors) {
+            // 执行拦截器 - onError (按优先级排序)
+            for (HttpInterceptor interceptor : getSortedInterceptors()) {
                 interceptor.onError(httpRequest, e);
             }
             throw new HttpException(0, "请求执行失败: " + e.getMessage(), url, e);
@@ -162,6 +168,15 @@ public class RestTemplateAdapter implements HttpClientAdapter {
     @Override
     public void clearInterceptors() {
         interceptors.clear();
+    }
+
+    /**
+     * 获取按优先级排序的拦截器列表
+     */
+    private List<HttpInterceptor> getSortedInterceptors() {
+        return interceptors.stream()
+                .sorted(java.util.Comparator.comparingInt(HttpInterceptor::getOrder))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
