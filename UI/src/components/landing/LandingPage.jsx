@@ -1229,7 +1229,9 @@ npm run dev`}</pre>
                     alt={t('landingPage.footer.sponsorTitle')}
                     width={180}
                     preview={{
-                      maskClassName: 'custom-preview-mask'
+                      classNames: {
+                        cover: 'custom-preview-mask'
+                      }
                     }}
                     style={{
                       border: '2px solid rgba(255, 255, 255, 0.1)',
@@ -1260,7 +1262,9 @@ npm run dev`}</pre>
                     alt={t('landingPage.footer.contactTitle')}
                     width={180}
                     preview={{
-                      maskClassName: 'custom-preview-mask'
+                      classNames: {
+                        cover: 'custom-preview-mask'
+                      }
                     }}
                     style={{
                       border: '2px solid rgba(255, 255, 255, 0.1)',
