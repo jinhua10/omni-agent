@@ -315,7 +315,7 @@ public class FileDocumentStorage implements DocumentStorageService {
             return documentId;
         } catch (IOException e) {
             log.error("❌ Failed to save extracted text: {}", documentId, e);
-            return null;
+            throw new StorageIOException(documentId, "Failed to save extracted text", e);
         }
     }
 
@@ -483,6 +483,7 @@ public class FileDocumentStorage implements DocumentStorageService {
 
     @Override
     public String saveChunk(String documentId, Chunk chunk) {
+        String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
         try {
             // 使用原始文件名作为目录（从chunk或documentId获取）
             // documentId 在调用时应该已经是原始文件名
@@ -490,7 +491,6 @@ public class FileDocumentStorage implements DocumentStorageService {
             Files.createDirectories(docChunkDir);
 
             // 使用有意义的文件名：chunk_序号.md ⭐
-            String chunkId = chunk.getId() != null ? chunk.getId() : UUID.randomUUID().toString();
             int sequence = chunk.getSequence();
             String chunkFilename = String.format("chunk_%03d.md", sequence);  // 添加.md后缀
             Path chunkFile = docChunkDir.resolve(chunkFilename);
@@ -508,7 +508,7 @@ public class FileDocumentStorage implements DocumentStorageService {
             return chunkId;
         } catch (IOException e) {
             log.error("Failed to save chunk for document: {}", documentId, e);
-            return null;
+            throw new StorageIOException(documentId, "Failed to save chunk: " + chunkId, e);
         }
     }
 
@@ -746,11 +746,12 @@ public class FileDocumentStorage implements DocumentStorageService {
 
     @Override
     public String saveImage(String documentId, Image image) {
+        String imageId = null;
         try {
             Path docImageDir = imagesPath.resolve(documentId);
             Files.createDirectories(docImageDir);
 
-            // ⭐ 强制要求页码信息
+            // ⭐ 验证必填字段：页码信息
             Integer pageNum = image.getPageNumber();
             if (pageNum == null || pageNum <= 0) {
                 throw new IllegalArgumentException(
@@ -759,30 +760,18 @@ public class FileDocumentStorage implements DocumentStorageService {
                                 pageNum, documentId));
             }
 
-            // 从 metadata 中获取图片序号和基础文件名
-            Integer imageIndex = null;
-            String baseName = documentId;  // 默认使用documentId
-            if (image.getMetadata() != null) {
-                if (image.getMetadata().containsKey("imageIndex")) {
-                    imageIndex = ((Number) image.getMetadata().get("imageIndex")).intValue();
-                }
-                if (image.getMetadata().containsKey("baseName")) {
-                    baseName = (String) image.getMetadata().get("baseName");
-                }
+            // ✅ 简化ID生成：使用提供的ID或生成新ID
+            imageId = image.getId();
+            if (imageId == null || imageId.isEmpty()) {
+                // 统一格式：documentId_p001_UUID前8位
+                String shortUuid = UUID.randomUUID().toString().substring(0, 8);
+                imageId = String.format("%s_p%03d_%s", documentId, pageNum, shortUuid);
             }
 
             String format = image.getFormat() != null ? image.getFormat() : "png";
 
-            // ⭐ 构建简洁的文件名：p001_i000.png（页码3位，图片序号3位）
-            // 不包含 baseName，因为已经在文件夹名中了
-            String imageFilename;
-            if (imageIndex != null && imageIndex >= 0) {
-                imageFilename = String.format("p%03d_i%03d.%s", pageNum, imageIndex, format);
-            } else {
-                // 如果没有图片序号，只有页码：p001.png
-                imageFilename = String.format("p%03d.%s", pageNum, format);
-            }
-
+            // ✅ 简化文件名：直接使用imageId作为基础名
+            String imageFilename = imageId + "." + format;
             Path imageFile = docImageDir.resolve(imageFilename);
 
             // 保存图片的二进制数据
@@ -792,16 +781,13 @@ public class FileDocumentStorage implements DocumentStorageService {
             String metadataFilename = imageFilename + ".meta";
             Path metadataFile = docImageDir.resolve(metadataFilename);
             String metadataJson = buildImageMetadataJson(image, imageFilename);
-            Files.write(metadataFile, metadataJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            Files.writeString(metadataFile, metadataJson, java.nio.charset.StandardCharsets.UTF_8);
 
-            // ⭐ imageId 保持原样（用于全局唯一标识）：baseName_p001_i000
-            String imageId = String.format("%s_p%03d_i%03d", baseName, pageNum, imageIndex != null ? imageIndex : 0);
-
-            log.debug("Saved image: {} -> {}/{}", imageId, documentId, imageFilename);
+            log.debug("✅ Saved image: {} -> {}/{}", imageId, documentId, imageFilename);
             return imageId;
         } catch (IOException e) {
-            log.error("Failed to save image", e);
-            return null;
+            log.error("Failed to save image: {}", imageId, e);
+            throw new StorageIOException(documentId, "Failed to save image: " + imageId, e);
         }
     }
 
@@ -1172,8 +1158,8 @@ public class FileDocumentStorage implements DocumentStorageService {
             log.debug("Saved PPL data for document: {}", documentId);
             return documentId;
         } catch (IOException e) {
-            log.error("Failed to save PPL data", e);
-            return null;
+            log.error("Failed to save PPL data for document: {}", documentId, e);
+            throw new StorageIOException(documentId, "Failed to save PPL data", e);
         }
     }
 
@@ -1372,8 +1358,8 @@ public class FileDocumentStorage implements DocumentStorageService {
             log.debug("Saved {} optimization data for document: {}", data.getOptimizationType(), documentId);
             return documentId + ":" + data.getOptimizationType();
         } catch (IOException e) {
-            log.error("Failed to save optimization data", e);
-            return null;
+            log.error("Failed to save optimization data for document: {}", documentId, e);
+            throw new StorageIOException(documentId, "Failed to save optimization data: " + data.getOptimizationType(), e);
         }
     }
 
