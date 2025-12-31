@@ -2,6 +2,8 @@ package top.yumbo.ai.omni.storage.impl.s3;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -38,6 +40,10 @@ public class S3DocumentStorage implements DocumentStorageService {
     private final S3Client s3Client;
     private final S3StorageProperties properties;
     private final ObjectMapper objectMapper;
+
+    // ✅ P0优化4：ID到Key的映射，支持通过ID快速查询和删除
+    private final Map<String, String> chunkIdToKeyMap = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, String> imageIdToKeyMap = new java.util.concurrent.ConcurrentHashMap<>();
 
     public S3DocumentStorage(S3Client s3Client, S3StorageProperties properties) {
         this.s3Client = s3Client;
@@ -118,6 +124,9 @@ public class S3DocumentStorage implements DocumentStorageService {
 
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(data));
 
+            // ✅ P0优化4：记录ID到Key映射
+            chunkIdToKeyMap.put(chunkId, key);
+
             log.debug("Saved chunk: {}", chunkId);
             return chunkId;
         } catch (Exception e) {
@@ -128,8 +137,14 @@ public class S3DocumentStorage implements DocumentStorageService {
 
     /**
      * ✅ P0优化1：使用并行流加速批量保存
+     * ✅ P1优化1：添加重试机制
      * 预期收益：性能提升4-8倍
      */
+    @Retryable(
+        retryFor = {S3Exception.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     @Override
     public List<String> saveChunks(String documentId, List<Chunk> chunks) {
         if (chunks == null || chunks.isEmpty()) {
@@ -164,16 +179,84 @@ public class S3DocumentStorage implements DocumentStorageService {
         return chunkIds;
     }
 
+    /**
+     * ✅ P0优化4：实现getChunk方法，使用ID映射快速查询
+     */
     @Override
     public Optional<Chunk> getChunk(String chunkId) {
-        log.warn("getChunk by ID only is not efficient in S3");
-        return Optional.empty();
+        try {
+            String key = chunkIdToKeyMap.get(chunkId);
+            if (key == null) {
+                log.warn("Chunk key not found for ID: {}, trying to scan...", chunkId);
+                return scanForChunk(chunkId);
+            }
+
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+            Chunk chunk = objectMapper.readValue(data, Chunk.class);
+
+            log.debug("✅ Retrieved chunk by ID: {}", chunkId);
+            return Optional.of(chunk);
+
+        } catch (Exception e) {
+            log.error("Failed to get chunk: {}", chunkId, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * 扫描查找chunk（降级方案，当映射不存在时使用）
+     */
+    private Optional<Chunk> scanForChunk(String chunkId) {
+        try {
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucketName())
+                    .prefix("chunks/")
+                    .build();
+
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+
+            for (S3Object s3Object : listResponse.contents()) {
+                if (s3Object.key().contains(chunkId)) {
+                    GetObjectRequest getRequest = GetObjectRequest.builder()
+                            .bucket(properties.getBucketName())
+                            .key(s3Object.key())
+                            .build();
+
+                    byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+                    Chunk chunk = objectMapper.readValue(data, Chunk.class);
+
+                    // 更新映射
+                    chunkIdToKeyMap.put(chunkId, s3Object.key());
+
+                    log.debug("✅ Found chunk by scanning: {}", chunkId);
+                    return Optional.of(chunk);
+                }
+            }
+
+            log.warn("Chunk not found: {}", chunkId);
+            return Optional.empty();
+
+        } catch (Exception e) {
+            log.error("Failed to scan for chunk: {}", chunkId, e);
+            return Optional.empty();
+        }
     }
 
     /**
      * ✅ P0优化2：使用并行流加速批量查询
+     * ✅ P1优化1：添加重试机制
      * 预期收益：性能提升4-8倍
      */
+    @Retryable(
+        retryFor = {S3Exception.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     @Override
     public List<Chunk> getChunksByDocument(String documentId) {
         try {
@@ -212,9 +295,32 @@ public class S3DocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * ✅ P0优化4：实现deleteChunk方法
+     */
     @Override
     public void deleteChunk(String chunkId) {
-        log.warn("deleteChunk by ID only is not efficient in S3");
+        try {
+            String key = chunkIdToKeyMap.get(chunkId);
+            if (key == null) {
+                log.warn("Chunk key not found for ID: {}", chunkId);
+                return;
+            }
+
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+
+            // 移除映射
+            chunkIdToKeyMap.remove(chunkId);
+
+            log.debug("✅ Deleted chunk: {}", chunkId);
+        } catch (Exception e) {
+            log.error("Failed to delete chunk: {}", chunkId, e);
+        }
     }
 
     /**
@@ -310,6 +416,9 @@ public class S3DocumentStorage implements DocumentStorageService {
 
             s3Client.putObject(putObjectRequest, RequestBody.fromBytes(data));
 
+            // ✅ P0优化4：记录ID到Key映射
+            imageIdToKeyMap.put(imageId, key);
+
             log.debug("Saved image: {}", imageId);
             return imageId;
         } catch (Exception e) {
@@ -318,15 +427,44 @@ public class S3DocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * ✅ P0优化4：实现getImage方法
+     */
     @Override
     public Optional<Image> getImage(String imageId) {
-        log.warn("getImage by ID only is not efficient in S3");
-        return Optional.empty();
+        try {
+            String key = imageIdToKeyMap.get(imageId);
+            if (key == null) {
+                log.warn("Image key not found for ID: {}", imageId);
+                return Optional.empty();
+            }
+
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
+            Image image = objectMapper.readValue(data, Image.class);
+
+            log.debug("✅ Retrieved image by ID: {}", imageId);
+            return Optional.of(image);
+
+        } catch (Exception e) {
+            log.error("Failed to get image: {}", imageId, e);
+            return Optional.empty();
+        }
     }
 
     /**
      * ✅ P0优化2：使用并行流加速批量查询
+     * ✅ P1优化1：添加重试机制
      */
+    @Retryable(
+        retryFor = {S3Exception.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     @Override
     public List<Image> getImagesByDocument(String documentId) {
         try {
@@ -350,6 +488,11 @@ public class S3DocumentStorage implements DocumentStorageService {
                     byte[] data = s3Client.getObjectAsBytes(getRequest).asByteArray();
                     Image image = objectMapper.readValue(data, Image.class);
                     images.add(image);
+
+                    // ✅ P0优化4：维护ID映射
+                    if (image.getId() != null) {
+                        imageIdToKeyMap.put(image.getId(), s3Object.key());
+                    }
                 } catch (Exception e) {
                     log.error("Failed to read image: {}", s3Object.key(), e);
                 }
@@ -363,9 +506,32 @@ public class S3DocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * ✅ P0优化4：实现deleteImage方法
+     */
     @Override
     public void deleteImage(String imageId) {
-        log.warn("deleteImage by ID only is not efficient in S3");
+        try {
+            String key = imageIdToKeyMap.get(imageId);
+            if (key == null) {
+                log.warn("Image key not found for ID: {}", imageId);
+                return;
+            }
+
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(properties.getBucketName())
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+
+            // 移除映射
+            imageIdToKeyMap.remove(imageId);
+
+            log.debug("✅ Deleted image: {}", imageId);
+        } catch (Exception e) {
+            log.error("Failed to delete image: {}", imageId, e);
+        }
     }
 
     /**
@@ -789,10 +955,33 @@ public class S3DocumentStorage implements DocumentStorageService {
         }
     }
 
+    /**
+     * ✅ P1优化2：优化统计方法，避免加载所有数据到内存
+     */
     @Override
     public long getDocumentCount() {
         try {
-            return listAllDocuments().size();
+            long count = 0;
+            String continuationToken = null;
+
+            do {
+                ListObjectsV2Request.Builder builder = ListObjectsV2Request.builder()
+                        .bucket(properties.getBucketName())
+                        .prefix("documents/");
+
+                if (continuationToken != null) {
+                    builder.continuationToken(continuationToken);
+                }
+
+                ListObjectsV2Response response = s3Client.listObjectsV2(builder.build());
+                count += response.keyCount();
+                continuationToken = response.nextContinuationToken();
+
+            } while (continuationToken != null);
+
+            log.debug("✅ Document count: {}", count);
+            return count;
+
         } catch (Exception e) {
             log.error("Failed to get document count", e);
             return 0;
@@ -886,6 +1075,9 @@ public class S3DocumentStorage implements DocumentStorageService {
 
     // ========== Statistics ==========
 
+    /**
+     * ✅ P1优化2：优化统计方法，使用分页避免OOM
+     */
     @Override
     public StorageStatistics getStatistics() {
         try {
@@ -895,30 +1087,44 @@ public class S3DocumentStorage implements DocumentStorageService {
             long totalSize = 0;
             Set<String> documentIds = new HashSet<>();
 
-            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
-                    .bucket(properties.getBucketName())
-                    .build();
+            String continuationToken = null;
 
-            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+            do {
+                ListObjectsV2Request.Builder builder = ListObjectsV2Request.builder()
+                        .bucket(properties.getBucketName())
+                        .maxKeys(1000);  // ✅ P1优化：分批处理，每次1000个
 
-            for (S3Object s3Object : listResponse.contents()) {
-                String key = s3Object.key();
-                totalSize += s3Object.size();
-
-                if (key.startsWith("chunks/")) {
-                    totalChunks++;
-                    String docId = key.split("/")[1];
-                    documentIds.add(docId);
-                } else if (key.startsWith("images/")) {
-                    totalImages++;
-                    String docId = key.split("/")[1];
-                    documentIds.add(docId);
-                } else if (key.startsWith("ppl/")) {
-                    totalPPLData++;
-                    String docId = key.split("/")[1];
-                    documentIds.add(docId);
+                if (continuationToken != null) {
+                    builder.continuationToken(continuationToken);
                 }
-            }
+
+                ListObjectsV2Response listResponse = s3Client.listObjectsV2(builder.build());
+
+                for (S3Object s3Object : listResponse.contents()) {
+                    String key = s3Object.key();
+                    totalSize += s3Object.size();
+
+                    if (key.startsWith("chunks/")) {
+                        totalChunks++;
+                        String docId = key.split("/")[1];
+                        documentIds.add(docId);
+                    } else if (key.startsWith("images/")) {
+                        totalImages++;
+                        String docId = key.split("/")[1];
+                        documentIds.add(docId);
+                    } else if (key.startsWith("ppl/")) {
+                        totalPPLData++;
+                        String docId = key.split("/")[1];
+                        documentIds.add(docId);
+                    }
+                }
+
+                continuationToken = listResponse.nextContinuationToken();
+
+            } while (continuationToken != null);
+
+            log.debug("✅ Statistics calculated: {} docs, {} chunks, {} images",
+                    documentIds.size(), totalChunks, totalImages);
 
             return StorageStatistics.builder()
                     .totalDocuments((long) documentIds.size())
