@@ -283,7 +283,270 @@ omni-agent-common/
   - 安全的 null 值处理
   - 详细的诊断日志
 
+**⚠️ 当前使用情况分析：**
+- **实际使用率：** 极低（仅在 1 个控制器中使用）
+- **使用位置：** `ProcessingProgressController` - 用于日志和API响应
+- **问题：** 
+  - 设计优秀但未被充分利用
+  - 其他控制器直接返回硬编码的英文消息
+  - 缺少统一的国际化规范
+
 ---
+
+### 🌍 国际化业界最佳实践分析
+
+#### 1. Spring Boot 标准方案（推荐）
+
+**方案：** Spring MessageSource + ResourceBundle
+
+```java
+// 配置
+@Configuration
+public class I18nConfig {
+    @Bean
+    public MessageSource messageSource() {
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasenames("i18n/messages", "i18n/errors");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setFallbackToSystemLocale(false);
+        return messageSource;
+    }
+    
+    @Bean
+    public LocaleResolver localeResolver() {
+        // 1. AcceptHeaderLocaleResolver - 基于 Accept-Language 请求头
+        // 2. SessionLocaleResolver - 基于 Session
+        // 3. CookieLocaleResolver - 基于 Cookie
+        AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
+        resolver.setDefaultLocale(Locale.SIMPLIFIED_CHINESE);
+        return resolver;
+    }
+}
+
+// 使用方式
+@Service
+public class MyService {
+    @Autowired
+    private MessageSource messageSource;
+    
+    public String getMessage(String key, Object... args) {
+        // 自动从 LocaleContextHolder 获取当前语言
+        return messageSource.getMessage(key, args, LocaleContextHolder.getLocale());
+    }
+}
+
+// Controller 中
+@RestController
+public class MyController {
+    @Autowired
+    private MessageSource messageSource;
+    
+    @GetMapping("/api/test")
+    public ResponseEntity<?> test(@RequestHeader(value = "Accept-Language", required = false) String lang) {
+        Locale locale = lang != null ? Locale.forLanguageTag(lang) : Locale.getDefault();
+        String message = messageSource.getMessage("test.success", null, locale);
+        return ResponseEntity.ok(Map.of("message", message));
+    }
+}
+```
+
+**优点：**
+- ✅ Spring 官方标准，生态完善
+- ✅ 与 Spring MVC 深度集成
+- ✅ 支持多种 LocaleResolver 策略
+- ✅ 自动从请求头获取语言
+- ✅ 支持 .properties 和 .yml 文件
+
+**缺点：**
+- ⚠️ 需要依赖注入，无法在静态方法中使用
+- ⚠️ 不支持非 Spring 环境
+
+---
+
+#### 2. 当前方案（静态工具类）评估
+
+**当前设计：** `I18N.java` 静态工具类
+
+**优点：**
+- ✅ 简单易用，无需依赖注入
+- ✅ 支持非 Spring 环境（日志场景）
+- ✅ 静态初始化，性能优秀
+- ✅ YAML 格式更清晰
+
+**缺点：**
+- ❌ 不符合 Spring 规范
+- ❌ 无法与 Spring MVC 自动集成
+- ❌ 需要手动传递 `lang` 参数
+- ❌ 未被充分使用
+
+---
+
+#### 3. 混合方案（推荐）⭐
+
+**建议：** 保留当前 I18N 用于日志，新增 Spring MessageSource 用于 API
+
+```
+国际化方案分层：
+├── I18N（静态工具类）
+│   └── 用途：后端日志国际化
+│   └── 场景：log.info(I18N.get("xxx"))
+│
+└── MessageSource（Spring Bean）
+    └── 用途：API 响应国际化
+    └── 场景：Controller 返回用户可见的消息
+```
+
+**实现建议：**
+
+```java
+// 1. 保留 I18N 用于日志
+log.info(I18N.get("document.processing.start", filename));
+
+// 2. 新增 MessageSourceConfig
+@Configuration
+public class MessageSourceConfig {
+    @Bean
+    public MessageSource messageSource() {
+        ResourceBundleMessageSource source = new ResourceBundleMessageSource();
+        source.setBasenames("i18n/api/messages", "i18n/api/errors");
+        source.setDefaultEncoding("UTF-8");
+        return source;
+    }
+    
+    @Bean
+    public LocaleResolver localeResolver() {
+        AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
+        resolver.setDefaultLocale(Locale.SIMPLIFIED_CHINESE);
+        return resolver;
+    }
+}
+
+// 3. 创建 I18nService 封装常用操作
+@Service
+public class I18nService {
+    @Autowired
+    private MessageSource messageSource;
+    
+    public String get(String key, Object... args) {
+        return messageSource.getMessage(key, args, LocaleContextHolder.getLocale());
+    }
+    
+    public String get(String key, Locale locale, Object... args) {
+        return messageSource.getMessage(key, args, locale);
+    }
+}
+
+// 4. Controller 中使用
+@RestController
+public class DocumentController {
+    @Autowired
+    private I18nService i18nService;
+    
+    @PostMapping("/api/document/upload")
+    public ResponseEntity<?> upload() {
+        log.info(I18N.get("document.upload.start")); // 日志用静态方法
+        
+        // ... 业务逻辑
+        
+        return ResponseEntity.ok(Map.of(
+            "message", i18nService.get("document.upload.success") // API响应用Spring
+        ));
+    }
+}
+```
+
+---
+
+#### 4. 业界主流方案对比
+
+| 方案 | 适用场景 | 优点 | 缺点 | 推荐度 |
+|------|---------|------|------|--------|
+| **Spring MessageSource** | API响应、Web应用 | Spring标准，自动集成 | 需要依赖注入 | ⭐⭐⭐⭐⭐ |
+| **静态工具类** | 日志、工具方法 | 简单易用，无需注入 | 不符合Spring规范 | ⭐⭐⭐⭐ |
+| **混合方案** | 大型项目 | 兼顾两者优点 | 需要维护两套 | ⭐⭐⭐⭐⭐ |
+| **第三方库（i18next等）** | 前后端分离 | 前后端统一 | 引入额外依赖 | ⭐⭐⭐ |
+
+---
+
+#### 5. 改进建议
+
+**短期改进（1周）：**
+1. ✅ 保留当前 `I18N.java`，用于日志国际化
+2. ✅ 新增 `MessageSourceConfig`，用于 API 响应
+3. ✅ 创建 `I18nService` 统一封装
+4. ✅ 在 `omni-agent-web` 模块建立国际化规范
+
+**长期规划（1个月）：**
+1. 统一所有控制器的 API 响应消息
+2. 建立国际化消息文件管理规范
+3. 添加国际化测试用例
+4. 编写国际化最佳实践文档
+
+**目录结构建议：**
+```
+resources/
+├── i18n/
+│   ├── log/              # 日志国际化（当前I18N使用）
+│   │   ├── zh/
+│   │   │   ├── messages.yml
+│   │   │   └── errors.yml
+│   │   └── en/
+│   │       ├── messages.yml
+│   │       └── errors.yml
+│   └── api/              # API国际化（MessageSource使用）
+│       ├── messages_zh_CN.properties
+│       ├── messages_en_US.properties
+│       ├── errors_zh_CN.properties
+│       └── errors_en_US.properties
+```
+
+---
+
+#### 6. 参考业界标准
+
+**Spring Boot 官方推荐：**
+- 使用 `MessageSource` + `LocaleResolver`
+- 基于 `Accept-Language` 请求头自动切换
+- 使用 `.properties` 文件（兼容性好）
+
+**大型项目实践：**
+- **后端：** Spring MessageSource（API响应）
+- **日志：** 简单的静态工具类或 SLF4J MDC
+- **前端：** react-i18next / vue-i18n（前后端分离）
+- **移动端：** 前端控制语言切换，后端通过 API 参数支持
+
+**国际化成熟度模型：**
+```
+Level 1: 硬编码英文 ❌
+Level 2: 静态工具类 ⚠️（当前）
+Level 3: Spring MessageSource ✅（推荐）
+Level 4: 前后端统一国际化方案 ⭐（大型项目）
+Level 5: 动态翻译 + 本地化（多地区） ⭐⭐（跨国公司）
+```
+
+---
+
+### 📝 国际化改进行动项
+
+**立即执行（Week 1）：**
+- [ ] 保留 `I18N.java`，添加使用说明（仅用于日志）
+- [ ] 创建 `MessageSourceConfig` 配置类
+- [ ] 创建 `I18nService` 封装类
+- [ ] 在一个控制器中试点新方案
+
+**短期（Week 2-3）：**
+- [ ] 统一 `omni-agent-web` 所有控制器的国际化
+- [ ] 建立国际化消息文件规范
+- [ ] 添加国际化测试用例
+
+**中期（Month 2）：**
+- [ ] 扩展到其他模块
+- [ ] 编写国际化最佳实践文档
+- [ ] 建立自动化检查（所有硬编码消息必须国际化）
+
+---
+
+
 
 ## 🚀 性能分析
 
@@ -754,6 +1017,20 @@ mvn org.owasp:dependency-check-maven:check
      - 验证协议（http/https）
      - 添加参数校验
 
+**🌍 国际化专项改进（顶级方案）：**
+
+4. **完全重构国际化体系**
+   - **工作量：** 5 天
+   - **重要性：** ⭐⭐⭐⭐⭐
+   - **风险：** 不符合Spring规范，长期维护成本高
+   - **行动：**
+     - ❌ 完全移除自定义 I18N.java
+     - ✅ 实现 Spring MessageSource + YAML
+     - ✅ 创建 YamlMessageSource（支持嵌套结构）
+     - ✅ 创建 MessageService 统一服务
+     - ✅ YAML格式消除properties重复前缀问题
+     - 详见：`I18N_ELITE_SOLUTION.md`
+
 #### 🟡 中优先级（建议修复/实现）
 
 4. **拆分 I18N.java**
@@ -960,12 +1237,19 @@ mvn org.owasp:dependency-check-maven:check
    - 缺少 README
    - 缺少架构说明
 
+5. **国际化未被充分利用** ⚠️ **新发现**
+   - I18N 设计优秀但使用率极低（仅1个控制器使用）
+   - 大部分控制器直接硬编码英文消息
+   - 缺乏统一的国际化规范
+   - 建议采用混合方案：I18N用于日志 + MessageSource用于API
+   - 详见：`I18N_IMPROVEMENT_PLAN.md`
+
 ### 下一步行动
 
 **立即开始：** 批次1 改进计划
-- **Week 1：** 补充单元测试 + 扩展接口
-- **Week 2：** 重构优化 + 完善文档
-- **Week 3：** 性能优化 + 高级特性
+- **Week 1：** 补充单元测试 + 扩展接口 + 国际化基础设施
+- **Week 2：** 重构优化 + 完善文档 + 国际化试点
+- **Week 3：** 性能优化 + 高级特性 + 国际化推广
 
 **预计完成时间：** 3 周（15 个工作日）
 
@@ -973,7 +1257,12 @@ mvn org.owasp:dependency-check-maven:check
 - 测试覆盖率：>80%
 - 功能完整度：>90%
 - 文档完整度：>85%
+- 国际化规范：完整建立
 - 总体评分：B（80+）
+
+**相关文档：**
+- 📄 `batch_01.md` - 批次1完整分析报告
+- 🌍 `I18N_IMPROVEMENT_PLAN.md` - 国际化改进方案（新增）
 
 ---
 
