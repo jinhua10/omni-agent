@@ -9,12 +9,33 @@
 .letter-selection-modal .ant-modal-content {
   border-radius: 16px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.letter-selection-modal .ant-modal-mask {
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
 }
 
 .letter-modal-header {
   text-align: center;
   padding: 32px 24px 24px;
   position: relative;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.letter-modal-hint {
+  margin: 12px 0 0 0;
+  padding: 8px 16px;
+  background: rgba(24, 144, 255, 0.1);
+  border: 1px solid rgba(24, 144, 255, 0.3);
+  border-radius: 8px;
+  color: #1890ff;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-block;
 }
 
 /* 语言切换器 */
@@ -126,6 +147,17 @@
   padding: 24px;
   display: flex;
   justify-content: center;
+  align-items: stretch;
+}
+
+.letter-cards-container .ant-space {
+  width: 100%;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.letter-cards-container .ant-space-item {
+  flex: 0 0 auto;
 }
 
 .letter-modal-footer {
@@ -342,6 +374,11 @@
     flex-direction: column;
   }
 
+  .letter-cards-container .ant-space {
+    flex-direction: column;
+    width: 100%;
+  }
+
   .letter-card {
     width: 100%;
     margin-bottom: 16px;
@@ -369,12 +406,27 @@
 }
 
 /* 暗色主题支持 */
+.theme-dark .letter-selection-modal .ant-modal-content {
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(20px);
+}
+
+.theme-dark .letter-modal-header {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
 .theme-dark .letter-modal-title {
   color: #40a9ff;
 }
 
 .theme-dark .letter-modal-subtitle {
   color: #aaa;
+}
+
+.theme-dark .letter-modal-hint {
+  background: rgba(64, 169, 255, 0.15);
+  border-color: rgba(64, 169, 255, 0.4);
+  color: #40a9ff;
 }
 
 .theme-dark .letter-language-icon {

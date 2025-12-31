@@ -145,19 +145,25 @@ const LandingPage = ({ onEnterApp }) => {
   useEffect(() => {
     const hasSeenLetter = localStorage.getItem('omni_agent_letter_seen')
     if (!hasSeenLetter) {
-      // 延迟1秒显示，让页面先加载
-      const timer = setTimeout(() => {
-        setLetterModalOpen(true)
-      }, 1000)
-      return () => clearTimeout(timer)
+      // 立即显示，阻止访问首页内容
+      setLetterModalOpen(true)
     } else {
       // 已经看过信件，显示徽章提示可以再次查看
       setShowLetterBadge(true)
     }
   }, [])
 
-  // 关闭信件模态框
+  // 关闭信件模态框（只有阅读过信件后才能关闭）
   const handleCloseLetterModal = () => {
+    // 只有已经看过信件的用户才能直接关闭
+    const hasSeenLetter = localStorage.getItem('omni_agent_letter_seen')
+    if (hasSeenLetter) {
+      setLetterModalOpen(false)
+    }
+  }
+
+  // 信件阅读完成回调
+  const handleLetterRead = () => {
     setLetterModalOpen(false)
     localStorage.setItem('omni_agent_letter_seen', 'true')
     setShowLetterBadge(true)
@@ -1331,6 +1337,7 @@ npm run dev`}</pre>
       <LetterModal
         open={letterModalOpen}
         onClose={handleCloseLetterModal}
+        onLetterRead={handleLetterRead}
       />
     </div>
   )

@@ -200,13 +200,20 @@ const LetterViewer = ({ letter, onClose, t, language }) => {
 /**
  * 信件选择模态框主组件
  */
-const LetterModal = ({ open, onClose }) => {
+const LetterModal = ({ open, onClose, onLetterRead }) => {
   const { t, language, setLanguage } = useLanguage()
   const [selectedLetter, setSelectedLetter] = useState(null)
   const [showConfetti, setShowConfetti] = useState(false)
+  const [isFirstVisit, setIsFirstVisit] = useState(false)
 
   // 获取信件列表
   const LETTERS = getLetters(t, language)
+
+  // 检查是否首次访问
+  useEffect(() => {
+    const hasSeenLetter = localStorage.getItem('omni_agent_letter_seen')
+    setIsFirstVisit(!hasSeenLetter)
+  }, [])
 
   // 当模态框打开时显示庆祝动画
   useEffect(() => {
@@ -223,11 +230,18 @@ const LetterModal = ({ open, onClose }) => {
 
   const handleCloseViewer = () => {
     setSelectedLetter(null)
+    // 如果是首次访问，阅读完一封信后标记为已读
+    if (isFirstVisit && onLetterRead) {
+      onLetterRead()
+    }
   }
 
   const handleCloseAll = () => {
-    setSelectedLetter(null)
-    onClose()
+    // 只有非首次访问才能直接关闭
+    if (!isFirstVisit) {
+      setSelectedLetter(null)
+      onClose()
+    }
   }
 
   const handleLanguageChange = (e) => {
@@ -242,7 +256,10 @@ const LetterModal = ({ open, onClose }) => {
         footer={null}
         width={900}
         className="letter-selection-modal"
-        closeIcon={<CloseOutlined />}
+        closeIcon={!isFirstVisit ? <CloseOutlined /> : null}
+        maskClosable={!isFirstVisit}
+        keyboard={!isFirstVisit}
+        centered
       >
         <div className="letter-modal-header">
           {showConfetti && (
@@ -276,6 +293,13 @@ const LetterModal = ({ open, onClose }) => {
           <p className="letter-modal-subtitle">
             {t('letter.modalSubtitle')}
           </p>
+          {isFirstVisit && (
+            <p className="letter-modal-hint">
+              {language === 'zh'
+                ? '📖 请至少阅读一封信后即可进入系统'
+                : '📖 Please read at least one letter to enter the system'}
+            </p>
+          )}
         </div>
 
         <div className="letter-cards-container">
@@ -291,11 +315,13 @@ const LetterModal = ({ open, onClose }) => {
           </Space>
         </div>
 
-        <div className="letter-modal-footer">
-          <Button onClick={handleCloseAll}>
-            {t('letter.laterButton')}
-          </Button>
-        </div>
+        {!isFirstVisit && (
+          <div className="letter-modal-footer">
+            <Button onClick={handleCloseAll}>
+              {t('letter.laterButton')}
+            </Button>
+          </div>
+        )}
       </Modal>
 
       <LetterViewer
