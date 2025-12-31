@@ -1,6 +1,7 @@
 package top.yumbo.ai.omni.storage.impl.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.Result;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.Time;
@@ -11,6 +12,8 @@ import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.storage.api.exception.*;
@@ -158,9 +161,15 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
 
     /**
      * ✅ P0优化1：使用Bulk API批量索引
+     * ✅ P1优化1：添加重试机制
      * 预期收益：性能提升50-100倍（100次网络请求 → 1次）
      */
     @Override
+    @Retryable(
+        retryFor = {ElasticsearchException.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public List<String> saveChunks(String documentId, List<Chunk> chunks) {
         if (chunks == null || chunks.isEmpty()) {
             return new ArrayList<>();
@@ -232,9 +241,15 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
 
     /**
      * ✅ P0优化2：使用Search After支持大数据集
+     * ✅ P1优化1：添加重试机制
      * 预期收益：避免数据丢失，支持无限量数据
      */
     @Override
+    @Retryable(
+        retryFor = {ElasticsearchException.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public List<Chunk> getChunksByDocument(String documentId) {
         try {
             List<Chunk> allChunks = new ArrayList<>();
@@ -985,33 +1000,79 @@ public class ElasticsearchDocumentStorage implements DocumentStorageService {
 
     // ========== Statistics ==========
 
+    /**
+     * ✅ P1优化2：使用MultiSearch优化统计查询
+     * 预期收益：性能提升3-5倍（4次查询 → 1次查询）
+     */
     @Override
+    @Retryable(
+        retryFor = {ElasticsearchException.class, IOException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public StorageStatistics getStatistics() {
         try {
-            // 统计各索引的文档数
-            CountRequest chunkCountRequest = CountRequest.of(c -> c.index(chunkIndex));
-            long totalChunks = client.count(chunkCountRequest).count();
-
-            CountRequest imageCountRequest = CountRequest.of(c -> c.index(imageIndex));
-            long totalImages = client.count(imageCountRequest).count();
-
-            CountRequest pplCountRequest = CountRequest.of(c -> c.index(pplIndex));
-            long totalPPLData = client.count(pplCountRequest).count();
-
-            // 统计唯一文档数（通过聚合）
-            SearchRequest docCountRequest = SearchRequest.of(s -> s
-                .index(chunkIndex, imageIndex, pplIndex)
-                .size(0)
-                .aggregations("unique_docs", a -> a
-                    .cardinality(ca -> ca.field("documentId"))
+            // ✅ P1优化：使用MultiSearch一次性获取所有统计
+            MsearchRequest multiSearchRequest = MsearchRequest.of(m -> m
+                .searches(s -> s
+                    .header(h -> h.index(chunkIndex))
+                    .body(b -> b.size(0).trackTotalHits(t -> t.enabled(true)))
+                )
+                .searches(s -> s
+                    .header(h -> h.index(imageIndex))
+                    .body(b -> b.size(0).trackTotalHits(t -> t.enabled(true)))
+                )
+                .searches(s -> s
+                    .header(h -> h.index(pplIndex))
+                    .body(b -> b.size(0).trackTotalHits(t -> t.enabled(true)))
+                )
+                .searches(s -> s
+                    .header(h -> h.index(chunkIndex, imageIndex, pplIndex))
+                    .body(b -> b
+                        .size(0)
+                        .aggregations("unique_docs", a -> a
+                            .cardinality(ca -> ca.field("documentId.keyword"))
+                        )
+                    )
                 )
             );
 
-            SearchResponse<Void> docCountResponse = client.search(docCountRequest, Void.class);
-            long totalDocuments = docCountResponse.aggregations()
-                    .get("unique_docs")
-                    .cardinality()
-                    .value();
+            MsearchResponse<Void> multiResponse = client.msearch(multiSearchRequest, Void.class);
+
+            // 解析结果
+            long totalChunks = 0;
+            long totalImages = 0;
+            long totalPPLData = 0;
+            long totalDocuments = 0;
+
+            if (multiResponse.responses().size() >= 4) {
+                // Chunks count
+                if (multiResponse.responses().get(0).result().hits().total() != null) {
+                    totalChunks = multiResponse.responses().get(0).result().hits().total().value();
+                }
+
+                // Images count
+                if (multiResponse.responses().get(1).result().hits().total() != null) {
+                    totalImages = multiResponse.responses().get(1).result().hits().total().value();
+                }
+
+                // PPL count
+                if (multiResponse.responses().get(2).result().hits().total() != null) {
+                    totalPPLData = multiResponse.responses().get(2).result().hits().total().value();
+                }
+
+                // Unique documents
+                if (multiResponse.responses().get(3).result().aggregations() != null) {
+                    totalDocuments = multiResponse.responses().get(3).result()
+                        .aggregations()
+                        .get("unique_docs")
+                        .cardinality()
+                        .value();
+                }
+            }
+
+            log.debug("✅ Statistics retrieved using MultiSearch: {} docs, {} chunks, {} images",
+                    totalDocuments, totalChunks, totalImages);
 
             return StorageStatistics.builder()
                     .totalDocuments(totalDocuments)
