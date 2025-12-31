@@ -1,5 +1,8 @@
 package top.yumbo.ai.omni.storage.impl.file;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.model.*;
@@ -30,6 +33,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FileDocumentStorage implements DocumentStorageService {
 
+    private final ObjectMapper objectMapper;  // ✅ Jackson for JSON serialization
+    private final java.util.concurrent.ConcurrentHashMap<String, Object> fileLocks = new java.util.concurrent.ConcurrentHashMap<>();  // ✅ File-level locks for concurrency
+
     private final Path basePath;
     private final Path chunksPath;
     private final Path imagesPath;
@@ -39,6 +45,9 @@ public class FileDocumentStorage implements DocumentStorageService {
     private final Path extractedPath;  // ⭐ 新增：提取文本路径
 
     public FileDocumentStorage(String baseDirectory) {
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.findAndRegisterModules();  // 注册Java 8时间模块等
+
         this.basePath = Paths.get(baseDirectory);
         this.chunksPath = basePath.resolve("chunks");
         this.imagesPath = basePath.resolve("images");
@@ -69,39 +78,59 @@ public class FileDocumentStorage implements DocumentStorageService {
 
     @Override
     public String saveDocument(String documentId, String filename, byte[] fileData) {
-        try {
-            // 根据文件名前缀判断保存路径 ⭐
-            Path targetPath;
-            String actualFilename;
+        // ✅ 使用文件级锁保证并发安全
+        Object lock = fileLocks.computeIfAbsent(documentId, k -> new Object());
 
-            if (filename.startsWith("extracted/")) {
-                // 提取结果保存到 extracted/ 目录
-                actualFilename = filename.substring("extracted/".length());
-                targetPath = extractedPath;
-            } else {
-                // 默认保存到 documents/ 目录
-                actualFilename = filename;
-                targetPath = documentsPath;
+        synchronized (lock) {
+            try {
+                // 根据文件名前缀判断保存路径 ⭐
+                Path targetPath;
+                String actualFilename;
+
+                if (filename.startsWith("extracted/")) {
+                    // 提取结果保存到 extracted/ 目录
+                    actualFilename = filename.substring("extracted/".length());
+                    targetPath = extractedPath;
+                } else {
+                    // 默认保存到 documents/ 目录
+                    actualFilename = filename;
+                    targetPath = documentsPath;
+                }
+
+                // 使用原文件名直接保存（保留相对路径中的目录结构）
+                // 例如: filename = "设计图/架构图.pptx"
+                //      保存为: documents/设计图/架构图.pptx
+                Path documentFile = targetPath.resolve(actualFilename).normalize();
+
+                // ✅ 安全检查：确保在basePath内，防止路径遍历攻击
+                if (!documentFile.startsWith(basePath)) {
+                    log.warn("⚠️ 路径遍历攻击尝试: {}", filename);
+                    throw new IllegalArgumentException("Invalid path: " + filename);
+                }
+
+                // 确保父目录存在
+                Path parentDir = documentFile.getParent();
+                if (parentDir != null) {
+                    Files.createDirectories(parentDir);
+                }
+
+                // ✅ 原子写入（先写临时文件，再重命名）
+                Path tempFile = documentFile.resolveSibling(documentFile.getFileName() + ".tmp");
+                Files.write(tempFile, fileData);
+                Files.move(tempFile, documentFile,
+                          StandardCopyOption.REPLACE_EXISTING,
+                          StandardCopyOption.ATOMIC_MOVE);
+
+                log.debug("✅ Saved document atomically: {} to {}", actualFilename, targetPath.getFileName());
+                return documentId;
+
+            } catch (IOException e) {
+                log.error("❌ Failed to save document: {}", filename, e);
+                throw new StorageIOException(documentId, "Failed to save document: " + filename, e);
+            } finally {
+                // 清理锁（如果没有其他线程等待）
+                fileLocks.remove(documentId, lock);
             }
-
-            // 使用原文件名直接保存（保留相对路径中的目录结构）
-            // 例如: filename = "设计图/架构图.pptx"
-            //      保存为: documents/设计图/架构图.pptx
-            Path documentFile = targetPath.resolve(actualFilename);
-
-            // 确保父目录存在
-            Path parentDir = documentFile.getParent();
-            if (parentDir != null) {
-                Files.createDirectories(parentDir);
-            }
-
-            Files.write(documentFile, fileData);
-
-            log.debug("Saved document: {} to {}", actualFilename, targetPath.getFileName());
-            return documentId;
-        } catch (IOException e) {
-            log.error("Failed to save document: {}", filename, e);
-            return null;
         }
     }
 
@@ -485,51 +514,39 @@ public class FileDocumentStorage implements DocumentStorageService {
 
     /**
      * 构建分块元数据 JSON
+     * ✅ 使用Jackson序列化，安全、可靠、可扩展
      */
     private String buildChunkMetadataJson(Chunk chunk, String filename) {
-        StringBuilder json = new StringBuilder();
-        json.append("{\n");
-        json.append("  \"id\": \"").append(chunk.getId()).append("\",\n");
-        json.append("  \"documentId\": \"").append(chunk.getDocumentId()).append("\",\n");
-        json.append("  \"filename\": \"").append(filename).append("\",\n");
-        json.append("  \"sequence\": ").append(chunk.getSequence()).append(",\n");
-        if (chunk.getStartPosition() != null) {
-            json.append("  \"startPosition\": ").append(chunk.getStartPosition()).append(",\n");
-        }
-        if (chunk.getEndPosition() != null) {
-            json.append("  \"endPosition\": ").append(chunk.getEndPosition()).append(",\n");
-        }
-        json.append("  \"size\": ").append(chunk.getSize()).append(",\n");
-        if (chunk.getMetadata() != null && !chunk.getMetadata().isEmpty()) {
-            json.append("  \"metadata\": ").append(mapToJson(chunk.getMetadata())).append(",\n");
-        }
-        json.append("  \"createdAt\": ").append(chunk.getCreatedAt() != null ? chunk.getCreatedAt() : System.currentTimeMillis()).append("\n");
-        json.append("}");
-        return json.toString();
-    }
+        try {
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("id", chunk.getId());
+            metadata.put("documentId", chunk.getDocumentId());
+            metadata.put("filename", filename);
+            metadata.put("sequence", chunk.getSequence());
 
-    /**
-     * 将 Map 转换为简单的 JSON 字符串
-     */
-    private String mapToJson(Map<String, Object> map) {
-        StringBuilder json = new StringBuilder();
-        json.append("{");
-        boolean first = true;
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            if (!first) json.append(", ");
-            json.append("\"").append(entry.getKey()).append("\": ");
-            Object value = entry.getValue();
-            if (value instanceof String) {
-                json.append("\"").append(value).append("\"");
-            } else if (value instanceof Number || value instanceof Boolean) {
-                json.append(value);
-            } else {
-                json.append("\"").append(value).append("\"");
+            if (chunk.getStartPosition() != null) {
+                metadata.put("startPosition", chunk.getStartPosition());
             }
-            first = false;
+            if (chunk.getEndPosition() != null) {
+                metadata.put("endPosition", chunk.getEndPosition());
+            }
+
+            metadata.put("size", chunk.getSize());
+
+            if (chunk.getMetadata() != null && !chunk.getMetadata().isEmpty()) {
+                metadata.put("metadata", chunk.getMetadata());
+            }
+
+            metadata.put("createdAt", chunk.getCreatedAt() != null ? chunk.getCreatedAt() : System.currentTimeMillis());
+
+            // ✅ 使用Jackson序列化：自动转义特殊字符、支持嵌套对象
+            return objectMapper.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(metadata);
+
+        } catch (JsonProcessingException e) {
+            log.error("❌ Failed to serialize chunk metadata", e);
+            throw new RuntimeException("Failed to serialize chunk metadata", e);
         }
-        json.append("}");
-        return json.toString();
     }
 
     /**
@@ -641,52 +658,50 @@ public class FileDocumentStorage implements DocumentStorageService {
 
     /**
      * 从分块文件和元数据文件加载 Chunk 对象
+     * ✅ 使用Jackson反序列化，安全、可靠
      */
     private Chunk loadChunkFromFiles(Path chunkFile, Path metadataFile) throws IOException {
         // 读取分块文本内容
-        String content = new String(Files.readAllBytes(chunkFile), java.nio.charset.StandardCharsets.UTF_8);
+        String content = Files.readString(chunkFile, java.nio.charset.StandardCharsets.UTF_8);
 
-        // 读取元数据
-        String metadataJson = new String(Files.readAllBytes(metadataFile), java.nio.charset.StandardCharsets.UTF_8);
+        // ✅ 使用Jackson解析元数据
+        Map<String, Object> metadata = objectMapper.readValue(
+            Files.readString(metadataFile, java.nio.charset.StandardCharsets.UTF_8),
+            new TypeReference<Map<String, Object>>() {}
+        );
 
-        // 解析元数据
-        String id = extractJsonValue(metadataJson, "id");
-        String documentId = extractJsonValue(metadataJson, "documentId");
-        Integer sequence = extractJsonIntValue(metadataJson, "sequence");
-        Integer startPosition = extractJsonIntValue(metadataJson, "startPosition");
-        Integer endPosition = extractJsonIntValue(metadataJson, "endPosition");
-        Long createdAt = extractJsonLongValue(metadataJson, "createdAt");
+        // 从Map中提取值
+        String id = (String) metadata.get("id");
+        String documentId = (String) metadata.get("documentId");
+
+        Integer sequence = metadata.containsKey("sequence") ?
+            ((Number) metadata.get("sequence")).intValue() : 0;
+
+        Integer startPosition = metadata.containsKey("startPosition") ?
+            ((Number) metadata.get("startPosition")).intValue() : null;
+
+        Integer endPosition = metadata.containsKey("endPosition") ?
+            ((Number) metadata.get("endPosition")).intValue() : null;
+
+        Long createdAt = metadata.containsKey("createdAt") ?
+            ((Number) metadata.get("createdAt")).longValue() : null;
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> chunkMetadata = metadata.containsKey("metadata") ?
+            (Map<String, Object>) metadata.get("metadata") : null;
 
         return Chunk.builder()
                 .id(id)
                 .documentId(documentId)
                 .content(content)
-                .sequence(sequence != null ? sequence : 0)
+                .sequence(sequence)
                 .startPosition(startPosition)
                 .endPosition(endPosition)
                 .createdAt(createdAt)
+                .metadata(chunkMetadata)
                 .build();
     }
 
-    /**
-     * 从 JSON 字符串中提取 Long 值
-     */
-    private Long extractJsonLongValue(String json, String key) {
-        String pattern = "\"" + key + "\": ";
-        int start = json.indexOf(pattern);
-        if (start == -1) return null;
-        start += pattern.length();
-        int end = json.indexOf(",", start);
-        if (end == -1) {
-            end = json.indexOf("\n", start);
-        }
-        if (end == -1) return null;
-        try {
-            return Long.parseLong(json.substring(start, end).trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
 
     @Override
     public void deleteChunk(String chunkId) {
@@ -792,33 +807,43 @@ public class FileDocumentStorage implements DocumentStorageService {
 
     /**
      * 构建图片元数据 JSON
+     * ✅ 使用Jackson序列化，安全、可靠、可扩展
      */
     private String buildImageMetadataJson(Image image, String filename) {
-        StringBuilder json = new StringBuilder();
-        json.append("{\n");
-        json.append("  \"id\": \"").append(image.getId()).append("\",\n");
-        json.append("  \"documentId\": \"").append(image.getDocumentId()).append("\",\n");
-        json.append("  \"filename\": \"").append(filename).append("\",\n");
-        json.append("  \"format\": \"").append(image.getFormat()).append("\",\n");
-        if (image.getWidth() != null) {
-            json.append("  \"width\": ").append(image.getWidth()).append(",\n");
-        }
-        if (image.getHeight() != null) {
-            json.append("  \"height\": ").append(image.getHeight()).append(",\n");
-        }
-        if (image.getPageNumber() != null) {
-            json.append("  \"pageNumber\": ").append(image.getPageNumber()).append(",\n");
-        }
-        json.append("  \"size\": ").append(image.getSize()).append(",\n");
+        try {
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("id", image.getId());
+            metadata.put("documentId", image.getDocumentId());
+            metadata.put("filename", filename);
+            metadata.put("format", image.getFormat());
 
-        // 添加 metadata 字段（包含图片描述等信息）⭐
-        if (image.getMetadata() != null && !image.getMetadata().isEmpty()) {
-            json.append("  \"metadata\": ").append(mapToJson(image.getMetadata())).append(",\n");
-        }
+            if (image.getWidth() != null) {
+                metadata.put("width", image.getWidth());
+            }
+            if (image.getHeight() != null) {
+                metadata.put("height", image.getHeight());
+            }
+            if (image.getPageNumber() != null) {
+                metadata.put("pageNumber", image.getPageNumber());
+            }
 
-        json.append("  \"createdAt\": ").append(System.currentTimeMillis()).append("\n");
-        json.append("}");
-        return json.toString();
+            metadata.put("size", image.getSize());
+
+            // 添加 metadata 字段（包含图片描述等信息）⭐
+            if (image.getMetadata() != null && !image.getMetadata().isEmpty()) {
+                metadata.put("metadata", image.getMetadata());
+            }
+
+            metadata.put("createdAt", System.currentTimeMillis());
+
+            // ✅ 使用Jackson序列化：自动转义特殊字符、支持嵌套对象
+            return objectMapper.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(metadata);
+
+        } catch (JsonProcessingException e) {
+            log.error("❌ Failed to serialize image metadata", e);
+            throw new RuntimeException("Failed to serialize image metadata", e);
+        }
     }
 
     @Override
@@ -903,21 +928,35 @@ public class FileDocumentStorage implements DocumentStorageService {
 
     /**
      * 从图片文件和元数据文件加载 Image 对象
+     * ✅ 使用Jackson反序列化，安全、可靠
      */
     private Image loadImageFromFiles(Path imageFile, Path metadataFile) throws IOException {
         // 读取图片二进制数据
         byte[] imageData = Files.readAllBytes(imageFile);
 
-        // 读取元数据
-        String metadataJson = new String(Files.readAllBytes(metadataFile), java.nio.charset.StandardCharsets.UTF_8);
+        // ✅ 使用Jackson解析元数据
+        Map<String, Object> metadata = objectMapper.readValue(
+            Files.readString(metadataFile, java.nio.charset.StandardCharsets.UTF_8),
+            new TypeReference<Map<String, Object>>() {}
+        );
 
-        // 解析元数据 (简单的 JSON 解析)
-        String id = extractJsonValue(metadataJson, "id");
-        String documentId = extractJsonValue(metadataJson, "documentId");
-        String format = extractJsonValue(metadataJson, "format");
-        Integer width = extractJsonIntValue(metadataJson, "width");
-        Integer height = extractJsonIntValue(metadataJson, "height");
-        Integer pageNumber = extractJsonIntValue(metadataJson, "pageNumber");
+        // 从Map中提取值
+        String id = (String) metadata.get("id");
+        String documentId = (String) metadata.get("documentId");
+        String format = (String) metadata.get("format");
+
+        Integer width = metadata.containsKey("width") ?
+            ((Number) metadata.get("width")).intValue() : null;
+
+        Integer height = metadata.containsKey("height") ?
+            ((Number) metadata.get("height")).intValue() : null;
+
+        Integer pageNumber = metadata.containsKey("pageNumber") ?
+            ((Number) metadata.get("pageNumber")).intValue() : null;
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> imageMetadata = metadata.containsKey("metadata") ?
+            (Map<String, Object>) metadata.get("metadata") : null;
 
         return Image.builder()
                 .id(id)
@@ -927,12 +966,15 @@ public class FileDocumentStorage implements DocumentStorageService {
                 .width(width)
                 .height(height)
                 .pageNumber(pageNumber)
+                .metadata(imageMetadata)
                 .build();
     }
 
     /**
      * 从 JSON 字符串中提取字符串值
+     * @deprecated 内部工具方法，仅用于PPL和Optimization数据解析，将来会迁移到Jackson
      */
+    @Deprecated
     private String extractJsonValue(String json, String key) {
         String pattern = "\"" + key + "\": \"";
         int start = json.indexOf(pattern);
@@ -945,7 +987,10 @@ public class FileDocumentStorage implements DocumentStorageService {
 
     /**
      * 从 JSON 字符串中提取整数值
+     * @deprecated 内部工具方法，仅用于PPL和Optimization数据解析，将来会迁移到Jackson
      */
+    @Deprecated
+    @SuppressWarnings("unused")
     private Integer extractJsonIntValue(String json, String key) {
         String pattern = "\"" + key + "\": ";
         int start = json.indexOf(pattern);
@@ -960,6 +1005,60 @@ public class FileDocumentStorage implements DocumentStorageService {
             return Integer.parseInt(json.substring(start, end).trim());
         } catch (NumberFormatException e) {
             return null;
+        }
+    }
+
+    /**
+     * 从 JSON 字符串中提取 Long 值
+     * @deprecated 内部工具方法，仅用于PPL和Optimization数据解析，将来会迁移到Jackson
+     */
+    @Deprecated
+    private Long extractJsonLongValue(String json, String key) {
+        String pattern = "\"" + key + "\": ";
+        int start = json.indexOf(pattern);
+        if (start == -1) return null;
+        start += pattern.length();
+        int end = json.indexOf(",", start);
+        if (end == -1) {
+            end = json.indexOf("\n", start);
+        }
+        if (end == -1) return null;
+        try {
+            return Long.parseLong(json.substring(start, end).trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * 将 Map 转换为简单的 JSON 字符串
+     * @deprecated 内部工具方法，仅用于PPL和Optimization数据序列化，将来会迁移到Jackson
+     */
+    @Deprecated
+    private String mapToJson(Map<String, Object> map) {
+        try {
+            // ✅ 优化：使用Jackson序列化
+            return objectMapper.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            // 降级：使用简单字符串拼接
+            StringBuilder json = new StringBuilder();
+            json.append("{");
+            boolean first = true;
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                if (!first) json.append(", ");
+                json.append("\"").append(entry.getKey()).append("\": ");
+                Object value = entry.getValue();
+                if (value instanceof String) {
+                    json.append("\"").append(value).append("\"");
+                } else if (value instanceof Number || value instanceof Boolean) {
+                    json.append(value);
+                } else {
+                    json.append("\"").append(value).append("\"");
+                }
+                first = false;
+            }
+            json.append("}");
+            return json.toString();
         }
     }
 
