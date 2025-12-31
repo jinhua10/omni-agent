@@ -22,8 +22,6 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.transaction.annotation.Transactional;
 import top.yumbo.ai.omni.chunking.Chunk;
-import top.yumbo.ai.omni.storage.api.model.DocumentMetadata;
-import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.storage.api.exception.*;
 import top.yumbo.ai.omni.storage.api.model.*;
