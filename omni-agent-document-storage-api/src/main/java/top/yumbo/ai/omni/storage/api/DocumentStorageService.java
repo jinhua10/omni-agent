@@ -811,19 +811,39 @@ public interface DocumentStorageService {
     boolean documentExists(String documentId);
 
     /**
+     * 批量检查文档是否存在（性能优化版本）⭐ NEW
+     * <p>返回每个文档ID的存在状态，避免逐个检查的性能开销</p>
+     * <p>建议实现类重写此方法以提供更高效的批量检查</p>
+     *
+     * @param documentIds 文档ID列表
+     * @return Map，key为文档ID，value为是否存在
+     */
+    default Map<String, Boolean> checkDocumentsExistBatch(List<String> documentIds) {
+        Map<String, Boolean> result = new java.util.HashMap<>();
+        for (String documentId : documentIds) {
+            result.put(documentId, documentExists(documentId));
+        }
+        return result;
+    }
+
+    /**
      * 批量检查文档是否存在 ⭐ NEW
      * @param documentIds 文档ID列表
      * @return 存在的文档ID列表和不存在的文档ID列表
+     * @deprecated 推荐使用 {@link #checkDocumentsExistBatch(List)} 以获得更好的性能
      */
+    @Deprecated
     default Map<String, List<String>> checkDocumentsExist(List<String> documentIds) {
+        Map<String, Boolean> existMap = checkDocumentsExistBatch(documentIds);
+
         List<String> existingIds = new ArrayList<>();
         List<String> missingIds = new ArrayList<>();
 
-        for (String documentId : documentIds) {
-            if (documentExists(documentId)) {
-                existingIds.add(documentId);
+        for (Map.Entry<String, Boolean> entry : existMap.entrySet()) {
+            if (entry.getValue()) {
+                existingIds.add(entry.getKey());
             } else {
-                missingIds.add(documentId);
+                missingIds.add(entry.getKey());
             }
         }
 
