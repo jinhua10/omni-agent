@@ -59,61 +59,95 @@ const getLetters = (t, language) => [
 ]
 
 /**
- * 角色卡片组件 - 场景式设计
+ * 信件卡片组件 - 现代卡片设计
  */
-const CharacterCard = ({ letter, onSelect, t }) => {
+const LetterCard = ({ letter, onSelect, t, language }) => {
   const [isHovered, setIsHovered] = useState(false)
 
+  // 根据角色类型获取图标和背景
+  const getCardStyle = () => {
+    switch(letter.key) {
+      case 'user':
+        return {
+          icon: '👤',
+          gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          shadow: '0 20px 60px rgba(102, 126, 234, 0.3)'
+        }
+      case 'developer':
+        return {
+          icon: '💻',
+          gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+          shadow: '0 20px 60px rgba(245, 87, 108, 0.3)'
+        }
+      case 'enterprise':
+        return {
+          icon: '💼',
+          gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+          shadow: '0 20px 60px rgba(79, 172, 254, 0.3)'
+        }
+      default:
+        return {
+          icon: '📧',
+          gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+          shadow: '0 20px 60px rgba(168, 237, 234, 0.3)'
+        }
+    }
+  }
+
+  const cardStyle = getCardStyle()
+
   return (
-    <div
-      className="character-wrapper"
+    <Card
+      className={`modern-letter-card ${isHovered ? 'card-hovered' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onSelect(letter)}
+      hoverable
+      bordered={false}
     >
-      {/* 悬挂的信封气泡 */}
-      <div className={`envelope-bubble ${isHovered ? 'envelope-bubble-hover' : ''}`}>
-        <div className="envelope-icon">
-          <MailOutlined style={{ fontSize: 32, color: letter.color }} />
-          <div className="envelope-badge">1</div>
-        </div>
-        <div className="bubble-arrow" style={{ borderTopColor: '#fff' }}></div>
+      {/* 新信徽章 */}
+      <div className="card-badge">
+        <span className="badge-dot"></span>
+        <span className="badge-text">NEW</span>
       </div>
 
-      {/* 角色小人 */}
-      <div className={`character-avatar ${isHovered ? 'character-avatar-hover' : ''}`}>
-        <div
-          className="avatar-circle"
-          style={{
-            background: `linear-gradient(135deg, ${letter.color}15 0%, ${letter.color}30 100%)`,
-            borderColor: letter.color
-          }}
+      {/* 卡片图标 */}
+      <div
+        className="card-icon-wrapper"
+        style={{ background: cardStyle.gradient }}
+      >
+        <div className="card-icon">{cardStyle.icon}</div>
+      </div>
+
+      {/* 卡片标题 */}
+      <h3 className="card-title">
+        {letter.title}
+      </h3>
+
+      {/* 卡片描述 */}
+      <p className="card-description">
+        {letter.description}
+      </p>
+
+      {/* 阅读按钮 */}
+      <div className="card-action">
+        <Button
+          type="primary"
+          size="large"
+          icon={<MailOutlined />}
+          className="read-button"
+          style={{ background: cardStyle.gradient, border: 'none' }}
         >
-          <div className="avatar-emoji">{letter.emoji}</div>
-        </div>
-
-        {/* 角色名称 */}
-        <div className="character-name" style={{ color: letter.color }}>
-          {letter.key === 'user' && (t('letter.user.title').split('的')[0] || 'User')}
-          {letter.key === 'developer' && (t('letter.developer.title').split('的')[0] || 'Developer')}
-          {letter.key === 'enterprise' && (t('letter.enterprise.title').split('的')[0] || 'Enterprise')}
-        </div>
-
-        {/* 悬停时显示描述 */}
-        {isHovered && (
-          <div className="character-description">
-            {letter.description}
-          </div>
-        )}
+          {t('letter.user.buttonText')}
+        </Button>
       </div>
 
-      {/* 点击提示 */}
-      {isHovered && (
-        <div className="click-hint" style={{ color: letter.color }}>
-          ✨ {t('letter.user.buttonText')}
-        </div>
-      )}
-    </div>
+      {/* 装饰性元素 */}
+      <div className="card-decoration">
+        <div className="decoration-circle decoration-1"></div>
+        <div className="decoration-circle decoration-2"></div>
+      </div>
+    </Card>
   )
 }
 
@@ -266,27 +300,16 @@ const LetterModal = ({ open, onClose, onLetterRead }) => {
         open={open && !selectedLetter}
         onCancel={handleCloseAll}
         footer={null}
-        width={1000}
-        className="letter-selection-modal letter-scene-modal"
+        width={1200}
+        className="letter-selection-modal modern-letter-modal"
         closeIcon={!isFirstVisit ? <CloseOutlined /> : null}
         maskClosable={!isFirstVisit}
         keyboard={!isFirstVisit}
         centered
       >
-        {/* 庆祝动画 */}
-        {showConfetti && (
-          <div className="confetti-container">
-            <span className="confetti">🎉</span>
-            <span className="confetti">✨</span>
-            <span className="confetti">🎊</span>
-            <span className="confetti">💫</span>
-            <span className="confetti">⭐</span>
-          </div>
-        )}
-
         {/* 语言切换按钮 */}
-        <div className="letter-language-switcher">
-          <GlobalOutlined className="letter-language-icon" />
+        <div className="modal-language-switcher">
+          <GlobalOutlined className="language-icon" />
           <Radio.Group
             value={language}
             onChange={handleLanguageChange}
@@ -298,53 +321,85 @@ const LetterModal = ({ open, onClose, onLetterRead }) => {
           </Radio.Group>
         </div>
 
-        {/* 艺术标题 */}
-        <div className="letter-art-header">
-          <h1 className="art-title">
-            <span className="title-gradient">
-              {t('letter.modalTitle')}
-            </span>
+        {/* 头部区域 */}
+        <div className="modal-header">
+          {/* 欢迎图标 */}
+          <div className="welcome-icon">
+            <div className="icon-animation">
+              <MailOutlined style={{ fontSize: 48 }} />
+            </div>
+          </div>
+
+          {/* 标题 */}
+          <h1 className="modal-title">
+            {t('letter.modalTitle')}
           </h1>
-          <p className="art-subtitle">
+
+          {/* 副标题 */}
+          <p className="modal-subtitle">
             {t('letter.modalSubtitle')}
           </p>
+
+          {/* 首次访问提示 */}
           {isFirstVisit && (
-            <div className="first-visit-badge">
-              <span className="badge-icon">📖</span>
-              <span className="badge-text">
+            <div className="first-visit-tip">
+              <span className="tip-icon">💡</span>
+              <span className="tip-text">
                 {language === 'zh'
-                  ? '请选择并阅读一封信后即可进入系统'
-                  : 'Please read at least one letter to continue'}
+                  ? '请选择一封信件阅读后即可进入系统'
+                  : 'Please read one letter to continue'}
               </span>
             </div>
           )}
         </div>
 
-        {/* 场景区域 - 三个角色 */}
-        <div className="character-scene">
-          <div className="scene-stage">
+        {/* 卡片区域 */}
+        <div className="cards-container">
+          <div className="cards-grid">
             {LETTERS.map((letter, index) => (
-              <CharacterCard
+              <div
                 key={letter.key}
-                letter={letter}
-                onSelect={handleSelectLetter}
-                t={t}
-                style={{ animationDelay: `${index * 0.15}s` }}
-              />
+                className="card-wrapper"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <LetterCard
+                  letter={letter}
+                  onSelect={handleSelectLetter}
+                  t={t}
+                  language={language}
+                />
+              </div>
             ))}
           </div>
         </div>
 
         {/* 底部提示 */}
         {!isFirstVisit && (
-          <div className="letter-modal-footer">
+          <div className="modal-footer">
             <Button
-              onClick={handleCloseAll}
               type="text"
-              className="later-button"
+              onClick={handleCloseAll}
+              className="skip-button"
             >
-              {t('letter.laterButton')} →
+              {t('letter.laterButton')}
             </Button>
+          </div>
+        )}
+
+        {/* 庆祝动画 */}
+        {showConfetti && (
+          <div className="confetti-animation">
+            {[...Array(30)].map((_, i) => (
+              <div
+                key={i}
+                className="confetti-piece"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 0.5}s`,
+                  background: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'][i % 6]
+                }}
+              />
+            ))}
           </div>
         )}
       </Modal>
