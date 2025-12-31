@@ -2,6 +2,8 @@ package top.yumbo.ai.omni.storage.impl.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SessionCallback;
@@ -13,6 +15,7 @@ import top.yumbo.ai.omni.storage.api.exception.*;
 import top.yumbo.ai.omni.storage.api.model.*;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -90,27 +93,34 @@ public class RedisDocumentStorage implements DocumentStorageService {
         try {
             chunk.setId(chunkId);
 
-            // 保存 chunk 对象
             String chunkKey = getChunkKey(chunkId);
-            redisTemplate.opsForValue().set(chunkKey, chunk);
+            String docChunksKey = getDocumentChunksKey(documentId);
+
+            // ✅ 使用SET EX原子操作（性能优化）
+            if (properties.getTtl() > 0) {
+                // SET key value EX seconds - 原子操作
+                redisTemplate.opsForValue().set(chunkKey, chunk,
+                    properties.getTtl(), TimeUnit.SECONDS);
+            } else {
+                redisTemplate.opsForValue().set(chunkKey, chunk);
+            }
 
             // 添加到文档的 chunks 集合
-            String docChunksKey = getDocumentChunksKey(documentId);
             redisTemplate.opsForSet().add(docChunksKey, chunkId);
 
-            // 设置过期时间
+            // Set的TTL稍长，避免孤儿引用
             if (properties.getTtl() > 0) {
-                redisTemplate.expire(chunkKey, properties.getTtl(), TimeUnit.SECONDS);
-                redisTemplate.expire(docChunksKey, properties.getTtl(), TimeUnit.SECONDS);
+                long indexTtl = properties.getTtl() + 1000; // 多1000秒
+                redisTemplate.expire(docChunksKey, indexTtl, TimeUnit.SECONDS);
             }
 
             log.debug("✅ Saved chunk: {}", chunkId);
             return chunkId;
-        } catch (org.springframework.data.redis.RedisConnectionFailureException e) {
+        } catch (RedisConnectionFailureException e) {
             log.error("❌ Redis connection failed while saving chunk: {}", chunkId, e);
             throw new StorageIOException(documentId,
                     "Failed to save chunk due to Redis connection failure: " + chunkId, e);
-        } catch (org.springframework.data.redis.RedisSystemException e) {
+        } catch (RedisSystemException e) {
             log.error("❌ Redis system error while saving chunk: {}", chunkId, e);
             throw new StorageIOException(documentId,
                     "Failed to save chunk due to Redis system error: " + chunkId, e);
@@ -145,17 +155,21 @@ public class RedisDocumentStorage implements DocumentStorageService {
 
                     String chunkKey = getChunkKey(chunkId);
 
-                    // 所有操作在一个Pipeline中
-                    ops.opsForValue().set(chunkKey, chunk);
-                    ops.opsForSet().add(docChunksKey, chunkId);
-
+                    // ✅ 使用SET EX原子操作（性能+一致性优化）
                     if (properties.getTtl() > 0) {
-                        ops.expire(chunkKey, properties.getTtl(), TimeUnit.SECONDS);
+                        ops.opsForValue().set(chunkKey, chunk,
+                            properties.getTtl(), TimeUnit.SECONDS);
+                    } else {
+                        ops.opsForValue().set(chunkKey, chunk);
                     }
+
+                    ops.opsForSet().add(docChunksKey, chunkId);
                 }
 
+                // Set的TTL稍长，避免孤儿引用
                 if (properties.getTtl() > 0) {
-                    ops.expire(docChunksKey, properties.getTtl(), TimeUnit.SECONDS);
+                    long indexTtl = properties.getTtl() + 1000; // 多1000秒
+                    ops.expire(docChunksKey, indexTtl, TimeUnit.SECONDS);
                 }
 
                 return null;
@@ -264,29 +278,37 @@ public class RedisDocumentStorage implements DocumentStorageService {
                     baseName, pageNum, imageIndex != null ? imageIndex : 0);
             image.setId(imageId);
 
-            // 保存 image 对象
             String imageKey = getImageKey(imageId);
-            redisTemplate.opsForValue().set(imageKey, image);
+            String docImagesKey = getDocumentImagesKey(documentId);
+
+            // ✅ 使用SET EX原子操作
+            if (properties.getTtl() > 0) {
+                redisTemplate.opsForValue().set(imageKey, image,
+                    properties.getTtl(), TimeUnit.SECONDS);
+            } else {
+                redisTemplate.opsForValue().set(imageKey, image);
+            }
 
             // 添加到文档的 images 集合
-            String docImagesKey = getDocumentImagesKey(documentId);
             redisTemplate.opsForSet().add(docImagesKey, imageId);
 
             // ⭐ 保存 hash -> imageId 映射（用于去重）
             if (image.getMetadata() != null && image.getMetadata().containsKey("imageHash")) {
                 String imageHash = (String) image.getMetadata().get("imageHash");
-                String hashKey = "image:hash:" + imageHash;
-                redisTemplate.opsForValue().set(hashKey, imageId);
+                String hashKey = properties.getKeyPrefix() + "image:hash:" + imageHash;
 
                 if (properties.getTtl() > 0) {
-                    redisTemplate.expire(hashKey, properties.getTtl(), TimeUnit.SECONDS);
+                    redisTemplate.opsForValue().set(hashKey, imageId,
+                        properties.getTtl(), TimeUnit.SECONDS);
+                } else {
+                    redisTemplate.opsForValue().set(hashKey, imageId);
                 }
             }
 
-            // 设置过期时间
+            // Set的TTL稍长，避免孤儿引用
             if (properties.getTtl() > 0) {
-                redisTemplate.expire(imageKey, properties.getTtl(), TimeUnit.SECONDS);
-                redisTemplate.expire(docImagesKey, properties.getTtl(), TimeUnit.SECONDS);
+                long indexTtl = properties.getTtl() + 1000;
+                redisTemplate.expire(docImagesKey, indexTtl, TimeUnit.SECONDS);
             }
 
             log.debug("✅ Saved image: {}", imageId);
@@ -294,11 +316,11 @@ public class RedisDocumentStorage implements DocumentStorageService {
         } catch (IllegalArgumentException e) {
             log.error("❌ Invalid image data: {}", e.getMessage());
             throw e;  // 参数验证错误直接抛出
-        } catch (org.springframework.data.redis.RedisConnectionFailureException e) {
+        } catch (RedisConnectionFailureException e) {
             log.error("❌ Redis connection failed while saving image: {}", imageId, e);
             throw new StorageIOException(documentId,
                     "Failed to save image due to Redis connection failure: " + imageId, e);
-        } catch (org.springframework.data.redis.RedisSystemException e) {
+        } catch (RedisSystemException e) {
             log.error("❌ Redis system error while saving image: {}", imageId, e);
             throw new StorageIOException(documentId,
                     "Failed to save image due to Redis system error: " + imageId, e);
@@ -357,28 +379,34 @@ public class RedisDocumentStorage implements DocumentStorageService {
 
                     String imageKey = getImageKey(imageId);
 
-                    // Pipeline中执行所有操作
-                    ops.opsForValue().set(imageKey, image);
+                    // ✅ 使用SET EX原子操作
+                    if (properties.getTtl() > 0) {
+                        ops.opsForValue().set(imageKey, image,
+                            properties.getTtl(), TimeUnit.SECONDS);
+                    } else {
+                        ops.opsForValue().set(imageKey, image);
+                    }
+
                     ops.opsForSet().add(docImagesKey, imageId);
 
                     // 保存hash映射
                     if (image.getMetadata() != null && image.getMetadata().containsKey("imageHash")) {
                         String imageHash = (String) image.getMetadata().get("imageHash");
                         String hashKey = properties.getKeyPrefix() + "image:hash:" + imageHash;
-                        ops.opsForValue().set(hashKey, imageId);
 
                         if (properties.getTtl() > 0) {
-                            ops.expire(hashKey, properties.getTtl(), TimeUnit.SECONDS);
+                            ops.opsForValue().set(hashKey, imageId,
+                                properties.getTtl(), TimeUnit.SECONDS);
+                        } else {
+                            ops.opsForValue().set(hashKey, imageId);
                         }
-                    }
-
-                    if (properties.getTtl() > 0) {
-                        ops.expire(imageKey, properties.getTtl(), TimeUnit.SECONDS);
                     }
                 }
 
+                // Set的TTL稍长，避免孤儿引用
                 if (properties.getTtl() > 0) {
-                    ops.expire(docImagesKey, properties.getTtl(), TimeUnit.SECONDS);
+                    long indexTtl = properties.getTtl() + 1000;
+                    ops.expire(docImagesKey, indexTtl, TimeUnit.SECONDS);
                 }
 
                 return null;
@@ -1181,7 +1209,7 @@ public class RedisDocumentStorage implements DocumentStorageService {
             if (text == null) {
                 throw new DocumentNotFoundException(documentId, "Extracted text not found");
             }
-            return new ByteArrayInputStream(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
         } catch (DocumentNotFoundException e) {
             throw e;
         } catch (Exception e) {
@@ -1193,7 +1221,7 @@ public class RedisDocumentStorage implements DocumentStorageService {
     public String saveExtractedTextStream(String documentId, InputStream inputStream)
             throws StorageException {
         try {
-            String text = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            String text = new String(inputStream.readAllBytes(),StandardCharsets.UTF_8);
             String key = properties.getKeyPrefix() + "extracted:" + documentId;
             redisTemplate.opsForValue().set(key, text);
             if (properties.getTtl() > 0) {
