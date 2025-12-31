@@ -30,14 +30,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class OkHttp3Adapter implements HttpClientAdapter {
 
-    private final OkHttpClient client;
+    private OkHttpClient client;
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     /**
      * 使用默认配置的 OkHttpClient
      */
     public OkHttp3Adapter() {
-        this(createDefaultClient());
+        this.client = createDefaultClient();
     }
 
     /**
@@ -61,18 +61,85 @@ public class OkHttp3Adapter implements HttpClientAdapter {
     }
 
     @Override
-    public String post(String url, Map<String, String> headers, String body) throws Exception {
-        // 构建请求
+    public String get(String url, Map<String, String> headers) throws Exception {
+        validateUrl(url);
+
         Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
-                .post(RequestBody.create(body, JSON));
+                .get();
 
-        // 添加请求头
-        headers.forEach(requestBuilder::addHeader);
+        if (headers != null) {
+            headers.forEach(requestBuilder::addHeader);
+        }
 
-        Request request = requestBuilder.build();
+        return executeRequest(requestBuilder.build());
+    }
 
-        // 发送请求
+    @Override
+    public String post(String url, Map<String, String> headers, String body) throws Exception {
+        validateUrl(url);
+
+        RequestBody requestBody = body != null
+            ? RequestBody.create(body, JSON)
+            : RequestBody.create("", JSON);
+
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(url)
+                .post(requestBody);
+
+        if (headers != null) {
+            headers.forEach(requestBuilder::addHeader);
+        }
+
+        return executeRequest(requestBuilder.build());
+    }
+
+    @Override
+    public String put(String url, Map<String, String> headers, String body) throws Exception {
+        validateUrl(url);
+
+        RequestBody requestBody = body != null
+            ? RequestBody.create(body, JSON)
+            : RequestBody.create("", JSON);
+
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(url)
+                .put(requestBody);
+
+        if (headers != null) {
+            headers.forEach(requestBuilder::addHeader);
+        }
+
+        return executeRequest(requestBuilder.build());
+    }
+
+    @Override
+    public String delete(String url, Map<String, String> headers) throws Exception {
+        validateUrl(url);
+
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(url)
+                .delete();
+
+        if (headers != null) {
+            headers.forEach(requestBuilder::addHeader);
+        }
+
+        return executeRequest(requestBuilder.build());
+    }
+
+    @Override
+    public void setTimeout(int connectTimeoutSeconds, int readTimeoutSeconds) {
+        this.client = client.newBuilder()
+                .connectTimeout(connectTimeoutSeconds, TimeUnit.SECONDS)
+                .readTimeout(readTimeoutSeconds, TimeUnit.SECONDS)
+                .build();
+    }
+
+    /**
+     * 执行HTTP请求
+     */
+    private String executeRequest(Request request) throws Exception {
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new RuntimeException("HTTP请求失败: " + response.code());

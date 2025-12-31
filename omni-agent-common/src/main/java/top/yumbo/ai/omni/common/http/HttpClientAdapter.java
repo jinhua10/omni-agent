@@ -15,19 +15,81 @@ import java.util.Map;
 public interface HttpClientAdapter {
 
     /**
+     * 发送 GET 请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头（可为null）
+     * @return 响应体（JSON字符串）
+     * @throws IllegalArgumentException URL格式错误
+     * @throws Exception 请求失败时抛出异常
+     */
+    String get(String url, Map<String, String> headers) throws Exception;
+
+    /**
      * 发送 POST 请求
      *
      * @param url 请求URL
-     * @param headers 请求头
-     * @param body 请求体（JSON字符串）
+     * @param headers 请求头（可为null）
+     * @param body 请求体（JSON字符串，可为null）
      * @return 响应体（JSON字符串）
+     * @throws IllegalArgumentException URL格式错误
      * @throws Exception 请求失败时抛出异常
      */
     String post(String url, Map<String, String> headers, String body) throws Exception;
 
     /**
+     * 发送 PUT 请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头（可为null）
+     * @param body 请求体（JSON字符串，可为null）
+     * @return 响应体（JSON字符串）
+     * @throws IllegalArgumentException URL格式错误
+     * @throws Exception 请求失败时抛出异常
+     */
+    String put(String url, Map<String, String> headers, String body) throws Exception;
+
+    /**
+     * 发送 DELETE 请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头（可为null）
+     * @return 响应体（JSON字符串）
+     * @throws IllegalArgumentException URL格式错误
+     * @throws Exception 请求失败时抛出异常
+     */
+    String delete(String url, Map<String, String> headers) throws Exception;
+
+    /**
+     * 设置超时时间
+     *
+     * @param connectTimeoutSeconds 连接超时时间（秒）
+     * @param readTimeoutSeconds 读取超时时间（秒）
+     */
+    default void setTimeout(int connectTimeoutSeconds, int readTimeoutSeconds) {
+        // 默认实现为空，子类可选择性实现
+    }
+
+    /**
      * 获取适配器名称
+     *
+     * @return 适配器名称
      */
     String getName();
+
+    /**
+     * 验证URL格式
+     *
+     * @param url 请求URL
+     * @throws IllegalArgumentException URL格式错误
+     */
+    default void validateUrl(String url) {
+        if (url == null || url.trim().isEmpty()) {
+            throw new IllegalArgumentException("URL cannot be null or empty");
+        }
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            throw new IllegalArgumentException("Invalid URL protocol, must be http:// or https://");
+        }
+    }
 }
 
