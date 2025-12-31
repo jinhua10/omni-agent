@@ -6,6 +6,8 @@ import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
+import top.yumbo.ai.omni.common.exception.HttpException;
+import top.yumbo.ai.omni.common.exception.ValidationException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -152,7 +154,7 @@ class RestTemplateAdapterTest {
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
         // when & then
-        assertThrows(HttpClientErrorException.class, () -> {
+        assertThrows(HttpException.class, () -> {
             adapter.get(url, null);
         });
     }
@@ -165,7 +167,7 @@ class RestTemplateAdapterTest {
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // when & then
-        assertThrows(HttpServerErrorException.class, () -> {
+        assertThrows(HttpException.class, () -> {
             adapter.post(url, null, "{}");
         });
     }
@@ -173,7 +175,7 @@ class RestTemplateAdapterTest {
     @Test
     void testGet_invalidUrl_throwsException() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(ValidationException.class, () -> {
             adapter.get("invalid-url", null);
         });
     }
@@ -181,7 +183,7 @@ class RestTemplateAdapterTest {
     @Test
     void testPost_invalidUrl_throwsException() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(ValidationException.class, () -> {
             adapter.post(null, null, "{}");
         });
     }

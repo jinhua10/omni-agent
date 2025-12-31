@@ -1,7 +1,13 @@
 package top.yumbo.ai.omni.common.http;
 
 import okhttp3.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import top.yumbo.ai.omni.common.exception.HttpException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -30,8 +36,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class OkHttp3Adapter implements HttpClientAdapter {
 
+    private static final Logger log = LoggerFactory.getLogger(OkHttp3Adapter.class);
     private OkHttpClient client;
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    private final List<HttpInterceptor> interceptors = new ArrayList<>();
 
     /**
      * 使用默认配置的 OkHttpClient
@@ -72,7 +80,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             headers.forEach(requestBuilder::addHeader);
         }
 
-        return executeRequest(requestBuilder.build());
+        return executeRequest(requestBuilder.build(), "GET", url, headers, null);
     }
 
     @Override
@@ -91,7 +99,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             headers.forEach(requestBuilder::addHeader);
         }
 
-        return executeRequest(requestBuilder.build());
+        return executeRequest(requestBuilder.build(), "POST", url, headers, body);
     }
 
     @Override
@@ -110,7 +118,7 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             headers.forEach(requestBuilder::addHeader);
         }
 
-        return executeRequest(requestBuilder.build());
+        return executeRequest(requestBuilder.build(), "PUT", url, headers, body);
     }
 
     @Override
@@ -125,33 +133,90 @@ public class OkHttp3Adapter implements HttpClientAdapter {
             headers.forEach(requestBuilder::addHeader);
         }
 
-        return executeRequest(requestBuilder.build());
-    }
-
-    @Override
-    public void setTimeout(int connectTimeoutSeconds, int readTimeoutSeconds) {
-        this.client = client.newBuilder()
-                .connectTimeout(connectTimeoutSeconds, TimeUnit.SECONDS)
-                .readTimeout(readTimeoutSeconds, TimeUnit.SECONDS)
-                .build();
+        return executeRequest(requestBuilder.build(), "DELETE", url, headers, null);
     }
 
     /**
      * 执行HTTP请求
      */
-    private String executeRequest(Request request) throws Exception {
+    private String executeRequest(Request request, String method, String url,
+                                   Map<String, String> headers, String body) throws Exception {
+        long startTime = System.currentTimeMillis();
+
+        // 执行拦截器 - beforeRequest
+        HttpInterceptor.HttpRequest httpRequest = new HttpInterceptor.HttpRequest(url, method, headers, body);
+        for (HttpInterceptor interceptor : interceptors) {
+            httpRequest = interceptor.beforeRequest(httpRequest);
+        }
+
         try (Response response = client.newCall(request).execute()) {
+            long duration = System.currentTimeMillis() - startTime;
+
             if (!response.isSuccessful()) {
-                throw new RuntimeException("HTTP请求失败: " + response.code());
+                String errorBody = "";
+                ResponseBody responseBody = response.body();
+                if (responseBody != null) {
+                    errorBody = responseBody.string();
+                }
+
+                HttpException exception = new HttpException(
+                    response.code(),
+                    response.message(),
+                    url,
+                    errorBody,
+                    method
+                );
+
+                // 执行拦截器 - onError
+                for (HttpInterceptor interceptor : interceptors) {
+                    interceptor.onError(httpRequest, exception);
+                }
+
+                throw exception;
             }
 
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
-                throw new RuntimeException("响应体为空");
+                throw new HttpException(response.code(), "响应体为空", url);
             }
 
-            return responseBody.string();
+            String responseBodyString = responseBody.string();
+
+            // 执行拦截器 - afterResponse
+            HttpInterceptor.HttpResponse httpResponse = new HttpInterceptor.HttpResponse(
+                response.code(),
+                responseBodyString,
+                new HashMap<>(),
+                duration
+            );
+
+            for (HttpInterceptor interceptor : interceptors) {
+                httpResponse = interceptor.afterResponse(httpResponse);
+            }
+
+            return httpResponse.getBody();
+
+        } catch (HttpException e) {
+            throw e;
+        } catch (Exception e) {
+            // 执行拦截器 - onError
+            for (HttpInterceptor interceptor : interceptors) {
+                interceptor.onError(httpRequest, e);
+            }
+            throw new HttpException(0, "请求执行失败: " + e.getMessage(), url, e);
         }
+    }
+
+    @Override
+    public void addInterceptor(HttpInterceptor interceptor) {
+        if (interceptor != null) {
+            interceptors.add(interceptor);
+        }
+    }
+
+    @Override
+    public void clearInterceptors() {
+        interceptors.clear();
     }
 
     @Override

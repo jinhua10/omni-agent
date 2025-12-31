@@ -1,6 +1,7 @@
 package top.yumbo.ai.omni.common.http;
 
 import org.junit.jupiter.api.Test;
+import top.yumbo.ai.omni.common.exception.ValidationException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,38 +31,38 @@ class UrlValidatorTest {
     @Test
     void testValidateBasic_nullUrl_shouldThrowException() {
         // null URL
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        ValidationException exception = assertThrows(
+            ValidationException.class,
             () -> UrlValidator.validateBasic(null)
         );
-        assertEquals("URL cannot be null or empty", exception.getMessage());
+        assertTrue(exception.getMessage().contains("URL cannot be null or empty"));
     }
 
     @Test
     void testValidateBasic_emptyUrl_shouldThrowException() {
         // 空字符串
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        ValidationException exception = assertThrows(
+            ValidationException.class,
             () -> UrlValidator.validateBasic("")
         );
-        assertEquals("URL cannot be null or empty", exception.getMessage());
+        assertTrue(exception.getMessage().contains("URL cannot be null or empty"));
     }
 
     @Test
     void testValidateBasic_blankUrl_shouldThrowException() {
         // 空白字符串
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        ValidationException exception = assertThrows(
+            ValidationException.class,
             () -> UrlValidator.validateBasic("   ")
         );
-        assertEquals("URL cannot be null or empty", exception.getMessage());
+        assertTrue(exception.getMessage().contains("URL cannot be null or empty"));
     }
 
     @Test
     void testValidateBasic_invalidProtocol_shouldThrowException() {
         // 不支持的协议
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        ValidationException exception = assertThrows(
+            ValidationException.class,
             () -> UrlValidator.validateBasic("ftp://example.com")
         );
         assertTrue(exception.getMessage().contains("Invalid URL protocol"));
@@ -70,8 +71,8 @@ class UrlValidatorTest {
     @Test
     void testValidateBasic_noProtocol_shouldThrowException() {
         // 没有协议
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
+        ValidationException exception = assertThrows(
+            ValidationException.class,
             () -> UrlValidator.validateBasic("example.com")
         );
         assertTrue(exception.getMessage().contains("Invalid URL protocol"));
@@ -87,7 +88,7 @@ class UrlValidatorTest {
     void testValidateFull_malformedUrl_shouldThrowException() {
         // 格式错误的URL
         assertThrows(
-            IllegalArgumentException.class,
+            ValidationException.class,
             () -> UrlValidator.validateFull("http://")
         );
     }
@@ -96,7 +97,7 @@ class UrlValidatorTest {
     void testValidateFull_urlWithSpaceInHost_shouldThrowException() {
         // host包含空格
         assertThrows(
-            IllegalArgumentException.class,
+            ValidationException.class,
             () -> UrlValidator.validateFull("http://example .com")
         );
     }
@@ -111,7 +112,7 @@ class UrlValidatorTest {
     void testValidateStrict_invalidPort_shouldThrowException() {
         // 端口号超出范围（注意：URL类可能在解析时就失败）
         assertThrows(
-            IllegalArgumentException.class,
+            ValidationException.class,
             () -> UrlValidator.validateStrict("http://example.com:99999/path")
         );
     }

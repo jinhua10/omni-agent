@@ -6,6 +6,8 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import top.yumbo.ai.omni.common.exception.HttpException;
+import top.yumbo.ai.omni.common.exception.ValidationException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -163,11 +165,11 @@ class OkHttp3AdapterTest {
                 .setBody("Not Found"));
 
         // when & then
-        Exception exception = assertThrows(Exception.class, () -> {
+        HttpException exception = assertThrows(HttpException.class, () -> {
             adapter.get(baseUrl + "notfound", null);
         });
 
-        assertTrue(exception.getMessage().contains("404"));
+        assertEquals(404, exception.getStatusCode());
     }
 
     @Test
@@ -178,17 +180,17 @@ class OkHttp3AdapterTest {
                 .setBody("Internal Server Error"));
 
         // when & then
-        Exception exception = assertThrows(Exception.class, () -> {
+        HttpException exception = assertThrows(HttpException.class, () -> {
             adapter.post(baseUrl + "error", null, "{}");
         });
 
-        assertTrue(exception.getMessage().contains("500"));
+        assertEquals(500, exception.getStatusCode());
     }
 
     @Test
     void testGet_invalidUrl_throwsException() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(ValidationException.class, () -> {
             adapter.get("invalid-url", null);
         });
     }
@@ -196,25 +198,11 @@ class OkHttp3AdapterTest {
     @Test
     void testPost_invalidUrl_throwsException() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(ValidationException.class, () -> {
             adapter.post("ftp://example.com", null, "{}");
         });
     }
 
-    @Test
-    void testSetTimeout_changesTimeout() throws Exception {
-        // given
-        mockWebServer.enqueue(new MockResponse()
-                .setBody("{\"data\":\"test\"}")
-                .setResponseCode(200));
-
-        // when
-        adapter.setTimeout(10, 20);
-        String response = adapter.get(baseUrl + "test", null);
-
-        // then
-        assertNotNull(response);
-    }
 
     @Test
     void testGetName_returnsCorrectName() {

@@ -1,8 +1,14 @@
 package top.yumbo.ai.omni.common.http;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
+import top.yumbo.ai.omni.common.exception.HttpException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,7 +30,9 @@ import java.util.Map;
  */
 public class RestTemplateAdapter implements HttpClientAdapter {
 
+    private static final Logger log = LoggerFactory.getLogger(RestTemplateAdapter.class);
     private final RestTemplate restTemplate;
+    private final List<HttpInterceptor> interceptors = new ArrayList<>();
 
     public RestTemplateAdapter(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -54,39 +62,91 @@ public class RestTemplateAdapter implements HttpClientAdapter {
         return executeRequest(url, HttpMethod.DELETE, headers, null);
     }
 
-    @Override
-    public void setTimeout(int connectTimeoutSeconds, int readTimeoutSeconds) {
-        // RestTemplate实例创建后无法动态修改超时时间
-        // 需要在创建RestTemplate时配置超时参数
-        // 此方法为空实现，保持接口兼容性
-    }
-
     /**
      * 执行HTTP请求
      */
     private String executeRequest(String url, HttpMethod method, Map<String, String> headers, String body) {
-        // 构建请求头
-        HttpHeaders httpHeaders = new HttpHeaders();
-        if (headers != null) {
-            headers.forEach(httpHeaders::set);
+        long startTime = System.currentTimeMillis();
+
+        // 执行拦截器 - beforeRequest
+        HttpInterceptor.HttpRequest httpRequest = new HttpInterceptor.HttpRequest(
+            url, method.name(), headers, body);
+        for (HttpInterceptor interceptor : interceptors) {
+            httpRequest = interceptor.beforeRequest(httpRequest);
         }
 
-        // 构建请求实体
-        HttpEntity<String> requestEntity = new HttpEntity<>(body, httpHeaders);
+        try {
+            // 构建请求头
+            HttpHeaders httpHeaders = new HttpHeaders();
+            if (headers != null) {
+                headers.forEach(httpHeaders::set);
+            }
 
-        // 发送请求
-        ResponseEntity<String> response = restTemplate.exchange(
-                url,
-                method,
-                requestEntity,
-                String.class
-        );
+            // 构建请求实体
+            HttpEntity<String> requestEntity = new HttpEntity<>(body, httpHeaders);
 
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("HTTP请求失败: " + response.getStatusCode());
+            // 发送请求
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url,
+                    method,
+                    requestEntity,
+                    String.class
+            );
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                HttpException exception = new HttpException(
+                    response.getStatusCode().value(),
+                    "HTTP请求失败",
+                    url,
+                    response.getBody(),
+                    method.name()
+                );
+
+                // 执行拦截器 - onError
+                for (HttpInterceptor interceptor : interceptors) {
+                    interceptor.onError(httpRequest, exception);
+                }
+
+                throw exception;
+            }
+
+            // 执行拦截器 - afterResponse
+            HttpInterceptor.HttpResponse httpResponse = new HttpInterceptor.HttpResponse(
+                response.getStatusCode().value(),
+                response.getBody(),
+                new HashMap<>(),
+                duration
+            );
+
+            for (HttpInterceptor interceptor : interceptors) {
+                httpResponse = interceptor.afterResponse(httpResponse);
+            }
+
+            return httpResponse.getBody();
+
+        } catch (HttpException e) {
+            throw e;
+        } catch (Exception e) {
+            // 执行拦截器 - onError
+            for (HttpInterceptor interceptor : interceptors) {
+                interceptor.onError(httpRequest, e);
+            }
+            throw new HttpException(0, "请求执行失败: " + e.getMessage(), url, e);
         }
+    }
 
-        return response.getBody();
+    @Override
+    public void addInterceptor(HttpInterceptor interceptor) {
+        if (interceptor != null) {
+            interceptors.add(interceptor);
+        }
+    }
+
+    @Override
+    public void clearInterceptors() {
+        interceptors.clear();
     }
 
     @Override

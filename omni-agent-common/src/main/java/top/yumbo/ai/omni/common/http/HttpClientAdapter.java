@@ -1,6 +1,7 @@
 package top.yumbo.ai.omni.common.http;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * HTTP 客户端适配器接口
@@ -85,6 +86,92 @@ public interface HttpClientAdapter {
      */
     default void validateUrl(String url) {
         UrlValidator.validateFull(url);
+    }
+
+    /**
+     * 发送异步 GET 请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头（可为null）
+     * @return CompletableFuture包装的响应体
+     */
+    default CompletableFuture<String> getAsync(String url, Map<String, String> headers) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return get(url, headers);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * 发送异步 POST 请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头（可为null）
+     * @param body 请求体（JSON字符串，可为null）
+     * @return CompletableFuture包装的响应体
+     */
+    default CompletableFuture<String> postAsync(String url, Map<String, String> headers, String body) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return post(url, headers, body);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * 发送异步 PUT 请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头（可为null）
+     * @param body 请求体（JSON字符串，可为null）
+     * @return CompletableFuture包装的响应体
+     */
+    default CompletableFuture<String> putAsync(String url, Map<String, String> headers, String body) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return put(url, headers, body);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * 发送异步 DELETE 请求
+     *
+     * @param url 请求URL
+     * @param headers 请求头（可为null）
+     * @return CompletableFuture包装的响应体
+     */
+    default CompletableFuture<String> deleteAsync(String url, Map<String, String> headers) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return delete(url, headers);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * 添加请求拦截器
+     *
+     * @param interceptor 拦截器实例
+     */
+    default void addInterceptor(HttpInterceptor interceptor) {
+        // 默认实现为空，子类可选择性实现
+    }
+
+    /**
+     * 移除所有拦截器
+     */
+    default void clearInterceptors() {
+        // 默认实现为空，子类可选择性实现
     }
 }
 

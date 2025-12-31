@@ -1,5 +1,7 @@
 package top.yumbo.ai.omni.common.http;
 
+import top.yumbo.ai.omni.common.exception.ValidationException;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -17,14 +19,14 @@ public class UrlValidator {
      * 验证URL格式（基础验证）
      *
      * @param url 请求URL
-     * @throws IllegalArgumentException URL格式错误
+     * @throws ValidationException URL格式错误
      */
     public static void validateBasic(String url) {
         if (url == null || url.trim().isEmpty()) {
-            throw new IllegalArgumentException("URL cannot be null or empty");
+            throw new ValidationException("url", url, "URL cannot be null or empty");
         }
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            throw new IllegalArgumentException("Invalid URL protocol, must be http:// or https://");
+            throw new ValidationException("url", url, "Invalid URL protocol, must be http:// or https://");
         }
     }
 
@@ -32,7 +34,7 @@ public class UrlValidator {
      * 验证URL格式（完整验证）
      *
      * @param url 请求URL
-     * @throws IllegalArgumentException URL格式错误
+     * @throws ValidationException URL格式错误
      */
     public static void validateFull(String url) {
         // 基础验证
@@ -45,16 +47,16 @@ public class UrlValidator {
             // 验证host不为空
             String host = urlObj.getHost();
             if (host == null || host.trim().isEmpty()) {
-                throw new IllegalArgumentException("URL host cannot be empty");
+                throw new ValidationException("url", url, "URL host cannot be empty");
             }
 
             // 验证host格式（不能包含非法字符）
             if (host.contains(" ") || host.contains("\t") || host.contains("\n")) {
-                throw new IllegalArgumentException("URL host contains illegal characters");
+                throw new ValidationException("url", url, "URL host contains illegal characters");
             }
 
         } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Malformed URL: " + e.getMessage(), e);
+            throw new ValidationException("url", url, "Malformed URL: " + e.getMessage());
         }
     }
 
@@ -62,7 +64,7 @@ public class UrlValidator {
      * 验证URL格式（严格验证）
      *
      * @param url 请求URL
-     * @throws IllegalArgumentException URL格式错误
+     * @throws ValidationException URL格式错误
      */
     public static void validateStrict(String url) {
         // 完整验证
@@ -74,17 +76,17 @@ public class UrlValidator {
             // 验证端口范围
             int port = urlObj.getPort();
             if (port < -1 || port > 65535) {
-                throw new IllegalArgumentException("Invalid port number: " + port);
+                throw new ValidationException("url", url, "Invalid port number: " + port);
             }
 
             // 验证协议只能是http或https
             String protocol = urlObj.getProtocol();
             if (!"http".equalsIgnoreCase(protocol) && !"https".equalsIgnoreCase(protocol)) {
-                throw new IllegalArgumentException("Protocol must be http or https, got: " + protocol);
+                throw new ValidationException("url", url, "Protocol must be http or https, got: " + protocol);
             }
 
         } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Malformed URL: " + e.getMessage(), e);
+            throw new ValidationException("url", url, "Malformed URL: " + e.getMessage());
         }
     }
 
@@ -98,7 +100,7 @@ public class UrlValidator {
         try {
             validateBasic(url);
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (ValidationException e) {
             return false;
         }
     }
