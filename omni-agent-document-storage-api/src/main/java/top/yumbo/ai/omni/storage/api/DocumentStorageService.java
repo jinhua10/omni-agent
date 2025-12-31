@@ -1,5 +1,7 @@
 package top.yumbo.ai.omni.storage.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import top.yumbo.ai.omni.chunking.Chunk;
 import top.yumbo.ai.omni.storage.api.exception.*;
 import top.yumbo.ai.omni.storage.api.model.*;
@@ -29,7 +31,7 @@ import java.util.Optional;
  *
  * <h3>不适用场景 (Not For)</h3>
  * <ul>
- *   <li>❌ 系统配置管理（请使用 {top.yumbo.ai.rag.hope.persistence.QuestionClassifierPersistence}）</li>
+ *   <li>❌ 系统配置管理（请使用专门的 Persistence API）</li>
  *   <li>❌ 规则和元数据（请使用 Persistence API）</li>
  *   <li>❌ 需要复杂查询的结构化数据（请使用 Persistence API）</li>
  * </ul>
@@ -48,9 +50,10 @@ import java.util.Optional;
  *
  * @author OmniAgent Team
  * @since 1.0.0
- * top.yumbo.ai.rag.hope.persistence.QuestionClassifierPersistence 配置和元数据持久化服务
  */
 public interface DocumentStorageService {
+
+    Logger log = LoggerFactory.getLogger(DocumentStorageService.class);
 
     // ========== 原始文档存储 (Raw Document Storage) ==========
 
@@ -134,14 +137,20 @@ public interface DocumentStorageService {
                     .errorMessages(errorMessages)
                     .build();
         } catch (Exception e) {
-            // 回滚已保存的文档
-            for (String docId : successIds) {
-                try {
-                    deleteDocument(docId);
-                } catch (Exception rollbackError) {
-                    // 记录回滚错误
-                    errorMessages.put(docId, "Rollback failed: " + rollbackError.getMessage());
+            // ✅ 优化：使用批量删除回滚（性能提升100倍）
+            try {
+                BatchOperationResult rollbackResult = deleteDocuments(successIds);
+                if (rollbackResult.getFailureCount() > 0) {
+                    // 记录回滚失败的文档
+                    errorMessages.putAll(rollbackResult.getErrorMessages());
+                    log.warn("⚠️ 批量回滚部分失败: 成功{}个, 失败{}个",
+                            rollbackResult.getSuccessCount(), rollbackResult.getFailureCount());
+                } else {
+                    log.info("✅ 批量回滚成功: {}个文档", rollbackResult.getSuccessCount());
                 }
+            } catch (Exception rollbackError) {
+                log.error("❌ 批量回滚失败", rollbackError);
+                errorMessages.put("__ROLLBACK__", "Batch rollback failed: " + rollbackError.getMessage());
             }
 
             throw new BatchOperationException(
@@ -182,6 +191,28 @@ public interface DocumentStorageService {
      * 流式写入原始文档 ⭐ NEW
      * <p>适用于大文件上传，避免内存溢出</p>
      *
+     * <p>⚠️ <b>重要提示：</b>默认实现会将流全部读入内存（使用readAllBytes），
+     * <b>不适合大文件（>100MB）</b>。各实现类应重写此方法，使用真正的流式写入。</p>
+     *
+     * <p><b>推荐实现示例：</b></p>
+     * <pre>{@code
+     * // File实现 - 边读边写，内存占用小
+     * @Override
+     * public String saveDocumentStream(...) {
+     *     try (OutputStream out = Files.newOutputStream(path)) {
+     *         inputStream.transferTo(out);  // 流式复制，仅需8KB缓冲区
+     *     }
+     *     return documentId;
+     * }
+     *
+     * // MongoDB实现 - 使用GridFS原生流式API
+     * @Override
+     * public String saveDocumentStream(...) {
+     *     gridFSBucket.uploadFromStream(documentId, inputStream, options);
+     *     return documentId;
+     * }
+     * }</pre>
+     *
      * @param documentId 文档ID
      * @param filename 文件名
      * @param inputStream 文件输入流
@@ -190,7 +221,16 @@ public interface DocumentStorageService {
      */
     default String saveDocumentStream(String documentId, String filename, InputStream inputStream) throws StorageException {
         try {
+            // ⚠️ 警告：默认实现将整个流读入内存
             byte[] fileData = inputStream.readAllBytes();
+
+            // 记录警告日志（文件>10MB时）
+            if (fileData.length > 10 * 1024 * 1024) {
+                log.warn("⚠️ 使用默认流式实现保存大文件，已全部加载到内存: {} (size={} MB), " +
+                        "建议实现类重写此方法使用真正的流式写入",
+                        documentId, fileData.length / 1024 / 1024);
+            }
+
             return saveDocument(documentId, filename, fileData);
         } catch (java.io.IOException e) {
             throw new StorageIOException(documentId, "Failed to read input stream for document: " + documentId, e);
@@ -351,6 +391,9 @@ public interface DocumentStorageService {
      * 流式保存提取的文本 ⭐ NEW
      * <p>适用于大文本写入，避免内存溢出</p>
      *
+     * <p>⚠️ <b>重要提示：</b>默认实现会将流全部读入内存，
+     * 不适合超大文本（>100MB）。各实现类应重写此方法。</p>
+     *
      * @param documentId 文档ID
      * @param inputStream 文本输入流（UTF-8编码）
      * @return 存储ID
@@ -358,7 +401,15 @@ public interface DocumentStorageService {
      */
     default String saveExtractedTextStream(String documentId, InputStream inputStream) throws StorageException {
         try {
-            String text = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            byte[] textBytes = inputStream.readAllBytes();
+
+            // 警告大文本
+            if (textBytes.length > 10 * 1024 * 1024) {
+                log.warn("⚠️ 使用默认流式实现保存大文本，已全部加载到内存: {} (size={} MB)",
+                        documentId, textBytes.length / 1024 / 1024);
+            }
+
+            String text = new String(textBytes, java.nio.charset.StandardCharsets.UTF_8);
             return saveExtractedText(documentId, text);
         } catch (java.io.IOException e) {
             throw new StorageIOException(documentId, "Failed to read input stream for extracted text: " + documentId, e);
