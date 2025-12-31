@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import top.yumbo.ai.omni.common.i18n.I18N;
+import top.yumbo.ai.omni.web.service.MessageService;
 import top.yumbo.ai.omni.web.model.rag.ProcessingProgress;
 import top.yumbo.ai.omni.web.service.rag.ProcessingProgressService;
 
@@ -30,6 +30,9 @@ public class ProcessingProgressController {
     @Autowired
     private ProcessingProgressService progressService;
 
+    @Autowired
+    private MessageService messageService;
+
     /**
      * 获取文档处理进度
      * (Get document processing progress)
@@ -43,21 +46,22 @@ public class ProcessingProgressController {
             @PathVariable String documentId,
             @RequestHeader(value = "Accept-Language", defaultValue = "zh") String lang) {
 
-        log.debug(I18N.get("rag.progress.query.start", documentId));
+        // 日志使用getForLog（统一中文）
+        log.debug(messageService.getForLog("api.rag.progress.query.start", documentId));
 
         ProcessingProgress progress = progressService.getProgress(documentId);
 
         if (progress == null) {
-            log.warn(I18N.get("rag.progress.notfound", documentId));
+            log.warn(messageService.getForLog("api.rag.progress.notfound", documentId));
             return ResponseEntity.status(404).body(Map.of(
                     "success", false,
-                    "error", I18N.getLang("rag.progress.notfound", lang, documentId)
+                    "error", messageService.get("api.rag.progress.notfound", lang, documentId)
             ));
         }
 
         return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", I18N.getLang("rag.progress.query.success", lang),
+                "message", messageService.get("api.rag.progress.query.success", lang),
                 "data", progress
         ));
     }
@@ -80,7 +84,7 @@ public class ProcessingProgressController {
         if (progress == null) {
             return ResponseEntity.status(404).body(Map.of(
                     "success", false,
-                    "error", I18N.getLang("rag.progress.notfound", lang, documentId)
+                    "error", messageService.get("api.rag.progress.notfound", lang, documentId)
             ));
         }
 
@@ -117,19 +121,15 @@ public class ProcessingProgressController {
             @PathVariable String documentId,
             @RequestHeader(value = "Accept-Language", defaultValue = "zh") String lang) {
 
-        log.info(I18N.get("rag.progress.delete.start", documentId));
+        // 日志使用getForLog（统一中文）
+        log.info(messageService.getForLog("api.rag.progress.delete.start", documentId));
 
         progressService.removeProgress(documentId);
 
         return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", I18N.getLang("rag.progress.delete.success", lang, documentId)
+                "message", messageService.get("api.rag.progress.delete.success", documentId)
         ));
     }
 }
-
-
-
-
-
 
