@@ -73,5 +73,25 @@ public class RedisStorageProperties {
      * 默认: true
      */
     private boolean enableOptimizations = true;
+
+    /**
+     * 是否启用数据压缩
+     * 默认: false（为保持兼容性）
+     */
+    private boolean enableCompression = false;
+
+    /**
+     * 压缩阈值（字节）
+     * 只有超过此大小的数据才考虑压缩
+     * 默认: 1024（1KB）
+     */
+    private int compressionThreshold = 1024;
+
+    /**
+     * 压缩比阈值
+     * 只有压缩比超过此值时才使用压缩结果
+     * 默认: 0.2（20%）
+     */
+    private double compressionRatioThreshold = 0.2;
 }
 

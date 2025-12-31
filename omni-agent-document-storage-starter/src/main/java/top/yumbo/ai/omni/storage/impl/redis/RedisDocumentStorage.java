@@ -11,6 +11,7 @@ import top.yumbo.ai.omni.storage.api.model.OptimizationData;
 import top.yumbo.ai.omni.storage.api.DocumentStorageService;
 import top.yumbo.ai.omni.storage.api.exception.*;
 import top.yumbo.ai.omni.storage.api.model.*;
+import top.yumbo.ai.omni.storage.impl.redis.util.CompressionUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -885,9 +886,43 @@ public class RedisDocumentStorage implements DocumentStorageService {
     @Override
     public String saveExtractedText(String documentId, String text) {
         try {
-            String key = properties.getKeyPrefix() + "extracted:" + documentId;
-            redisTemplate.opsForValue().set(key, text);
-            log.debug("✅ Saved extracted text: {}, length={}", documentId, text.length());
+            String textKey = properties.getKeyPrefix() + "extracted:" + documentId;
+            String metaKey = properties.getKeyPrefix() + "extracted:meta:" + documentId;
+
+            // ✅ P2优化：智能压缩大文本
+            if (properties.isEnableCompression()) {
+                CompressionUtils.CompressionResult result = CompressionUtils.smartCompressString(text);
+
+                // 保存压缩后的数据
+                redisTemplate.opsForValue().set(textKey, result.getData());
+
+                // 保存元数据
+                Map<String, Object> meta = new HashMap<>();
+                meta.put("compressed", result.isCompressed());
+                meta.put("originalSize", result.getOriginalSize());
+                meta.put("compressedSize", result.getCompressedSize());
+                meta.put("compressionRatio", result.getCompressionRatio());
+                redisTemplate.opsForHash().putAll(metaKey, meta);
+
+                if (properties.getTtl() > 0) {
+                    redisTemplate.expire(textKey, properties.getTtl(), TimeUnit.SECONDS);
+                    redisTemplate.expire(metaKey, properties.getTtl(), TimeUnit.SECONDS);
+                }
+
+                log.debug("✅ Saved extracted text: {}, original={} bytes, compressed={} bytes, saved={:.2f}%",
+                    documentId, result.getOriginalSize(), result.getCompressedSize(),
+                    result.getSavedPercentage());
+            } else {
+                // 不启用压缩，直接保存
+                redisTemplate.opsForValue().set(textKey, text);
+
+                if (properties.getTtl() > 0) {
+                    redisTemplate.expire(textKey, properties.getTtl(), TimeUnit.SECONDS);
+                }
+
+                log.debug("✅ Saved extracted text: {}, length={}", documentId, text.length());
+            }
+
             return documentId;
         } catch (Exception e) {
             log.error("❌ Failed to save extracted text: {}", documentId, e);
@@ -898,17 +933,46 @@ public class RedisDocumentStorage implements DocumentStorageService {
     @Override
     public Optional<String> getExtractedText(String documentId) {
         try {
-            String key = properties.getKeyPrefix() + "extracted:" + documentId;
-            Object value = redisTemplate.opsForValue().get(key);
+            String textKey = properties.getKeyPrefix() + "extracted:" + documentId;
 
-            if (value != null) {
-                String text = value.toString();
-                log.debug("✅ Retrieved extracted text: {}, length={}", documentId, text.length());
-                return Optional.of(text);
+            // ✅ P2优化：支持压缩数据的读取
+            if (properties.isEnableCompression()) {
+                String metaKey = properties.getKeyPrefix() + "extracted:meta:" + documentId;
+
+                Object dataObj = redisTemplate.opsForValue().get(textKey);
+                if (dataObj == null) {
+                    log.debug("⚠️ Extracted text not found: {}", documentId);
+                    return Optional.empty();
+                }
+
+                // 检查是否压缩
+                Boolean compressed = (Boolean) redisTemplate.opsForHash().get(metaKey, "compressed");
+
+                if (Boolean.TRUE.equals(compressed)) {
+                    // 解压数据
+                    byte[] compressedData = (byte[]) dataObj;
+                    String text = CompressionUtils.decompressString(compressedData);
+                    log.debug("✅ Retrieved compressed text: {}, decompressed length={}", documentId, text.length());
+                    return Optional.of(text);
+                } else {
+                    // 未压缩数据
+                    String text = dataObj.toString();
+                    log.debug("✅ Retrieved extracted text: {}, length={}", documentId, text.length());
+                    return Optional.of(text);
+                }
+            } else {
+                // 不启用压缩，直接读取
+                Object value = redisTemplate.opsForValue().get(textKey);
+
+                if (value != null) {
+                    String text = value.toString();
+                    log.debug("✅ Retrieved extracted text: {}, length={}", documentId, text.length());
+                    return Optional.of(text);
+                }
+
+                log.debug("⚠️ Extracted text not found: {}", documentId);
+                return Optional.empty();
             }
-
-            log.debug("⚠️ Extracted text not found: {}", documentId);
-            return Optional.empty();
         } catch (Exception e) {
             log.error("❌ Failed to get extracted text: {}", documentId, e);
             return Optional.empty();
