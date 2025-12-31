@@ -509,7 +509,7 @@ default CompletableFuture<String> getAsync(String url, Map<String, String> heade
 | # | 问题 | 影响 | 位置 | 状态 |
 |---|------|------|------|------|
 | M1 | 默认超时时间过长（120秒） | 可能导致长时间阻塞 | OkHttp3Adapter | ✅ 已修复 (改为30/60秒) |
-| M2 | 响应只支持String类型 | 无法直接反序列化为对象 | HttpClientAdapter接口 | ⚠️ 待优化（需要集成Jackson）|
+| M2 | 响应只支持String类型 | 无法直接反序列化为对象 | HttpClientAdapter接口 | ✅ 已修复 |
 | M3 | 缺少PATCH方法支持 | RESTful API支持不完整 | HttpClientAdapter接口 | ✅ 已修复 |
 | M4 | 拦截器无优先级控制 | 无法控制执行顺序 | HttpInterceptor | ✅ 已修复 |
 | M5 | 缺少重试机制 | 网络抖动时可靠性差 | 所有Adapter | ✅ 已修复 |
@@ -1139,6 +1139,7 @@ public class HttpClientAdapterFactory {
 | S3 | setTimeout()方法未实现 | 实现动态超时配置 | OkHttp3Adapter | ✅ 通过 |
 | S4 | 缺少请求/响应大小限制 | 添加setMaxRequestSize/setMaxResponseSize | HttpClientAdapter, OkHttp3Adapter, RestTemplateAdapter | ✅ 通过 (7个新测试) |
 | M1 | 默认超时120秒过长 | 调整为30/60秒 | OkHttp3Adapter | ✅ 通过 |
+| M2 | 响应只支持String类型 | 添加泛型方法和deserialize()，集成Jackson | HttpClientAdapter, pom.xml | ✅ 通过 (9个新测试) |
 | M3 | 缺少PATCH方法支持 | 添加patch()和patchAsync()方法 | HttpClientAdapter, OkHttp3Adapter, RestTemplateAdapter | ✅ 通过 (6个新测试) |
 | M4 | 拦截器无优先级控制 | 添加getOrder()方法，按优先级执行 | HttpInterceptor, OkHttp3Adapter, RestTemplateAdapter | ✅ 通过 (5个新测试) |
 | M5 | 缺少重试机制 | 添加RetryPolicy接口和实现 | RetryPolicy, OkHttp3Adapter | ✅ 通过 (10个新测试) |
@@ -1149,16 +1150,24 @@ public class HttpClientAdapterFactory {
 #### 📊 修复统计
 
 - **严重问题修复：** 4/4 (100%) ✅
-- **中等问题修复：** 7/8 (87.5%)
+- **中等问题修复：** 8/8 (100%) ✅✅
 - **轻微问题修复：** 0/8 (0%)
-- **总计修复：** 11/20 (55%)
+- **总计修复：** 12/20 (60%)
 
 #### 🧪 测试覆盖
 
-- **测试用例总数：** 95个 (新增38个)
+- **测试用例总数：** 104个 (新增47个)
 - **测试通过率：** 100%
-- **新增测试文件：** RequestSizeLimitTest.java, AsyncExecutorTest.java, PatchMethodTest.java, InterceptorPriorityTest.java, RetryPolicyTest.java
-- **新增功能类：** ConnectionPoolMonitor.java (连接池监控), RetryPolicy.java (重试策略)
+- **新增测试文件：** 
+  - RequestSizeLimitTest.java (7个测试)
+  - AsyncExecutorTest.java (10个测试)
+  - PatchMethodTest.java (6个测试)
+  - InterceptorPriorityTest.java (5个测试)
+  - RetryPolicyTest.java (10个测试)
+  - GenericResponseTest.java (9个测试)
+- **新增功能类：** 
+  - ConnectionPoolMonitor.java (连接池监控)
+  - RetryPolicy.java (重试策略)
 
 #### 📝 代码变更
 

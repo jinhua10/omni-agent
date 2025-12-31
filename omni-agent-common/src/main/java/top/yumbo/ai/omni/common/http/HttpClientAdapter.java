@@ -76,6 +76,111 @@ public interface HttpClientAdapter {
     String patch(String url, Map<String, String> headers, String body) throws Exception;
 
     /**
+     * 发送 GET 请求并反序列化为指定类型
+     *
+     * @param url          请求URL
+     * @param headers      请求头（可为null）
+     * @param responseType 响应类型
+     * @param <T>          响应类型泛型
+     * @return 反序列化后的对象
+     * @throws IllegalArgumentException URL格式错误
+     * @throws Exception                请求失败或反序列化失败时抛出异常
+     */
+    default <T> T get(String url, Map<String, String> headers, Class<T> responseType) throws Exception {
+        String response = get(url, headers);
+        return deserialize(response, responseType);
+    }
+
+    /**
+     * 发送 POST 请求并反序列化为指定类型
+     *
+     * @param url          请求URL
+     * @param headers      请求头（可为null）
+     * @param body         请求体（JSON字符串，可为null）
+     * @param responseType 响应类型
+     * @param <T>          响应类型泛型
+     * @return 反序列化后的对象
+     * @throws IllegalArgumentException URL格式错误
+     * @throws Exception                请求失败或反序列化失败时抛出异常
+     */
+    default <T> T post(String url, Map<String, String> headers, String body, Class<T> responseType) throws Exception {
+        String response = post(url, headers, body);
+        return deserialize(response, responseType);
+    }
+
+    /**
+     * 发送 PUT 请求并反序列化为指定类型
+     *
+     * @param url          请求URL
+     * @param headers      请求头（可为null）
+     * @param body         请求体（JSON字符串，可为null）
+     * @param responseType 响应类型
+     * @param <T>          响应类型泛型
+     * @return 反序列化后的对象
+     * @throws IllegalArgumentException URL格式错误
+     * @throws Exception                请求失败或反序列化失败时抛出异常
+     */
+    default <T> T put(String url, Map<String, String> headers, String body, Class<T> responseType) throws Exception {
+        String response = put(url, headers, body);
+        return deserialize(response, responseType);
+    }
+
+    /**
+     * 发送 DELETE 请求并反序列化为指定类型
+     *
+     * @param url          请求URL
+     * @param headers      请求头（可为null）
+     * @param responseType 响应类型
+     * @param <T>          响应类型泛型
+     * @return 反序列化后的对象
+     * @throws IllegalArgumentException URL格式错误
+     * @throws Exception                请求失败或反序列化失败时抛出异常
+     */
+    default <T> T delete(String url, Map<String, String> headers, Class<T> responseType) throws Exception {
+        String response = delete(url, headers);
+        return deserialize(response, responseType);
+    }
+
+    /**
+     * 发送 PATCH 请求并反序列化为指定类型
+     *
+     * @param url          请求URL
+     * @param headers      请求头（可为null）
+     * @param body         请求体（JSON字符串，可为null）
+     * @param responseType 响应类型
+     * @param <T>          响应类型泛型
+     * @return 反序列化后的对象
+     * @throws IllegalArgumentException URL格式错误
+     * @throws Exception                请求失败或反序列化失败时抛出异常
+     */
+    default <T> T patch(String url, Map<String, String> headers, String body, Class<T> responseType) throws Exception {
+        String response = patch(url, headers, body);
+        return deserialize(response, responseType);
+    }
+
+    /**
+     * 反序列化JSON字符串为指定类型
+     *
+     * @param json JSON字符串
+     * @param type 目标类型
+     * @param <T>  类型泛型
+     * @return 反序列化后的对象
+     * @throws Exception 反序列化失败时抛出异常
+     */
+    default <T> T deserialize(String json, Class<T> type) throws Exception {
+        // 默认实现：尝试使用Jackson
+        try {
+            Class<?> objectMapperClass = Class.forName("com.fasterxml.jackson.databind.ObjectMapper");
+            Object mapper = objectMapperClass.getDeclaredConstructor().newInstance();
+            java.lang.reflect.Method readValue = objectMapperClass.getMethod("readValue", String.class, Class.class);
+            return type.cast(readValue.invoke(mapper, json, type));
+        } catch (ClassNotFoundException e) {
+            throw new UnsupportedOperationException(
+                    "泛型响应需要Jackson依赖。请添加: com.fasterxml.jackson.core:jackson-databind", e);
+        }
+    }
+
+    /**
      * 设置超时时间
      *
      * @param connectTimeoutSeconds 连接超时时间（秒）

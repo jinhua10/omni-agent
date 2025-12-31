@@ -43,6 +43,13 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
+        <!-- Jackson (可选，用于泛型响应支持) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- JUnit 5 (Test) -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
