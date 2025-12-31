@@ -790,7 +790,7 @@ omni-agent-web/
 #### 3. API 设计规范
 
 **统一响应格式：**
-```java
+```json
 {
   "code": 200,
   "message": "success",
@@ -800,7 +800,7 @@ omni-agent-web/
 ```
 
 **分页规范：**
-```java
+```json
 {
   "content": [ ... ],
   "pageNumber": 0,
@@ -811,7 +811,7 @@ omni-agent-web/
 ```
 
 **错误响应：**
-```java
+```json
 {
   "code": 400,
   "message": "Invalid parameter",
