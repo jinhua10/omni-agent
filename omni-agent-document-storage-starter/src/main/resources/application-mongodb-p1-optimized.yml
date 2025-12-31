@@ -1,0 +1,57 @@
+# ✅ MongoDB文档存储 - P1优化配置示例
+#
+# 包含以下优化：
+# - P1优化3：连接池优化
+# - P1优化4：重试机制配置
+#
+# @author OmniAgent Team
+# @since 2.0.0
+# @version P1 Optimized
+
+spring:
+  data:
+    mongodb:
+      # MongoDB连接URI
+      uri: mongodb://localhost:27017/omni-agent
+
+      # ✅ P1优化3：连接池优化配置
+      # 预期收益：提升并发性能和稳定性
+      auto-index-creation: true  # 自动创建索引
+
+      # 连接池配置（通过URI参数配置）
+      # uri: mongodb://localhost:27017/omni-agent?minPoolSize=10&maxPoolSize=100&maxWaitTime=2000&maxConnectionIdleTime=60000&maxConnectionLifeTime=300000&connectTimeout=10000&socketTimeout=30000&serverSelectionTimeout=30000
+
+  # ✅ P1优化4：重试机制配置
+  retry:
+    mongodb:
+      enabled: true
+      max-attempts: 3           # 最大重试次数
+      initial-interval: 100ms   # 初始延迟
+      multiplier: 2.0          # 延迟倍增系数
+      max-interval: 2000ms     # 最大延迟
+
+# OmniAgent文档存储配置
+omni-agent:
+  document-storage:
+    # 存储类型选择
+    type: mongodb
+
+    # 主实例配置
+    primary: mongodb-main
+
+    # 实例列表
+    instances:
+      mongodb-main:
+        type: mongodb
+        mongodb:
+          database: documents  # GridFS bucket名称
+
+# MongoDB性能监控（可选）
+management:
+  metrics:
+    enable:
+      mongo: true
+  endpoint:
+    health:
+      show-details: always
+
