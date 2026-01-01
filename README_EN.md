@@ -853,6 +853,29 @@ If this project helps you, please give us a Star! ⭐
 
 ---
 
+## 💝 Contact Us & Sponsor
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center">
+  <h3>📱 Contact</h3>
+  <img src="UI/src/assets/images/Connect Me.png" alt="Contact QR Code" width="200"/>
+  <p><b>Scan to add WeChat<br/>Join our technical community</b></p>
+</td>
+<td align="center">
+  <h3>☕ Support Us</h3>
+  <img src="UI/src/assets/images/Payment QR Code.png" alt="Sponsor QR Code" width="200"/>
+  <p><b>Buy me a coffee ☕<br/>Your support keeps us going! 💪</b></p>
+</td>
+</tr>
+</table>
+
+</div>
+
+---
+
 <div align="center">
 
 **Let Agents Bloom Everywhere - The Year of Agent Officially Begins!**

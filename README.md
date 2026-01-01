@@ -853,6 +853,29 @@ OmniAgent = Skill-based Agent + 知识网络
 
 ---
 
+## 💝 联系我们 & 赞助支持
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center">
+  <h3>📱 联系方式</h3>
+  <img src="UI/src/assets/images/Connect Me.png" alt="联系我二维码" width="200"/>
+  <p><b>扫码添加微信<br/>加入技术交流群</b></p>
+</td>
+<td align="center">
+  <h3>☕ 赞助支持</h3>
+  <img src="UI/src/assets/images/Payment QR Code.png" alt="赞助二维码" width="200"/>
+  <p><b>请我喝杯咖啡 ☕<br/>您的支持是我们持续开发的动力！💪</b></p>
+</td>
+</tr>
+</table>
+
+</div>
+
+---
+
 <div align="center">
 
 **让Agent遍地开花，Agent元年正式启动！**
