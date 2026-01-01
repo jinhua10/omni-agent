@@ -411,8 +411,9 @@ omni-agent:
 
   # ========== 工作流引擎配置 ⭐ NEW ==========
   workflow:
-    # 存储类型：auto（自动检测）| file | sqlite | mongodb | elasticsearch
-    storage-type: auto
+    # 存储类型：sqlite（推荐）| file | mongodb | elasticsearch | auto（自动检测）
+    # 注意：auto 模式会自动检测依赖，可能选择非预期的存储类型
+    storage-type: sqlite
 
     # SQLite 配置
     sqlite:

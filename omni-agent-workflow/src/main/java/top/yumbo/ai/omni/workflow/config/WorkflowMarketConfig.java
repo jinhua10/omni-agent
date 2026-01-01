@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import top.yumbo.ai.omni.workflow.repository.WorkflowRepository;
@@ -41,23 +42,24 @@ public class WorkflowMarketConfig {
 
         log.info("🔍 自动检测工作流存储类型...");
 
+        // 检测 SQLite（优先，因为最轻量）
+        if (isClassPresent("org.sqlite.JDBC")) {
+            log.info("✅ 检测到 SQLite 依赖，使用 SQLite 存储");
+            return "sqlite";
+        }
+
         // 检测 MongoDB
         if (isClassPresent("org.springframework.data.mongodb.core.MongoTemplate")) {
             log.info("✅ 检测到 MongoDB 依赖，使用 MongoDB 存储");
             return "mongodb";
         }
 
-        // 检测 Elasticsearch
+        // 检测 Elasticsearch（最后，因为可能只是作为其他功能的依赖存在）
         if (isClassPresent("co.elastic.clients.elasticsearch.ElasticsearchClient")) {
             log.info("✅ 检测到 Elasticsearch 依赖，使用 Elasticsearch 存储");
             return "elasticsearch";
         }
 
-        // 检测 SQLite
-        if (isClassPresent("org.sqlite.JDBC")) {
-            log.info("✅ 检测到 SQLite 依赖，使用 SQLite 存储");
-            return "sqlite";
-        }
 
         // 默认使用 File
         log.info("ℹ️ 未检测到特定存储依赖，使用 File 存储（YAML）");
@@ -80,6 +82,7 @@ public class WorkflowMarketConfig {
      * 创建 SQLite 数据源
      */
     @Bean
+    @Primary
     @ConditionalOnProperty(prefix = "omni-agent.workflow", name = "storage-type", havingValue = "sqlite")
     public DataSource workflowDataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
@@ -92,9 +95,11 @@ public class WorkflowMarketConfig {
 
     /**
      * 自动模式：根据依赖创建数据源
+     * 注意：只有检测到 SQLite 时才会创建 DataSource bean，且只在 auto 模式下
      */
-    @Bean
-    @ConditionalOnProperty(prefix = "omni-agent.workflow", name = "storage-type", havingValue = "auto", matchIfMissing = true)
+    @Bean(name = "autoWorkflowDataSource")
+    @Primary
+    @ConditionalOnProperty(prefix = "omni-agent.workflow", name = "storage-type", havingValue = "auto")
     public DataSource autoWorkflowDataSource() {
         String detectedType = detectStorageType();
 
@@ -106,7 +111,9 @@ public class WorkflowMarketConfig {
             return dataSource;
         }
 
-        // 其他存储类型返回 null，由对应的配置类处理
+        // 其他存储类型不需要 DataSource，返回 null
+        // Spring 会跳过这个 bean 的创建
+        log.info("ℹ️ 工作流使用非 SQL 存储类型: {}, 不创建 DataSource", detectedType);
         return null;
     }
 
@@ -114,6 +121,7 @@ public class WorkflowMarketConfig {
      * 创建 JdbcTemplate（SQLite）
      */
     @Bean
+    @Primary
     @ConditionalOnProperty(prefix = "omni-agent.workflow", name = "storage-type", havingValue = "sqlite")
     public JdbcTemplate workflowJdbcTemplate(DataSource workflowDataSource) {
         return new JdbcTemplate(workflowDataSource);
@@ -121,9 +129,11 @@ public class WorkflowMarketConfig {
 
     /**
      * 自动模式：创建 JdbcTemplate
+     * 注意：只在 auto 模式下创建
      */
-    @Bean
-    @ConditionalOnProperty(prefix = "omni-agent.workflow", name = "storage-type", havingValue = "auto", matchIfMissing = true)
+    @Bean(name = "autoWorkflowJdbcTemplate")
+    @Primary
+    @ConditionalOnProperty(prefix = "omni-agent.workflow", name = "storage-type", havingValue = "auto")
     public JdbcTemplate autoWorkflowJdbcTemplate() {
         String detectedType = detectStorageType();
 
@@ -149,9 +159,10 @@ public class WorkflowMarketConfig {
 
     /**
      * 自动模式：创建 WorkflowRepository
+     * 注意：只在 auto 模式下创建
      */
     @Bean
-    @ConditionalOnProperty(prefix = "omni-agent.workflow", name = "storage-type", havingValue = "auto", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = "omni-agent.workflow", name = "storage-type", havingValue = "auto")
     public WorkflowRepository autoWorkflowRepository(ObjectMapper objectMapper) {
         String detectedType = detectStorageType();
 
