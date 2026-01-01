@@ -11,12 +11,12 @@
   isolation: isolate;
 }
 
-.flow-title {
+.hope-flow-title {
   text-align: center;
   margin-bottom: 40px;
 }
 
-.flow-title h2 {
+.hope-flow-title h2 {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 10px;
@@ -24,14 +24,14 @@
   line-height: 1.2;
 }
 
-.flow-subtitle {
+.hope-flow-subtitle {
   font-size: 16px;
   opacity: 0.9;
   color: rgba(255, 255, 255, 0.9);
   font-style: italic;
 }
 
-.flow-container {
+.hope-flow-container {
   max-width: 1000px;
   margin: 0 auto;
   display: flex;
@@ -40,7 +40,7 @@
 }
 
 /* 流程步骤通用样式 */
-.flow-step {
+.hope-flow-step {
   width: 100%;
   max-width: 800px;
   background: rgba(255, 255, 255, 0.12);
@@ -55,7 +55,7 @@
   backdrop-filter: blur(5px);
 }
 
-.flow-step:hover {
+.hope-flow-step:hover {
   transform: translateY(-3px) translateZ(0);
   background: rgba(255, 255, 255, 0.18);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
@@ -88,7 +88,7 @@
   border-color: rgba(139, 92, 246, 0.5);
 }
 
-.user-question {
+.hope-flow-user-question {
   font-size: 16px;
   font-weight: 600;
   padding: 10px;
@@ -135,14 +135,14 @@
   }
 }
 
-.hope-header {
+.hope-flow-header {
   text-align: center;
   margin-bottom: 25px;
   position: relative;
   z-index: 1;
 }
 
-.hope-title {
+.hope-flow-title-text {
   font-size: 24px;
   font-weight: 700;
   color: #ffd700;
@@ -150,7 +150,7 @@
 }
 
 /* HOPE 内部区块 */
-.hope-section {
+.hope-flow-section-block {
   background: rgba(0, 0, 0, 0.25);
   border-radius: 12px;
   padding: 20px;
@@ -205,7 +205,7 @@
 }
 
 /* 三层检索容器 */
-.layers-container {
+.hope-flow-layers-container {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -279,6 +279,32 @@
   font-weight: 600;
 }
 
+/* 层级详情按钮 */
+.layer-detail-btn {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  border-radius: 6px;
+  color: #ffd700;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.layer-detail-btn:hover {
+  background: rgba(255, 215, 0, 0.3);
+  border-color: rgba(255, 215, 0, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.layer-detail-btn:active {
+  transform: translateY(0);
+}
+
 /* 区块箭头 */
 .hope-flow-section-arrow {
   text-align: center;
@@ -289,7 +315,7 @@
 }
 
 /* 流程箭头 */
-.flow-arrow {
+.hope-flow-arrow {
   font-size: 32px;
   color: rgba(255, 255, 255, 0.6);
   margin: 15px 0;
@@ -298,12 +324,12 @@
 }
 
 /* 紧凑步骤布局 */
-.compact-steps {
+.hope-flow-compact-steps {
   width: 100%;
   max-width: 800px;
 }
 
-.compact-row {
+.hope-flow-compact-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 15px;
@@ -340,7 +366,7 @@
   border-color: rgba(16, 185, 129, 0.5);
 }
 
-.result-content {
+.hope-flow-result-content {
   font-size: 16px;
   font-weight: 600;
   color: #6ee7b7;
@@ -356,15 +382,15 @@
     padding: 30px 15px;
   }
 
-  .flow-title h2 {
+  .hope-flow-title h2 {
     font-size: 24px;
   }
 
-  .flow-container {
+  .hope-flow-container {
     max-width: 100%;
   }
 
-  .flow-step {
+  .hope-flow-step {
     max-width: 100%;
     padding: 15px 20px;
   }
@@ -373,11 +399,11 @@
     font-size: 16px;
   }
 
-  .compact-row {
+  .hope-flow-compact-row {
     grid-template-columns: 1fr;
   }
 
-  .hope-title {
+  .hope-flow-title-text {
     font-size: 20px;
   }
 
@@ -395,9 +421,9 @@
 }
 
 /* 性能优化 - 减少不必要的重绘 */
-.flow-step,
+.hope-flow-step,
 .hope-flow-layer-box,
-.hope-section {
+.hope-flow-section-block {
   contain: layout style paint;
 }
 
@@ -406,6 +432,72 @@
   overflow-x: hidden;
   overflow-y: auto;
 }
+
+/* 层级详情弹窗样式 */
+.hope-layer-detail-modal.ant-modal .ant-modal-container {
+  padding: 0 !important;
+}
+
+.hope-layer-detail-modal .ant-modal-content {
+  background: transparent !important;
+  box-shadow: none;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.hope-layer-detail-modal .ant-modal-body {
+  padding: 0 !important;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* 防止 Modal 的任何样式污染子组件 */
+.hope-layer-detail-modal .ant-modal-body > * {
+  all: initial;
+  display: block;
+  width: 100%;
+}
+
+/* 恢复子组件的样式 */
+.hope-layer-detail-modal .hope-layers-structure {
+  all: revert;
+}
+
+.hope-layer-detail-modal .ant-modal {
+  padding: 0;
+  border-radius: 20px;
+}
+
+.hope-layer-detail-modal .ant-modal-close {
+  top: 10px;
+  right: 10px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.hope-layer-detail-modal .ant-modal-close:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.hope-layer-detail-modal .ant-modal-close-x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+}
+
 
 
 

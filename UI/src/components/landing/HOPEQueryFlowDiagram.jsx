@@ -1,10 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Modal } from 'antd';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { AnimatedContainer } from '../common';
+import HOPELayersStructure from './HOPELayersStructure';
 import '../../assets/css/landing/HOPEQueryFlowDiagram.css';
 
 const HOPEQueryFlowDiagram = () => {
   const { language } = useLanguage();
+  const [isLayerModalOpen, setIsLayerModalOpen] = useState(false);
+  const [selectedLayer, setSelectedLayer] = useState(null); // 'permanent', 'ordinary', 'highfreq', or null
 
   // 使用 useMemo 缓存翻译对象
   const t = useMemo(() => {
@@ -49,6 +53,7 @@ const HOPEQueryFlowDiagram = () => {
         highFreq: '高频层',
         highFreqCheck: '检查最近是否有类似问题',
         highFreqHit: '命中: 直接返回',
+        moreDetails: '更多详情',
 
         // 普通层
         ordinary: '普通层',
@@ -124,6 +129,7 @@ const HOPEQueryFlowDiagram = () => {
         highFreq: 'High Frequency Layer',
         highFreqCheck: 'Check for similar recent questions',
         highFreqHit: 'Hit: Return directly',
+        moreDetails: 'More Details',
 
         ordinary: 'Ordinary Layer',
         ordinaryRAG: 'RAG semantic search related docs',
@@ -171,34 +177,34 @@ const HOPEQueryFlowDiagram = () => {
     <div className="hope-query-flow-diagram">
       {/* 标题 */}
       <AnimatedContainer
-        className="flow-title"
+        className="hope-flow-title"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
         <h2>{t.title}</h2>
-        <p className="flow-subtitle">{t.subtitle}</p>
+        <p className="hope-flow-subtitle">{t.subtitle}</p>
       </AnimatedContainer>
 
-      <div className="flow-container">
+      <div className="hope-flow-container">
         {/* 步骤 1: 用户提问 */}
         <AnimatedContainer
-          className="flow-step hope-flow-step-user"
+          className="hope-flow-step hope-flow-step-user"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
         >
           <div className="hope-flow-step-header">{t.step1}</div>
           <div className="hope-flow-step-content">
-            <div className="user-question">{t.step1Question}</div>
+            <div className="hope-flow-user-question">{t.step1Question}</div>
           </div>
         </AnimatedContainer>
 
-        <div className="flow-arrow">↓</div>
+        <div className="hope-flow-arrow">↓</div>
 
         {/* 步骤 2: Conversation Manager */}
         <AnimatedContainer
-          className="flow-step hope-flow-step-normal"
+          className="hope-flow-step hope-flow-step-normal"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
@@ -210,11 +216,11 @@ const HOPEQueryFlowDiagram = () => {
           </div>
         </AnimatedContainer>
 
-        <div className="flow-arrow">↓</div>
+        <div className="hope-flow-arrow">↓</div>
 
         {/* 步骤 3: Intent Analyzer */}
         <AnimatedContainer
-          className="flow-step hope-flow-step-normal"
+          className="hope-flow-step hope-flow-step-normal"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
@@ -227,21 +233,21 @@ const HOPEQueryFlowDiagram = () => {
           </div>
         </AnimatedContainer>
 
-        <div className="flow-arrow">↓</div>
+        <div className="hope-flow-arrow">↓</div>
 
         {/* 步骤 4: HOPE 系统核心 */}
         <AnimatedContainer
-          className="flow-step hope-flow-step-hope"
+          className="hope-flow-step hope-flow-step-hope"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="hope-header">
-            <div className="hope-title">{t.step4} {t.step4Core}</div>
+          <div className="hope-flow-header">
+            <div className="hope-flow-title-text">{t.step4} {t.step4Core}</div>
           </div>
 
           {/* 4.1 问题分类 */}
-          <div className="hope-section">
+          <div className="hope-flow-section-block">
             <div className="hope-flow-section-title">{t.step4_1}</div>
             <div className="hope-flow-section-content">
               <div className="hope-flow-content-line">{t.step4_1_input}</div>
@@ -252,7 +258,7 @@ const HOPEQueryFlowDiagram = () => {
           <div className="hope-flow-section-arrow">↓</div>
 
           {/* 4.2 层级选择 */}
-          <div className="hope-section">
+          <div className="hope-flow-section-block">
             <div className="hope-flow-section-title">{t.step4_2}</div>
             <div className="hope-flow-section-content">
               <div className="hope-flow-content-line">{t.step4_2_suggest}</div>
@@ -260,13 +266,22 @@ const HOPEQueryFlowDiagram = () => {
               <div className="hope-flow-content-line priority">{t.step4_2_priority}</div>
 
               {/* 三层检索 */}
-              <div className="layers-container">
+              <div className="hope-flow-layers-container">
                 {/* 高频层 */}
                 <div className="hope-flow-layer-box high-freq">
                   <div className="hope-flow-layer-number">1️⃣</div>
                   <div className="hope-flow-layer-name">{t.highFreq}</div>
                   <div className="hope-flow-layer-item">• {t.highFreqCheck}</div>
                   <div className="hope-flow-layer-item hit">• {t.highFreqHit} ✅</div>
+                  <button
+                    className="layer-detail-btn"
+                    onClick={() => {
+                      setSelectedLayer('highfreq');
+                      setIsLayerModalOpen(true);
+                    }}
+                  >
+                    {t.moreDetails}
+                  </button>
                 </div>
 
                 {/* 普通层 */}
@@ -275,6 +290,15 @@ const HOPEQueryFlowDiagram = () => {
                   <div className="hope-flow-layer-name">{t.ordinary}</div>
                   <div className="hope-flow-layer-item">• {t.ordinaryRAG}</div>
                   <div className="hope-flow-layer-item">• {t.ordinaryFound}</div>
+                  <button
+                    className="layer-detail-btn"
+                    onClick={() => {
+                      setSelectedLayer('ordinary');
+                      setIsLayerModalOpen(true);
+                    }}
+                  >
+                    {t.moreDetails}
+                  </button>
                 </div>
 
                 {/* 持久层 */}
@@ -283,6 +307,15 @@ const HOPEQueryFlowDiagram = () => {
                   <div className="hope-flow-layer-name">{t.permanent}</div>
                   <div className="hope-flow-layer-item">• {t.permanentCore}</div>
                   <div className="hope-flow-layer-item">• {t.permanentFound}</div>
+                  <button
+                    className="layer-detail-btn"
+                    onClick={() => {
+                      setSelectedLayer('permanent');
+                      setIsLayerModalOpen(true);
+                    }}
+                  >
+                    {t.moreDetails}
+                  </button>
                 </div>
               </div>
             </div>
@@ -291,7 +324,7 @@ const HOPEQueryFlowDiagram = () => {
           <div className="hope-flow-section-arrow">↓</div>
 
           {/* 4.3 自学习机制 */}
-          <div className="hope-section">
+          <div className="hope-flow-section-block">
             <div className="hope-flow-section-title">{t.step4_3}</div>
             <div className="hope-flow-section-content">
               <div className="hope-flow-step-item">• {t.step4_3_item1}</div>
@@ -302,14 +335,14 @@ const HOPEQueryFlowDiagram = () => {
           </div>
         </AnimatedContainer>
 
-        <div className="flow-arrow">↓</div>
+        <div className="hope-flow-arrow">↓</div>
 
         {/* 后续步骤 - 紧凑布局 */}
-        <div className="compact-steps">
+        <div className="hope-flow-compact-steps">
           {/* 步骤 5-6 */}
-          <div className="compact-row">
+          <div className="hope-flow-compact-row">
             <AnimatedContainer
-              className="flow-step hope-flow-step-compact"
+              className="hope-flow-step hope-flow-step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
@@ -322,7 +355,7 @@ const HOPEQueryFlowDiagram = () => {
             </AnimatedContainer>
 
             <AnimatedContainer
-              className="flow-step hope-flow-step-compact"
+              className="hope-flow-step hope-flow-step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
@@ -337,9 +370,9 @@ const HOPEQueryFlowDiagram = () => {
           </div>
 
           {/* 步骤 7-8 */}
-          <div className="compact-row">
+          <div className="hope-flow-compact-row">
             <AnimatedContainer
-              className="flow-step hope-flow-step-compact"
+              className="hope-flow-step hope-flow-step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
@@ -353,7 +386,7 @@ const HOPEQueryFlowDiagram = () => {
             </AnimatedContainer>
 
             <AnimatedContainer
-              className="flow-step hope-flow-step-compact"
+              className="hope-flow-step hope-flow-step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.9 }}
@@ -368,26 +401,54 @@ const HOPEQueryFlowDiagram = () => {
           </div>
         </div>
 
-        <div className="flow-arrow">↓</div>
+        <div className="hope-flow-arrow">↓</div>
 
         {/* 步骤 9: 返回结果 */}
         <AnimatedContainer
-          className="flow-step hope-flow-step-result"
+          className="hope-flow-step hope-flow-step-result"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1.0 }}
         >
           <div className="hope-flow-step-header">{t.step9}</div>
           <div className="hope-flow-step-content">
-            <div className="result-content">{t.step9Content}</div>
+            <div className="hope-flow-result-content">{t.step9Content}</div>
           </div>
         </AnimatedContainer>
       </div>
+
+      {/* 层级详情弹窗 */}
+      <Modal
+        open={isLayerModalOpen}
+        onCancel={() => {
+          setIsLayerModalOpen(false);
+          setSelectedLayer(null);
+        }}
+        footer={null}
+        width="90%"
+        style={{ top: 20, maxWidth: 1400 }}
+        className="hope-layer-detail-modal"
+        styles={{
+          body: {
+            padding: 0,
+            background: 'transparent',
+            color: 'inherit'
+          },
+          content: {
+            background: 'transparent',
+            boxShadow: 'none',
+            padding: 0
+          }
+        }}
+      >
+        <HOPELayersStructure selectedLayer={selectedLayer} />
+      </Modal>
     </div>
   );
 };
 
 export default React.memo(HOPEQueryFlowDiagram);
+
 
 
 

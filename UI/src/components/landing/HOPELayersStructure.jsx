@@ -3,8 +3,14 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { AnimatedContainer } from '../common';
 import '../../assets/css/landing/HOPELayersStructure.css';
 
-const HOPELayersStructure = () => {
+const HOPELayersStructure = ({ selectedLayer = null }) => {
   const { language } = useLanguage();
+
+  // 根据 selectedLayer 决定显示哪些层
+  const shouldShowLayer = (layerType) => {
+    if (!selectedLayer) return true; // 没有选择时显示所有层
+    return selectedLayer === layerType; // 只显示选中的层
+  };
 
   // 使用 useMemo 缓存翻译对象
   const t = useMemo(() => {
