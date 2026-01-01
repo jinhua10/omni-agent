@@ -436,12 +436,13 @@
 /* 层级详情弹窗样式 */
 .hope-layer-detail-modal.ant-modal .ant-modal-container {
   padding: 0 !important;
+  background: transparent !important;
 }
 
 .hope-layer-detail-modal .ant-modal-content {
   background: transparent !important;
-  box-shadow: none;
-  padding: 0;
+  box-shadow: none !important;
+  padding: 0 !important;
   overflow: hidden;
   border-radius: 20px;
 }
@@ -467,9 +468,15 @@
   all: revert;
 }
 
+/* 移除 Modal 可能的白色背景 */
+.hope-layer-detail-modal .ant-modal-wrap {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
 .hope-layer-detail-modal .ant-modal {
-  padding: 0;
+  padding: 0 !important;
   border-radius: 20px;
+  background: transparent !important;
 }
 
 .hope-layer-detail-modal .ant-modal-close {

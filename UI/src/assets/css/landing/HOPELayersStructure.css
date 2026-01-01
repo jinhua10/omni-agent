@@ -8,12 +8,12 @@
   color: white;
 }
 
-.layers-title {
+.hope-layers-title {
   text-align: center;
   margin-bottom: 40px;
 }
 
-.layers-title h2 {
+.hope-layers-title h2 {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 10px;
@@ -21,7 +21,7 @@
   line-height: 1.2;
 }
 
-.layers-subtitle {
+.hope-layers-subtitle {
   font-size: 16px;
   opacity: 0.9;
   color: rgba(255, 255, 255, 0.9);
@@ -29,7 +29,7 @@
 }
 
 /* 三层容器 - 响应式网格布局 */
-.layers-container {
+.hope-layers-container {
   max-width: 1400px;
   margin: 0 auto;
   display: grid;
@@ -38,7 +38,7 @@
 }
 
 /* 层级卡片 */
-.layer-card {
+.hope-layers-card {
   background: rgba(255, 255, 255, 0.12);
   border-radius: 15px;
   padding: 25px;
@@ -52,7 +52,7 @@
   flex-direction: column;
 }
 
-.layer-card:hover {
+.hope-layers-card:hover {
   transform: translateY(-8px) translateZ(0);
   background: rgba(255, 255, 255, 0.18);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
@@ -169,7 +169,7 @@
 }
 
 /* 问题类型 */
-.type-item {
+.hope-layers-type-item {
   font-size: 13px;
   padding: 5px 0;
   padding-left: 10px;
@@ -178,7 +178,7 @@
 }
 
 /* 自动管理机制框 */
-.mechanism-box {
+.hope-layers-mechanism-box {
   background: rgba(0, 0, 0, 0.25);
   padding: 15px;
   border-radius: 10px;
@@ -188,21 +188,21 @@
   gap: 12px;
 }
 
-.mechanism-item {
+.hope-layers-mechanism-item {
   padding: 10px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   border-left: 3px solid rgba(255, 215, 0, 0.5);
 }
 
-.mechanism-title {
+.hope-layers-mechanism-title {
   font-size: 14px;
   font-weight: 700;
   color: #ffd700;
   margin-bottom: 6px;
 }
 
-.mechanism-detail {
+.hope-layers-mechanism-detail {
   font-size: 13px;
   padding: 3px 0;
   padding-left: 15px;
@@ -210,7 +210,7 @@
 }
 
 /* 检索优先级 */
-.layer-priority {
+.hope-layers-priority {
   margin-top: auto;
   padding: 12px 15px;
   background: rgba(255, 215, 0, 0.15);
@@ -226,11 +226,11 @@
 
 /* 平板端 (768px - 1200px) - 2列布局 */
 @media (max-width: 1200px) and (min-width: 769px) {
-  .layers-container {
+  .hope-layers-container {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .layer-card:nth-child(3) {
+  .hope-layers-card:nth-child(3) {
     grid-column: 1 / -1;
     max-width: 600px;
     margin: 0 auto;
@@ -244,16 +244,16 @@
     padding: 30px 15px;
   }
 
-  .layers-title h2 {
+  .hope-layers-title h2 {
     font-size: 24px;
   }
 
-  .layers-container {
+  .hope-layers-container {
     grid-template-columns: 1fr;
     gap: 20px;
   }
 
-  .layer-card {
+  .hope-layers-card {
     padding: 20px;
   }
 
@@ -266,15 +266,15 @@
   }
 
   .hope-layers-content-box,
-  .mechanism-box {
+  .hope-layers-mechanism-box {
     padding: 12px;
   }
 
-  .mechanism-item {
+  .hope-layers-mechanism-item {
     padding: 8px;
   }
 
-  .layer-priority {
+  .hope-layers-priority {
     font-size: 14px;
     padding: 10px 12px;
   }
@@ -286,11 +286,11 @@
     padding: 20px 10px;
   }
 
-  .layers-title h2 {
+  .hope-layers-title h2 {
     font-size: 20px;
   }
 
-  .layer-card {
+  .hope-layers-card {
     padding: 15px;
   }
 
@@ -307,27 +307,28 @@
     font-size: 13px;
   }
 
-  .mechanism-detail {
+  .hope-layers-mechanism-detail {
     font-size: 12px;
   }
 }
 
 /* 性能优化 */
-.layer-card,
+.hope-layers-card,
 .hope-layers-content-box,
-.mechanism-box {
+.hope-layers-mechanism-box {
   contain: layout style paint;
 }
 
 /* 超宽屏优化 (> 1400px) */
 @media (min-width: 1400px) {
-  .layers-container {
+  .hope-layers-container {
     max-width: 1600px;
   }
 
-  .layer-card {
+  .hope-layers-card {
     padding: 30px;
   }
 }
+
 
 
