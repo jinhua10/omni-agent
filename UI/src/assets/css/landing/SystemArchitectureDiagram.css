@@ -524,14 +524,28 @@
 }
 
 /* HOPE 查询流程弹窗样式 */
-.hope-flow-modal .ant-modal-content {
+
+/* 覆盖 Modal 容器的默认 padding */
+.hope-flow-modal.ant-modal .ant-modal-container {
+  padding: 0 !important;
   background: transparent;
   box-shadow: none;
   padding: 0;
+  overflow: hidden;
+  border-radius: 20px;
 }
 
 .hope-flow-modal .ant-modal-body {
   padding: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+/* 移除 Modal 容器的 padding */
+.hope-flow-modal .ant-modal {
+  padding: 0;
+  border-radius: 20px;
 }
 
 .hope-flow-modal .ant-modal-close {
@@ -545,6 +559,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1000;
 }
 
 .hope-flow-modal .ant-modal-close:hover {
