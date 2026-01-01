@@ -9,9 +9,8 @@ import top.yumbo.ai.omni.p2p.api.P2PConnection;
 import top.yumbo.ai.omni.p2p.api.P2PConnectionManager;
 import top.yumbo.ai.omni.p2p.api.P2PDataTransferService;
 import top.yumbo.ai.omni.p2p.api.P2PTransferBridge;
-import top.yumbo.ai.p2p.core.DefaultP2PConnectionManager;
-import top.yumbo.ai.p2p.core.DefaultP2PTransferBridge;
-
+import top.yumbo.ai.omni.p2p.starter.core.DefaultP2PConnectionManager;
+import top.yumbo.ai.omni.p2p.starter.core.DefaultP2PTransferBridge;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -91,6 +91,10 @@
         </dependency>
 
 
+        <dependency>
+            <groupId>top.yumbo.ai.omni</groupId>
+            <artifactId>omni-agent-p2p-starter</artifactId>
+        </dependency>
 
         <!-- OkHttp - 用于 Vision LLM HTTP 请求 -->
         <dependency>

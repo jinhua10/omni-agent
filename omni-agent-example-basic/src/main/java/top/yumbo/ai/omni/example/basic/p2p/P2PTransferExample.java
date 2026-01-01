@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import top.yumbo.ai.omni.p2p.api.P2PDataTransferService;
 import top.yumbo.ai.omni.p2p.api.P2PTransferBridge;
-import top.yumbo.ai.p2p.core.DefaultP2PTransferBridge;
+import top.yumbo.ai.omni.p2p.starter.core.DefaultP2PTransferBridge;
 
 import java.util.HashMap;
 import java.util.Map;
