@@ -34,7 +34,7 @@ import GiteeIcon from '../icons/GiteeIcon'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { LetterModal, FloatingLetterButton } from '../common'
 import './LandingPage.css'
-import KnowledgeNetworkDiagram from './KnowledgeNetworkDiagram'
+import SystemArchitectureDiagram from './SystemArchitectureDiagram'
 
 // 导入二维码图片
 import PaymentQRCode from '../../assets/images/Payment QR Code.png'
@@ -800,7 +800,7 @@ const LandingPage = ({ onEnterApp }) => {
             </div>
           </div>
           {/* 知识网络架构 */}
-          <KnowledgeNetworkDiagram />
+          <SystemArchitectureDiagram />
           {/* P2P分布式架构 */}
           <div className="p2p-architecture-section" style={{ marginTop: 80 }}>
             <Title level={3} className="section-subtitle" style={{ marginBottom: 32, textAlign: 'center' }}>
