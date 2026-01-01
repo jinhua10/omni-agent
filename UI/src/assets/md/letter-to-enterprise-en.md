@@ -126,6 +126,80 @@ Flexible extension capabilities:
 └─ Custom business logic (through plugin mechanism)
 ```
 
+### 5. Engineering Data Closed-Loop System
+
+omni-agent builds a complete **data closed-loop system** from an engineering architecture design perspective, ensuring high-quality enterprise knowledge management:
+
+```
+Complete data processing pipeline:
+
+1️⃣ Data Collection
+   ├─ Multi-format document auto-collection (Word, PDF, Excel, PPT, etc.)
+   ├─ Structured data integration (database, API, system connection)
+   ├─ Real-time data monitoring (automatic new document discovery)
+   └─ Batch import tools (rapid historical data migration)
+   
+2️⃣ Data Cleaning
+   ├─ Format standardization (unified encoding, format conversion)
+   ├─ Content deduplication (intelligent duplicate document identification)
+   ├─ Noise filtering (remove invalid content, ads, watermarks)
+   ├─ Quality detection (completeness, readability assessment)
+   └─ Metadata extraction (author, time, version, tags)
+   
+3️⃣ Intelligent Chunking
+   ├─ 6 chunking strategies (semantic, paragraph, sentence, sliding window, recursive, structured)
+   ├─ Adaptive chunking (auto-select strategy based on document type)
+   ├─ Context preservation (ensure semantic integrity)
+   ├─ Overlap handling (avoid boundary information loss)
+   └─ Real-time preview (visual chunk effect adjustment)
+   
+4️⃣ Vectorization
+   ├─ Multi-model support (BGE-M3, BGE-Base-ZH, OpenAI Embedding)
+   ├─ Local deployment (data stays within enterprise intranet)
+   ├─ Batch processing (high-performance parallel computing)
+   ├─ Incremental updates (quick vectorization of new content)
+   └─ Vector quality monitoring (anomaly detection and optimization)
+   
+5️⃣ Intelligent Retrieval
+   ├─ Hybrid retrieval (vector + keyword + BM25)
+   ├─ Reranking optimization (multi-stage precision ranking)
+   ├─ Query expansion (synonyms, near-synonyms, domain terms)
+   ├─ Personalized retrieval (optimize based on user role and history)
+   └─ Multi-strategy fusion (6 retrieval strategies adaptive selection)
+   
+6️⃣ Intelligent Generation
+   ├─ Context understanding (precise intent recognition)
+   ├─ Multi-turn dialogue (maintain conversation context)
+   ├─ Citation tracing (answer with source annotation)
+   ├─ Formatted output (Markdown, tables, lists)
+   └─ Risk control (refuse to answer uncertain questions)
+   
+7️⃣ Effect Evaluation
+   ├─ Accuracy monitoring (automatic answer quality scoring)
+   ├─ User feedback (thumbs up/down, correction mechanism)
+   ├─ A/B testing (compare different strategy effects)
+   ├─ Data analysis (identify hot issues, knowledge gaps)
+   └─ Continuous optimization (auto-tune based on evaluation results)
+
+📈 Closed-loop advantages:
+✅ Every link is monitorable and optimizable
+✅ Data quality controlled at every layer
+✅ Problems are traceable and improvable
+✅ System continuously learns and evolves
+```
+
+**Enterprise-grade Engineering Assurance:**
+
+| Stage | Quality Metrics | Monitoring Methods |
+|-------|----------------|-------------------|
+| **Data Collection** | Success rate > 99% | Real-time monitoring, alerts |
+| **Data Cleaning** | Quality score > 95 | Quality detection, manual sampling |
+| **Intelligent Chunking** | Semantic integrity > 98% | Chunk preview, effect evaluation |
+| **Vectorization** | Vector quality > 90 | Similarity testing, anomaly detection |
+| **Intelligent Retrieval** | Top-3 accuracy > 85% | User feedback, A/B testing |
+| **Intelligent Generation** | Satisfaction > 90% | User ratings, expert review |
+| **Effect Evaluation** | Coverage 100% | Full data analysis, regular reports |
+
 ---
 
 ## 📊 Return on Investment (ROI) Analysis
