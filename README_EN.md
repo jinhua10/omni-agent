@@ -205,13 +205,13 @@ Strategy Optimization ← Pattern Recognition ← Knowledge Supplement ← Auto-
 └─────────────────────────────────────────┘
 ```
 
-**Self-learning Capabilities**:
+**Self-learning Capabilities:**
 - 🎓 **Question Classification Learning** - Auto-classify based on keywords and patterns
 - 🔍 **Knowledge Gap Detection** - Discover knowledge base blind spots
 - 📈 **Auto Strategy Optimization** - Dynamically adjust layers based on access frequency
 - 🔄 **Continuous Improvement** - Learn and optimize from each interaction
 
-**Detailed Documentation**: [HOPE System Design](docs/refactor_01/core/HOPE_SYSTEM_DESIGN.md)
+**Detailed Documentation**: [HOPE System Design](docs/refactor_01/core/HOPE_SYSTEM_DESIGN_EN.md)
 
 ---
 
@@ -859,7 +859,7 @@ If this project helps you, please give us a Star! ⭐
 
 **OmniAgent - Building Next-Generation Intelligent Agent Applications**
 
-[🌐 Website](https://yumbo.top) • [📖 Docs](docs/) • [🐛 Feedback](https://github.com/jinhua10/omni-agent/issues) • [💬 Discussions](https://github.com/jinhua10/omni-agent/discussions)
+[🌐 Website](https://yumbo.top) • [📖 Docs](docs/en/) • [🐛 Feedback](https://github.com/jinhua10/omni-agent/issues) • [💬 Discussions](https://github.com/jinhua10/omni-agent/discussions)
 
 Made with ❤️ by OmniAgent Team
 
