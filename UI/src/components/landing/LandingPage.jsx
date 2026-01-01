@@ -6,7 +6,7 @@
  * @since 2025-12-29
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { Button, Row, Col, Card, Typography, Space, Statistic, Image } from 'antd'
 import {
   RocketOutlined,
@@ -42,6 +42,37 @@ import ConnectMeQRCode from '../../assets/images/Connect Me.png'
 
 const { Title, Paragraph, Text } = Typography
 
+// 图标映射对象 - 移到组件外部，避免每次渲染都重新创建
+const ICON_MAP = {
+  ApiOutlined,
+  CodeOutlined,
+  FileTextOutlined,
+  ThunderboltOutlined,
+  DatabaseOutlined,
+  SafetyOutlined,
+  CheckCircleOutlined,
+  BulbOutlined,
+  ShareAltOutlined,
+  RocketOutlined,
+  CloudOutlined,
+  UserOutlined
+}
+
+// 语言切换按钮样式常量
+const LANG_BUTTON_BASE_STYLE = {
+  background: 'rgba(255, 255, 255, 0.1)',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  color: '#fff',
+  backdropFilter: 'blur(10px)',
+  borderRadius: 20,
+  padding: '4px 16px',
+  fontWeight: 500,
+  transition: 'all 0.3s ease',
+}
+
+const LANG_BUTTON_HOVER_BG = 'rgba(255, 255, 255, 0.2)'
+const LANG_BUTTON_NORMAL_BG = 'rgba(255, 255, 255, 0.1)'
+
 
 const LandingPage = ({ onEnterApp }) => {
   const { t, language, toggleLanguage } = useLanguage()
@@ -50,21 +81,6 @@ const LandingPage = ({ onEnterApp }) => {
   const [letterModalOpen, setLetterModalOpen] = useState(false)
   const [showLetterBadge, setShowLetterBadge] = useState(false)
 
-  // 图标映射对象 - 避免使用eval导致生产环境问题
-  const iconMap = {
-    ApiOutlined,
-    CodeOutlined,
-    FileTextOutlined,
-    ThunderboltOutlined,
-    DatabaseOutlined,
-    SafetyOutlined,
-    CheckCircleOutlined,
-    BulbOutlined,
-    ShareAltOutlined,
-    RocketOutlined,
-    CloudOutlined,
-    UserOutlined
-  }
 
   const [animatedStats, setAnimatedStats] = useState({
     modules: 0,
@@ -107,23 +123,23 @@ const LandingPage = ({ onEnterApp }) => {
     ],
   ], [t, language])
 
-  // 数字动画效果
+  // 数字动画效果 - 使用 requestAnimationFrame 优化性能
   useEffect(() => {
     const duration = 2000
-    const steps = 60
-    const interval = duration / steps
-
     const targets = {
       modules: 20,
       codeLines: 15000,
-      formats: 10,  // Office文档(5种) + 所有文本格式
+      formats: 10,
       strategies: 6
     }
 
-    let step = 0
-    const timer = setInterval(() => {
-      step++
-      const progress = step / steps
+    let startTime = null
+    let animationFrame = null
+
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1)
 
       setAnimatedStats({
         modules: Math.floor(targets.modules * progress),
@@ -132,13 +148,20 @@ const LandingPage = ({ onEnterApp }) => {
         strategies: Math.floor(targets.strategies * progress)
       })
 
-      if (step >= steps) {
-        clearInterval(timer)
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate)
+      } else {
         setAnimatedStats(targets)
       }
-    }, interval)
+    }
 
-    return () => clearInterval(timer)
+    animationFrame = requestAnimationFrame(animate)
+
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame)
+      }
+    }
   }, [])
 
   // 检查是否首次访问，显示信件模态框
@@ -164,23 +187,34 @@ const LandingPage = ({ onEnterApp }) => {
     }
   }, [])
 
-  // 关闭信件模态框
-  const handleCloseLetterModal = () => {
+  // 使用 useCallback 优化事件处理函数
+  const handleCloseLetterModal = useCallback(() => {
     setLetterModalOpen(false)
-  }
+  }, [])
 
-  // 信件阅读完成回调
-  const handleLetterRead = () => {
+  const handleLetterRead = useCallback(() => {
     setLetterModalOpen(false)
     localStorage.setItem('omni_agent_letter_seen', 'true')
     setShowLetterBadge(true)
-  }
+  }, [])
 
-  // 打开信件模态框
-  const handleOpenLetterModal = () => {
+  const handleOpenLetterModal = useCallback(() => {
     setLetterModalOpen(true)
     setShowLetterBadge(false)
-  }
+  }, [])
+
+  const handleStatsPageChange = useCallback((index) => {
+    setCurrentStatsPage(index)
+  }, [])
+
+  // 语言切换按钮事件处理
+  const handleLangMouseEnter = useCallback((e) => {
+    e.currentTarget.style.background = LANG_BUTTON_HOVER_BG
+  }, [])
+
+  const handleLangMouseLeave = useCallback((e) => {
+    e.currentTarget.style.background = LANG_BUTTON_NORMAL_BG
+  }, [])
 
   // 自动轮播统计数据
   useEffect(() => {
@@ -191,10 +225,6 @@ const LandingPage = ({ onEnterApp }) => {
     return () => clearInterval(autoScroll)
   }, [statsPages.length])
 
-  // 手动切换统计页
-  const handleStatsPageChange = (index) => {
-    setCurrentStatsPage(index)
-  }
 
   return (
     <div className="landing-page">
@@ -220,22 +250,9 @@ const LandingPage = ({ onEnterApp }) => {
               className="lang-btn"
               onClick={toggleLanguage}
               size="small"
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                color: '#fff',
-                backdropFilter: 'blur(10px)',
-                borderRadius: 20,
-                padding: '4px 16px',
-                fontWeight: 500,
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
-              }}
+              style={LANG_BUTTON_BASE_STYLE}
+              onMouseEnter={handleLangMouseEnter}
+              onMouseLeave={handleLangMouseLeave}
             >
               {language === 'zh' ? 'EN' : '中文'}
             </Button>
@@ -343,7 +360,7 @@ const LandingPage = ({ onEnterApp }) => {
               <div className="stats-row-wrapper">
                 <Row gutter={[24, 24]} className="stats-row">
                   {statsPages[currentStatsPage].map((stat, index) => {
-                    const IconComponent = iconMap[stat.icon]
+                    const IconComponent = ICON_MAP[stat.icon]
                     return (
                       <Col xs={12} sm={6} key={index}>
                         <div className="stat-item">
@@ -1373,5 +1390,6 @@ npm run dev`}</pre>
   )
 }
 
-export default LandingPage
+// 使用 React.memo 优化性能，只在 props 改变时重新渲染
+export default memo(LandingPage)
 

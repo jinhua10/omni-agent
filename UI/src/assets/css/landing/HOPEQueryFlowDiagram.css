@@ -1,0 +1,408 @@
+/* HOPEQueryFlowDiagram.css */
+
+.hope-query-flow-diagram {
+  width: 100%;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  border-radius: 20px;
+  color: white;
+}
+
+.flow-title {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.flow-title h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: white;
+  line-height: 1.2;
+}
+
+.flow-subtitle {
+  font-size: 16px;
+  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.9);
+  font-style: italic;
+}
+
+.flow-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 流程步骤通用样式 */
+.flow-step {
+  width: 100%;
+  max-width: 800px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 15px;
+  padding: 20px 25px;
+  margin: 10px 0;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s ease,
+              background-color 0.3s ease;
+  will-change: transform;
+  backdrop-filter: blur(5px);
+}
+
+.flow-step:hover {
+  transform: translateY(-3px) translateZ(0);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.step-header {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #ffd700;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 8px;
+}
+
+.step-content {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.step-item {
+  padding: 5px 0;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* 用户提问步骤 */
+.step-user {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.2));
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.user-question {
+  font-size: 16px;
+  font-weight: 600;
+  color: #a78bfa;
+  padding: 10px;
+  background: rgba(139, 92, 246, 0.15);
+  border-radius: 8px;
+  border-left: 4px solid #a78bfa;
+}
+
+/* 普通步骤 */
+.step-normal {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* HOPE 核心步骤 */
+.step-hope {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 140, 0, 0.25));
+  border: 3px solid rgba(255, 215, 0, 0.6);
+  padding: 30px;
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.step-hope::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%);
+  animation: hopePulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes hopePulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.hope-header {
+  text-align: center;
+  margin-bottom: 25px;
+  position: relative;
+  z-index: 1;
+}
+
+.hope-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffd700;
+  text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
+}
+
+/* HOPE 内部区块 */
+.hope-section {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 15px 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffd700;
+  margin-bottom: 8px;
+}
+
+.section-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+.section-content {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.content-line {
+  padding: 5px 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.content-line.output {
+  background: rgba(76, 175, 80, 0.2);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid #4caf50;
+  margin-top: 8px;
+}
+
+.content-line.result {
+  background: rgba(33, 150, 243, 0.2);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid #2196f3;
+  margin: 8px 0;
+}
+
+.content-line.priority {
+  font-weight: 600;
+  color: #ffd700;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+/* 三层检索容器 */
+.layers-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.layer-box {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 15px;
+  border: 2px solid;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.3s ease,
+              box-shadow 0.3s ease;
+  will-change: transform;
+}
+
+.layer-box:hover {
+  transform: translateX(8px) translateZ(0);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.layer-box.high-freq {
+  border-color: #f87171;
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.15), rgba(239, 68, 68, 0.1));
+}
+
+.layer-box.high-freq:hover {
+  box-shadow: 0 4px 16px rgba(248, 113, 113, 0.4);
+}
+
+.layer-box.ordinary {
+  border-color: #60a5fa;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(59, 130, 246, 0.1));
+}
+
+.layer-box.ordinary:hover {
+  box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
+}
+
+.layer-box.permanent {
+  border-color: #4ade80;
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.1));
+}
+
+.layer-box.permanent:hover {
+  box-shadow: 0 4px 16px rgba(74, 222, 128, 0.4);
+}
+
+.layer-number {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.layer-name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.layer-item {
+  font-size: 13px;
+  padding: 4px 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.layer-item.hit {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+/* 区块箭头 */
+.section-arrow {
+  text-align: center;
+  font-size: 28px;
+  color: #ffd700;
+  margin: 10px 0;
+  font-weight: 700;
+}
+
+/* 流程箭头 */
+.flow-arrow {
+  font-size: 32px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 15px 0;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* 紧凑步骤布局 */
+.compact-steps {
+  width: 100%;
+  max-width: 800px;
+}
+
+.compact-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin: 10px 0;
+}
+
+.step-compact {
+  margin: 0;
+  padding: 15px 20px;
+}
+
+.step-compact .step-header {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.step-compact .step-content {
+  font-size: 13px;
+}
+
+.step-compact .step-item {
+  padding: 3px 0;
+}
+
+.step-item.domain {
+  color: #60a5fa;
+  font-weight: 600;
+  margin-left: 10px;
+}
+
+/* 结果步骤 */
+.step-result {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.2));
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.result-content {
+  font-size: 16px;
+  font-weight: 600;
+  color: #6ee7b7;
+  text-align: center;
+  padding: 10px;
+  background: rgba(16, 185, 129, 0.15);
+  border-radius: 8px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .hope-query-flow-diagram {
+    padding: 30px 15px;
+  }
+
+  .flow-title h2 {
+    font-size: 24px;
+  }
+
+  .flow-container {
+    max-width: 100%;
+  }
+
+  .flow-step {
+    max-width: 100%;
+    padding: 15px 20px;
+  }
+
+  .step-header {
+    font-size: 16px;
+  }
+
+  .compact-row {
+    grid-template-columns: 1fr;
+  }
+
+  .hope-title {
+    font-size: 20px;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .layer-box {
+    padding: 12px;
+  }
+
+  .layer-name {
+    font-size: 14px;
+  }
+}
+
+/* 性能优化 - 减少不必要的重绘 */
+.flow-step,
+.layer-box,
+.hope-section {
+  contain: layout style paint;
+}
+
+/* 滚动优化 */
+.hope-query-flow-diagram {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
