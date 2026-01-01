@@ -211,7 +211,7 @@ OmniAgent HOPE 架构：
 - 📈 **策略自动优化** - 根据访问频率动态调整层级
 - 🔄 **持续改进** - 从每次交互中学习和优化
 
-**详细文档**: [HOPE 系统设计文档](docs/refactor_01/core/HOPE_SYSTEM_DESIGN.md)
+**详细文档**: [HOPE 系统设计文档](docs/core/HOPE_SYSTEM.md)
 
 ---
 
@@ -429,6 +429,15 @@ npm run dev
 ```
 
 访问 **http://localhost:3000** 开始使用！
+
+### 📚 完整文档
+
+- 📖 [快速开始指南](docs/core/QUICKSTART.md) - 详细的入门教程
+- 🏗️ [完整系统架构](docs/core/ARCHITECTURE.md) - 包含 HOPE 系统的完整架构
+- 🧠 [HOPE 自学习系统](docs/core/HOPE_SYSTEM.md) - 分层智能持久化引擎详解
+- 🕸️ [知识网络架构](docs/core/KNOWLEDGE_NETWORK.md) - 知识图谱和域管理
+- 📦 [模块架构详解](docs/core/MODULES.md) - 25个功能模块说明
+- 📑 [文档索引](docs/core/README.md) - 所有文档的导航
 
 ### 🌐 在线演示
 
@@ -882,7 +891,7 @@ OmniAgent = Skill-based Agent + 知识网络
 
 **OmniAgent - 构建下一代智能Agent应用**
 
-[🌐 官网](https://yumbo.top) • [📖 文档](docs/) • [🐛 反馈](https://github.com/jinhua10/omni-agent/issues) • [💬 讨论](https://github.com/jinhua10/omni-agent/discussions)
+[🌐 官网](https://yumbo.top) • [📖 核心文档](docs/core/) • [🐛 反馈](https://github.com/jinhua10/omni-agent/issues) • [💬 讨论](https://github.com/jinhua10/omni-agent/discussions)
 
 Made with ❤️ by OmniAgent Team
 

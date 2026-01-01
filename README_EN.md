@@ -7,29 +7,29 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
-**Full-scenario Agent development framework for smarter, more controllable, and practical AI**
+**Making AI More Intelligent, Controllable, and Practical**
 
-### 🌐 [**Live Demo →**](https://yumbo.top/) | 📖 [**Quick Start**](#-quick-start) | 🎯 [**Core Features**](#-core-features)
+### 🌐 [**Live Demo →**](https://yumbo.top/) | 📖 [**Quick Start**](#-quick-start) | 🎯 [**Key Features**](#-key-features)
 
 **[中文](README.md) | English**
 
-**Let Agents Bloom Everywhere - The Year of Agent Officially Begins!**
+**Empowering Agents Everywhere - The Agent Era Begins!**
 
 </div>
 
 ---
 
-## 🎯 Why Choose OmniAgent?
+## 🎯 Why OmniAgent?
 
-OmniAgent is a **full-scenario Agent development framework** designed to solve fundamental flaws in traditional RAG systems, enabling you to:
+OmniAgent is a **full-scenario Agent development framework**, designed to solve fundamental defects of traditional RAG systems:
 
-- 🏗️ **Build Distributed Enterprise-level Agent Platform** - Multi-instance, multi-strategy, disaster recovery redundancy
-- 🧠 **Create Smarter Agent Applications** - HOPE self-learning architecture + knowledge network system
-- 🚀 **Rapid AI Application Development** - Complete context management + out-of-the-box components
-- 📊 **Build Professional Knowledge Services** - Intelligent assistants like Copilot/Cursor
+- 🏗️ **Build Enterprise-Grade Distributed Agent Platforms** - Multi-instance, multi-strategy, disaster recovery
+- 🧠 **Create Smarter Agent Applications** - HOPE Self-Learning Architecture + Knowledge Network System  
+- 🚀 **Rapid AI Application Development** - Complete context management + ready-to-use components
+- 📊 **Professional Knowledge Services** - Copilot/Cursor-like intelligent assistants
 - 🔧 **Build Context-Aware AI Applications** - Project analysis, automated testing, code generation, etc.
 
-### 📈 Project Metrics
+### 📈 Project Statistics
 
 | Metric | Value |
 |--------|-------|
@@ -37,191 +37,92 @@ OmniAgent is a **full-scenario Agent development framework** designed to solve f
 | **Backend Modules** | 25 functional modules |
 | **Storage Engines** | 6 types (File/SQLite/H2/MongoDB/Redis/Elasticsearch) |
 | **RAG Strategies** | 6+ intelligent chunking strategies |
-| **Model Support** | 3 types: Ollama/Online API/ONNX local models |
-| **Document Formats** | Word/Excel/PPT/PDF + all text formats |
-| **Deployment** | Local/Docker/K8s/Cloud servers |
+| **Supported Models** | 3 types (Ollama/Online API/ONNX) |
+| **Document Formats** | Word/Excel/PPT/PDF + All text formats |
+| **Deployment** | Local/Docker/K8s/Cloud Server |
 
 ---
 
-## ⚠️ Fundamental Flaws of Traditional RAG
+## 🏗️ Complete System Architecture
 
-### 1. Chunking Causes Semantic Fragmentation
-Traditional RAG forcibly splits documents into fixed-size chunks, causing:
-- 📄 **Context Breakage** - Important information cut off, complete semantics lost
-- 🔍 **Inaccurate Retrieval** - Related content scattered across different chunks
-- 💔 **Semantic Integrity Loss** - Cannot understand complete context and logic
+**Comprehensive Documentation**: [Complete Architecture with HOPE System](docs/core/ARCHITECTURE.md)
 
-### 2. Single Index Chaos
-All documents mixed in one vector space:
-- 🌀 **Vector Space Pollution** - Different domain documents interfere, reducing precision
-- 🎯 **No Targeted Optimization** - Technical and business docs need different strategies
-- 📊 **Poor Scalability** - Performance drops sharply as data grows
+### HOPE Self-Learning System ⭐
 
-### 3. Lack of Context Memory
-Traditional RAG cannot understand conversation history:
-- 💬 **Multi-turn Dialogue Fails** - Cannot understand pronouns like "it", "this"
-- 🔄 **Repeated Questions** - Need complete question every time
-- 🧠 **No Learning Ability** - Cannot improve from interactions
+**HOPE = Hierarchical Omni-Agent Persistent Engine**
 
-### 4. No Knowledge Association
-Documents lack semantic connections:
-- 🔗 **Isolated Knowledge** - Cannot discover related content and references
-- 🕸️ **No Knowledge Graph** - Lack structured knowledge organization
-- 📚 **Single Dimension Retrieval** - Only simple keyword matching
+The core intelligence management brain of OmniAgent, featuring:
+
+```
+┌─────────────────────────────────────────┐
+│  Permanent Layer                         │
+│  - Core knowledge, system docs           │
+│  - Long-term stable, manually managed    │
+├─────────────────────────────────────────┤
+│  Ordinary Layer                          │
+│  - General knowledge, business docs      │
+│  - Dynamically updated, regular retrieval│
+├─────────────────────────────────────────┤
+│  High Frequency Layer                    │
+│  - Hot topics, recent Q&A                │
+│  - Auto-adjusted, priority retrieval     │
+└─────────────────────────────────────────┘
+```
+
+**Self-Learning Capabilities**:
+- 🎓 **Question Classification Learning** - Auto-classify based on keywords and patterns
+- 🔍 **Knowledge Gap Detection** - Discover knowledge base blind spots
+- 📈 **Strategy Auto-Optimization** - Dynamic layer adjustment based on access frequency
+- 🔄 **Continuous Improvement** - Learn and optimize from every interaction
+
+**Detailed Documentation**: [HOPE System Design](docs/core/HOPE_SYSTEM_EN.md)
 
 ---
 
-## ✅ OmniAgent's Architectural Innovation
+## ✅ Architectural Innovations
 
 ### 🎯 Core Advantages Comparison
 
 | Feature | Traditional RAG | OmniAgent |
 |---------|----------------|-----------|
-| **Chunking Strategy** | Fixed-size splitting | 6 intelligent strategies (perplexity/semantic/paragraph) ⭐ |
-| **Storage Method** | Single vector DB | 6 heterogeneous storage engines + disaster recovery |
-| **RAG System** | Single instance | Multiple parallel systems with different vector dimensions |
-| **Knowledge Organization** | Flat retrieval | Domain index + knowledge network + HOPE self-learning |
-| **Context Management** | None | Complete dialogue history + intent analysis + gap detection |
-| **Distributed** | Not supported | P2P knowledge sharing + connection code mechanism |
+| **Chunking Strategy** | Fixed-size splitting | 6 intelligent strategies (PPL/Semantic/Paragraph, etc.) ⭐ |
+| **Storage** | Single vector DB | 6 storage engines with redundancy + disaster recovery |
+| **RAG System** | Single instance | Multi-instance with different vector dimensions in parallel |
+| **Knowledge Organization** | Flat retrieval | Domain indexing + Knowledge network + HOPE self-learning |
+| **Context Management** | None | Complete conversation history + Intent analysis + Gap detection |
+| **Distributed** | Not supported | P2P knowledge sharing + Connection code mechanism |
 | **Model Support** | Single | ONNX local/Ollama/Online API - 3 types |
 
-### 🚀 Innovation Architecture Details
-
-#### 1. Multi-Strategy Intelligent Chunking
+### 🚀 Intelligent Chunking Strategies
 
 ```
-Traditional Method:
+Traditional Approach:
 [Fixed 500 chars] [Fixed 500 chars] [Fixed 500 chars]... ❌ Semantic fragmentation
          
-OmniAgent Intelligent Chunking:
-├─ Perplexity-based Chunking (AI-driven semantic boundary detection) ⭐ Recommended
+OmniAgent Smart Chunking:
+├─ PPL Chunking (AI-driven semantic boundary) ⭐ Recommended
 │  └─ Auto-identify natural semantic boundaries, preserve complete context
-├─ Semantic Chunking (vector similarity-based)
+├─ Semantic Chunking (based on vector similarity)
 │  └─ Aggregate semantically similar content
-├─ Paragraph Chunking (natural paragraphs)
+├─ Paragraph Chunking (based on natural paragraphs)
 │  └─ Maintain original document structure
 ├─ Sliding Window (overlapping windows)
 │  └─ Preserve context continuity
 ├─ Recursive Chunking (hierarchical)
 │  └─ Hierarchical processing for large documents
-└─ Fixed-size (compatibility mode)
+└─ Fixed Size (compatibility mode)
    └─ Compatible with traditional RAG needs
 ```
 
-#### 2. Heterogeneous Redundant Storage Architecture
-
-```
-Same data, 6 storage methods, disaster recovery:
-┌─────────────────────────────────────────┐
-│  File ←→ SQLite ←→ MongoDB              │
-│    ↕️       ↕️        ↕️                    │
-│  Redis ←→ H2 ←→ Elasticsearch           │
-└─────────────────────────────────────────┘
-✅ Disaster Recovery  ✅ Performance  ✅ On-demand  ✅ Read-Write Separation
-```
-
-**Advantages**:
-- 📦 **File** - Simple and fast, no additional services
-- 💾 **SQLite/H2** - Embedded database, single file deployment
-- 📊 **MongoDB** - Document database, complex queries
-- ⚡ **Redis** - High-speed cache, millisecond response
-- 🔍 **Elasticsearch** - Enterprise search, massive data
-
-#### 3. Multi-dimensional RAG Parallel
-
-```
-Multiple RAG systems with different dimensions running simultaneously:
-┌──────────────────────────────────────────┐
-│ RAG-768dim  → General semantic understanding (fast retrieval)  │
-│ RAG-1024dim → Domain-specific precision matching (high accuracy) │  
-│ RAG-512dim  → Lightweight retrieval (low resource consumption)  │
-└──────────────────────────────────────────┘
-Smart Routing: Auto-select optimal RAG system based on question type
-```
-
-#### 4. Knowledge Network System
-
-```
-Traditional RAG:
-Doc1  Doc2  Doc3  Doc4  Doc5 (completely isolated) ❌
-            
-OmniAgent Knowledge Network Architecture:
-          [Core Architecture Doc]
-         /      |      \
-    [API Doc] [Design] [Codebase]
-      /  \      |      /  \
-[Interface][Tests][Unit Tests][Integration Tests]
-      \    |    |    |    /
-       [Auto Knowledge Graph Association]
-```
-
-**Domain Index Organization**:
-```
-Project Knowledge Base
-├─ Technical Domain
-│  ├─ Architecture docs
-│  ├─ API docs
-│  └─ Code comments
-├─ Business Domain
-│  ├─ Requirements docs
-│  ├─ Flowcharts
-│  └─ User manuals
-└─ Testing Domain
-   ├─ Test cases
-   ├─ Test reports
-   └─ Bug tracking
-```
-
-#### 5. HOPE Self-Learning Architecture ⭐
-
-**HOPE = Hierarchical Omni-Agent Persistent Engine**
-
-```
-Traditional RAG: Question → Retrieval → Return Result (fixed process) ❌
-
-OmniAgent HOPE Architecture:
-User Question → Classification → Layer Selection → Smart Retrieval
-    ↓                                              ↓
-Feedback Learning ← Evaluation ← Generation ← Gap Detection
-    ↓                                              ↓
-Strategy Optimization ← Pattern Recognition ← Knowledge Supplement ← Auto-improvement
-```
-
-**Three-layer Knowledge Structure**:
-
-```
-┌─────────────────────────────────────────┐
-│  Persistent Layer                       │
-│  - Core knowledge, system docs, authoritative refs │
-│  - Long-term stable, manual management  │
-├─────────────────────────────────────────┤
-│  Ordinary Layer                         │
-│  - General knowledge, business docs, feature descriptions │
-│  - Dynamic updates, regular retrieval   │
-├─────────────────────────────────────────┤
-│  High Frequency Layer                   │
-│  - Hot topics, recent Q&A, frequently accessed knowledge │
-│  - Auto-adjustment, priority retrieval  │
-└─────────────────────────────────────────┘
-```
-
-**Self-learning Capabilities:**
-- 🎓 **Question Classification Learning** - Auto-classify based on keywords and patterns
-- 🔍 **Knowledge Gap Detection** - Discover knowledge base blind spots
-- 📈 **Auto Strategy Optimization** - Dynamically adjust layers based on access frequency
-- 🔄 **Continuous Improvement** - Learn and optimize from each interaction
-
-**Detailed Documentation**: [HOPE System Design](docs/refactor_01/core/HOPE_SYSTEM_DESIGN_EN.md)
-
 ---
 
-## 🎯 Core Features
+## 🎯 Key Features
 
-### 1. 🤖 Intelligent Agent Building
+### 1. 🤖 Intelligent Agent Construction
 - ✅ Complete conversation history management
 - ✅ Intent analysis and understanding
-- ✅ Multi-turn dialogue support
-- ✅ Automatic context preservation
+- ✅ Multi-turn conversation support
+- ✅ Automatic context retention
 - ✅ Role system (multi-role collaboration)
 
 ### 2. 📚 Comprehensive Document Processing
@@ -230,7 +131,7 @@ Strategy Optimization ← Pattern Recognition ← Knowledge Supplement ← Auto-
 - ✅ **Word** (.doc/.docx) - Table to Markdown, style preservation
 - ✅ **Excel** (.xls/.xlsx) - Formula calculation, intelligent data segmentation
 - ✅ **PowerPoint** (.ppt/.pptx) - Slide content extraction
-- ✅ **PDF** - Page-by-page extraction, page number marking, metadata
+- ✅ **PDF** - Page-by-page extraction, page numbering, metadata
 
 **All Text Formats**:
 - ✅ Basic text: .txt, .md, .log, .csv
@@ -239,21 +140,21 @@ Strategy Optimization ← Pattern Recognition ← Knowledge Supplement ← Auto-
 - ✅ **Build complete knowledge base for entire code projects**
 
 **Advanced Features**:
-- ✅ **Vision LLM Image Extraction** - AI understanding of image content (Qwen3-VL, etc.)
+- ✅ **Vision LLM Image Extraction** - AI-powered image content understanding (Qwen3-VL, etc.)
 - ✅ **OCR Text Recognition** - Tesseract optical recognition
 - ✅ **Local Model/Ollama/Online API** - Flexible extraction methods
 
 ### 3. 🧠 Advanced RAG Technology
 
 **6 Intelligent Chunking Strategies**:
-- ✅ **Perplexity-based Chunking** ⭐ Recommended - AI-driven semantic boundary detection
+- ✅ **PPL Smart Chunking** ⭐ Recommended - AI-driven semantic boundary identification
 - ✅ **Semantic Chunking** - Vector similarity-based aggregation
-- ✅ **Paragraph Chunking** - Preserve natural paragraph structure
-- ✅ **Sliding Window** - Overlap to preserve context
-- ✅ **Recursive Chunking** - Hierarchical processing for large docs
-- ✅ **Fixed-size** - Compatibility mode
+- ✅ **Paragraph Chunking** - Maintain natural paragraph structure
+- ✅ **Sliding Window** - Overlapping to preserve context
+- ✅ **Recursive Chunking** - Hierarchical processing for large documents
+- ✅ **Fixed Size** - Compatibility mode
 
-**Multi-dimensional Vectorization**:
+**Multi-Dimensional Vectorization**:
 - ✅ **ONNX Local Models** - bge-base-zh, bge-m3, etc.
 - ✅ **Ollama Service** - Local deployment, data security
 - ✅ **Online Vector API** - Qwen, DeepSeek, etc.
@@ -267,117 +168,46 @@ Strategy Optimization ← Pattern Recognition ← Knowledge Supplement ← Auto-
 - ✅ **H2** - In-memory database, high performance
 - ✅ **MongoDB** - Document database, flexible schema
 - ✅ **Redis** - Cache acceleration, millisecond response
-- ✅ **Elasticsearch** - Enterprise search, billion-level data
+- ✅ **Elasticsearch** - Enterprise search, billion-scale data
 
 **Disaster Recovery**:
-- ✅ Multi-storage backup of same data
+- ✅ Same data backed up to multiple storages
 - ✅ Automatic failover
 - ✅ Data consistency guarantee
 
 ### 5. 🕸️ Knowledge Network System
 
-**Domain Index**:
-- ✅ Organize knowledge by domain
+**Domain Indexing**:
+- ✅ Knowledge organization by domain
 - ✅ Independent vector spaces
 - ✅ Specialized retrieval strategies
-- ✅ Smart routing distribution
+- ✅ Intelligent routing distribution
 
 **Knowledge Graph**:
-- ✅ Auto-discover document associations
+- ✅ Automatic document association discovery
 - ✅ Reference relationship tracking
 - ✅ Semantic similarity calculation
-- ✅ Smart recommendation of related content
+- ✅ Intelligent related content recommendation
 
 **P2P Knowledge Sharing**:
 - ✅ Connection code mechanism
 - ✅ Cross-node knowledge transfer
-- ✅ Distributed monolith availability
+- ✅ Distributed standalone availability
 - ✅ Enterprise internal knowledge network
 
 ### 6. 🎓 HOPE Self-Learning
 
 - ✅ **Question Classification** - Auto-identify question types
 - ✅ **Knowledge Gap Detection** - Discover knowledge blind spots
-- ✅ **Auto Strategy Optimization** - Improve based on feedback
+- ✅ **Strategy Auto-Optimization** - Improve based on feedback
 - ✅ **Continuous Learning** - Evolve from interactions
 - ✅ **Pattern Recognition** - Discover common question patterns
-
-### 7. 🔄 Workflow Engine
-
-- ✅ Visual process design
-- ✅ Node drag-and-drop orchestration
-- ✅ Conditional branch control
-- ✅ Loop iteration support
-- ✅ Workflow marketplace (share/import)
-
-### 8. 🌐 Distributed Architecture
-
-- ✅ P2P node connection
-- ✅ Decentralized design
-- ✅ Cross-node knowledge sharing
-- ✅ Monolith availability guarantee
-- ✅ Enterprise deployment support
-
----
-
-## 🏗️ Intelligent Full Pipeline
-
-### Complete Document Processing Pipeline
-
-```
-📄 Document Upload
-    ↓
-📑 Intelligent Text Extraction
-    ├─ Local model extraction
-    ├─ Ollama service extraction  
-    └─ Online API extraction (Qwen3-VL, etc.)
-    ↓
-    Supported Formats:
-    • Office: Word/Excel/PPT (.doc/.docx/.xls/.xlsx/.ppt/.pptx)
-    • Documents: PDF
-    • Text: All text formats (.txt/.md/.json/.xml/.log/.csv, etc.)
-    • Code: All programming language files
-    ↓
-✂️ Intelligent Chunking
-    ├─ Perplexity Chunking (AI-driven) ⭐ Recommended
-    ├─ Semantic Chunking (vector similarity)
-    ├─ Paragraph Chunking (natural paragraphs)
-    ├─ Sliding Window (overlap preservation)
-    ├─ Recursive Chunking (hierarchical)
-    └─ Fixed-size (compatibility mode)
-    ↓
-🔢 Vectorization
-    ├─ ONNX local models (bge-base-zh/bge-m3, etc.)
-    ├─ Ollama local service
-    ├─ Online vector API
-    └─ Multi-RAG parallel support
-    ↓
-💾 Multi-element Heterogeneous Storage
-    ├─ File (simple and fast)
-    ├─ SQLite (embedded)
-    ├─ H2 (in-memory database)
-    ├─ MongoDB (document database)
-    ├─ Redis (high-speed cache)
-    └─ Elasticsearch (enterprise search)
-    ↓
-🕸️ Knowledge Network Construction
-    ├─ Domain index organization
-    ├─ Knowledge graph auto-construction
-    ├─ Semantic association analysis
-    └─ P2P knowledge sharing
-    ↓
-🤖 HOPE Self-Learning
-    ├─ Question classification learning
-    ├─ Knowledge gap detection
-    ├─ Auto strategy optimization
-    └─ Continuous improvement mechanism
-```
 
 ---
 
 ## 🚀 Quick Start
 
-### Three Steps to Launch
+### 3-Step Launch
 
 #### 1️⃣ Clone Project
 
@@ -385,7 +215,7 @@ Strategy Optimization ← Pattern Recognition ← Knowledge Supplement ← Auto-
 # GitHub
 git clone https://github.com/jinhua10/omni-agent.git
 
-# Or Gitee (faster in China)
+# Or Gitee (Recommended for China, faster)
 git clone https://gitee.com/gnnu/omni-agent.git
 
 cd omni-agent
@@ -394,13 +224,13 @@ cd omni-agent
 #### 2️⃣ Build and Start Backend
 
 ```bash
-# Clean and build project
+# Clean and compile project
 mvn clean package \
     -pl omni-agent-example-basic \
     -am \
     -DskipTests
 
-# Start backend service (using omni-agent-example-basic module)
+# Start backend service
 java -Dfile.encoding=UTF-8 \
      -Dsun.jnu.encoding=UTF-8 \
      -jar omni-agent-example-basic/target/omni-agent-example-basic-1.0.0.jar
@@ -430,90 +260,55 @@ npm run dev
 
 Visit **http://localhost:3000** to get started!
 
+### 📚 Complete Documentation
+
+- 📖 [Quick Start Guide](docs/core/QUICKSTART.md) - Detailed tutorial
+- 🏗️ [Complete System Architecture](docs/core/ARCHITECTURE.md) - Full architecture including HOPE
+- 🧠 [HOPE Self-Learning System](docs/core/HOPE_SYSTEM_EN.md) - Hierarchical intelligent engine explained
+- 🕸️ [Knowledge Network Architecture](docs/core/KNOWLEDGE_NETWORK.md) - Knowledge graph and domain management
+- 📦 [Module Architecture](docs/core/MODULES.md) - 25 functional modules explained
+- 📑 [Documentation Index](docs/core/README.md) - Navigation for all docs
+
 ### 🌐 Live Demo
 
-**Website**: [https://yumbo.top](https://yumbo.top)
+**Official Website**: [https://yumbo.top](https://yumbo.top)
 
-Visit the live demo to experience full functionality!
+Try the online demo now!
 
 ---
 
 ## 📦 System Architecture
 
-### Backend Modules (25)
+### Backend Modules (25+)
 
 ```
 omni-agent/
-├─ omni-agent-core               # Core foundation module (infrastructure and utilities)
+├─ omni-agent-core               # Core infrastructure
 ├─ omni-agent-common             # Common utilities
-├─ omni-agent-hope-api           # HOPE interface definitions (classification, persistence abstractions)
-├─ omni-agent-hope-starter       # HOPE implementation (question classifier, HOPE system)
-├─ omni-agent-orchestrator       # Service orchestration layer (query service, context management)
-├─ omni-agent-ai-api             # AI service abstract interface
-├─ omni-agent-ai-starter         # AI service implementation (Ollama/Online API/Vision LLM)
-├─ omni-agent-rag-api            # RAG abstract interface
-├─ omni-agent-rag-starter-adapter # RAG adapter (File/H2/SQLite/Redis/MongoDB/ES)
-├─ omni-agent-chunking-api       # Chunking strategy interface
-├─ omni-agent-chunking-starter   # Chunking strategy implementation (6 types)
-├─ omni-agent-document-processor-api    # Document processing interface
-├─ omni-agent-document-processor-starter # Document processor implementation
-├─ omni-agent-document-storage-api      # Document storage interface
-├─ omni-agent-document-storage-starter  # Document storage implementation
-├─ omni-agent-knowledge-registry-api    # Knowledge registry interface
-├─ omni-agent-knowledge-registry-starter # Knowledge network implementation
+├─ omni-agent-hope-api           # HOPE API definitions
+├─ omni-agent-hope-starter       # HOPE implementation
+├─ omni-agent-orchestrator       # Service orchestration
+├─ omni-agent-ai-api             # AI service abstraction
+├─ omni-agent-ai-starter         # AI service implementation
+├─ omni-agent-rag-api            # RAG abstraction
+├─ omni-agent-rag-starter-adapter # RAG adapter
+├─ omni-agent-chunking-api       # Chunking strategy API
+├─ omni-agent-chunking-starter   # Chunking implementation
+├─ omni-agent-document-processor-api    # Document processor API
+├─ omni-agent-document-processor-starter # Document processor impl
+├─ omni-agent-document-storage-api      # Document storage API
+├─ omni-agent-document-storage-starter  # Storage implementation
+├─ omni-agent-knowledge-registry-api    # Knowledge registry API
+├─ omni-agent-knowledge-registry-starter # Knowledge network impl
 ├─ omni-agent-ocr-starter-tesseract    # OCR recognition
-├─ omni-agent-p2p-api            # P2P interface
+├─ omni-agent-p2p-api            # P2P API
 ├─ omni-agent-p2p-starter        # P2P implementation
 ├─ omni-agent-workflow           # Workflow engine
 ├─ omni-agent-marketplace        # Workflow marketplace
-├─ omni-agent-web                # Web interface layer
-├─ omni-agent-example-basic      # Basic example (startup entry)
-└─ omni-agent-example-production # Production environment example
+├─ omni-agent-web                # Web interface
+├─ omni-agent-example-basic      # Basic example
+└─ omni-agent-example-production # Production example
 ```
-
-**Architecture Layering**:
-
-```
-Application Layer
-├── omni-agent-web
-├── omni-agent-example-basic
-└── omni-agent-example-production
-    ↓ depends on
-Service Orchestration Layer
-└── omni-agent-orchestrator
-    ├── Query Service ✅
-    ├── Context Management ✅
-    └── Only depends on API interfaces ✅
-    ↓ depends on
-Starter Implementation Layer
-├── omni-agent-hope-starter
-│   ├── HOPE System Implementation ✅
-│   ├── Question Classifier ✅
-│   └── Depends on Caffeine ✅
-├── omni-agent-rag-starter-adapter
-│   └── Depends on Lucene ✅
-└── omni-agent-document-processor-starter
-    └── Depends on POI, PDFBox, Tika ✅
-    ↓ depends on
-API Interface Layer
-├── omni-agent-hope-api
-│   ├── HopePersistence Interface ✅
-│   ├── QuestionClassifier Interface ✅
-│   └── QuestionTypeConfig Model ✅
-└── Other API Modules
-    ↓ depends on
-Core Layer
-└── omni-agent-core
-    ├── Infrastructure and utilities ✅
-    ├── No dependency on specific implementation libraries ✅
-    └── Clear responsibilities ✅
-```
-
-**Module Responsibilities**:
-- **omni-agent-core**: Core foundation module, provides infrastructure and utility classes
-- **omni-agent-hope-api**: HOPE interface definitions, includes question classification, persistence abstractions
-- **omni-agent-hope-starter**: HOPE implementation, includes question classifier, HOPE system, etc.
-- **omni-agent-orchestrator**: Service orchestration layer, handles query service, context management, business orchestration
 
 ### Frontend Tech Stack
 
@@ -521,7 +316,7 @@ Core Layer
 - 🎨 **Ant Design 5** - Enterprise component library
 - 🎭 **Framer Motion** - Smooth animations
 - 📊 **ECharts** - Data visualization
-- 🔄 **React Router** - Routing management
+- 🔄 **React Router** - Route management
 - 🎨 **Custom Theme Engine** - Multi-theme switching
 
 ---
@@ -531,11 +326,11 @@ Core Layer
 ### 1. 🏢 Enterprise Knowledge Management
 - Internal document intelligent retrieval
 - Technical documentation auto-Q&A
-- Project knowledge sedimentation
+- Project knowledge accumulation
 - New employee training assistant
 
-### 2. 💻 Development Assistant Tools
-- Code repository intelligent analysis
+### 2. 💻 Development Tools
+- Codebase intelligent analysis
 - API documentation auto-generation
 - Code review assistant
 - Project architecture analysis
@@ -548,25 +343,25 @@ Core Layer
 
 ### 4. 🔬 Research Assistant
 - Paper intelligent retrieval
-- Literature correlation analysis
-- Research achievement management
+- Literature association analysis
+- Research result management
 - Knowledge discovery
 
 ### 5. 🤖 Intelligent Customer Service
 - Product documentation Q&A
-- FAQ responses
-- Multi-turn dialogue support
+- FAQ automation
+- Multi-turn conversation support
 - Knowledge base management
 
 ### 6. 📊 Data Analysis
 - Report auto-generation
 - Data insight discovery
-- Trend analysis & prediction
+- Trend analysis and prediction
 - Anomaly detection
 
 ---
 
-## 🗺️ Development Roadmap
+## 🗺️ Roadmap
 
 ### ✅ Completed (v1.0.0)
 
@@ -595,25 +390,25 @@ Core Layer
 - 📋 Multi-language support (Python SDK, Node.js SDK)
 - 📋 Cloud-native deployment (K8s Operator)
 - 📋 Vector database optimization
-- 📋 More AI model integration
-- 📋 Enterprise permission system
+- 📋 More AI model integrations
+- 📋 Enterprise-grade permission system
 - 📋 Audit logging system
 - 📋 SaaS cloud service version
 
 ---
 
-## 👥 Contribution Guidelines
+## 👥 Contributing
 
 We welcome all forms of contributions!
 
 ### How to Contribute
 
-1. 🐛 **Report Bugs** - [Issue Tracker](https://github.com/jinhua10/omni-agent/issues)
-2. 💡 **Feature Requests** - Submit feature requests
-3. 📝 **Improve Documentation** - Documentation is never perfect enough
+1. 🐛 **Submit Bugs** - [Issue Tracker](https://github.com/jinhua10/omni-agent/issues)
+2. 💡 **Feature Requests** - Submit feature suggestions
+3. 📝 **Improve Documentation** - Documentation is never complete enough
 4. 🔧 **Submit Code** - Pull Requests are welcome
 
-### Development Process
+### Development Workflow
 
 ```bash
 # 1. Fork the project
@@ -631,186 +426,19 @@ git push origin feature/AmazingFeature
 
 ---
 
-## 🔮 Future Vision & Roadmap
-
-### Why Open Source?
-
-We firmly believe: **A complete enterprise-level AI service platform solution should be known and used by more people.**
-
-Through our observation, **there is currently no truly complete solution in the industry that transforms from knowledge base to AI service platform**. The market offers either:
-- 🔸 Traditional knowledge bases (query only, no generation)
-- 🔸 AI tools (single function, no collaboration)
-- 🔸 Skill-based Agents (high cost, unstable accuracy)
-- 🔸 Commercial closed-source products (expensive, data security concerns)
-
-**OmniAgent's Mission:**
-```
-Let every enterprise have its own AI service platform
-Let every employee enjoy productivity improvements from AI
-Let every developer build innovative applications on this foundation
-```
-
-### 📅 Development Roadmap
-
-#### Near-term Plans (3-6 months)
-
-**1. Agent Skill Capabilities** ⭐
-```
-✨ Under Development
-
-Learning from mainstream solutions like Copilot:
-├─ Agents can call external tools and APIs
-├─ Support custom Skill plugins
-├─ Skill marketplace (preset common skills)
-└─ Deep integration with knowledge network (more accurate than Copilot)
-
-Core Difference:
-OmniAgent = Skill-based Agent + Knowledge Network
-→ Both Skill flexibility and knowledge network accuracy
-```
-
-**2. Multimodal AI Services**
-```
-├─ Image understanding and generation (auto-parse charts in documents)
-├─ Voice input/output (voice Q&A, meeting summarization)
-├─ Video content analysis (auto-extract training video key points)
-└─ Cross-modal retrieval (find images with text, find docs with images)
-```
-
-**3. Enterprise Feature Enhancements**
-```
-├─ Stronger permission system (fine-grained access control)
-├─ Better monitoring & ops (complete observability)
-├─ More integrations (DingTalk, WeCom, Feishu, etc.)
-└─ Smarter recommendations (proactive knowledge push)
-```
-
-#### Mid-term Plans (6-12 months)
-
-**1. Enhanced Agent Collaboration**
-```
-├─ Agent workflow orchestration (visual Agent collaboration config)
-├─ Cross-enterprise Agent collaboration (secure knowledge sharing)
-├─ Agent capability marketplace (preset professional Agent templates)
-└─ Agent performance analysis (contribution assessment per Agent)
-```
-
-**2. Knowledge Graph Visualization**
-```
-├─ Enterprise knowledge map (global view of knowledge distribution)
-├─ Knowledge correlation analysis (discover hidden connections)
-├─ Knowledge gap identification (proactively find blind spots)
-└─ Knowledge evolution tracking (how knowledge changes over time)
-```
-
-**3. Industry Solutions**
-```
-├─ Finance industry edition (compliance, risk control, investment research)
-├─ Healthcare industry edition (medical records, diagnosis, research)
-├─ Manufacturing edition (process, quality control, supply chain)
-└─ More industries... (based on community demand)
-```
-
-#### Long-term Vision
-
-```
-Make OmniAgent:
-✨ Infrastructure for enterprise AI services
-✨ Operating system for Agent collaboration
-✨ Industry standard for knowledge management
-✨ Innovation platform for developers
-```
-
-### Current Challenges
-
-**Honestly, we still have a lot to do:**
-
-⚠️ **Feature-wise**
-- Some advanced features still under development (e.g., Agent Skill)
-- Accuracy in certain scenarios needs optimization
-- UI/UX experience can be better
-
-⚠️ **Ecosystem-wise**
-- Need more use cases and best practices
-- Need more comprehensive documentation and tutorials
-- Need more active developer community
-
-⚠️ **Business-wise**
-- Enterprise service system under construction
-- Partner network expanding
-- Industry solutions need deepening
-
-**But we believe:**
-- ✅ Direction is right (from knowledge base to AI service platform)
-- ✅ Architecture is solid (complete data closed-loop)
-- ✅ Community will grow (build ecosystem together)
-
----
-
 ## 🌟 Support the Project
 
 ### ⭐ Give Us a Star
 
-**If you appreciate this project's vision and direction, please give OmniAgent a Star!**
+**If you recognize the vision and direction of this project, please give OmniAgent a Star!**
 
-Your every Star is our greatest encouragement, helping to:
-- 💪 Motivate the team to continue development and optimization
-- 📢 Let more people discover this project
-- 🚀 Promote enterprise AI service platform development
-- 🌱 Foster open-source community ecosystem
+Your every Star:
+- 💪 Motivates the team to continue development
+- 📢 Helps more people discover this project
+- 🚀 Drives the development of enterprise AI service platforms
+- 🌱 Promotes open source community ecosystem
 
 [![GitHub stars](https://img.shields.io/github/stars/jinhua10/omni-agent?style=social)](https://github.com/jinhua10/omni-agent/stargazers)
-
-### 🤝 Participate in Community Building
-
-We sincerely invite you to participate in building OmniAgent:
-
-**If you are a Developer 👨‍💻**
-- 💡 Propose requirements and suggestions ([Issues](https://github.com/jinhua10/omni-agent/issues))
-- 🐛 Report bugs and problems ([Issues](https://github.com/jinhua10/omni-agent/issues))
-- 📝 Contribute code and features ([Pull Requests](https://github.com/jinhua10/omni-agent/pulls))
-- 🔧 Develop plugins and extensions (based on framework)
-- We provide: **Technical guidance, code review, recognition**
-
-**If you are an Enterprise User 🏢**
-- 📊 Share usage experiences and cases ([Discussions](https://github.com/jinhua10/omni-agent/discussions))
-- 💬 Propose business needs and suggestions ([Issues](https://github.com/jinhua10/omni-agent/issues))
-- 🤝 Become early customer, co-build industry solutions
-- We provide: **Priority support, custom development, business cooperation**
-
-**If you are a Content Contributor 📚**
-- 📖 Improve project documentation and tutorials
-- 🎬 Create video tutorials and demos
-- 📢 Write blog articles and case analyses
-- 🌍 Translate docs to other languages
-- We provide: **Platform exposure, community honor, material rewards**
-
-**If you are a Product Designer 💡**
-- 🎨 Optimize UI design and user experience
-- 🖼️ Design product icons and visual elements
-- 📱 Provide interaction design suggestions
-- We provide: **Design freedom, portfolio showcase, team collaboration**
-
-### 💬 Join the Community
-
-**Multiple ways to participate in discussions and exchanges:**
-
-- 💬 [GitHub Discussions](https://github.com/jinhua10/omni-agent/discussions) - Feature discussions, help requests
-- 🐛 [GitHub Issues](https://github.com/jinhua10/omni-agent/issues) - Bug reports, feature suggestions
-- 📧 Email: 1015770492@qq.com
-- 📝 CSDN Blog: [https://yumbo.blog.csdn.net/](https://yumbo.blog.csdn.net/)
-
-### 🎁 Contributor Benefits
-
-Thanks to every contributor! We provide active contributors with:
-
-- 🏆 **Recognition**: Contributor list display, special thanks
-- 📊 **Priority Access**: Priority testing and feedback on new features
-- 🎓 **Technical Growth**: Participate in core technical discussions and decisions
-- 🤝 **Career Opportunities**: Outstanding contributors can receive job recommendations
-- 🎁 **Material Rewards**: Major contributors can receive commemorative items
-
-**Let's make OmniAgent better together! 🚀**
 
 ---
 
@@ -818,13 +446,13 @@ Thanks to every contributor! We provide active contributors with:
 
 This project is licensed under **Apache License 2.0**.
 
-See [LICENSE.txt](LICENSE.txt) file for details.
+See [LICENSE.txt](LICENSE.txt) for details.
 
 ---
 
 ## 🙏 Acknowledgments
 
-Thanks to the following open-source projects:
+Thanks to the following open source projects:
 
 - [Spring Boot](https://spring.io/projects/spring-boot) - Application framework
 - [Apache Lucene](https://lucene.apache.org/) - Full-text search
@@ -853,7 +481,7 @@ If this project helps you, please give us a Star! ⭐
 
 ---
 
-## 💝 Contact Us & Sponsor
+## 💝 Contact & Sponsor
 
 <div align="center">
 
@@ -862,12 +490,12 @@ If this project helps you, please give us a Star! ⭐
 <td align="center">
   <h3>📱 Contact</h3>
   <img src="UI/src/assets/images/Connect Me.png" alt="Contact QR Code" width="200"/>
-  <p><b>Scan to add WeChat<br/>Join our technical community</b></p>
+  <p><b>Scan to add WeChat<br/>Join tech community</b></p>
 </td>
 <td align="center">
-  <h3>☕ Support Us</h3>
+  <h3>☕ Sponsor</h3>
   <img src="UI/src/assets/images/Payment QR Code.png" alt="Sponsor QR Code" width="200"/>
-  <p><b>Buy me a coffee ☕<br/>Your support keeps us going! 💪</b></p>
+  <p><b>Buy me a coffee ☕<br/>Your support drives our development! 💪</b></p>
 </td>
 </tr>
 </table>
@@ -878,11 +506,11 @@ If this project helps you, please give us a Star! ⭐
 
 <div align="center">
 
-**Let Agents Bloom Everywhere - The Year of Agent Officially Begins!**
+**Empowering Agents Everywhere - The Agent Era Begins!**
 
 **OmniAgent - Building Next-Generation Intelligent Agent Applications**
 
-[🌐 Website](https://yumbo.top) • [📖 Docs](docs/en/) • [🐛 Feedback](https://github.com/jinhua10/omni-agent/issues) • [💬 Discussions](https://github.com/jinhua10/omni-agent/discussions)
+[🌐 Website](https://yumbo.top) • [📖 Core Docs](docs/core/) • [🐛 Issues](https://github.com/jinhua10/omni-agent/issues) • [💬 Discussions](https://github.com/jinhua10/omni-agent/discussions)
 
 Made with ❤️ by OmniAgent Team
 
