@@ -151,8 +151,8 @@
 
 /* HOPE 内部区块 */
 .hope-section {
+  background: rgba(0, 0, 0, 0.25);
   border-radius: 12px;
-  border-color: rgba(139, 92, 246, 0.5)
   padding: 20px;
   margin: 15px 0;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -160,28 +160,28 @@
   z-index: 1;
 }
 
-.section-title {
+.hope-flow-section-title {
   font-size: 16px;
   font-weight: 700;
 }
 
-.section-subtitle {
+.hope-flow-section-subtitle {
   font-size: 14px;
   margin-bottom: 12px;
   font-style: italic;
 }
 
-.section-content {
+.hope-flow-section-content {
   font-size: 14px;
   line-height: 1.8;
 }
 
-.content-line {
+.hope-flow-content-line {
   padding: 5px 0;
   color: rgba(255, 255, 255, 0.9);
 }
 
-.content-line.output {
+.hope-flow-content-line.output {
   background: rgba(76, 175, 80, 0.2);
   padding: 8px 12px;
   border-radius: 6px;
@@ -189,7 +189,7 @@
   margin-top: 8px;
 }
 
-.content-line.result {
+.hope-flow-content-line.result {
   background: rgba(33, 150, 243, 0.2);
   padding: 8px 12px;
   border-radius: 6px;
@@ -197,7 +197,7 @@
   margin: 8px 0;
 }
 
-.content-line.priority {
+.hope-flow-content-line.priority {
   font-weight: 600;
   color: #ffd700;
   margin-top: 12px;
@@ -212,7 +212,7 @@
   margin-top: 15px;
 }
 
-.layer-box {
+.hope-flow-layer-box {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 15px;
@@ -223,64 +223,64 @@
   will-change: transform;
 }
 
-.layer-box:hover {
+.hope-flow-layer-box:hover {
   transform: translateX(8px) translateZ(0);
   background: rgba(255, 255, 255, 0.15);
 }
 
-.layer-box.high-freq {
+.hope-flow-layer-box.high-freq {
   border-color: #f87171;
   background: linear-gradient(135deg, rgba(248, 113, 113, 0.15), rgba(239, 68, 68, 0.1));
 }
 
-.layer-box.high-freq:hover {
+.hope-flow-layer-box.high-freq:hover {
   box-shadow: 0 4px 16px rgba(248, 113, 113, 0.4);
 }
 
-.layer-box.ordinary {
+.hope-flow-layer-box.ordinary {
   border-color: #60a5fa;
   background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(59, 130, 246, 0.1));
 }
 
-.layer-box.ordinary:hover {
+.hope-flow-layer-box.ordinary:hover {
   box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
 }
 
-.layer-box.permanent {
+.hope-flow-layer-box.permanent {
   border-color: #4ade80;
   background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.1));
 }
 
-.layer-box.permanent:hover {
+.hope-flow-layer-box.permanent:hover {
   box-shadow: 0 4px 16px rgba(74, 222, 128, 0.4);
 }
 
-.layer-number {
+.hope-flow-layer-number {
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 5px;
 }
 
-.layer-name {
+.hope-flow-layer-name {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 8px;
   color: #fff;
 }
 
-.layer-item {
+.hope-flow-layer-item {
   font-size: 13px;
   padding: 4px 0;
   color: rgba(255, 255, 255, 0.85);
 }
 
-.layer-item.hit {
+.hope-flow-layer-item.hit {
   color: #4ade80;
   font-weight: 600;
 }
 
 /* 区块箭头 */
-.section-arrow {
+.hope-flow-section-arrow {
   text-align: center;
   font-size: 28px;
   color: #ffd700;
@@ -381,22 +381,22 @@
     font-size: 20px;
   }
 
-  .section-title {
+  .hope-flow-section-title {
     font-size: 15px;
   }
 
-  .layer-box {
+  .hope-flow-layer-box {
     padding: 12px;
   }
 
-  .layer-name {
+  .hope-flow-layer-name {
     font-size: 14px;
   }
 }
 
 /* 性能优化 - 减少不必要的重绘 */
 .flow-step,
-.layer-box,
+.hope-flow-layer-box,
 .hope-section {
   contain: layout style paint;
 }
@@ -406,4 +406,5 @@
   overflow-x: hidden;
   overflow-y: auto;
 }
+
 

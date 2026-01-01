@@ -307,13 +307,13 @@ const DataFlowDiagram = () => {
           <div className="layers-retrieval">
             {/* 高频层 */}
             <div className="retrieval-layer layer-highfreq">
-              <div className="layer-header">{t.layer1}</div>
-              <div className="layer-content">
+              <div className="data-flow-layer-header">{t.layer1}</div>
+              <div className="data-flow-layer-content">
                 <div>• {t.layer1Query}</div>
                 <div>• {t.layer1Result}</div>
                 <div className="highlight">• {t.layer1Return}</div>
               </div>
-              <div className="layer-decision">
+              <div className="data-flow-layer-decision">
                 <div className="hit">✓ {t.layer1Hit}</div>
                 <div className="miss">✗ {t.layer1Miss}</div>
               </div>
@@ -321,8 +321,8 @@ const DataFlowDiagram = () => {
 
             {/* 普通层 */}
             <div className="retrieval-layer layer-ordinary">
-              <div className="layer-header">{t.layer2}</div>
-              <div className="layer-content">
+              <div className="data-flow-layer-header">{t.layer2}</div>
+              <div className="data-flow-layer-content">
                 <div className="sub-title">{t.layer2Router}</div>
                 <div className="indent">• {t.layer2Domain1}</div>
                 <div className="indent">• {t.layer2Domain2}</div>
@@ -331,7 +331,7 @@ const DataFlowDiagram = () => {
                 <div className="indent">• {t.layer2Result2}</div>
                 <div className="indent">• {t.layer2Result3}</div>
               </div>
-              <div className="layer-decision">
+              <div className="data-flow-layer-decision">
                 <div className="enough">✓ {t.layer2Enough}</div>
                 <div className="not-enough">✗ {t.layer2NotEnough}</div>
               </div>
@@ -339,8 +339,8 @@ const DataFlowDiagram = () => {
 
             {/* 持久层 */}
             <div className="retrieval-layer layer-permanent">
-              <div className="layer-header">{t.layer3}</div>
-              <div className="layer-content">
+              <div className="data-flow-layer-header">{t.layer3}</div>
+              <div className="data-flow-layer-content">
                 <div>• {t.layer3Query}</div>
                 <div className="indent">• {t.layer3Result1}</div>
                 <div className="indent">• {t.layer3Result2}</div>
@@ -362,7 +362,7 @@ const DataFlowDiagram = () => {
           >
             <div className="phase-header">{t.phase3}</div>
             <div className="compact-content">
-              <div className="content-title">{t.gapManager}</div>
+              <div className="data-flow-content-title">{t.gapManager}</div>
               <div className="gap-score">{t.gapScore}</div>
               <div className="gap-list">
                 <div className="list-title">{t.gapHave}</div>
@@ -383,7 +383,7 @@ const DataFlowDiagram = () => {
           >
             <div className="phase-header">{t.phase4}</div>
             <div className="compact-content">
-              <div className="content-title">{t.responseGen}</div>
+              <div className="data-flow-content-title">{t.responseGen}</div>
               <div className="steps-list">
                 <div className="step-group">
                   <div className="step-title">{t.step1}</div>
@@ -498,5 +498,6 @@ const DataFlowDiagram = () => {
 };
 
 export default React.memo(DataFlowDiagram);
+
 
 

@@ -191,37 +191,37 @@
   box-shadow: 0 4px 16px rgba(74, 222, 128, 0.4);
 }
 
-.layer-header {
+.data-flow-layer-header {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 12px;
   color: #fff;
 }
 
-.layer-content {
+.data-flow-layer-content {
   font-size: 14px;
   line-height: 1.8;
   color: rgba(255, 255, 255, 0.9);
   margin-bottom: 12px;
 }
 
-.layer-content .sub-title {
+.data-flow-layer-content .sub-title {
   font-weight: 600;
   margin-top: 8px;
   margin-bottom: 4px;
   color: #ffd700;
 }
 
-.layer-content .indent {
+.data-flow-layer-content .indent {
   padding-left: 15px;
 }
 
-.layer-content .highlight {
+.data-flow-layer-content .highlight {
   color: #4ade80;
   font-weight: 600;
 }
 
-.layer-decision {
+.data-flow-layer-decision {
   display: flex;
   gap: 15px;
   font-size: 13px;
@@ -230,13 +230,13 @@
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.layer-decision .hit,
-.layer-decision .enough {
+.data-flow-layer-decision .hit,
+.data-flow-layer-decision .enough {
   color: #4ade80;
 }
 
-.layer-decision .miss,
-.layer-decision .not-enough {
+.data-flow-layer-decision .miss,
+.data-flow-layer-decision .not-enough {
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -257,7 +257,7 @@
   font-size: 14px;
 }
 
-.content-title {
+.data-flow-content-title {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 10px;
@@ -552,4 +552,5 @@
   overflow-x: hidden;
   overflow-y: auto;
 }
+
 

@@ -166,38 +166,38 @@ const HOPELayersStructure = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <div className="layer-header">
-            <div className="layer-title">{t.permanentTitle}</div>
-            <div className="layer-subtitle">{t.permanentSubtitle}</div>
+          <div className="hope-layers-layer-header">
+            <div className="hope-layers-layer-title">{t.permanentTitle}</div>
+            <div className="hope-layers-layer-subtitle">{t.permanentSubtitle}</div>
           </div>
 
-          <div className="layer-body">
+          <div className="hope-layers-layer-body">
             {/* 特征 */}
-            <div className="layer-section">
-              <div className="section-title">{t.permanentFeature}</div>
-              <div className="section-content">
-                <div className="feature-item">{t.permanentF1}</div>
-                <div className="feature-item">{t.permanentF2}</div>
-                <div className="feature-item">{t.permanentF3}</div>
+            <div className="hope-layers-layer-section">
+              <div className="hope-layers-section-title">{t.permanentFeature}</div>
+              <div className="hope-layers-section-content">
+                <div className="hope-layers-feature-item">{t.permanentF1}</div>
+                <div className="hope-layers-feature-item">{t.permanentF2}</div>
+                <div className="hope-layers-feature-item">{t.permanentF3}</div>
               </div>
             </div>
 
             {/* 存储内容 */}
-            <div className="layer-section">
-              <div className="section-title">{t.permanentContent}</div>
-              <div className="content-box">
-                <div className="content-item">{t.permanentC1}</div>
-                <div className="content-item">{t.permanentC2}</div>
-                <div className="content-item">{t.permanentC3}</div>
-                <div className="content-item">{t.permanentC4}</div>
-                <div className="content-item">{t.permanentC5}</div>
+            <div className="hope-layers-layer-section">
+              <div className="hope-layers-section-title">{t.permanentContent}</div>
+              <div className="hope-layers-content-box">
+                <div className="hope-layers-content-item">{t.permanentC1}</div>
+                <div className="hope-layers-content-item">{t.permanentC2}</div>
+                <div className="hope-layers-content-item">{t.permanentC3}</div>
+                <div className="hope-layers-content-item">{t.permanentC4}</div>
+                <div className="hope-layers-content-item">{t.permanentC5}</div>
               </div>
             </div>
 
             {/* 问题类型 */}
-            <div className="layer-section">
-              <div className="section-title">{t.permanentType}</div>
-              <div className="section-content">
+            <div className="hope-layers-layer-section">
+              <div className="hope-layers-section-title">{t.permanentType}</div>
+              <div className="hope-layers-section-content">
                 <div className="type-item">{t.permanentT1}</div>
                 <div className="type-item">{t.permanentT2}</div>
               </div>
@@ -217,38 +217,38 @@ const HOPELayersStructure = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <div className="layer-header">
-            <div className="layer-title">{t.ordinaryTitle}</div>
-            <div className="layer-subtitle">{t.ordinarySubtitle}</div>
+          <div className="hope-layers-layer-header">
+            <div className="hope-layers-layer-title">{t.ordinaryTitle}</div>
+            <div className="hope-layers-layer-subtitle">{t.ordinarySubtitle}</div>
           </div>
 
-          <div className="layer-body">
+          <div className="hope-layers-layer-body">
             {/* 特征 */}
-            <div className="layer-section">
-              <div className="section-title">{t.ordinaryFeature}</div>
-              <div className="section-content">
-                <div className="feature-item">{t.ordinaryF1}</div>
-                <div className="feature-item">{t.ordinaryF2}</div>
-                <div className="feature-item">{t.ordinaryF3}</div>
+            <div className="hope-layers-layer-section">
+              <div className="hope-layers-section-title">{t.ordinaryFeature}</div>
+              <div className="hope-layers-section-content">
+                <div className="hope-layers-feature-item">{t.ordinaryF1}</div>
+                <div className="hope-layers-feature-item">{t.ordinaryF2}</div>
+                <div className="hope-layers-feature-item">{t.ordinaryF3}</div>
               </div>
             </div>
 
             {/* 存储内容 */}
-            <div className="layer-section">
-              <div className="section-title">{t.ordinaryContent}</div>
-              <div className="content-box">
-                <div className="content-item">{t.ordinaryC1}</div>
-                <div className="content-item">{t.ordinaryC2}</div>
-                <div className="content-item">{t.ordinaryC3}</div>
-                <div className="content-item">{t.ordinaryC4}</div>
-                <div className="content-item">{t.ordinaryC5}</div>
+            <div className="hope-layers-layer-section">
+              <div className="hope-layers-section-title">{t.ordinaryContent}</div>
+              <div className="hope-layers-content-box">
+                <div className="hope-layers-content-item">{t.ordinaryC1}</div>
+                <div className="hope-layers-content-item">{t.ordinaryC2}</div>
+                <div className="hope-layers-content-item">{t.ordinaryC3}</div>
+                <div className="hope-layers-content-item">{t.ordinaryC4}</div>
+                <div className="hope-layers-content-item">{t.ordinaryC5}</div>
               </div>
             </div>
 
             {/* 问题类型 */}
-            <div className="layer-section">
-              <div className="section-title">{t.ordinaryType}</div>
-              <div className="section-content">
+            <div className="hope-layers-layer-section">
+              <div className="hope-layers-section-title">{t.ordinaryType}</div>
+              <div className="hope-layers-section-content">
                 <div className="type-item">{t.ordinaryT1}</div>
                 <div className="type-item">{t.ordinaryT2}</div>
               </div>
@@ -268,37 +268,37 @@ const HOPELayersStructure = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <div className="layer-header">
-            <div className="layer-title">{t.highFreqTitle}</div>
-            <div className="layer-subtitle">{t.highFreqSubtitle}</div>
+          <div className="hope-layers-layer-header">
+            <div className="hope-layers-layer-title">{t.highFreqTitle}</div>
+            <div className="hope-layers-layer-subtitle">{t.highFreqSubtitle}</div>
           </div>
 
-          <div className="layer-body">
+          <div className="hope-layers-layer-body">
             {/* 特征 */}
-            <div className="layer-section">
-              <div className="section-title">{t.highFreqFeature}</div>
-              <div className="section-content">
-                <div className="feature-item">{t.highFreqF1}</div>
-                <div className="feature-item">{t.highFreqF2}</div>
-                <div className="feature-item">{t.highFreqF3}</div>
+            <div className="hope-layers-layer-section">
+              <div className="hope-layers-section-title">{t.highFreqFeature}</div>
+              <div className="hope-layers-section-content">
+                <div className="hope-layers-feature-item">{t.highFreqF1}</div>
+                <div className="hope-layers-feature-item">{t.highFreqF2}</div>
+                <div className="hope-layers-feature-item">{t.highFreqF3}</div>
               </div>
             </div>
 
             {/* 存储内容 */}
-            <div className="layer-section">
-              <div className="section-title">{t.highFreqContent}</div>
-              <div className="content-box">
-                <div className="content-item">{t.highFreqC1}</div>
-                <div className="content-item">{t.highFreqC2}</div>
-                <div className="content-item">{t.highFreqC3}</div>
-                <div className="content-item">{t.highFreqC4}</div>
-                <div className="content-item">{t.highFreqC5}</div>
+            <div className="hope-layers-layer-section">
+              <div className="hope-layers-section-title">{t.highFreqContent}</div>
+              <div className="hope-layers-content-box">
+                <div className="hope-layers-content-item">{t.highFreqC1}</div>
+                <div className="hope-layers-content-item">{t.highFreqC2}</div>
+                <div className="hope-layers-content-item">{t.highFreqC3}</div>
+                <div className="hope-layers-content-item">{t.highFreqC4}</div>
+                <div className="hope-layers-content-item">{t.highFreqC5}</div>
               </div>
             </div>
 
             {/* 自动管理机制 */}
-            <div className="layer-section">
-              <div className="section-title">{t.highFreqMechanism}</div>
+            <div className="hope-layers-layer-section">
+              <div className="hope-layers-section-title">{t.highFreqMechanism}</div>
               <div className="mechanism-box">
                 <div className="mechanism-item">
                   <div className="mechanism-title">{t.highFreqM1Title}</div>
@@ -330,5 +330,6 @@ const HOPELayersStructure = () => {
 };
 
 export default React.memo(HOPELayersStructure);
+
 
 

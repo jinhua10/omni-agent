@@ -242,59 +242,58 @@ const HOPEQueryFlowDiagram = () => {
 
           {/* 4.1 问题分类 */}
           <div className="hope-section">
-            <div className="section-title">{t.step4_1}</div>
-            <div className="section-content">
-              <div className="content-line">{t.step4_1_input}</div>
-              <div className="content-line output">{t.step4_1_output}</div>
+            <div className="hope-flow-section-title">{t.step4_1}</div>
+            <div className="hope-flow-section-content">
+              <div className="hope-flow-content-line">{t.step4_1_input}</div>
+              <div className="hope-flow-content-line output">{t.step4_1_output}</div>
             </div>
           </div>
 
-          <div className="section-arrow">↓</div>
+          <div className="hope-flow-section-arrow">↓</div>
 
           {/* 4.2 层级选择 */}
           <div className="hope-section">
-            <div className="section-title">{t.step4_2}</div>
-            <div className="section-content">
-              <div className="content-line">{t.step4_2_suggest}</div>
-              <div className="content-line result">{t.step4_2_result}</div>
-              <div className="content-line priority">{t.step4_2_priority}</div>
+            <div className="hope-flow-section-title">{t.step4_2}</div>
+            <div className="hope-flow-section-content">
+              <div className="hope-flow-content-line">{t.step4_2_suggest}</div>
+              <div className="hope-flow-content-line result">{t.step4_2_result}</div>
+              <div className="hope-flow-content-line priority">{t.step4_2_priority}</div>
 
               {/* 三层检索 */}
               <div className="layers-container">
                 {/* 高频层 */}
-                <div className="layer-box high-freq">
-                  <div className="layer-number">1️⃣</div>
-                  <div className="layer-name">{t.highFreq}</div>
-                  <div className="layer-item">• {t.highFreqCheck}</div>
-                  <div className="layer-item hit">• {t.highFreqHit} ✅</div>
+                <div className="hope-flow-layer-box high-freq">
+                  <div className="hope-flow-layer-number">1️⃣</div>
+                  <div className="hope-flow-layer-name">{t.highFreq}</div>
+                  <div className="hope-flow-layer-item">• {t.highFreqCheck}</div>
+                  <div className="hope-flow-layer-item hit">• {t.highFreqHit} ✅</div>
                 </div>
 
                 {/* 普通层 */}
-                <div className="layer-box ordinary">
-                  <div className="layer-number">2️⃣</div>
-                  <div className="layer-name">{t.ordinary}</div>
-                  <div className="layer-item">• {t.ordinaryRAG}</div>
-                  <div className="layer-item">• {t.ordinaryFound}</div>
+                <div className="hope-flow-layer-box ordinary">
+                  <div className="hope-flow-layer-number">2️⃣</div>
+                  <div className="hope-flow-layer-name">{t.ordinary}</div>
+                  <div className="hope-flow-layer-item">• {t.ordinaryRAG}</div>
+                  <div className="hope-flow-layer-item">• {t.ordinaryFound}</div>
                 </div>
 
                 {/* 持久层 */}
-                <div className="layer-box permanent">
-                  <div className="layer-number">3️⃣</div>
-                  <div className="layer-name">{t.permanent}</div>
-                  <div className="layer-item">• {t.permanentCore}</div>
-                  <div className="layer-item">• {t.permanentFound}</div>
+                <div className="hope-flow-layer-box permanent">
+                  <div className="hope-flow-layer-number">3️⃣</div>
+                  <div className="hope-flow-layer-name">{t.permanent}</div>
+                  <div className="hope-flow-layer-item">• {t.permanentCore}</div>
+                  <div className="hope-flow-layer-item">• {t.permanentFound}</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="section-arrow">↓</div>
+          <div className="hope-flow-section-arrow">↓</div>
 
           {/* 4.3 自学习机制 */}
           <div className="hope-section">
-            <div className="section-title">{t.step4_3}</div>
-            <div className="section-subtitle">{t.step4_3_title}</div>
-            <div className="section-content">
+            <div className="hope-flow-section-title">{t.step4_3}</div>
+            <div className="hope-flow-section-content">
               <div className="step-item">• {t.step4_3_item1}</div>
               <div className="step-item">• {t.step4_3_item2}</div>
               <div className="step-item">• {t.step4_3_item3}</div>
@@ -389,5 +388,6 @@ const HOPEQueryFlowDiagram = () => {
 };
 
 export default React.memo(HOPEQueryFlowDiagram);
+
 
 

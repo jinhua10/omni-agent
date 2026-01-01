@@ -238,16 +238,16 @@ const SystemArchitectureDiagram = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <div className="layer-box user-layer">
-            <div className="layer-title">{t.userLayer}</div>
+          <div className="arch-layer-box user-layer">
+            <div className="arch-layer-title">{t.userLayer}</div>
           </div>
 
-          <div className="layer-box orchestration-layer">
-            <div className="layer-title">{t.orchestrationLayer}</div>
+          <div className="arch-layer-box orchestration-layer">
+            <div className="arch-layer-title">{t.orchestrationLayer}</div>
           </div>
 
-          <div className="layer-box knowledge-layer">
-            <div className="layer-title">{t.knowledgeLayer}</div>
+          <div className="arch-layer-box knowledge-layer">
+            <div className="arch-layer-title">{t.knowledgeLayer}</div>
           </div>
         </AnimatedContainer>
 
@@ -267,7 +267,7 @@ const SystemArchitectureDiagram = () => {
             <span className="click-text">{t.clickToViewFlow}</span>
           </div>
 
-          <div className="section-header">
+          <div className="arch-section-header">
             <h3>{t.coreIntelligence}</h3>
           </div>
 
@@ -336,21 +336,21 @@ const SystemArchitectureDiagram = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.8 }}
           >
-            <div className="section-title">{t.conversationIntent}</div>
+            <div className="arch-section-title">{t.conversationIntent}</div>
             <div className="feature-components">
-              <div className="feature-item">
-                <div className="item-title">{t.conversationManager}</div>
-                <div className="item-desc">{t.conversationDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.conversationManager}</div>
+                <div className="arch-item-desc">{t.conversationDesc}</div>
               </div>
               <div className="arrow">→</div>
-              <div className="feature-item">
-                <div className="item-title">{t.intentAnalyzer}</div>
-                <div className="item-desc">{t.intentDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.intentAnalyzer}</div>
+                <div className="arch-item-desc">{t.intentDesc}</div>
               </div>
               <div className="arrow">→</div>
-              <div className="feature-item">
-                <div className="item-title">{t.contextExtractor}</div>
-                <div className="item-desc">{t.contextDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.contextExtractor}</div>
+                <div className="arch-item-desc">{t.contextDesc}</div>
               </div>
             </div>
           </AnimatedContainer>
@@ -362,31 +362,31 @@ const SystemArchitectureDiagram = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 1.0 }}
           >
-            <div className="section-title">{t.knowledgeRetrieval}</div>
-            <div className="feature-grid">
-              <div className="feature-item">
-                <div className="item-title">{t.domainRouter}</div>
-                <div className="item-desc">{t.domainRouterDesc}</div>
+            <div className="arch-section-title">{t.knowledgeRetrieval}</div>
+            <div className="arch-feature-grid">
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.domainRouter}</div>
+                <div className="arch-item-desc">{t.domainRouterDesc}</div>
               </div>
-              <div className="feature-item">
-                <div className="item-title">{t.knowledgeExtraction}</div>
-                <div className="item-desc">{t.knowledgeExtractionDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.knowledgeExtraction}</div>
+                <div className="arch-item-desc">{t.knowledgeExtractionDesc}</div>
               </div>
-              <div className="feature-item">
-                <div className="item-title">{t.userPreference}</div>
-                <div className="item-desc">{t.userPreferenceDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.userPreference}</div>
+                <div className="arch-item-desc">{t.userPreferenceDesc}</div>
               </div>
-              <div className="feature-item">
-                <div className="item-title">{t.crossDomainQuery}</div>
-                <div className="item-desc">{t.crossDomainQueryDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.crossDomainQuery}</div>
+                <div className="arch-item-desc">{t.crossDomainQueryDesc}</div>
               </div>
-              <div className="feature-item">
-                <div className="item-title">{t.queryCache}</div>
-                <div className="item-desc">{t.queryCacheDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.queryCache}</div>
+                <div className="arch-item-desc">{t.queryCacheDesc}</div>
               </div>
-              <div className="feature-item">
-                <div className="item-title">{t.domainQuality}</div>
-                <div className="item-desc">{t.domainQualityDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.domainQuality}</div>
+                <div className="arch-item-desc">{t.domainQualityDesc}</div>
               </div>
             </div>
           </AnimatedContainer>
@@ -398,21 +398,21 @@ const SystemArchitectureDiagram = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 1.2 }}
           >
-            <div className="section-title">{t.knowledgeGap}</div>
+            <div className="arch-section-title">{t.knowledgeGap}</div>
             <div className="feature-components">
-              <div className="feature-item">
-                <div className="item-title">{t.gapDetector}</div>
-                <div className="item-desc">{t.gapDetectorDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.gapDetector}</div>
+                <div className="arch-item-desc">{t.gapDetectorDesc}</div>
               </div>
               <div className="arrow">→</div>
-              <div className="feature-item">
-                <div className="item-title">{t.interactiveLearner}</div>
-                <div className="item-desc">{t.interactiveLearnerDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.interactiveLearner}</div>
+                <div className="arch-item-desc">{t.interactiveLearnerDesc}</div>
               </div>
               <div className="arrow">→</div>
-              <div className="feature-item">
-                <div className="item-title">{t.knowledgeValidator}</div>
-                <div className="item-desc">{t.knowledgeValidatorDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.knowledgeValidator}</div>
+                <div className="arch-item-desc">{t.knowledgeValidatorDesc}</div>
               </div>
             </div>
           </AnimatedContainer>
@@ -424,21 +424,21 @@ const SystemArchitectureDiagram = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 1.4 }}
           >
-            <div className="section-title">{t.responseGeneration}</div>
+            <div className="arch-section-title">{t.responseGeneration}</div>
             <div className="feature-components">
-              <div className="feature-item">
-                <div className="item-title">{t.responseGenerator}</div>
-                <div className="item-desc">{t.responseGeneratorDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.responseGenerator}</div>
+                <div className="arch-item-desc">{t.responseGeneratorDesc}</div>
               </div>
               <div className="arrow">→</div>
-              <div className="feature-item">
-                <div className="item-title">{t.answerFormatter}</div>
-                <div className="item-desc">{t.answerFormatterDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.answerFormatter}</div>
+                <div className="arch-item-desc">{t.answerFormatterDesc}</div>
               </div>
               <div className="arrow">→</div>
-              <div className="feature-item">
-                <div className="item-title">{t.knowledgeIntegrator}</div>
-                <div className="item-desc">{t.knowledgeIntegratorDesc}</div>
+              <div className="arch-feature-item">
+                <div className="arch-item-title">{t.knowledgeIntegrator}</div>
+                <div className="arch-item-desc">{t.knowledgeIntegratorDesc}</div>
               </div>
             </div>
           </AnimatedContainer>
@@ -491,16 +491,12 @@ const SystemArchitectureDiagram = () => {
         footer={null}
         width="90%"
         style={{ top: 20, maxWidth: 1200 }}
-        bodyStyle={{
-          padding: 0,
-          background: 'transparent',
-          color: 'inherit'
-        }}
         className="hope-flow-modal"
         styles={{
           body: {
             padding: 0,
-            background: 'transparent'
+            background: 'transparent',
+            color: 'inherit'
           },
           content: {
             background: 'transparent',
@@ -516,5 +512,6 @@ const SystemArchitectureDiagram = () => {
 };
 
 export default SystemArchitectureDiagram;
+
 
 
