@@ -61,7 +61,7 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-.step-header {
+.hope-flow-step-header {
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 12px;
@@ -70,12 +70,12 @@
   padding-bottom: 8px;
 }
 
-.step-content {
+.hope-flow-step-content {
   font-size: 14px;
   line-height: 1.8;
 }
 
-.step-item {
+.hope-flow-step-item {
   padding: 5px 0;
   color: rgba(255, 255, 255, 0.95);
   /* 明确设置透明背景，防止继承 Modal 的白色背景 */
@@ -83,7 +83,7 @@
 }
 
 /* 用户提问步骤 */
-.step-user {
+.hope-flow-step-user {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.2));
   border-color: rgba(139, 92, 246, 0.5);
 }
@@ -98,12 +98,12 @@
 }
 
 /* 普通步骤 */
-.step-normal {
+.hope-flow-step-normal {
   background: rgba(255, 255, 255, 0.1);
 }
 
 /* HOPE 核心步骤 */
-.step-hope {
+.hope-flow-step-hope {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 140, 0, 0.25));
   border: 3px solid rgba(255, 215, 0, 0.6);
   padding: 30px;
@@ -112,7 +112,7 @@
   overflow: hidden;
 }
 
-.step-hope::before {
+.hope-flow-step-hope::before {
   content: '';
   position: absolute;
   top: -50%;
@@ -310,32 +310,32 @@
   margin: 10px 0;
 }
 
-.step-compact {
+.hope-flow-step-compact {
   margin: 0;
   padding: 15px 20px;
 }
 
-.step-compact .step-header {
+.hope-flow-step-compact .hope-flow-step-header {
   font-size: 16px;
   margin-bottom: 10px;
 }
 
-.step-compact .step-content {
+.hope-flow-step-compact .hope-flow-step-content {
   font-size: 13px;
 }
 
-.step-compact .step-item {
+.hope-flow-step-compact .hope-flow-step-item {
   padding: 3px 0;
 }
 
-.step-item.domain {
+.hope-flow-step-item.domain {
   color: #60a5fa;
   font-weight: 600;
   margin-left: 10px;
 }
 
 /* 结果步骤 */
-.step-result {
+.hope-flow-step-result {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.2));
   border-color: rgba(16, 185, 129, 0.5);
 }
@@ -369,7 +369,7 @@
     padding: 15px 20px;
   }
 
-  .step-header {
+  .hope-flow-step-header {
     font-size: 16px;
   }
 
@@ -406,5 +406,6 @@
   overflow-x: hidden;
   overflow-y: auto;
 }
+
 
 

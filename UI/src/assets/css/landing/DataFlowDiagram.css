@@ -296,17 +296,17 @@
   font-size: 13px;
 }
 
-.step-group {
+.data-flow-step-group {
   margin-bottom: 12px;
 }
 
-.step-title {
+.data-flow-step-title {
   font-weight: 600;
   margin-bottom: 5px;
   color: #ffd700;
 }
 
-.step-item {
+.data-flow-step-item {
   padding: 3px 0;
   color: rgba(255, 255, 255, 0.9);
 }
@@ -552,5 +552,6 @@
   overflow-x: hidden;
   overflow-y: auto;
 }
+
 
 

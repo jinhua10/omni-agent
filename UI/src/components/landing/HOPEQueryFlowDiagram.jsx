@@ -18,12 +18,12 @@ const HOPEQueryFlowDiagram = () => {
         step1Question: '"如何实现用户认证？"',
 
         // 步骤2
-        step2: '2. Conversation Manager',
+        step2: '2. 会话管理器',
         step2Item1: '创建/获取对话',
         step2Item2: '管理历史消息',
 
         // 步骤3
-        step3: '3. Intent Analyzer',
+        step3: '3. 意图分析器',
         step3Item1: '分析用户意图',
         step3Item2: '提取关键实体',
         step3Item3: '识别缺失信息',
@@ -34,56 +34,56 @@ const HOPEQueryFlowDiagram = () => {
 
         // 4.1 问题分类
         step4_1: '4.1 问题分类',
-        step4_1_title: 'QuestionClassifier',
+        step4_1_title: '问题分类器',
         step4_1_input: '输入: "如何实现用户认证？"',
-        step4_1_output: '输出: questionType = "procedural" (步骤类)',
+        step4_1_output: '输出: 问题类型 = "步骤类"',
 
         // 4.2 层级选择
         step4_2: '4.2 层级选择',
-        step4_2_title: 'Layer Manager',
+        step4_2_title: '层级管理器',
         step4_2_suggest: '根据问题类型选择知识层级:',
-        step4_2_result: 'procedural → 建议使用 "ordinary" 层',
+        step4_2_result: '步骤类 → 建议使用"普通层"',
         step4_2_priority: '查询优先级:',
 
         // 高频层
-        highFreq: 'High Frequency Layer (高频层)',
+        highFreq: '高频层',
         highFreqCheck: '检查最近是否有类似问题',
         highFreqHit: '命中: 直接返回',
 
         // 普通层
-        ordinary: 'Ordinary Layer (普通层)',
+        ordinary: '普通层',
         ordinaryRAG: 'RAG 语义搜索相关文档',
         ordinaryFound: '找到: Spring Security + JWT 文档',
 
         // 持久层
-        permanent: 'Permanent Layer (持久层)',
+        permanent: '持久层',
         permanentCore: '查找核心认证概念',
         permanentFound: '找到: 用户认证最佳实践',
 
         // 4.3 自学习
         step4_3: '4.3 自学习机制',
-        step4_3_title: 'Learning Module',
+        step4_3_title: '学习模块',
         step4_3_item1: '记录查询统计',
         step4_3_item2: '更新访问频率',
         step4_3_item3: '调整知识层级 (如果需要)',
         step4_3_item4: '学习用户偏好',
 
         // 步骤5-9
-        step5: '5. Domain Router',
+        step5: '5. 域路由器',
         step5Item: '路由到相关域',
-        step5Domain: 'security-domain',
+        step5Domain: '安全域',
 
-        step6: '6. Knowledge Extraction',
+        step6: '6. 知识提取',
         step6Item1: 'RAG 语义搜索',
         step6Item2: '跨域查询',
         step6Item3: '用户偏好优化',
 
-        step7: '7. Knowledge Gap Detection',
+        step7: '7. 知识缺口检测',
         step7Item1: '评估知识完整性',
         step7Item2: '识别缺口',
         step7Item3: '生成问题（如需要）',
 
-        step8: '8. Response Generation',
+        step8: '8. 响应生成',
         step8Item1: '整合多源知识',
         step8Item2: 'AI 生成回答',
         step8Item3: '格式化输出',
@@ -183,13 +183,13 @@ const HOPEQueryFlowDiagram = () => {
       <div className="flow-container">
         {/* 步骤 1: 用户提问 */}
         <AnimatedContainer
-          className="flow-step step-user"
+          className="flow-step hope-flow-step-user"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <div className="step-header">{t.step1}</div>
-          <div className="step-content">
+          <div className="hope-flow-step-header">{t.step1}</div>
+          <div className="hope-flow-step-content">
             <div className="user-question">{t.step1Question}</div>
           </div>
         </AnimatedContainer>
@@ -198,15 +198,15 @@ const HOPEQueryFlowDiagram = () => {
 
         {/* 步骤 2: Conversation Manager */}
         <AnimatedContainer
-          className="flow-step step-normal"
+          className="flow-step hope-flow-step-normal"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <div className="step-header">{t.step2}</div>
-          <div className="step-content">
-            <div className="step-item">• {t.step2Item1}</div>
-            <div className="step-item">• {t.step2Item2}</div>
+          <div className="hope-flow-step-header">{t.step2}</div>
+          <div className="hope-flow-step-content">
+            <div className="hope-flow-step-item">• {t.step2Item1}</div>
+            <div className="hope-flow-step-item">• {t.step2Item2}</div>
           </div>
         </AnimatedContainer>
 
@@ -214,16 +214,16 @@ const HOPEQueryFlowDiagram = () => {
 
         {/* 步骤 3: Intent Analyzer */}
         <AnimatedContainer
-          className="flow-step step-normal"
+          className="flow-step hope-flow-step-normal"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <div className="step-header">{t.step3}</div>
-          <div className="step-content">
-            <div className="step-item">• {t.step3Item1}</div>
-            <div className="step-item">• {t.step3Item2}</div>
-            <div className="step-item">• {t.step3Item3}</div>
+          <div className="hope-flow-step-header">{t.step3}</div>
+          <div className="hope-flow-step-content">
+            <div className="hope-flow-step-item">• {t.step3Item1}</div>
+            <div className="hope-flow-step-item">• {t.step3Item2}</div>
+            <div className="hope-flow-step-item">• {t.step3Item3}</div>
           </div>
         </AnimatedContainer>
 
@@ -231,7 +231,7 @@ const HOPEQueryFlowDiagram = () => {
 
         {/* 步骤 4: HOPE 系统核心 */}
         <AnimatedContainer
-          className="flow-step step-hope"
+          className="flow-step hope-flow-step-hope"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5 }}
@@ -294,10 +294,10 @@ const HOPEQueryFlowDiagram = () => {
           <div className="hope-section">
             <div className="hope-flow-section-title">{t.step4_3}</div>
             <div className="hope-flow-section-content">
-              <div className="step-item">• {t.step4_3_item1}</div>
-              <div className="step-item">• {t.step4_3_item2}</div>
-              <div className="step-item">• {t.step4_3_item3}</div>
-              <div className="step-item">• {t.step4_3_item4}</div>
+              <div className="hope-flow-step-item">• {t.step4_3_item1}</div>
+              <div className="hope-flow-step-item">• {t.step4_3_item2}</div>
+              <div className="hope-flow-step-item">• {t.step4_3_item3}</div>
+              <div className="hope-flow-step-item">• {t.step4_3_item4}</div>
             </div>
           </div>
         </AnimatedContainer>
@@ -309,29 +309,29 @@ const HOPEQueryFlowDiagram = () => {
           {/* 步骤 5-6 */}
           <div className="compact-row">
             <AnimatedContainer
-              className="flow-step step-compact"
+              className="flow-step hope-flow-step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-              <div className="step-header">{t.step5}</div>
-              <div className="step-content">
-                <div className="step-item">• {t.step5Item}</div>
-                <div className="step-item domain">→ {t.step5Domain}</div>
+              <div className="hope-flow-step-header">{t.step5}</div>
+              <div className="hope-flow-step-content">
+                <div className="hope-flow-step-item">• {t.step5Item}</div>
+                <div className="hope-flow-step-item domain">→ {t.step5Domain}</div>
               </div>
             </AnimatedContainer>
 
             <AnimatedContainer
-              className="flow-step step-compact"
+              className="flow-step hope-flow-step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
-              <div className="step-header">{t.step6}</div>
-              <div className="step-content">
-                <div className="step-item">• {t.step6Item1}</div>
-                <div className="step-item">• {t.step6Item2}</div>
-                <div className="step-item">• {t.step6Item3}</div>
+              <div className="hope-flow-step-header">{t.step6}</div>
+              <div className="hope-flow-step-content">
+                <div className="hope-flow-step-item">• {t.step6Item1}</div>
+                <div className="hope-flow-step-item">• {t.step6Item2}</div>
+                <div className="hope-flow-step-item">• {t.step6Item3}</div>
               </div>
             </AnimatedContainer>
           </div>
@@ -339,30 +339,30 @@ const HOPEQueryFlowDiagram = () => {
           {/* 步骤 7-8 */}
           <div className="compact-row">
             <AnimatedContainer
-              className="flow-step step-compact"
+              className="flow-step hope-flow-step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
             >
-              <div className="step-header">{t.step7}</div>
-              <div className="step-content">
-                <div className="step-item">• {t.step7Item1}</div>
-                <div className="step-item">• {t.step7Item2}</div>
-                <div className="step-item">• {t.step7Item3}</div>
+              <div className="hope-flow-step-header">{t.step7}</div>
+              <div className="hope-flow-step-content">
+                <div className="hope-flow-step-item">• {t.step7Item1}</div>
+                <div className="hope-flow-step-item">• {t.step7Item2}</div>
+                <div className="hope-flow-step-item">• {t.step7Item3}</div>
               </div>
             </AnimatedContainer>
 
             <AnimatedContainer
-              className="flow-step step-compact"
+              className="flow-step hope-flow-step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.9 }}
             >
-              <div className="step-header">{t.step8}</div>
-              <div className="step-content">
-                <div className="step-item">• {t.step8Item1}</div>
-                <div className="step-item">• {t.step8Item2}</div>
-                <div className="step-item">• {t.step8Item3}</div>
+              <div className="hope-flow-step-header">{t.step8}</div>
+              <div className="hope-flow-step-content">
+                <div className="hope-flow-step-item">• {t.step8Item1}</div>
+                <div className="hope-flow-step-item">• {t.step8Item2}</div>
+                <div className="hope-flow-step-item">• {t.step8Item3}</div>
               </div>
             </AnimatedContainer>
           </div>
@@ -372,13 +372,13 @@ const HOPEQueryFlowDiagram = () => {
 
         {/* 步骤 9: 返回结果 */}
         <AnimatedContainer
-          className="flow-step step-result"
+          className="flow-step hope-flow-step-result"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1.0 }}
         >
-          <div className="step-header">{t.step9}</div>
-          <div className="step-content">
+          <div className="hope-flow-step-header">{t.step9}</div>
+          <div className="hope-flow-step-content">
             <div className="result-content">{t.step9Content}</div>
           </div>
         </AnimatedContainer>
@@ -388,6 +388,7 @@ const HOPEQueryFlowDiagram = () => {
 };
 
 export default React.memo(HOPEQueryFlowDiagram);
+
 
 
 
