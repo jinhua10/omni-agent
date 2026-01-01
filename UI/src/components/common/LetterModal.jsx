@@ -101,7 +101,7 @@ const LetterCard = ({ letter, onSelect, t, language }) => {
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onSelect(letter)}
       hoverable
-      bordered={false}
+      variant="borderless"
     >
       {/* 新信徽章 */}
       <div className="card-badge">

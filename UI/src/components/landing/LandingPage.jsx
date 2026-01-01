@@ -33,7 +33,7 @@ import {
 import GiteeIcon from '../icons/GiteeIcon'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { LetterModal, FloatingLetterButton } from '../common'
-import './LandingPage.css'
+import '../../assets/css/landing/LandingPage.css'
 import SystemArchitectureDiagram from './SystemArchitectureDiagram'
 
 // 导入二维码图片
