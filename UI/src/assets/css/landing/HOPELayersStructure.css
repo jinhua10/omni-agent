@@ -8,6 +8,11 @@
   color: white;
 }
 
+/* 在 Modal 中时使用透明背景（Modal 自己有背景） */
+.hope-layer-detail-modal .hope-layers-structure {
+  background: transparent;
+}
+
 .hope-layers-title {
   text-align: center;
   margin-bottom: 40px;
@@ -26,6 +31,33 @@
   opacity: 0.9;
   color: rgba(255, 255, 255, 0.9);
   font-style: italic;
+}
+
+/* 显示全部按钮 */
+.show-all-btn {
+  margin-top: 20px;
+  padding: 12px 32px;
+  background: rgba(255, 215, 0, 0.2);
+  border: 2px solid rgba(255, 215, 0, 0.6);
+  border-radius: 25px;
+  color: #ffd700;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.show-all-btn:hover {
+  background: rgba(255, 215, 0, 0.35);
+  border-color: rgba(255, 215, 0, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.show-all-btn:active {
+  transform: translateY(0);
 }
 
 /* 三层容器 - 响应式网格布局 */

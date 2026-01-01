@@ -1,14 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { AnimatedContainer } from '../common';
 import '../../assets/css/landing/HOPELayersStructure.css';
 
 const HOPELayersStructure = ({ selectedLayer = null }) => {
   const { language } = useLanguage();
+  const [showAll, setShowAll] = useState(false);
 
-  // 根据 selectedLayer 决定显示哪些层
+  // 根据 selectedLayer 和 showAll 决定显示哪些层
   const shouldShowLayer = (layerType) => {
-    if (!selectedLayer) return true; // 没有选择时显示所有层
+    if (!selectedLayer || showAll) return true; // 没有选择或点击"显示全部"时显示所有层
     return selectedLayer === layerType; // 只显示选中的层
   };
 
@@ -18,6 +19,7 @@ const HOPELayersStructure = ({ selectedLayer = null }) => {
       zh: {
         title: 'HOPE 三层知识结构',
         subtitle: '分层智能持久化引擎',
+        showAllLayers: '显示全部三层',
 
         // 持久层
         permanentTitle: '持久层',
@@ -83,6 +85,7 @@ const HOPELayersStructure = ({ selectedLayer = null }) => {
       en: {
         title: 'HOPE Three-Layer Structure',
         subtitle: 'Hierarchical Omni-Agent Persistent Engine',
+        showAllLayers: 'Show All Three Layers',
 
         // Permanent Layer
         permanentTitle: 'Permanent Layer',
@@ -161,6 +164,16 @@ const HOPELayersStructure = ({ selectedLayer = null }) => {
       >
         <h2>{t.title}</h2>
         <p className="hope-layers-subtitle">{t.subtitle}</p>
+
+        {/* 显示全部按钮 - 仅在有 selectedLayer 且未显示全部时显示 */}
+        {selectedLayer && !showAll && (
+          <button
+            className="show-all-btn"
+            onClick={() => setShowAll(true)}
+          >
+            {t.showAllLayers}
+          </button>
+        )}
       </AnimatedContainer>
 
       {/* 三层结构 */}

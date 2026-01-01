@@ -440,8 +440,8 @@
 }
 
 .hope-layer-detail-modal .ant-modal-content {
-  background: transparent !important;
-  box-shadow: none !important;
+  background: linear-gradient(135deg, rgba(118, 75, 162, 0.95) 0%, rgba(102, 126, 234, 0.95) 100%) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
   padding: 0 !important;
   overflow: hidden;
   border-radius: 20px;
