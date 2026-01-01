@@ -42,7 +42,7 @@ const HOPELayersStructure = ({ selectedLayer = null }) => {
         permanentType: '问题类型:',
         permanentT1: '• factual (事实类): "什么是RAG?"',
         permanentT2: '• conceptual (概念类): "微服务架构是什么?"',
-        permanentPriority: '检索优先级: 🔴 最高 (第3顺位检索)',
+        permanentPriority: '检索优先级: 🔵 较低 (第3顺位检索)',
 
         // 普通层
         ordinaryTitle: '普通层',
@@ -108,7 +108,7 @@ const HOPELayersStructure = ({ selectedLayer = null }) => {
         permanentType: 'Question Types:',
         permanentT1: '• factual: "What is RAG?"',
         permanentT2: '• conceptual: "What is microservices?"',
-        permanentPriority: 'Priority: 🔴 Highest (3rd order)',
+        permanentPriority: 'Priority: 🔵 Lower (3rd order)',
 
         // Ordinary Layer
         ordinaryTitle: 'Ordinary Layer',

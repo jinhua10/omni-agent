@@ -277,7 +277,7 @@
 │  • factual: "What is RAG?"                             │
 │  • conceptual: "What is microservices architecture?"   │
 │                                                         │
-│  Retrieval Priority: 🔴 High (3rd priority)            │
+│  Retrieval Priority: 🔵 Lower (3rd priority)           │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
