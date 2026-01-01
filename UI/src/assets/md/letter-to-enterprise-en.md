@@ -609,6 +609,201 @@ Continuous Value Creation:
 
 ---
 
+## 🌟 Open Source Philosophy & Community Building
+
+### Why Open Source?
+
+We firmly believe: **A complete enterprise-level AI service platform solution should be known and used by more people.**
+
+Through our observation, **there is currently no truly complete solution in the industry that transforms from knowledge base to AI service platform**. The market offers either:
+- 🔸 Traditional knowledge bases (query only, no generation)
+- 🔸 AI tools (single function, no collaboration)
+- 🔸 Skill-based Agents (high cost, unstable accuracy)
+- 🔸 Commercial closed-source products (expensive, data security concerns)
+
+**omni-agent's Mission:**
+```
+Let every enterprise have its own AI service platform
+Let every employee enjoy productivity improvements from AI
+Let every developer build innovative applications on this foundation
+```
+
+### Open Source License: Apache 2.0
+
+We adopt the **Apache 2.0** open source license, which means:
+
+✅ **Commercial Friendly**
+- Free for commercial projects
+- Can modify and redevelop
+- Can distribute modified versions in closed-source
+
+✅ **Legal Protection**
+- Clear patent grants
+- Disclaimer protection
+- Trademark usage guidelines
+
+✅ **Flexible Usage**
+- Personal learning and research
+- Internal enterprise use
+- Commercial product integration
+
+**You Can:**
+- 🎯 Deploy directly (free)
+- 🔧 Custom development (based on source code)
+- 📦 Package as your own product (retain copyright notice)
+- 💼 Provide commercial services (based on omni-agent)
+
+### If You Appreciate This Project
+
+We sincerely invite you to:
+
+⭐ **Give omni-agent a Star**
+```
+https://github.com/[Project URL]
+
+Every Star is our greatest encouragement
+Help more people discover this project
+Together promote the development of enterprise AI service platforms
+```
+
+🤝 **Participate in Community Building**
+- 💡 Propose requirements and suggestions (Issues)
+- 🐛 Report bugs and problems (Issues)
+- 📝 Contribute code and documentation (Pull Requests)
+- 📢 Share usage experiences and cases (Discussions)
+- 🎓 Help other users with questions (Community)
+
+### Future Roadmap
+
+We are working hard to complete more features to make omni-agent a more powerful AI service platform:
+
+#### 📅 Near-term Plans (3-6 months)
+
+**1. Agent Skill Capabilities**
+```
+✨ Under Development
+
+Learning from mainstream solutions like Copilot:
+├─ Agents can call external tools and APIs
+├─ Support custom Skill plugins
+├─ Skill marketplace (preset common skills)
+└─ Deep integration with knowledge network (more accurate than Copilot)
+
+Core Difference:
+omni-agent = Skill-based Agent + Knowledge Network
+→ Both Skill flexibility and knowledge network accuracy
+```
+
+**2. Multimodal AI Services**
+```
+├─ Image understanding and generation (auto-parse charts in documents)
+├─ Voice input/output (voice Q&A, meeting summarization)
+├─ Video content analysis (auto-extract training video key points)
+└─ Cross-modal retrieval (find images with text, find docs with images)
+```
+
+**3. Enterprise Feature Enhancements**
+```
+├─ Stronger permission system (fine-grained access control)
+├─ Better monitoring & ops (complete observability)
+├─ More integrations (DingTalk, WeCom, Feishu, etc.)
+└─ Smarter recommendations (proactive knowledge push)
+```
+
+#### 🚀 Mid-term Plans (6-12 months)
+
+**1. Enhanced Agent Collaboration**
+```
+├─ Agent workflow orchestration (visual Agent collaboration config)
+├─ Cross-enterprise Agent collaboration (secure knowledge sharing)
+├─ Agent capability marketplace (preset professional Agent templates)
+└─ Agent performance analysis (contribution assessment per Agent)
+```
+
+**2. Knowledge Graph Visualization**
+```
+├─ Enterprise knowledge map (global view of knowledge distribution)
+├─ Knowledge correlation analysis (discover hidden connections)
+├─ Knowledge gap identification (proactively find blind spots)
+└─ Knowledge evolution tracking (how knowledge changes over time)
+```
+
+**3. Industry Solutions**
+```
+├─ Finance industry edition (compliance, risk control, investment research)
+├─ Healthcare industry edition (medical records, diagnosis, research)
+├─ Manufacturing edition (process, quality control, supply chain)
+└─ More industries... (based on community demand)
+```
+
+#### 🌈 Long-term Vision
+
+```
+Make omni-agent:
+✨ Infrastructure for enterprise AI services
+✨ Operating system for Agent collaboration
+✨ Industry standard for knowledge management
+✨ Innovation platform for developers
+```
+
+### Current Challenges
+
+**Honestly, we still have a lot to do:**
+
+⚠️ **Feature-wise**
+- Some advanced features still under development (e.g., Agent Skill)
+- Accuracy in certain scenarios needs optimization
+- UI/UX experience can be better
+
+⚠️ **Ecosystem-wise**
+- Need more use cases and best practices
+- Need more comprehensive documentation and tutorials
+- Need more active developer community
+
+⚠️ **Business-wise**
+- Enterprise service system under construction
+- Partner network expanding
+- Industry solutions need deepening
+
+**But we believe:**
+- ✅ Direction is right (from knowledge base to AI service platform)
+- ✅ Architecture is solid (complete data closed-loop)
+- ✅ Community will grow (build ecosystem together)
+
+### Join Us
+
+**If you are:**
+
+👨‍💻 **Developer**
+- Welcome to contribute code, fix bugs, optimize performance
+- Welcome to develop plugins, extend features, innovate apps
+- We provide: technical guidance, code review, recognition
+
+🏢 **Enterprise User**
+- Welcome to trial feedback, propose needs, share experiences
+- Welcome to be early customer, co-build industry solutions
+- We provide: priority support, custom development, business cooperation
+
+📚 **Content Contributor**
+- Welcome to improve docs, write tutorials, share cases
+- Welcome to translate docs, create videos, organize events
+- We provide: platform exposure, community honor, material rewards
+
+💡 **Product Designer**
+- Welcome to optimize UI, improve UX, design interactions
+- Welcome to share design concepts, participate in product discussions
+- We provide: design freedom, portfolio showcase, team collaboration
+
+**Contact:**
+```
+📧 Email: [Team Email]
+💬 WeChat Group: [QR Code]
+🐙 GitHub: [https://github.com/...]
+📱 Community Forum: [https://community....]
+```
+
+---
+
 ## 📞 Contact Us
 
 **Business Inquiries:**
