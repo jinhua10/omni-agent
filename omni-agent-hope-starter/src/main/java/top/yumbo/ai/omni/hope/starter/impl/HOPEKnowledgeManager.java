@@ -2,8 +2,6 @@ package top.yumbo.ai.omni.hope.starter.impl;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import top.yumbo.ai.omni.rag.RagService;
 import top.yumbo.ai.omni.rag.model.Document;
 
@@ -28,7 +26,6 @@ import java.util.*;
  * @since 1.0.0
  */
 @Slf4j
-@Service
 public class HOPEKnowledgeManager {
 
     private final QuestionClassifier questionClassifier;
@@ -39,7 +36,6 @@ public class HOPEKnowledgeManager {
      */
     private final Map<String, LayerStats> layerStatsMap = new HashMap<>();
 
-    @Autowired
     public HOPEKnowledgeManager(
             QuestionClassifier questionClassifier,
             RagService ragService) {

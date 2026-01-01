@@ -1,8 +1,6 @@
 package top.yumbo.ai.omni.hope.starter.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import top.yumbo.ai.omni.hope.api.model.QuestionTypeConfig;
 import top.yumbo.ai.omni.hope.api.persistence.HopePersistence;
 
@@ -24,7 +22,6 @@ import java.util.regex.Pattern;
  * @since 1.0.0
  */
 @Slf4j
-@Component
 public class QuestionClassifier {
 
     private final HopePersistence persistence;
@@ -44,7 +41,6 @@ public class QuestionClassifier {
      */
     private final Map<String, List<Pattern>> patternCache = new ConcurrentHashMap<>();
 
-    @Autowired
     public QuestionClassifier(HopePersistence persistence) {
         this.persistence = persistence;
         log.info("✅ QuestionClassifier initialized with persistence: {}",
