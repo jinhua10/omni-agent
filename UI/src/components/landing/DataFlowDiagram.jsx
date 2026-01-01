@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { AnimatedContainer } from '../common';
 import '../../assets/css/landing/DataFlowDiagram.css';
 
 const DataFlowDiagram = () => {
@@ -241,7 +241,7 @@ const DataFlowDiagram = () => {
   return (
     <div className="data-flow-diagram">
       {/* 标题 */}
-      <motion.div
+      <AnimatedContainer
         className="flow-title"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -249,11 +249,11 @@ const DataFlowDiagram = () => {
       >
         <h2>{t.title}</h2>
         <p className="flow-subtitle">{t.subtitle}</p>
-      </motion.div>
+      </AnimatedContainer>
 
       <div className="flow-container">
         {/* 阶段1: 查询阶段 */}
-        <motion.div
+        <AnimatedContainer
           className="phase-section phase-query"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -289,12 +289,12 @@ const DataFlowDiagram = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         <div className="phase-arrow">↓</div>
 
         {/* 阶段2: 检索阶段 */}
-        <motion.div
+        <AnimatedContainer
           className="phase-section phase-retrieval"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -347,14 +347,14 @@ const DataFlowDiagram = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         <div className="phase-arrow">↓</div>
 
         {/* 阶段3-5: 紧凑布局 */}
         <div className="compact-phases">
           {/* 知识评估 */}
-          <motion.div
+          <AnimatedContainer
             className="phase-section phase-compact"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -372,10 +372,10 @@ const DataFlowDiagram = () => {
               </div>
               <div className="gap-decision">{t.gapDecision}</div>
             </div>
-          </motion.div>
+          </AnimatedContainer>
 
           {/* 回答生成 */}
-          <motion.div
+          <AnimatedContainer
             className="phase-section phase-compact"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -393,13 +393,13 @@ const DataFlowDiagram = () => {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </AnimatedContainer>
         </div>
 
         <div className="phase-arrow">↓</div>
 
         {/* 阶段5: 学习优化 */}
-        <motion.div
+        <AnimatedContainer
           className="phase-section phase-learning"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -454,12 +454,12 @@ const DataFlowDiagram = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         <div className="phase-arrow">↓</div>
 
         {/* 阶段6: 下次优化 */}
-        <motion.div
+        <AnimatedContainer
           className="phase-section phase-optimized"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -491,11 +491,12 @@ const DataFlowDiagram = () => {
               </div>
             </div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
       </div>
     </div>
   );
 };
 
 export default React.memo(DataFlowDiagram);
+
 

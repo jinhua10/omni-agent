@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Modal } from 'antd';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { AnimatedContainer } from '../common';
 import '../../assets/css/landing/SystemArchitectureDiagram.css';
 import HOPEQueryFlowDiagram from './HOPEQueryFlowDiagram';
 
@@ -220,7 +220,7 @@ const SystemArchitectureDiagram = () => {
   return (
     <div className="system-architecture-diagram">
       {/* 标题 */}
-      <motion.div
+      <AnimatedContainer
         className="architecture-title"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -228,11 +228,11 @@ const SystemArchitectureDiagram = () => {
       >
         <h2>{t.title}</h2>
         <p className="subtitle">{t.subtitle}</p>
-      </motion.div>
+      </AnimatedContainer>
 
       <div className="architecture-container">
         {/* 顶层 - 三个层次 */}
-        <motion.div
+        <AnimatedContainer
           className="top-layer"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -249,10 +249,10 @@ const SystemArchitectureDiagram = () => {
           <div className="layer-box knowledge-layer">
             <div className="layer-title">{t.knowledgeLayer}</div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         {/* 核心智能层容器 */}
-        <motion.div
+        <AnimatedContainer
           className="core-intelligence-container clickable"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -272,7 +272,7 @@ const SystemArchitectureDiagram = () => {
           </div>
 
           {/* HOPE 系统 */}
-          <motion.div
+          <AnimatedContainer
             className="hope-system-container"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -327,10 +327,10 @@ const SystemArchitectureDiagram = () => {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </AnimatedContainer>
 
           {/* 对话管理与意图分析 */}
-          <motion.div
+          <AnimatedContainer
             className="feature-section"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -353,10 +353,10 @@ const SystemArchitectureDiagram = () => {
                 <div className="item-desc">{t.contextDesc}</div>
               </div>
             </div>
-          </motion.div>
+          </AnimatedContainer>
 
           {/* 知识检索引擎 */}
-          <motion.div
+          <AnimatedContainer
             className="feature-section"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -389,10 +389,10 @@ const SystemArchitectureDiagram = () => {
                 <div className="item-desc">{t.domainQualityDesc}</div>
               </div>
             </div>
-          </motion.div>
+          </AnimatedContainer>
 
           {/* 知识缺口管理 */}
-          <motion.div
+          <AnimatedContainer
             className="feature-section"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -415,10 +415,10 @@ const SystemArchitectureDiagram = () => {
                 <div className="item-desc">{t.knowledgeValidatorDesc}</div>
               </div>
             </div>
-          </motion.div>
+          </AnimatedContainer>
 
           {/* 响应生成 */}
-          <motion.div
+          <AnimatedContainer
             className="feature-section"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -441,11 +441,11 @@ const SystemArchitectureDiagram = () => {
                 <div className="item-desc">{t.knowledgeIntegratorDesc}</div>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </AnimatedContainer>
+        </AnimatedContainer>
 
         {/* 底层服务 */}
-        <motion.div
+        <AnimatedContainer
           className="bottom-layer"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -481,7 +481,7 @@ const SystemArchitectureDiagram = () => {
               <div>• {t.customLLM}</div>
             </div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
       </div>
 
       {/* HOPE 查询流程弹窗 */}
@@ -501,4 +501,5 @@ const SystemArchitectureDiagram = () => {
 };
 
 export default SystemArchitectureDiagram;
+
 

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { AnimatedContainer } from '../common';
 import '../../assets/css/landing/HOPELayersStructure.css';
 
 const HOPELayersStructure = () => {
@@ -147,7 +147,7 @@ const HOPELayersStructure = () => {
   return (
     <div className="hope-layers-structure">
       {/* 标题 */}
-      <motion.div
+      <AnimatedContainer
         className="layers-title"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -155,12 +155,12 @@ const HOPELayersStructure = () => {
       >
         <h2>{t.title}</h2>
         <p className="layers-subtitle">{t.subtitle}</p>
-      </motion.div>
+      </AnimatedContainer>
 
       {/* 三层结构 */}
       <div className="layers-container">
         {/* 持久层 */}
-        <motion.div
+        <AnimatedContainer
           className="layer-card layer-permanent"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -208,10 +208,10 @@ const HOPELayersStructure = () => {
               {t.permanentPriority}
             </div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         {/* 普通层 */}
-        <motion.div
+        <AnimatedContainer
           className="layer-card layer-ordinary"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -259,10 +259,10 @@ const HOPELayersStructure = () => {
               {t.ordinaryPriority}
             </div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         {/* 高频层 */}
-        <motion.div
+        <AnimatedContainer
           className="layer-card layer-highfreq"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -323,11 +323,12 @@ const HOPELayersStructure = () => {
               {t.highFreqPriority}
             </div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
       </div>
     </div>
   );
 };
 
 export default React.memo(HOPELayersStructure);
+
 

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { AnimatedContainer } from '../common';
 import '../../assets/css/landing/HOPEQueryFlowDiagram.css';
 
 const HOPEQueryFlowDiagram = () => {
@@ -170,7 +170,7 @@ const HOPEQueryFlowDiagram = () => {
   return (
     <div className="hope-query-flow-diagram">
       {/* 标题 */}
-      <motion.div
+      <AnimatedContainer
         className="flow-title"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -178,11 +178,11 @@ const HOPEQueryFlowDiagram = () => {
       >
         <h2>{t.title}</h2>
         <p className="flow-subtitle">{t.subtitle}</p>
-      </motion.div>
+      </AnimatedContainer>
 
       <div className="flow-container">
         {/* 步骤 1: 用户提问 */}
-        <motion.div
+        <AnimatedContainer
           className="flow-step step-user"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -192,12 +192,12 @@ const HOPEQueryFlowDiagram = () => {
           <div className="step-content">
             <div className="user-question">{t.step1Question}</div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         <div className="flow-arrow">↓</div>
 
         {/* 步骤 2: Conversation Manager */}
-        <motion.div
+        <AnimatedContainer
           className="flow-step step-normal"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -208,12 +208,12 @@ const HOPEQueryFlowDiagram = () => {
             <div className="step-item">• {t.step2Item1}</div>
             <div className="step-item">• {t.step2Item2}</div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         <div className="flow-arrow">↓</div>
 
         {/* 步骤 3: Intent Analyzer */}
-        <motion.div
+        <AnimatedContainer
           className="flow-step step-normal"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -225,12 +225,12 @@ const HOPEQueryFlowDiagram = () => {
             <div className="step-item">• {t.step3Item2}</div>
             <div className="step-item">• {t.step3Item3}</div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         <div className="flow-arrow">↓</div>
 
         {/* 步骤 4: HOPE 系统核心 */}
-        <motion.div
+        <AnimatedContainer
           className="flow-step step-hope"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -303,7 +303,7 @@ const HOPEQueryFlowDiagram = () => {
               <div className="step-item">• {t.step4_3_item4}</div>
             </div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
 
         <div className="flow-arrow">↓</div>
 
@@ -311,7 +311,7 @@ const HOPEQueryFlowDiagram = () => {
         <div className="compact-steps">
           {/* 步骤 5-6 */}
           <div className="compact-row">
-            <motion.div
+            <AnimatedContainer
               className="flow-step step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -322,9 +322,9 @@ const HOPEQueryFlowDiagram = () => {
                 <div className="step-item">• {t.step5Item}</div>
                 <div className="step-item domain">→ {t.step5Domain}</div>
               </div>
-            </motion.div>
+            </AnimatedContainer>
 
-            <motion.div
+            <AnimatedContainer
               className="flow-step step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -336,12 +336,12 @@ const HOPEQueryFlowDiagram = () => {
                 <div className="step-item">• {t.step6Item2}</div>
                 <div className="step-item">• {t.step6Item3}</div>
               </div>
-            </motion.div>
+            </AnimatedContainer>
           </div>
 
           {/* 步骤 7-8 */}
           <div className="compact-row">
-            <motion.div
+            <AnimatedContainer
               className="flow-step step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -353,9 +353,9 @@ const HOPEQueryFlowDiagram = () => {
                 <div className="step-item">• {t.step7Item2}</div>
                 <div className="step-item">• {t.step7Item3}</div>
               </div>
-            </motion.div>
+            </AnimatedContainer>
 
-            <motion.div
+            <AnimatedContainer
               className="flow-step step-compact"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -367,14 +367,14 @@ const HOPEQueryFlowDiagram = () => {
                 <div className="step-item">• {t.step8Item2}</div>
                 <div className="step-item">• {t.step8Item3}</div>
               </div>
-            </motion.div>
+            </AnimatedContainer>
           </div>
         </div>
 
         <div className="flow-arrow">↓</div>
 
         {/* 步骤 9: 返回结果 */}
-        <motion.div
+        <AnimatedContainer
           className="flow-step step-result"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -384,11 +384,12 @@ const HOPEQueryFlowDiagram = () => {
           <div className="step-content">
             <div className="result-content">{t.step9Content}</div>
           </div>
-        </motion.div>
+        </AnimatedContainer>
       </div>
     </div>
   );
 };
 
 export default React.memo(HOPEQueryFlowDiagram);
+
 

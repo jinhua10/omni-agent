@@ -14,4 +14,5 @@ export { default as Skeleton } from './Skeleton'
 export { default as Button } from './Button'
 export { default as LetterModal } from './LetterModal'
 export { default as FloatingLetterButton } from './FloatingLetterButton'
+export { default as AnimatedContainer } from './AnimatedContainer'
 
