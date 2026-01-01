@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { AnimatedContainer } from '../common';
 import '../../assets/css/landing/HOPELayersStructure.css';
@@ -6,6 +6,11 @@ import '../../assets/css/landing/HOPELayersStructure.css';
 const HOPELayersStructure = ({ selectedLayer = null }) => {
   const { language } = useLanguage();
   const [showAll, setShowAll] = useState(false);
+
+  // 当 selectedLayer 改变时，重置 showAll 状态
+  useEffect(() => {
+    setShowAll(false);
+  }, [selectedLayer]);
 
   // 根据 selectedLayer 和 showAll 决定显示哪些层
   const shouldShowLayer = (layerType) => {
