@@ -3,6 +3,8 @@
 > **最后更新：** 2026-01-01  
 > **文档版本：** 1.0.0
 
+**中文 | [English](README_EN.md)**
+
 ---
 
 ## 📚 文档导航
@@ -14,6 +16,7 @@
   - 快速安装
   - 第一个示例
   - 常见问题
+  - [English Version](QUICKSTART_EN.md)
 
 ### 🏗️ 架构文档
 
@@ -22,12 +25,14 @@
   - HOPE 系统在架构中的位置
   - 数据流转示意
   - 性能对比
+  - [English Version](ARCHITECTURE_EN.md)
 
-- **[模块架构](MODULES.md)** - 25个功能模块详解
+- **[模块架构](MODULES.md)** - 27个功能模块详解
   - 模块总览
   - 核心模块详解
   - 模块依赖关系
   - 模块选择指南
+  - [English Version](MODULES_EN.md)
 
 ### 🧠 核心系统
 
@@ -43,6 +48,7 @@
   - 知识关联
   - 跨域查询
   - 用户偏好学习
+  - [English Version](KNOWLEDGE_NETWORK_EN.md)
 
 ### 🔧 高级主题
 
