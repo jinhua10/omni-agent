@@ -1,0 +1,332 @@
+/* HOPELayersStructure.css */
+
+.hope-layers-structure {
+  width: 100%;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  border-radius: 20px;
+  color: white;
+}
+
+.layers-title {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.layers-title h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: white;
+  line-height: 1.2;
+}
+
+.layers-subtitle {
+  font-size: 16px;
+  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.9);
+  font-style: italic;
+}
+
+/* 三层容器 - 响应式网格布局 */
+.layers-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+}
+
+/* 层级卡片 */
+.layer-card {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 15px;
+  padding: 25px;
+  border: 3px solid;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s ease,
+              background-color 0.3s ease;
+  will-change: transform;
+  backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+}
+
+.layer-card:hover {
+  transform: translateY(-8px) translateZ(0);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+/* 持久层 - 绿色 */
+.layer-permanent {
+  border-color: #4ade80;
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.1));
+}
+
+.layer-permanent:hover {
+  box-shadow: 0 12px 36px rgba(74, 222, 128, 0.4);
+}
+
+.layer-permanent .layer-title {
+  color: #4ade80;
+}
+
+/* 普通层 - 蓝色 */
+.layer-ordinary {
+  border-color: #60a5fa;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(59, 130, 246, 0.1));
+}
+
+.layer-ordinary:hover {
+  box-shadow: 0 12px 36px rgba(96, 165, 250, 0.4);
+}
+
+.layer-ordinary .layer-title {
+  color: #60a5fa;
+}
+
+/* 高频层 - 红色 */
+.layer-highfreq {
+  border-color: #f87171;
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.15), rgba(239, 68, 68, 0.1));
+}
+
+.layer-highfreq:hover {
+  box-shadow: 0 12px 36px rgba(248, 113, 113, 0.4);
+}
+
+.layer-highfreq .layer-title {
+  color: #f87171;
+}
+
+/* 层级头部 */
+.layer-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.layer-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.layer-subtitle {
+  font-size: 14px;
+  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 层级主体 */
+.layer-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 区块 */
+.layer-section {
+  margin-bottom: 5px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffd700;
+  margin-bottom: 10px;
+  border-left: 3px solid #ffd700;
+  padding-left: 10px;
+}
+
+.section-content {
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.feature-item {
+  padding: 5px 0;
+  padding-left: 10px;
+}
+
+/* 内容框 */
+.content-box {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 10px;
+  border-left: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.content-item {
+  font-size: 14px;
+  padding: 4px 0;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+}
+
+/* 问题类型 */
+.type-item {
+  font-size: 13px;
+  padding: 5px 0;
+  padding-left: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-style: italic;
+}
+
+/* 自动管理机制框 */
+.mechanism-box {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 15px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mechanism-item {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid rgba(255, 215, 0, 0.5);
+}
+
+.mechanism-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffd700;
+  margin-bottom: 6px;
+}
+
+.mechanism-detail {
+  font-size: 13px;
+  padding: 3px 0;
+  padding-left: 15px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 检索优先级 */
+.layer-priority {
+  margin-top: auto;
+  padding: 12px 15px;
+  background: rgba(255, 215, 0, 0.15);
+  border-radius: 10px;
+  border: 2px solid rgba(255, 215, 0, 0.4);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+/* 响应式设计 */
+
+/* 平板端 (768px - 1200px) - 2列布局 */
+@media (max-width: 1200px) and (min-width: 769px) {
+  .layers-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .layer-card:nth-child(3) {
+    grid-column: 1 / -1;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+/* 移动端 (< 768px) - 1列布局 */
+@media (max-width: 768px) {
+  .hope-layers-structure {
+    padding: 30px 15px;
+  }
+
+  .layers-title h2 {
+    font-size: 24px;
+  }
+
+  .layers-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .layer-card {
+    padding: 20px;
+  }
+
+  .layer-title {
+    font-size: 20px;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .content-box,
+  .mechanism-box {
+    padding: 12px;
+  }
+
+  .mechanism-item {
+    padding: 8px;
+  }
+
+  .layer-priority {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+}
+
+/* 超小屏幕优化 (< 480px) */
+@media (max-width: 480px) {
+  .hope-layers-structure {
+    padding: 20px 10px;
+  }
+
+  .layers-title h2 {
+    font-size: 20px;
+  }
+
+  .layer-card {
+    padding: 15px;
+  }
+
+  .layer-title {
+    font-size: 18px;
+  }
+
+  .section-title {
+    font-size: 14px;
+  }
+
+  .content-item,
+  .feature-item {
+    font-size: 13px;
+  }
+
+  .mechanism-detail {
+    font-size: 12px;
+  }
+}
+
+/* 性能优化 */
+.layer-card,
+.content-box,
+.mechanism-box {
+  contain: layout style paint;
+}
+
+/* 超宽屏优化 (> 1400px) */
+@media (min-width: 1400px) {
+  .layers-container {
+    max-width: 1600px;
+  }
+
+  .layer-card {
+    padding: 30px;
+  }
+}
+
