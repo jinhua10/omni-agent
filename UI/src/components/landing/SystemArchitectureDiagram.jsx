@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import '../../assets/css/landing/SystemArchitectureDiagram.css';
@@ -6,10 +6,12 @@ import '../../assets/css/landing/SystemArchitectureDiagram.css';
 const SystemArchitectureDiagram = () => {
   const { language } = useLanguage();
 
-  const translations = {
-    zh: {
-      title: 'OmniAgent 智能问答系统',
-      subtitle: '(基于 HOPE 的智能问答系统)',
+  // 使用 useMemo 缓存翻译对象
+  const t = useMemo(() => {
+    const translations = {
+      zh: {
+        title: 'OmniAgent 智能问答系统',
+        subtitle: '(基于 HOPE 的智能问答系统)',
 
       // 顶层
       userLayer: '用户交互层',
@@ -207,7 +209,8 @@ const SystemArchitectureDiagram = () => {
     },
   };
 
-  const t = translations[language] || translations.zh;
+  return translations[language] || translations.zh;
+  }, [language]);
 
   return (
     <div className="system-architecture-diagram">

@@ -6,6 +6,7 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 20px;
   color: white;
+  will-change: transform;
 }
 
 .architecture-title {
@@ -18,12 +19,14 @@
   font-weight: 700;
   margin-bottom: 10px;
   color: white;
+  line-height: 1.2;
 }
 
 .architecture-title .subtitle {
   font-size: 16px;
   opacity: 0.9;
   font-style: italic;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .architecture-container {
@@ -47,11 +50,14 @@
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.3);
   text-align: center;
-  transition: all 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.3s ease,
+              box-shadow 0.3s ease;
+  will-change: transform;
 }
 
 .layer-box:hover {
-  transform: translateY(-5px);
+  transform: translateY(-5px) translateZ(0);
   background: rgba(255, 255, 255, 0.25);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
@@ -100,16 +106,44 @@
 
 /* HOPE 系统 */
 .hope-system-container {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
-  border: 3px solid rgba(255, 215, 0, 0.5);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 140, 0, 0.25));
+  border: 3px solid rgba(255, 215, 0, 0.6);
   border-radius: 15px;
   padding: 25px;
   margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.hope-system-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+  animation: pulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
 }
 
 .hope-header {
   text-align: center;
   margin-bottom: 25px;
+  position: relative;
+  z-index: 1;
 }
 
 .hope-title {
@@ -117,11 +151,13 @@
   font-weight: 700;
   margin-bottom: 8px;
   color: #ffd700;
+  text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
 }
 
 .hope-subtitle {
   font-size: 14px;
-  opacity: 0.9;
+  opacity: 0.95;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .hope-components {
@@ -130,14 +166,25 @@
   justify-content: center;
   gap: 15px;
   margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
 }
 
 .hope-component {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
   padding: 15px 20px;
   border-radius: 10px;
   text-align: center;
   min-width: 150px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.3s ease;
+  will-change: transform;
+}
+
+.hope-component:hover {
+  transform: translateY(-3px) translateZ(0);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .component-name {
@@ -162,36 +209,57 @@
   display: flex;
   gap: 15px;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 .knowledge-layer {
   flex: 1;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   padding: 20px;
   text-align: center;
   border: 2px solid;
-  transition: all 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s ease,
+              background-color 0.3s ease;
+  will-change: transform;
+  backdrop-filter: blur(5px);
 }
 
 .knowledge-layer:hover {
-  transform: scale(1.05);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  transform: scale(1.05) translateZ(0);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .knowledge-layer.permanent {
   border-color: #4ade80;
-  background: rgba(74, 222, 128, 0.1);
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(34, 197, 94, 0.1));
+}
+
+.knowledge-layer.permanent:hover {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.25), rgba(34, 197, 94, 0.15));
+  box-shadow: 0 8px 24px rgba(74, 222, 128, 0.3);
 }
 
 .knowledge-layer.ordinary {
   border-color: #60a5fa;
-  background: rgba(96, 165, 250, 0.1);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(59, 130, 246, 0.1));
+}
+
+.knowledge-layer.ordinary:hover {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.25), rgba(59, 130, 246, 0.15));
+  box-shadow: 0 8px 24px rgba(96, 165, 250, 0.3);
 }
 
 .knowledge-layer.high-freq {
   border-color: #f87171;
-  background: rgba(248, 113, 113, 0.1);
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.15), rgba(239, 68, 68, 0.1));
+}
+
+.knowledge-layer.high-freq:hover {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.25), rgba(239, 68, 68, 0.15));
+  box-shadow: 0 8px 24px rgba(248, 113, 113, 0.3);
 }
 
 .layer-name {
@@ -251,14 +319,19 @@
   padding: 15px;
   border-radius: 10px;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.3s ease,
+              border-color 0.3s ease;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  will-change: transform;
+  backdrop-filter: blur(5px);
 }
 
 .feature-item:hover {
   background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-3px);
+  transform: translateY(-3px) translateZ(0);
   border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .item-title {
@@ -287,13 +360,27 @@
   border-radius: 15px;
   padding: 25px;
   border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s ease,
+              background-color 0.3s ease;
+  will-change: transform;
+  backdrop-filter: blur(5px);
+}
+
+.service-box:hover {
+  transform: translateY(-5px) translateZ(0);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .service-title {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 5px;
+  margin-bottom: 15px;
   text-align: center;
+  color: #fff;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
 }
 
 .service-subtitle {
@@ -309,8 +396,14 @@
 }
 
 .service-list div {
-  padding: 5px 0;
+  padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease, padding-left 0.2s ease;
+}
+
+.service-list div:hover {
+  background: rgba(255, 255, 255, 0.05);
+  padding-left: 8px;
 }
 
 .service-list div:last-child {
