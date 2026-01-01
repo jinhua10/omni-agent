@@ -78,17 +78,24 @@
 .section-header {
   text-align: center;
   margin-bottom: 30px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 15px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .section-header h3 {
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 8px;
+  color: #fff;
 }
 
 .section-subtitle {
   font-size: 16px;
-  opacity: 0.8;
+  opacity: 0.95;
+  color: #fff;
+  font-weight: 500;
 }
 
 /* HOPE 系统 */
@@ -210,15 +217,16 @@
 
 /* 功能区块 */
 .feature-section {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .section-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   margin-bottom: 20px;
   text-align: center;
   color: #ffd700;
@@ -239,27 +247,31 @@
 }
 
 .feature-item {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   padding: 15px;
   border-radius: 10px;
   text-align: center;
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .feature-item:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .item-title {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 5px;
+  color: #fff;
 }
 
 .item-desc {
   font-size: 12px;
-  opacity: 0.7;
+  opacity: 0.85;
+  color: #fff;
 }
 
 /* 底层服务 */

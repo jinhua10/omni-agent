@@ -255,7 +255,6 @@ const SystemArchitectureDiagram = () => {
         >
           <div className="section-header">
             <h3>{t.coreIntelligence}</h3>
-            <p className="section-subtitle">Core Intelligence Layer</p>
           </div>
 
           {/* HOPE 系统 */}
