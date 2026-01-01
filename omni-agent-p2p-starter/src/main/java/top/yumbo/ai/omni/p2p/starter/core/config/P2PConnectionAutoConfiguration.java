@@ -8,6 +8,7 @@ import top.yumbo.ai.omni.p2p.api.P2PConnectionManager;
 import top.yumbo.ai.omni.p2p.api.P2PDataTransferService;
 import top.yumbo.ai.omni.p2p.api.P2PTransferBridge;
 import top.yumbo.ai.omni.p2p.starter.core.DefaultP2PConnectionManager;
+import top.yumbo.ai.omni.p2p.starter.core.DefaultP2PTransferBridge;
 
 import java.util.List;
 
@@ -24,6 +25,17 @@ import java.util.List;
 @Slf4j
 @AutoConfiguration
 public class P2PConnectionAutoConfiguration {
+
+    /**
+     * 创建 P2P 传输桥接服务
+     * (Creates P2P Transfer Bridge)
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public P2PTransferBridge p2pTransferBridge() {
+        log.info("✅ [P2P] 创建 P2P Transfer Bridge");
+        return new DefaultP2PTransferBridge();
+    }
 
     /**
      * 创建P2P连接管理器Bean

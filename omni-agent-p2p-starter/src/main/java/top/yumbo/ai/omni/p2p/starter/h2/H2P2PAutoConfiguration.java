@@ -21,7 +21,7 @@ import javax.sql.DataSource;
  * @since 1.0.0
  */
 @Configuration
-@ConditionalOnClass(JdbcTemplate.class)
+@ConditionalOnClass({JdbcTemplate.class, org.h2.Driver.class})
 @EnableConfigurationProperties(H2P2PProperties.class)
 public class H2P2PAutoConfiguration {
 

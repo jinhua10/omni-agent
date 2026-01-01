@@ -9,6 +9,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import top.yumbo.ai.omni.p2p.api.P2PCollaborationService;
 import top.yumbo.ai.omni.p2p.api.P2PDataTransferService;
+import top.yumbo.ai.omni.p2p.api.P2PTransferBridge;
+import top.yumbo.ai.omni.p2p.starter.core.DefaultP2PTransferBridge;
 import top.yumbo.ai.omni.p2p.starter.memory.MemoryP2PCollaborationService;
 import top.yumbo.ai.omni.p2p.starter.memory.MemoryP2PDataTransferService;
 
@@ -62,6 +64,17 @@ import top.yumbo.ai.omni.p2p.starter.memory.MemoryP2PDataTransferService;
         matchIfMissing = true
 )
 public class P2PAutoConfiguration {
+
+    /**
+     * 创建 P2P 传输桥接服务
+     * (Create P2P Transfer Bridge)
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public P2PTransferBridge p2pTransferBridge() {
+        log.info("✅ [P2P] 创建 P2P Transfer Bridge");
+        return new DefaultP2PTransferBridge();
+    }
 
     /**
      * Memory 实现（默认）
