@@ -181,129 +181,23 @@ const HOPELayersStructure = ({ selectedLayer = null }) => {
         )}
       </AnimatedContainer>
 
-      {/* 三层结构 */}
+      {/* 三层结构 - 按照检索优先级从左到右排列 */}
       <div className="hope-layers-container">
-        {/* 持久层 */}
-        {shouldShowLayer('permanent') && (
+        {/* 高频层 - 第1顺位检索（最高优先级） */}
+        {shouldShowLayer('highfreq') && (
           <AnimatedContainer
-            className="hope-layers-card layer-permanent"
+            className="hope-layers-card layer-highfreq"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="hope-layers-layer-header">
-            <div className="hope-layers-layer-title">{t.permanentTitle}</div>
-            <div className="hope-layers-layer-subtitle">{t.permanentSubtitle}</div>
-          </div>
-
-          <div className="hope-layers-layer-body">
-            {/* 特征 */}
-            <div className="hope-layers-layer-section">
-              <div className="hope-layers-section-title">{t.permanentFeature}</div>
-              <div className="hope-layers-section-content">
-                <div className="hope-layers-feature-item">{t.permanentF1}</div>
-                <div className="hope-layers-feature-item">{t.permanentF2}</div>
-                <div className="hope-layers-feature-item">{t.permanentF3}</div>
-              </div>
-            </div>
-
-            {/* 存储内容 */}
-            <div className="hope-layers-layer-section">
-              <div className="hope-layers-section-title">{t.permanentContent}</div>
-              <div className="hope-layers-content-box">
-                <div className="hope-layers-content-item">{t.permanentC1}</div>
-                <div className="hope-layers-content-item">{t.permanentC2}</div>
-                <div className="hope-layers-content-item">{t.permanentC3}</div>
-                <div className="hope-layers-content-item">{t.permanentC4}</div>
-                <div className="hope-layers-content-item">{t.permanentC5}</div>
-              </div>
-            </div>
-
-            {/* 问题类型 */}
-            <div className="hope-layers-layer-section">
-              <div className="hope-layers-section-title">{t.permanentType}</div>
-              <div className="hope-layers-section-content">
-                <div className="hope-layers-type-item">{t.permanentT1}</div>
-                <div className="hope-layers-type-item">{t.permanentT2}</div>
-              </div>
-            </div>
-
-            {/* 检索优先级 */}
-            <div className="hope-layers-priority">
-              {t.permanentPriority}
-            </div>
-          </div>
-        </AnimatedContainer>
-        )}
-
-        {/* 普通层 */}
-        {shouldShowLayer('ordinary') && (
-          <AnimatedContainer
-          className="hope-layers-card layer-ordinary"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="hope-layers-layer-header">
-            <div className="hope-layers-layer-title">{t.ordinaryTitle}</div>
-            <div className="hope-layers-layer-subtitle">{t.ordinarySubtitle}</div>
-          </div>
-
-          <div className="hope-layers-layer-body">
-            {/* 特征 */}
-            <div className="hope-layers-layer-section">
-              <div className="hope-layers-section-title">{t.ordinaryFeature}</div>
-              <div className="hope-layers-section-content">
-                <div className="hope-layers-feature-item">{t.ordinaryF1}</div>
-                <div className="hope-layers-feature-item">{t.ordinaryF2}</div>
-                <div className="hope-layers-feature-item">{t.ordinaryF3}</div>
-              </div>
-            </div>
-
-            {/* 存储内容 */}
-            <div className="hope-layers-layer-section">
-              <div className="hope-layers-section-title">{t.ordinaryContent}</div>
-              <div className="hope-layers-content-box">
-                <div className="hope-layers-content-item">{t.ordinaryC1}</div>
-                <div className="hope-layers-content-item">{t.ordinaryC2}</div>
-                <div className="hope-layers-content-item">{t.ordinaryC3}</div>
-                <div className="hope-layers-content-item">{t.ordinaryC4}</div>
-                <div className="hope-layers-content-item">{t.ordinaryC5}</div>
-              </div>
-            </div>
-
-            {/* 问题类型 */}
-            <div className="hope-layers-layer-section">
-              <div className="hope-layers-section-title">{t.ordinaryType}</div>
-              <div className="hope-layers-section-content">
-                <div className="hope-layers-type-item">{t.ordinaryT1}</div>
-                <div className="hope-layers-type-item">{t.ordinaryT2}</div>
-              </div>
-            </div>
-
-            {/* 检索优先级 */}
-            <div className="hope-layers-priority">
-              {t.ordinaryPriority}
-            </div>
-          </div>
-        </AnimatedContainer>
-        )}
-
-        {/* 高频层 */}
-        {shouldShowLayer('highfreq') && (
-          <AnimatedContainer
-          className="hope-layers-card layer-highfreq"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
           <div className="hope-layers-layer-header">
             <div className="hope-layers-layer-title">{t.highFreqTitle}</div>
             <div className="hope-layers-layer-subtitle">{t.highFreqSubtitle}</div>
           </div>
 
           <div className="hope-layers-layer-body">
-            {/* 特征 */}
+            {/* ...existing code... */}
             <div className="hope-layers-layer-section">
               <div className="hope-layers-section-title">{t.highFreqFeature}</div>
               <div className="hope-layers-section-content">
@@ -313,7 +207,6 @@ const HOPELayersStructure = ({ selectedLayer = null }) => {
               </div>
             </div>
 
-            {/* 存储内容 */}
             <div className="hope-layers-layer-section">
               <div className="hope-layers-section-title">{t.highFreqContent}</div>
               <div className="hope-layers-content-box">
@@ -325,7 +218,6 @@ const HOPELayersStructure = ({ selectedLayer = null }) => {
               </div>
             </div>
 
-            {/* 自动管理机制 */}
             <div className="hope-layers-layer-section">
               <div className="hope-layers-section-title">{t.highFreqMechanism}</div>
               <div className="hope-layers-mechanism-box">
@@ -347,12 +239,111 @@ const HOPELayersStructure = ({ selectedLayer = null }) => {
               </div>
             </div>
 
-            {/* 检索优先级 */}
             <div className="hope-layers-priority">
               {t.highFreqPriority}
             </div>
           </div>
         </AnimatedContainer>
+        )}
+
+        {/* 普通层 - 第2顺位检索（中等优先级） */}
+        {shouldShowLayer('ordinary') && (
+          <AnimatedContainer
+            className="hope-layers-card layer-ordinary"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="hope-layers-layer-header">
+              <div className="hope-layers-layer-title">{t.ordinaryTitle}</div>
+              <div className="hope-layers-layer-subtitle">{t.ordinarySubtitle}</div>
+            </div>
+
+            <div className="hope-layers-layer-body">
+              {/* ...existing code... */}
+              <div className="hope-layers-layer-section">
+                <div className="hope-layers-section-title">{t.ordinaryFeature}</div>
+                <div className="hope-layers-section-content">
+                  <div className="hope-layers-feature-item">{t.ordinaryF1}</div>
+                  <div className="hope-layers-feature-item">{t.ordinaryF2}</div>
+                  <div className="hope-layers-feature-item">{t.ordinaryF3}</div>
+                </div>
+              </div>
+
+              <div className="hope-layers-layer-section">
+                <div className="hope-layers-section-title">{t.ordinaryContent}</div>
+                <div className="hope-layers-content-box">
+                  <div className="hope-layers-content-item">{t.ordinaryC1}</div>
+                  <div className="hope-layers-content-item">{t.ordinaryC2}</div>
+                  <div className="hope-layers-content-item">{t.ordinaryC3}</div>
+                  <div className="hope-layers-content-item">{t.ordinaryC4}</div>
+                  <div className="hope-layers-content-item">{t.ordinaryC5}</div>
+                </div>
+              </div>
+
+              <div className="hope-layers-layer-section">
+                <div className="hope-layers-section-title">{t.ordinaryType}</div>
+                <div className="hope-layers-section-content">
+                  <div className="hope-layers-type-item">{t.ordinaryT1}</div>
+                  <div className="hope-layers-type-item">{t.ordinaryT2}</div>
+                </div>
+              </div>
+
+              <div className="hope-layers-priority">
+                {t.ordinaryPriority}
+              </div>
+            </div>
+          </AnimatedContainer>
+        )}
+
+        {/* 持久层 - 第3顺位检索（较低优先级） */}
+        {shouldShowLayer('permanent') && (
+          <AnimatedContainer
+            className="hope-layers-card layer-permanent"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="hope-layers-layer-header">
+              <div className="hope-layers-layer-title">{t.permanentTitle}</div>
+              <div className="hope-layers-layer-subtitle">{t.permanentSubtitle}</div>
+            </div>
+
+            <div className="hope-layers-layer-body">
+              {/* ...existing code... */}
+              <div className="hope-layers-layer-section">
+                <div className="hope-layers-section-title">{t.permanentFeature}</div>
+                <div className="hope-layers-section-content">
+                  <div className="hope-layers-feature-item">{t.permanentF1}</div>
+                  <div className="hope-layers-feature-item">{t.permanentF2}</div>
+                  <div className="hope-layers-feature-item">{t.permanentF3}</div>
+                </div>
+              </div>
+
+              <div className="hope-layers-layer-section">
+                <div className="hope-layers-section-title">{t.permanentContent}</div>
+                <div className="hope-layers-content-box">
+                  <div className="hope-layers-content-item">{t.permanentC1}</div>
+                  <div className="hope-layers-content-item">{t.permanentC2}</div>
+                  <div className="hope-layers-content-item">{t.permanentC3}</div>
+                  <div className="hope-layers-content-item">{t.permanentC4}</div>
+                  <div className="hope-layers-content-item">{t.permanentC5}</div>
+                </div>
+              </div>
+
+              <div className="hope-layers-layer-section">
+                <div className="hope-layers-section-title">{t.permanentType}</div>
+                <div className="hope-layers-section-content">
+                  <div className="hope-layers-type-item">{t.permanentT1}</div>
+                  <div className="hope-layers-type-item">{t.permanentT2}</div>
+                </div>
+              </div>
+
+              <div className="hope-layers-priority">
+                {t.permanentPriority}
+              </div>
+            </div>
+          </AnimatedContainer>
         )}
       </div>
     </div>
