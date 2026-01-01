@@ -34,7 +34,7 @@ OmniAgent is a **full-scenario Agent development framework** designed to solve f
 | Metric | Value |
 |--------|-------|
 | **Code Lines** | 85,144 lines of Java code |
-| **Backend Modules** | 22 functional modules |
+| **Backend Modules** | 25 functional modules |
 | **Storage Engines** | 6 types (File/SQLite/H2/MongoDB/Redis/Elasticsearch) |
 | **RAG Strategies** | 6+ intelligent chunking strategies |
 | **Model Support** | 3 types: Ollama/Online API/ONNX local models |
@@ -440,12 +440,15 @@ Visit the live demo to experience full functionality!
 
 ## 📦 System Architecture
 
-### Backend Modules (22)
+### Backend Modules (25)
 
 ```
 omni-agent/
-├─ omni-agent-core               # Core module (HOPE/Query/Classification)
+├─ omni-agent-core               # Core foundation module (infrastructure and utilities)
 ├─ omni-agent-common             # Common utilities
+├─ omni-agent-hope-api           # HOPE interface definitions (classification, persistence abstractions)
+├─ omni-agent-hope-starter       # HOPE implementation (question classifier, HOPE system)
+├─ omni-agent-orchestrator       # Service orchestration layer (query service, context management)
 ├─ omni-agent-ai-api             # AI service abstract interface
 ├─ omni-agent-ai-starter         # AI service implementation (Ollama/Online API/Vision LLM)
 ├─ omni-agent-rag-api            # RAG abstract interface
@@ -467,6 +470,50 @@ omni-agent/
 ├─ omni-agent-example-basic      # Basic example (startup entry)
 └─ omni-agent-example-production # Production environment example
 ```
+
+**Architecture Layering**:
+
+```
+Application Layer
+├── omni-agent-web
+├── omni-agent-example-basic
+└── omni-agent-example-production
+    ↓ depends on
+Service Orchestration Layer
+└── omni-agent-orchestrator
+    ├── Query Service ✅
+    ├── Context Management ✅
+    └── Only depends on API interfaces ✅
+    ↓ depends on
+Starter Implementation Layer
+├── omni-agent-hope-starter
+│   ├── HOPE System Implementation ✅
+│   ├── Question Classifier ✅
+│   └── Depends on Caffeine ✅
+├── omni-agent-rag-starter-adapter
+│   └── Depends on Lucene ✅
+└── omni-agent-document-processor-starter
+    └── Depends on POI, PDFBox, Tika ✅
+    ↓ depends on
+API Interface Layer
+├── omni-agent-hope-api
+│   ├── HopePersistence Interface ✅
+│   ├── QuestionClassifier Interface ✅
+│   └── QuestionTypeConfig Model ✅
+└── Other API Modules
+    ↓ depends on
+Core Layer
+└── omni-agent-core
+    ├── Infrastructure and utilities ✅
+    ├── No dependency on specific implementation libraries ✅
+    └── Clear responsibilities ✅
+```
+
+**Module Responsibilities**:
+- **omni-agent-core**: Core foundation module, provides infrastructure and utility classes
+- **omni-agent-hope-api**: HOPE interface definitions, includes question classification, persistence abstractions
+- **omni-agent-hope-starter**: HOPE implementation, includes question classifier, HOPE system, etc.
+- **omni-agent-orchestrator**: Service orchestration layer, handles query service, context management, business orchestration
 
 ### Frontend Tech Stack
 

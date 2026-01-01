@@ -34,7 +34,7 @@ OmniAgent 是一个**全场景Agent开发框架**，专为解决传统RAG系统�
 | 指标 | 数值 |
 |------|------|
 | **代码量** | 85,144 行 Java 代码 |
-| **后端模块** | 22 个功能模块 |
+| **后端模块** | 25 个功能模块 |
 | **存储引擎** | 6 种（File/SQLite/H2/MongoDB/Redis/Elasticsearch） |
 | **RAG策略** | 6+ 种智能分块策略 |
 | **支持模型** | Ollama/在线API/ONNX本地模型 3种类型 |
@@ -440,16 +440,19 @@ npm run dev
 
 ## 📦 系统架构
 
-### 后端模块（22个）
+### 后端模块（25个）
 
 ```
 omni-agent/
-├─ omni-agent-core               # 核心模块（HOPE/查询/分类）
+├─ omni-agent-core               # 核心基础模块（基础设施和工具）
 ├─ omni-agent-common             # 公共工具
-├─ omni-agent-ai-api             # AI服务抽象接口
-├─ omni-agent-ai-starter         # AI服务实现（Ollama/在线API/Vision LLM）
-├─ omni-agent-rag-api            # RAG抽象接口
-├─ omni-agent-rag-starter-adapter # RAG适配器（File/H2/SQLite/Redis/MongoDB/ES）
+├─ omni-agent-hope-api           # HOPE 接口定义（分类、持久化抽象）
+├─ omni-agent-hope-starter       # HOPE 实现（问题分类器、HOPE 系统）
+├─ omni-agent-orchestrator       # 服务编排层（查询服务、上下文管理）
+├─ omni-agent-ai-api             # AI 服务抽象接口
+├─ omni-agent-ai-starter         # AI 服务实现（Ollama/在线API/Vision LLM）
+├─ omni-agent-rag-api            # RAG 抽象接口
+├─ omni-agent-rag-starter-adapter # RAG 适配器（File/H2/SQLite/Redis/MongoDB/ES）
 ├─ omni-agent-chunking-api       # 分块策略接口
 ├─ omni-agent-chunking-starter   # 分块策略实现（6种）
 ├─ omni-agent-document-processor-api    # 文档处理接口
@@ -458,18 +461,19 @@ omni-agent/
 ├─ omni-agent-document-storage-starter  # 文档存储实现
 ├─ omni-agent-knowledge-registry-api    # 知识注册表接口
 ├─ omni-agent-knowledge-registry-starter # 知识网络实现
-├─ omni-agent-ocr-starter-tesseract    # OCR识别
-├─ omni-agent-p2p-api            # P2P接口
-├─ omni-agent-p2p-starter        # P2P实现
+├─ omni-agent-ocr-starter-tesseract    # OCR 识别
+├─ omni-agent-p2p-api            # P2P 接口
+├─ omni-agent-p2p-starter        # P2P 实现
 ├─ omni-agent-workflow           # 工作流引擎
 ├─ omni-agent-marketplace        # 工作流市场
-├─ omni-agent-web                # Web接口层
+├─ omni-agent-web                # Web 接口层
 ├─ omni-agent-example-basic      # 基础示例（启动入口）
 └─ omni-agent-example-production # 生产环境示例
 ```
 
+**架构分层**：
 
-```declarative
+```
 应用层
 ├── omni-agent-web
 ├── omni-agent-example-basic
@@ -478,6 +482,7 @@ omni-agent/
 服务编排层
 └── omni-agent-orchestrator
     ├── 查询服务 ✅
+    ├── 上下文管理 ✅
     └── 只依赖 API 接口 ✅
     ↓ 依赖
 Starter 实现层
@@ -493,15 +498,22 @@ Starter 实现层
 API 接口层
 ├── omni-agent-hope-api
 │   ├── HopePersistence 接口 ✅
+│   ├── QuestionClassifier 接口 ✅
 │   └── QuestionTypeConfig 模型 ✅
 └── 其他 API 模块
     ↓ 依赖
 核心层
 └── omni-agent-core
-    ├── 只依赖 API 接口 ✅
-    ├── 不再依赖具体实现库 ✅
+    ├── 基础设施和工具 ✅
+    ├── 不依赖具体实现库 ✅
     └── 职责清晰 ✅
 ```
+
+**模块职责说明**：
+- **omni-agent-core**: 核心基础模块，提供基础设施和工具类
+- **omni-agent-hope-api**: HOPE 接口定义，包含问题分类、持久化等抽象接口
+- **omni-agent-hope-starter**: HOPE 具体实现，包含问题分类器、HOPE 系统等
+- **omni-agent-orchestrator**: 服务编排层，负责查询服务、上下文管理等业务编排
 
 ### 前端技术栈
 
