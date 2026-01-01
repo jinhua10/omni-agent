@@ -79,6 +79,67 @@
   border-radius: 20px;
   padding: 30px;
   margin-bottom: 30px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* 可点击样式 */
+.core-intelligence-container.clickable {
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.core-intelligence-container.clickable:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+}
+
+/* 点击提示 */
+.click-hint {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 215, 0, 0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  animation: clickHintPulse 2s ease-in-out infinite;
+  z-index: 10;
+}
+
+.click-icon {
+  font-size: 20px;
+  animation: clickIconBounce 1.5s ease-in-out infinite;
+}
+
+.click-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffd700;
+}
+
+@keyframes clickHintPulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes clickIconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .section-header {
@@ -445,5 +506,56 @@
   .architecture-title h2 {
     font-size: 24px;
   }
+
+  /* 移动端点击提示调整 */
+  .click-hint {
+    top: 5px;
+    right: 10px;
+    padding: 6px 12px;
+  }
+
+  .click-text {
+    font-size: 12px;
+  }
+
+  .click-icon {
+    font-size: 18px;
+  }
+}
+
+/* HOPE 查询流程弹窗样式 */
+.hope-flow-modal .ant-modal-content {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.hope-flow-modal .ant-modal-body {
+  padding: 0;
+}
+
+.hope-flow-modal .ant-modal-close {
+  top: 10px;
+  right: 10px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hope-flow-modal .ant-modal-close:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.hope-flow-modal .ant-modal-close-x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
 }
 

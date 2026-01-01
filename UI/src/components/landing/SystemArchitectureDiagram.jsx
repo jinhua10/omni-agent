@@ -1,10 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Modal } from 'antd';
 import { useLanguage } from '../../contexts/LanguageContext';
 import '../../assets/css/landing/SystemArchitectureDiagram.css';
+import HOPEQueryFlowDiagram from './HOPEQueryFlowDiagram';
 
 const SystemArchitectureDiagram = () => {
   const { language } = useLanguage();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 使用 useMemo 缓存翻译对象
   const t = useMemo(() => {
@@ -12,6 +15,7 @@ const SystemArchitectureDiagram = () => {
       zh: {
         title: 'OmniAgent 智能问答系统',
         subtitle: '(基于 HOPE 的智能问答系统)',
+        clickToViewFlow: '点击查看完整查询流程',
 
       // 顶层
       userLayer: '用户交互层',
@@ -111,6 +115,7 @@ const SystemArchitectureDiagram = () => {
     en: {
       title: 'OmniAgent Intelligent Q&A System',
       subtitle: '(Intelligent Q&A System with HOPE)',
+      clickToViewFlow: 'Click to view complete query flow',
 
       // Top layer
       userLayer: 'User Interface Layer',
@@ -248,11 +253,20 @@ const SystemArchitectureDiagram = () => {
 
         {/* 核心智能层容器 */}
         <motion.div
-          className="core-intelligence-container"
+          className="core-intelligence-container clickable"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4 }}
+          onClick={() => setIsModalOpen(true)}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
+          {/* 点击提示 */}
+          <div className="click-hint">
+            <span className="click-icon">👆</span>
+            <span className="click-text">{t.clickToViewFlow}</span>
+          </div>
+
           <div className="section-header">
             <h3>{t.coreIntelligence}</h3>
           </div>
@@ -469,6 +483,19 @@ const SystemArchitectureDiagram = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* HOPE 查询流程弹窗 */}
+      <Modal
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+        width="90%"
+        style={{ top: 20, maxWidth: 1200 }}
+        bodyStyle={{ padding: 0 }}
+        className="hope-flow-modal"
+      >
+        <HOPEQueryFlowDiagram />
+      </Modal>
     </div>
   );
 };
