@@ -232,17 +232,14 @@ const SystemArchitectureDiagram = () => {
         >
           <div className="layer-box user-layer">
             <div className="layer-title">{t.userLayer}</div>
-            <div className="layer-subtitle">User Layer</div>
           </div>
 
           <div className="layer-box orchestration-layer">
             <div className="layer-title">{t.orchestrationLayer}</div>
-            <div className="layer-subtitle">Orchestration</div>
           </div>
 
           <div className="layer-box knowledge-layer">
             <div className="layer-title">{t.knowledgeLayer}</div>
-            <div className="layer-subtitle">Knowledge</div>
           </div>
         </motion.div>
 
@@ -273,17 +270,14 @@ const SystemArchitectureDiagram = () => {
             <div className="hope-components">
               <div className="hope-component">
                 <div className="component-name">{t.questionClassifier}</div>
-                <div className="component-name-en">Question Classifier</div>
               </div>
               <div className="arrow">→</div>
               <div className="hope-component">
                 <div className="component-name">{t.layerManager}</div>
-                <div className="component-name-en">Layer Manager</div>
               </div>
               <div className="arrow">→</div>
               <div className="hope-component">
                 <div className="component-name">{t.learningModule}</div>
-                <div className="component-name-en">Learning Module</div>
               </div>
             </div>
 
@@ -291,7 +285,6 @@ const SystemArchitectureDiagram = () => {
             <div className="knowledge-layers">
               <div className="knowledge-layer permanent">
                 <div className="layer-name">{t.permanentLayer}</div>
-                <div className="layer-name-en">Permanent</div>
                 <div className="layer-content">
                   <div>{t.coreKnowledge}</div>
                   <div>{t.systemDocs}</div>
@@ -301,7 +294,6 @@ const SystemArchitectureDiagram = () => {
 
               <div className="knowledge-layer ordinary">
                 <div className="layer-name">{t.ordinaryLayer}</div>
-                <div className="layer-name-en">Ordinary</div>
                 <div className="layer-content">
                   <div>{t.generalKnowledge}</div>
                   <div>{t.businessDocs}</div>
@@ -311,7 +303,6 @@ const SystemArchitectureDiagram = () => {
 
               <div className="knowledge-layer high-freq">
                 <div className="layer-name">{t.highFreqLayer}</div>
-                <div className="layer-name-en">High Freq</div>
                 <div className="layer-content">
                   <div>{t.hotKnowledge}</div>
                   <div>{t.frequentAccess}</div>
@@ -445,7 +436,6 @@ const SystemArchitectureDiagram = () => {
         >
           <div className="service-box base-services">
             <div className="service-title">{t.baseServices}</div>
-            <div className="service-subtitle">Base Services</div>
             <div className="service-list">
               <div>• {t.ragService}</div>
               <div>• {t.documentProcessing}</div>
@@ -456,7 +446,6 @@ const SystemArchitectureDiagram = () => {
 
           <div className="service-box storage-services">
             <div className="service-title">{t.storageLayer}</div>
-            <div className="service-subtitle">Storage</div>
             <div className="service-list">
               <div>• {t.fileStorage}</div>
               <div>• {t.mongodb}</div>
@@ -469,7 +458,6 @@ const SystemArchitectureDiagram = () => {
 
           <div className="service-box ai-services">
             <div className="service-title">{t.aiServices}</div>
-            <div className="service-subtitle">AI Services</div>
             <div className="service-list">
               <div>• {t.onlineAPI}</div>
               <div>• {t.ollama}</div>
