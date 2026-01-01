@@ -58,6 +58,10 @@ java -jar target/omni-agent-example-basic-1.0.0.jar
 
 ### 方式2: Maven 依赖（自定义项目）
 
+由于系统模块多，我还在打磨细节，下面的依赖暂时没在maven中央仓库发布，待稳定后将发布1.0.0 版本，故请先通过克隆源码自行安装到本地仓库：
+
+```bash
+
 ```xml
 <dependencies>
     <!-- 核心依赖 -->
