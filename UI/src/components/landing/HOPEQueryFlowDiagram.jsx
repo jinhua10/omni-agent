@@ -243,7 +243,6 @@ const HOPEQueryFlowDiagram = () => {
           {/* 4.1 问题分类 */}
           <div className="hope-section">
             <div className="section-title">{t.step4_1}</div>
-            <div className="section-subtitle">{t.step4_1_title}</div>
             <div className="section-content">
               <div className="content-line">{t.step4_1_input}</div>
               <div className="content-line output">{t.step4_1_output}</div>
@@ -255,7 +254,6 @@ const HOPEQueryFlowDiagram = () => {
           {/* 4.2 层级选择 */}
           <div className="hope-section">
             <div className="section-title">{t.step4_2}</div>
-            <div className="section-subtitle">{t.step4_2_title}</div>
             <div className="section-content">
               <div className="content-line">{t.step4_2_suggest}</div>
               <div className="content-line result">{t.step4_2_result}</div>

@@ -1,31 +1,17 @@
 /* AnimatedContainer.css */
 
-/* 确保所有动画容器内的文字都有正确的颜色 */
+/*
+ * AnimatedContainer 只提供基础容器功能
+ * 不强制覆盖任何样式，让 CSS 自然层叠
+ * 子元素的样式由各自的 CSS 类控制
+ */
+
 .animated-container {
-  color: inherit;
+  /* 不设置任何颜色，让子元素自由使用自己的样式 */
 }
-
-/* 强制继承父元素的颜色，防止 motion 动画覆盖 */
-.animated-container * {
-  color: inherit;
+.step-item{
+    border: none !important;
 }
-
-/* 确保标题、段落等元素的颜色正确 */
-.animated-container h1,
-.animated-container h2,
-.animated-container h3,
-.animated-container h4,
-.animated-container h5,
-.animated-container h6 {
-  color: inherit;
-}
-
-.animated-container p,
-.animated-container span,
-.animated-container div {
-  color: inherit;
-}
-
 /* 性能优化 */
 .animated-container {
   contain: layout style paint;

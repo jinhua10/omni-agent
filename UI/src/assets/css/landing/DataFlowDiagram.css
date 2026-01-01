@@ -6,6 +6,9 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 20px;
   color: white;
+  /* 防止继承 Modal 的背景色 */
+  background-clip: padding-box;
+  isolation: isolate;
 }
 
 .flow-title {

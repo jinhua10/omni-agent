@@ -6,6 +6,9 @@
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
   border-radius: 20px;
   color: white;
+  /* 防止继承 Modal 的背景色 */
+  background-clip: padding-box;
+  isolation: isolate;
 }
 
 .flow-title {
@@ -75,6 +78,8 @@
 .step-item {
   padding: 5px 0;
   color: rgba(255, 255, 255, 0.95);
+  /* 明确设置透明背景，防止继承 Modal 的白色背景 */
+  background: transparent;
 }
 
 /* 用户提问步骤 */
@@ -86,7 +91,6 @@
 .user-question {
   font-size: 16px;
   font-weight: 600;
-  color: #a78bfa;
   padding: 10px;
   background: rgba(139, 92, 246, 0.15);
   border-radius: 8px;
@@ -147,8 +151,8 @@
 
 /* HOPE 内部区块 */
 .hope-section {
-  background: rgba(0, 0, 0, 0.25);
   border-radius: 12px;
+  border-color: rgba(139, 92, 246, 0.5)
   padding: 20px;
   margin: 15px 0;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -159,13 +163,10 @@
 .section-title {
   font-size: 16px;
   font-weight: 700;
-  color: #ffd700;
-  margin-bottom: 8px;
 }
 
 .section-subtitle {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
   margin-bottom: 12px;
   font-style: italic;
 }

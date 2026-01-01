@@ -491,8 +491,23 @@ const SystemArchitectureDiagram = () => {
         footer={null}
         width="90%"
         style={{ top: 20, maxWidth: 1200 }}
-        bodyStyle={{ padding: 0 }}
+        bodyStyle={{
+          padding: 0,
+          background: 'transparent',
+          color: 'inherit'
+        }}
         className="hope-flow-modal"
+        styles={{
+          body: {
+            padding: 0,
+            background: 'transparent'
+          },
+          content: {
+            background: 'transparent',
+            boxShadow: 'none',
+            padding: 0
+          }
+        }}
       >
         <HOPEQueryFlowDiagram />
       </Modal>
