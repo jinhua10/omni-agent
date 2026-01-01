@@ -9,9 +9,7 @@
 .animated-container {
   /* 不设置任何颜色，让子元素自由使用自己的样式 */
 }
-.step-item{
-    border: none !important;
-}
+
 /* 性能优化 */
 .animated-container {
   contain: layout style paint;

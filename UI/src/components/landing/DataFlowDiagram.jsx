@@ -385,11 +385,11 @@ const DataFlowDiagram = () => {
             <div className="compact-content">
               <div className="data-flow-content-title">{t.responseGen}</div>
               <div className="steps-list">
-                <div className="step-group">
-                  <div className="step-title">{t.step1}</div>
-                  <div className="step-item">{t.step1Item1}</div>
-                  <div className="step-item">{t.step1Item2}</div>
-                  <div className="step-item">{t.step1Item3}</div>
+                <div className="data-flow-step-group">
+                  <div className="data-flow-step-title">{t.step1}</div>
+                  <div className="data-flow-step-item">{t.step1Item1}</div>
+                  <div className="data-flow-step-item">{t.step1Item2}</div>
+                  <div className="data-flow-step-item">{t.step1Item3}</div>
                 </div>
               </div>
             </div>
@@ -498,6 +498,7 @@ const DataFlowDiagram = () => {
 };
 
 export default React.memo(DataFlowDiagram);
+
 
 
 
