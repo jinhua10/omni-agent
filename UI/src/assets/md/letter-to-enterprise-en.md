@@ -659,7 +659,7 @@ We sincerely invite you to:
 
 ⭐ **Give omni-agent a Star**
 ```
-https://github.com/[Project URL]
+https://github.com/jinhua10/omni-agent
 
 Every Star is our greatest encouragement
 Help more people discover this project
