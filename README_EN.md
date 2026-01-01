@@ -34,7 +34,7 @@ OmniAgent is a **full-scenario Agent development framework**, designed to solve 
 | Metric | Value |
 |--------|-------|
 | **Code Lines** | 85,144 lines of Java code |
-| **Backend Modules** | 25 functional modules |
+| **Backend Modules** | 27 functional modules |
 | **Storage Engines** | 6 types (File/SQLite/H2/MongoDB/Redis/Elasticsearch) |
 | **RAG Strategies** | 6+ intelligent chunking strategies |
 | **Supported Models** | 3 types (Ollama/Online API/ONNX) |
@@ -45,7 +45,7 @@ OmniAgent is a **full-scenario Agent development framework**, designed to solve 
 
 ## 🏗️ Complete System Architecture
 
-**Comprehensive Documentation**: [Complete Architecture with HOPE System](docs/core/ARCHITECTURE.md)
+**Comprehensive Documentation**: [Complete Architecture with HOPE System](docs/core/ARCHITECTURE_EN.md)
 
 ### HOPE Self-Learning System ⭐
 
@@ -262,12 +262,12 @@ Visit **http://localhost:3000** to get started!
 
 ### 📚 Complete Documentation
 
-- 📖 [Quick Start Guide](docs/core/QUICKSTART.md) - Detailed tutorial
-- 🏗️ [Complete System Architecture](docs/core/ARCHITECTURE.md) - Full architecture including HOPE
+- 📖 [Quick Start Guide](docs/core/QUICKSTART_EN.md) - Detailed tutorial
+- 🏗️ [Complete System Architecture](docs/core/ARCHITECTURE_EN.md) - Full architecture including HOPE
 - 🧠 [HOPE Self-Learning System](docs/core/HOPE_SYSTEM_EN.md) - Hierarchical intelligent engine explained
-- 🕸️ [Knowledge Network Architecture](docs/core/KNOWLEDGE_NETWORK.md) - Knowledge graph and domain management
-- 📦 [Module Architecture](docs/core/MODULES.md) - 25 functional modules explained
-- 📑 [Documentation Index](docs/core/README.md) - Navigation for all docs
+- 🕸️ [Knowledge Network Architecture](docs/core/KNOWLEDGE_NETWORK_EN.md) - Knowledge graph and domain management
+- 📦 [Module Architecture](docs/core/MODULES_EN.md) - 27 functional modules explained
+- 📑 [Documentation Index](docs/core/README_EN.md) - Navigation for all docs
 
 ### 🌐 Live Demo
 
@@ -279,7 +279,7 @@ Try the online demo now!
 
 ## 📦 System Architecture
 
-### Backend Modules (25+)
+### Backend Modules (27)
 
 ```
 omni-agent/

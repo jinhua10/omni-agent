@@ -34,7 +34,7 @@ OmniAgent 是一个**全场景Agent开发框架**，专为解决传统RAG系统�
 | 指标 | 数值 |
 |------|------|
 | **代码量** | 85,144 行 Java 代码 |
-| **后端模块** | 25 个功能模块 |
+| **后端模块** | 27 个功能模块 |
 | **存储引擎** | 6 种（File/SQLite/H2/MongoDB/Redis/Elasticsearch） |
 | **RAG策略** | 6+ 种智能分块策略 |
 | **支持模型** | Ollama/在线API/ONNX本地模型 3种类型 |
@@ -436,7 +436,7 @@ npm run dev
 - 🏗️ [完整系统架构](docs/core/ARCHITECTURE.md) - 包含 HOPE 系统的完整架构
 - 🧠 [HOPE 自学习系统](docs/core/HOPE_SYSTEM.md) - 分层智能持久化引擎详解
 - 🕸️ [知识网络架构](docs/core/KNOWLEDGE_NETWORK.md) - 知识图谱和域管理
-- 📦 [模块架构详解](docs/core/MODULES.md) - 25个功能模块说明
+- 📦 [模块架构详解](docs/core/MODULES.md) - 27个功能模块说明
 - 📑 [文档索引](docs/core/README.md) - 所有文档的导航
 
 ### 🌐 在线演示
@@ -449,7 +449,7 @@ npm run dev
 
 ## 📦 系统架构
 
-### 后端模块（25个）
+### 后端模块（27个）
 
 ```
 omni-agent/
