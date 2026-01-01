@@ -37,6 +37,18 @@
   gap: 25px;
 }
 
+/* 当只有一个卡片时，居中并限制宽度 */
+.hope-layers-container:has(.hope-layers-card:only-child) {
+  grid-template-columns: 1fr;
+  max-width: 800px;
+  justify-items: center;
+}
+
+.hope-layers-container:has(.hope-layers-card:only-child) .hope-layers-card {
+  width: 100%;
+  max-width: 800px;
+}
+
 /* 层级卡片 */
 .hope-layers-card {
   background: rgba(255, 255, 255, 0.12);
@@ -251,6 +263,11 @@
   .hope-layers-container {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  /* 移动端单卡片布局优化 */
+  .hope-layers-container:has(.hope-layers-card:only-child) {
+    max-width: 100%;
   }
 
   .hope-layers-card {
