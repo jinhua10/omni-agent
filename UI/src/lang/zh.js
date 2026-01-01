@@ -2274,7 +2274,7 @@ export default {
     hero: {
       subtitle: '全场景企业级Agent框架',
       slogan: '🚀 让Agent遍地开花，Agent元年正式开启！',
-      description: '基于知识域隔离的智能Agent平台 | 构建分布式企业级AI应用',
+      description: 'omni-agent 不只是一个技术产品，更是一套完整的企业AI服务平台解决方案',
       featureAgent: '智能Agent',
       featureService: '服务平台',
       featureAI: '智能AI应用',

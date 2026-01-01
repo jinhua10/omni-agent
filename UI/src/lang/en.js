@@ -2222,7 +2222,7 @@ export default {
     hero: {
       subtitle: 'Enterprise-Grade Agent Framework for All Scenarios',
       slogan: '🚀 Let Agents Bloom Everywhere - The Era of Agents Has Begun!',
-      description: 'Intelligent Agent Platform Based on Knowledge Domain Isolation | Building Distributed Enterprise AI Applications',
+      description: 'Omni-agent is not just a technical product, but a complete set of enterprise AI service platform solutions.',
       featureAgent: 'Intelligent Agent',
       featureService: 'Service Platform',
       featureAI: 'Smart AI Apps',
